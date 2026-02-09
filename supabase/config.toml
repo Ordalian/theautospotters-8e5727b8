@@ -1,1 +1,4 @@
 project_id = "qbbhsrlyttjgdkuovjwk"
+
+[functions.identify-car]
+verify_jwt = false
