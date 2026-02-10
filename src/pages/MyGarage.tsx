@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ItalianFlagBg from "@/components/ItalianFlagBg";
 
 interface SpottedCar {
   id: string;
@@ -51,9 +52,10 @@ const MyGarage = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background relative">
+      <ItalianFlagBg />
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50">
+      <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-10">
         <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -89,8 +91,19 @@ const MyGarage = () => {
                     />
                   </div>
                 ) : (
-                  <div className="h-32 bg-secondary/30 flex items-center justify-center">
-                    <Car className="h-12 w-12 text-muted-foreground/20" />
+                  <div className="h-44 overflow-hidden relative">
+                    <img
+                      src={`https://source.unsplash.com/800x600/?${encodeURIComponent(car.brand + " " + car.model + " car")}`}
+                      alt={`${car.brand} ${car.model}`}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                        (e.target as HTMLImageElement).parentElement!.classList.add("bg-secondary/30", "flex", "items-center", "justify-center");
+                      }}
+                    />
+                    <div className="absolute bottom-2 right-2 rounded-full bg-background/70 backdrop-blur px-2 py-0.5 text-[10px] text-muted-foreground">
+                      Auto image
+                    </div>
                   </div>
                 )}
                 <div className="p-4">
