@@ -1,0 +1,120 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+
+interface MapSpot {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  latitude: number;
+  longitude: number;
+  location_name: string | null;
+  image_url: string | null;
+  user_id: string;
+  username: string | null;
+}
+
+const SpotMap = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [spots, setSpots] = useState<MapSpot[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSpots = async () => {
+      // Fetch user's own cars with location
+      const { data: myCars } = await supabase
+        .from("cars")
+        .select("id, brand, model, year, latitude, longitude, location_name, image_url, user_id")
+        .not("latitude", "is", null)
+        .not("longitude", "is", null);
+
+      if (myCars) {
+        // Fetch usernames for these spots
+        const userIds = [...new Set(myCars.map(c => c.user_id))];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, username")
+          .in("user_id", userIds);
+
+        const profileMap = new Map(profiles?.map(p => [p.user_id, p.username]) || []);
+
+        setSpots(
+          myCars.map(c => ({
+            ...c,
+            latitude: c.latitude!,
+            longitude: c.longitude!,
+            username: profileMap.get(c.user_id) || null,
+          }))
+        );
+      }
+      setLoading(false);
+    };
+    fetchSpots();
+  }, []);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-[1000]">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-xl font-bold">Spot Map</h1>
+        <span className="ml-auto text-sm text-muted-foreground">{spots.length} spots</span>
+      </header>
+
+      <div className="flex-1 relative">
+        {loading ? (
+          <div className="flex items-center justify-center h-full py-20">
+            <div className="animate-pulse text-muted-foreground">Loading map...</div>
+          </div>
+        ) : (
+          <MapContainer
+            center={[30, 0]}
+            zoom={2}
+            style={{ height: "calc(100vh - 65px)", width: "100%" }}
+            className="z-0"
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+            {spots.map((spot) => (
+              <CircleMarker
+                key={spot.id}
+                center={[spot.latitude, spot.longitude]}
+                radius={8}
+                pathOptions={{
+                  color: spot.user_id === user?.id ? "hsl(14, 100%, 55%)" : "#3b82f6",
+                  fillColor: spot.user_id === user?.id ? "hsl(14, 100%, 55%)" : "#3b82f6",
+                  fillOpacity: 0.8,
+                  weight: 2,
+                }}
+              >
+                <Popup>
+                  <div className="text-sm font-sans">
+                    <p className="font-bold">{spot.brand} {spot.model} ({spot.year})</p>
+                    <p className="text-gray-500">
+                      {spot.username || "Anonymous"} • {spot.location_name || "Unknown location"}
+                    </p>
+                    {spot.image_url && (
+                      <img src={spot.image_url} alt="" className="w-32 h-20 object-cover rounded mt-1" />
+                    )}
+                  </div>
+                </Popup>
+              </CircleMarker>
+            ))}
+          </MapContainer>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SpotMap;

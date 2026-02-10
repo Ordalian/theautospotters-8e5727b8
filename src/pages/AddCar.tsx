@@ -6,7 +6,7 @@ import { carBrands, getModelsForBrand, getYearsForModel } from "@/data/carData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Camera, Check } from "lucide-react";
+import { ArrowLeft, Camera, Check, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,9 @@ const AddCar = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(searchParams.get("image_url") || null);
   const [loading, setLoading] = useState(false);
+  const [locationName, setLocationName] = useState("");
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // Search states
   const [brandSearch, setBrandSearch] = useState(brand);
@@ -97,6 +100,9 @@ const AddCar = () => {
         modified,
         car_meet: carMeet,
         image_url: imageUrl,
+        latitude: coords?.lat || null,
+        longitude: coords?.lng || null,
+        location_name: locationName || null,
       });
 
       if (error) throw error;
@@ -317,7 +323,50 @@ const AddCar = () => {
           </div>
         </div>
 
-        {/* Photo Upload */}
+        {/* Location */}
+        <div className="space-y-3">
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Location
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="City, Country..."
+              value={locationName}
+              onChange={(e) => setLocationName(e.target.value)}
+              className="bg-secondary/30 flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              disabled={gettingLocation}
+              onClick={() => {
+                setGettingLocation(true);
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                    setGettingLocation(false);
+                    toast.success("Location captured!");
+                  },
+                  () => {
+                    setGettingLocation(false);
+                    toast.error("Could not get location");
+                  }
+                );
+              }}
+            >
+              {gettingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+            </Button>
+          </div>
+          {coords && (
+            <p className="text-xs text-muted-foreground">
+              📍 GPS: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+            </p>
+          )}
+        </div>
+
+        {/* Photo (optional) */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             Photo (optional)

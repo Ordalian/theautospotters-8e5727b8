@@ -21,6 +21,9 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          latitude: number | null
+          location_name: string | null
+          longitude: number | null
           model: string
           modified: boolean
           parked: boolean
@@ -35,6 +38,9 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
           model: string
           modified?: boolean
           parked?: boolean
@@ -49,6 +55,9 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
           model?: string
           modified?: boolean
           parked?: boolean
@@ -88,7 +97,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_leaderboard: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          car_count: number
+          user_id: string
+          username: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

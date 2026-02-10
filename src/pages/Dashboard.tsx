@@ -2,26 +2,34 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Car, Users, Brain, Trophy, LogOut } from "lucide-react";
+import { Car, Users, Brain, Trophy, LogOut, User, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ItalianFlagBg from "@/components/ItalianFlagBg";
+import DashboardMap from "@/components/DashboardMap";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [latestCarImage, setLatestCarImage] = useState<string | null>(null);
   const [carCount, setCarCount] = useState(0);
+  const [mapSpots, setMapSpots] = useState<{ id: string; latitude: number; longitude: number }[]>([]);
 
   useEffect(() => {
     if (!user) return;
-    const fetchLatestCar = async () => {
+    const fetchData = async () => {
       const { data } = await supabase
         .from("cars")
-        .select("image_url")
+        .select("id, image_url, latitude, longitude")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
+        .order("created_at", { ascending: false });
+
       if (data && data.length > 0) {
         setLatestCarImage(data[0].image_url);
+        setMapSpots(
+          data
+            .filter((c) => c.latitude && c.longitude)
+            .map((c) => ({ id: c.id, latitude: c.latitude!, longitude: c.longitude! }))
+        );
       }
       const { count } = await supabase
         .from("cars")
@@ -29,7 +37,7 @@ const Dashboard = () => {
         .eq("user_id", user.id);
       setCarCount(count || 0);
     };
-    fetchLatestCar();
+    fetchData();
   }, [user]);
 
   const handleSignOut = async () => {
@@ -64,33 +72,39 @@ const Dashboard = () => {
       gradient: "from-emerald-500/20 to-emerald-500/5",
     },
     {
-      title: "Leaderboards",
-      subtitle: "Coming soon",
+      title: "Leaderboard",
+      subtitle: "Top spotters",
       icon: Trophy,
       image: null,
-      onClick: () => {},
+      onClick: () => navigate("/leaderboard"),
       gradient: "from-amber-500/20 to-amber-500/5",
-      disabled: true,
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <ItalianFlagBg />
+
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-border/50">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-border/50 relative z-10">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <Car className="h-5 w-5 text-primary" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">AutoSpot</h1>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleSignOut}>
-          <LogOut className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
+            <User className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <LogOut className="h-5 w-5" />
+          </Button>
+        </div>
       </header>
 
       {/* Dashboard Grid */}
-      <main className="p-6 max-w-2xl mx-auto">
+      <main className="p-6 max-w-2xl mx-auto relative z-10">
         <h2 className="text-lg font-medium text-muted-foreground mb-6">
           Hey, {user?.email?.split("@")[0]} 👋
         </h2>
@@ -124,6 +138,22 @@ const Dashboard = () => {
             </button>
           ))}
         </div>
+
+        {/* Map Preview */}
+        <button
+          onClick={() => navigate("/map")}
+          className="mt-4 w-full rounded-2xl border border-border/50 overflow-hidden bg-card/60 backdrop-blur-sm text-left transition-all hover:scale-[1.01] hover:border-primary/30 active:scale-[0.99]"
+        >
+          <div className="h-44 relative">
+            <DashboardMap spots={mapSpots} />
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-card/80 to-transparent" />
+            <div className="absolute bottom-3 left-4 z-10 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="font-bold text-sm">Spot Map</span>
+              <span className="text-xs text-muted-foreground">• {mapSpots.length} located</span>
+            </div>
+          </div>
+        </button>
       </main>
     </div>
   );

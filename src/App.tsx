@@ -9,6 +9,9 @@ import Dashboard from "./pages/Dashboard";
 import MyGarage from "./pages/MyGarage";
 import AddCar from "./pages/AddCar";
 import AutoSpotter from "./pages/AutoSpotter";
+import Leaderboard from "./pages/Leaderboard";
+import Profile from "./pages/Profile";
+import SpotMap from "./pages/SpotMap";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +43,9 @@ const App = () => (
             <Route path="/garage" element={<ProtectedRoute><MyGarage /></ProtectedRoute>} />
             <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
             <Route path="/autospotter" element={<ProtectedRoute><AutoSpotter /></ProtectedRoute>} />
+            <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
