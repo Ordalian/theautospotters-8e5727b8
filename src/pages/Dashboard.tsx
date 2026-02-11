@@ -19,15 +19,16 @@ const Dashboard = () => {
     const fetchData = async () => {
       const { data } = await supabase
         .from("cars")
-        .select("id, image_url, latitude, longitude")
+        .select("id, image_url, latitude, longitude, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (data && data.length > 0) {
         setLatestCarImage(data[0].image_url);
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
         setMapSpots(
           data
-            .filter((c) => c.latitude && c.longitude)
+            .filter((c) => c.latitude && c.longitude && c.created_at >= sevenDaysAgo)
             .map((c) => ({ id: c.id, latitude: c.latitude!, longitude: c.longitude! }))
         );
       }
@@ -56,12 +57,11 @@ const Dashboard = () => {
     },
     {
       title: "Friends' Garages",
-      subtitle: "Coming soon",
+      subtitle: "See your friends",
       icon: Users,
       image: null,
-      onClick: () => {},
+      onClick: () => navigate("/friends"),
       gradient: "from-blue-500/20 to-blue-500/5",
-      disabled: true,
     },
     {
       title: "The AutoSpotter",
@@ -113,8 +113,7 @@ const Dashboard = () => {
             <button
               key={tile.title}
               onClick={tile.onClick}
-              disabled={tile.disabled}
-              className={`relative group overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br ${tile.gradient} p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/30 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 aspect-square`}
+              className={`relative group overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br ${tile.gradient} p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/30 active:scale-[0.98] aspect-square`}
             >
               <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/60 backdrop-blur-sm p-4">
                 {tile.image ? (

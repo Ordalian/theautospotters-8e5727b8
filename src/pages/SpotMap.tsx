@@ -30,11 +30,13 @@ const SpotMap = () => {
 
   useEffect(() => {
     const fetchSpots = async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: myCars } = await supabase
         .from("cars")
-        .select("id, brand, model, year, latitude, longitude, location_name, image_url, user_id")
+        .select("id, brand, model, year, latitude, longitude, location_name, image_url, user_id, created_at")
         .not("latitude", "is", null)
-        .not("longitude", "is", null);
+        .not("longitude", "is", null)
+        .gte("created_at", sevenDaysAgo);
 
       if (myCars) {
         const userIds = [...new Set(myCars.map(c => c.user_id))];
@@ -67,7 +69,7 @@ const SpotMap = () => {
       zoom: 2,
     });
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
     }).addTo(map);
 
