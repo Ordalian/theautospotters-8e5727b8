@@ -12,6 +12,7 @@ import AutoSpotter from "./pages/AutoSpotter";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import SpotMap from "./pages/SpotMap";
+import FriendsGarages from "./pages/FriendsGarages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/autospotter" element={<ProtectedRoute><AutoSpotter /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
             <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
