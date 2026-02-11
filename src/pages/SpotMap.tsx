@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 interface MapSpot {
@@ -25,10 +25,11 @@ const SpotMap = () => {
   const { user } = useAuth();
   const [spots, setSpots] = useState<MapSpot[]>([]);
   const [loading, setLoading] = useState(true);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<L.Map | null>(null);
 
   useEffect(() => {
     const fetchSpots = async () => {
-      // Fetch user's own cars with location
       const { data: myCars } = await supabase
         .from("cars")
         .select("id, brand, model, year, latitude, longitude, location_name, image_url, user_id")
@@ -36,7 +37,6 @@ const SpotMap = () => {
         .not("longitude", "is", null);
 
       if (myCars) {
-        // Fetch usernames for these spots
         const userIds = [...new Set(myCars.map(c => c.user_id))];
         const { data: profiles } = await supabase
           .from("profiles")
@@ -59,6 +59,47 @@ const SpotMap = () => {
     fetchSpots();
   }, []);
 
+  useEffect(() => {
+    if (loading || !mapRef.current || mapInstance.current) return;
+
+    const map = L.map(mapRef.current, {
+      center: [30, 0],
+      zoom: 2,
+    });
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    }).addTo(map);
+
+    spots.forEach((spot) => {
+      const isOwn = spot.user_id === user?.id;
+      const color = isOwn ? "hsl(14, 100%, 55%)" : "#3b82f6";
+
+      L.circleMarker([spot.latitude, spot.longitude], {
+        radius: 8,
+        color,
+        fillColor: color,
+        fillOpacity: 0.8,
+        weight: 2,
+      })
+        .bindPopup(
+          `<div style="font-size:13px;font-family:sans-serif;">
+            <b>${spot.brand} ${spot.model} (${spot.year})</b><br/>
+            <span style="color:#888;">${spot.username || "Anonymous"} • ${spot.location_name || "Unknown location"}</span>
+            ${spot.image_url ? `<br/><img src="${spot.image_url}" style="width:128px;height:80px;object-fit:cover;border-radius:4px;margin-top:4px;" />` : ""}
+          </div>`
+        )
+        .addTo(map);
+    });
+
+    mapInstance.current = map;
+
+    return () => {
+      map.remove();
+      mapInstance.current = null;
+    };
+  }, [loading, spots, user?.id]);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-[1000]">
@@ -75,42 +116,7 @@ const SpotMap = () => {
             <div className="animate-pulse text-muted-foreground">Loading map...</div>
           </div>
         ) : (
-          <MapContainer
-            center={[30, 0]}
-            zoom={2}
-            style={{ height: "calc(100vh - 65px)", width: "100%" }}
-            className="z-0"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
-            {spots.map((spot) => (
-              <CircleMarker
-                key={spot.id}
-                center={[spot.latitude, spot.longitude]}
-                radius={8}
-                pathOptions={{
-                  color: spot.user_id === user?.id ? "hsl(14, 100%, 55%)" : "#3b82f6",
-                  fillColor: spot.user_id === user?.id ? "hsl(14, 100%, 55%)" : "#3b82f6",
-                  fillOpacity: 0.8,
-                  weight: 2,
-                }}
-              >
-                <Popup>
-                  <div className="text-sm font-sans">
-                    <p className="font-bold">{spot.brand} {spot.model} ({spot.year})</p>
-                    <p className="text-gray-500">
-                      {spot.username || "Anonymous"} • {spot.location_name || "Unknown location"}
-                    </p>
-                    {spot.image_url && (
-                      <img src={spot.image_url} alt="" className="w-32 h-20 object-cover rounded mt-1" />
-                    )}
-                  </div>
-                </Popup>
-              </CircleMarker>
-            ))}
-          </MapContainer>
+          <div ref={mapRef} className="z-0" style={{ height: "calc(100vh - 65px)", width: "100%" }} />
         )}
       </div>
     </div>
