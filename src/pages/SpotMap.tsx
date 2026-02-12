@@ -77,6 +77,33 @@ const SpotMap = () => {
       const isOwn = spot.user_id === user?.id;
       const color = isOwn ? "hsl(14, 100%, 55%)" : "#3b82f6";
 
+      const popupEl = document.createElement("div");
+      popupEl.style.fontSize = "13px";
+      popupEl.style.fontFamily = "sans-serif";
+
+      const title = document.createElement("b");
+      title.textContent = `${spot.brand} ${spot.model} (${spot.year})`;
+      popupEl.appendChild(title);
+
+      popupEl.appendChild(document.createElement("br"));
+
+      const details = document.createElement("span");
+      details.style.color = "#888";
+      details.textContent = `${spot.username || "Anonymous"} • ${spot.location_name || "Unknown location"}`;
+      popupEl.appendChild(details);
+
+      if (spot.image_url && spot.image_url.startsWith("https://")) {
+        popupEl.appendChild(document.createElement("br"));
+        const img = document.createElement("img");
+        img.src = spot.image_url;
+        img.style.width = "128px";
+        img.style.height = "80px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "4px";
+        img.style.marginTop = "4px";
+        popupEl.appendChild(img);
+      }
+
       L.circleMarker([spot.latitude, spot.longitude], {
         radius: 8,
         color,
@@ -84,13 +111,7 @@ const SpotMap = () => {
         fillOpacity: 0.8,
         weight: 2,
       })
-        .bindPopup(
-          `<div style="font-size:13px;font-family:sans-serif;">
-            <b>${spot.brand} ${spot.model} (${spot.year})</b><br/>
-            <span style="color:#888;">${spot.username || "Anonymous"} • ${spot.location_name || "Unknown location"}</span>
-            ${spot.image_url ? `<br/><img src="${spot.image_url}" style="width:128px;height:80px;object-fit:cover;border-radius:4px;margin-top:4px;" />` : ""}
-          </div>`
-        )
+        .bindPopup(popupEl)
         .addTo(map);
     });
 
