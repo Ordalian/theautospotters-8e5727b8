@@ -19,7 +19,7 @@ export type Database = {
           brand: string
           car_meet: boolean
           created_at: string
-          horsepower: number | null
+          engine: string | null
           id: string
           image_url: string | null
           latitude: number | null
@@ -37,7 +37,7 @@ export type Database = {
           brand: string
           car_meet?: boolean
           created_at?: string
-          horsepower?: number | null
+          engine?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -55,7 +55,7 @@ export type Database = {
           brand?: string
           car_meet?: boolean
           created_at?: string
-          horsepower?: number | null
+          engine?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null

@@ -13,6 +13,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import SpotMap from "./pages/SpotMap";
 import FriendsGarages from "./pages/FriendsGarages";
+import CarDetails from "./pages/CarDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
             <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
+            <Route path="/car/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
