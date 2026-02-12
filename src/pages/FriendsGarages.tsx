@@ -24,7 +24,7 @@ interface FriendCar {
   brand: string;
   model: string;
   year: number;
-  horsepower: number | null;
+  engine: string | null;
   image_url: string | null;
   created_at: string;
   user_id: string;
@@ -50,8 +50,6 @@ const FriendsGarages = () => {
         return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       case "oldest":
         return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      case "horsepower":
-        return sorted.sort((a, b) => (b.horsepower ?? 0) - (a.horsepower ?? 0));
       case "brand":
         return sorted.sort((a, b) => a.brand.localeCompare(b.brand));
       default:
@@ -93,7 +91,7 @@ const FriendsGarages = () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: spots } = await supabase
         .from("cars")
-        .select("id, brand, model, year, horsepower, image_url, created_at, user_id")
+        .select("id, brand, model, year, engine, image_url, created_at, user_id")
         .in("user_id", friendUserIds)
         .gte("created_at", sevenDaysAgo)
         .order("created_at", { ascending: false })
@@ -154,7 +152,7 @@ const FriendsGarages = () => {
     setSelectedFriend(friend);
     const { data } = await supabase
       .from("cars")
-      .select("id, brand, model, year, horsepower, image_url, created_at, user_id")
+      .select("id, brand, model, year, engine, image_url, created_at, user_id")
       .eq("user_id", friend.user_id)
       .order("created_at", { ascending: false });
     setFriendCars(
@@ -283,7 +281,7 @@ const FriendsGarages = () => {
               <p className="text-muted-foreground text-sm">Ce garage est vide pour l'instant.</p>
             ) : (
               sortedFriendCars.map((car) => (
-                <div key={car.id} className="rounded-xl border border-border bg-card overflow-hidden">
+                <div key={car.id} onClick={() => navigate(`/car/${car.id}`)} className="rounded-xl border border-border bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors">
                   {car.image_url ? (
                     <img src={car.image_url} alt={`${car.brand} ${car.model}`} className="h-40 w-full object-cover" />
                   ) : (

@@ -13,7 +13,7 @@ interface SpottedCar {
   brand: string;
   model: string;
   year: number;
-  horsepower: number | null;
+  engine: string | null;
   seen_on_road: boolean;
   parked: boolean;
   stock: boolean;
@@ -37,8 +37,6 @@ const MyGarage = () => {
         return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       case "oldest":
         return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      case "horsepower":
-        return sorted.sort((a, b) => (b.horsepower ?? 0) - (a.horsepower ?? 0));
       case "brand":
         return sorted.sort((a, b) => a.brand.localeCompare(b.brand));
       default:
@@ -102,7 +100,8 @@ const MyGarage = () => {
             sortedCars.map((car) => (
               <div
                 key={car.id}
-                className="rounded-xl border border-border/50 bg-card overflow-hidden"
+                onClick={() => navigate(`/car/${car.id}`)}
+                className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors"
               >
                 {car.image_url ? (
                   <div className="h-44 overflow-hidden">

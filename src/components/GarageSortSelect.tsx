@@ -6,7 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export type GarageSortOption = "newest" | "oldest" | "horsepower" | "brand";
+export type GarageSortOption = "newest" | "oldest" | "brand";
 
 interface GarageSortSelectProps {
   value: GarageSortOption;
@@ -21,7 +21,6 @@ const GarageSortSelect = ({ value, onChange }: GarageSortSelectProps) => (
     <SelectContent>
       <SelectItem value="newest">Newest first</SelectItem>
       <SelectItem value="oldest">Oldest first</SelectItem>
-      <SelectItem value="horsepower">Horsepower ↓</SelectItem>
       <SelectItem value="brand">Brand A→Z</SelectItem>
     </SelectContent>
   </Select>

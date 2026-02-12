@@ -28,7 +28,10 @@ const AddCar = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(searchParams.get("image_url") || null);
   const [loading, setLoading] = useState(false);
-  const [horsepower, setHorsepower] = useState(searchParams.get("horsepower") || "");
+  const [engine, setEngine] = useState(searchParams.get("engine") || "");
+  const [engines, setEngines] = useState<{ name: string; displacement: string; fuel: string; hp: number }[]>([]);
+  const [loadingEngines, setLoadingEngines] = useState(false);
+  const [showEngines, setShowEngines] = useState(false);
   const [locationName, setLocationName] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -101,7 +104,7 @@ const AddCar = () => {
         modified,
         car_meet: carMeet,
         image_url: imageUrl,
-        horsepower: horsepower ? parseInt(horsepower) : null,
+        engine: engine || null,
         latitude: coords?.lat || null,
         longitude: coords?.lng || null,
         location_name: locationName || null,
@@ -325,18 +328,75 @@ const AddCar = () => {
           </div>
         </div>
 
-        {/* Horsepower */}
+        {/* Engine */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Horsepower (optional)
+            Engine (optional)
           </Label>
-          <Input
-            type="number"
-            placeholder="e.g. 450"
-            value={horsepower}
-            onChange={(e) => setHorsepower(e.target.value)}
-            className="bg-secondary/30"
-          />
+          <div className="relative">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!brand || !model || !year) {
+                  toast.error("Select brand, model and year first");
+                  return;
+                }
+                if (engines.length === 0 && !loadingEngines) {
+                  setLoadingEngines(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke("car-info", {
+                      body: { action: "engines", brand, model, year: parseInt(year) },
+                    });
+                    if (!error && data?.engines) {
+                      setEngines(data.engines);
+                    }
+                  } catch {
+                    toast.error("Could not load engines");
+                  } finally {
+                    setLoadingEngines(false);
+                  }
+                }
+                setShowEngines(!showEngines);
+              }}
+              disabled={!year}
+              className={cn(
+                "flex h-10 w-full items-center justify-between rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm",
+                !year && "opacity-50 cursor-not-allowed",
+                !engine && "text-muted-foreground"
+              )}
+            >
+              {loadingEngines ? "Loading engines..." : engine || (year ? "Select engine (optional)" : "Select year first")}
+            </button>
+            {showEngines && (
+              <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
+                <button
+                  onClick={() => {
+                    setEngine("");
+                    setShowEngines(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary/50 transition-colors"
+                >
+                  Skip / Unknown
+                </button>
+                {engines.map((eng, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setEngine(`${eng.name} (${eng.hp}hp)`);
+                      setShowEngines(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary/50 transition-colors"
+                  >
+                    <span className="font-medium">{eng.name}</span>
+                    <span className="text-muted-foreground ml-2">{eng.hp}hp • {eng.fuel}</span>
+                  </button>
+                ))}
+                {engines.length === 0 && !loadingEngines && (
+                  <div className="px-4 py-3 text-sm text-muted-foreground">No engines found</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Location */}
