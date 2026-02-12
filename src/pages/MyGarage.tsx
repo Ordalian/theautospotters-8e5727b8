@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,12 +6,14 @@ import { ArrowLeft, Plus, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ItalianFlagBg from "@/components/ItalianFlagBg";
+import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSortSelect";
 
 interface SpottedCar {
   id: string;
   brand: string;
   model: string;
   year: number;
+  horsepower: number | null;
   seen_on_road: boolean;
   parked: boolean;
   stock: boolean;
@@ -26,6 +28,23 @@ const MyGarage = () => {
   const navigate = useNavigate();
   const [cars, setCars] = useState<SpottedCar[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortOption, setSortOption] = useState<GarageSortOption>("newest");
+
+  const sortedCars = useMemo(() => {
+    const sorted = [...cars];
+    switch (sortOption) {
+      case "newest":
+        return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case "oldest":
+        return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case "horsepower":
+        return sorted.sort((a, b) => (b.horsepower ?? 0) - (a.horsepower ?? 0));
+      case "brand":
+        return sorted.sort((a, b) => a.brand.localeCompare(b.brand));
+      default:
+        return sorted;
+    }
+  }, [cars, sortOption]);
 
   useEffect(() => {
     if (!user) return;
@@ -60,7 +79,10 @@ const MyGarage = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold">My Garage</h1>
-        <span className="ml-auto text-sm text-muted-foreground">{cars.length} spots</span>
+        <div className="ml-auto flex items-center gap-2">
+          <GarageSortSelect value={sortOption} onChange={setSortOption} />
+          <span className="text-sm text-muted-foreground">{cars.length} spots</span>
+        </div>
       </header>
 
       {/* Car List */}
@@ -77,7 +99,7 @@ const MyGarage = () => {
               <p className="text-muted-foreground text-sm mt-1">Start spotting and add your first car!</p>
             </div>
           ) : (
-            cars.map((car) => (
+            sortedCars.map((car) => (
               <div
                 key={car.id}
                 className="rounded-xl border border-border/50 bg-card overflow-hidden"
