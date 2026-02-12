@@ -28,6 +28,7 @@ const AddCar = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(searchParams.get("image_url") || null);
   const [loading, setLoading] = useState(false);
+  const [horsepower, setHorsepower] = useState(searchParams.get("horsepower") || "");
   const [locationName, setLocationName] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -100,6 +101,7 @@ const AddCar = () => {
         modified,
         car_meet: carMeet,
         image_url: imageUrl,
+        horsepower: horsepower ? parseInt(horsepower) : null,
         latitude: coords?.lat || null,
         longitude: coords?.lng || null,
         location_name: locationName || null,
@@ -321,6 +323,20 @@ const AddCar = () => {
           <div className="flex flex-wrap gap-2">
             <ToggleChip label="🏁 Car Meet" checked={carMeet} onChange={setCarMeet} />
           </div>
+        </div>
+
+        {/* Horsepower */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Horsepower (optional)
+          </Label>
+          <Input
+            type="number"
+            placeholder="e.g. 450"
+            value={horsepower}
+            onChange={(e) => setHorsepower(e.target.value)}
+            className="bg-secondary/30"
+          />
         </div>
 
         {/* Location */}

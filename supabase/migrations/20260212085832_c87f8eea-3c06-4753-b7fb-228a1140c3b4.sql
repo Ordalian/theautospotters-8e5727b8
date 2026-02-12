@@ -1,0 +1,1 @@
+ALTER TABLE public.cars ADD COLUMN horsepower integer DEFAULT NULL;

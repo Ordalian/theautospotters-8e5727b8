@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSortSelect";
 
 interface Friend {
   user_id: string;
@@ -23,6 +24,7 @@ interface FriendCar {
   brand: string;
   model: string;
   year: number;
+  horsepower: number | null;
   image_url: string | null;
   created_at: string;
   user_id: string;
@@ -39,6 +41,23 @@ const FriendsGarages = () => {
   const [friendCars, setFriendCars] = useState<FriendCar[]>([]);
   const [recentSpots, setRecentSpots] = useState<FriendCar[]>([]);
   const [loading, setLoading] = useState(true);
+  const [friendSort, setFriendSort] = useState<GarageSortOption>("newest");
+
+  const sortedFriendCars = useMemo(() => {
+    const sorted = [...friendCars];
+    switch (friendSort) {
+      case "newest":
+        return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case "oldest":
+        return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case "horsepower":
+        return sorted.sort((a, b) => (b.horsepower ?? 0) - (a.horsepower ?? 0));
+      case "brand":
+        return sorted.sort((a, b) => a.brand.localeCompare(b.brand));
+      default:
+        return sorted;
+    }
+  }, [friendCars, friendSort]);
 
   useEffect(() => {
     if (user) fetchFriends();
@@ -74,7 +93,7 @@ const FriendsGarages = () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: spots } = await supabase
         .from("cars")
-        .select("id, brand, model, year, image_url, created_at, user_id")
+        .select("id, brand, model, year, horsepower, image_url, created_at, user_id")
         .in("user_id", friendUserIds)
         .gte("created_at", sevenDaysAgo)
         .order("created_at", { ascending: false })
@@ -135,7 +154,7 @@ const FriendsGarages = () => {
     setSelectedFriend(friend);
     const { data } = await supabase
       .from("cars")
-      .select("id, brand, model, year, image_url, created_at, user_id")
+      .select("id, brand, model, year, horsepower, image_url, created_at, user_id")
       .eq("user_id", friend.user_id)
       .order("created_at", { ascending: false });
     setFriendCars(
@@ -257,10 +276,13 @@ const FriendsGarages = () => {
         {/* Friend's Garage */}
         {selectedFriend && (
           <div className="space-y-3">
-            {friendCars.length === 0 ? (
+            <div className="flex justify-end">
+              <GarageSortSelect value={friendSort} onChange={setFriendSort} />
+            </div>
+            {sortedFriendCars.length === 0 ? (
               <p className="text-muted-foreground text-sm">Ce garage est vide pour l'instant.</p>
             ) : (
-              friendCars.map((car) => (
+              sortedFriendCars.map((car) => (
                 <div key={car.id} className="rounded-xl border border-border bg-card overflow-hidden">
                   {car.image_url ? (
                     <img src={car.image_url} alt={`${car.brand} ${car.model}`} className="h-40 w-full object-cover" />
