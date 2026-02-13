@@ -162,17 +162,17 @@ const CarDetails = () => {
           </p>
 
           {/* AI Description */}
-          <div className="rounded-xl border border-border/50 bg-card p-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               About this car
             </p>
             {loadingDesc ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading description...
+                Loading car info...
               </div>
             ) : description ? (
-              <p className="text-sm leading-relaxed">{description}</p>
+              <div className="text-sm leading-relaxed whitespace-pre-line">{description}</div>
             ) : (
               <p className="text-sm text-muted-foreground">Could not load description.</p>
             )}

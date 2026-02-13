@@ -460,6 +460,10 @@ export const carBrands: CarBrand[] = [
       { name: "Touareg", years: [2002, 2026] },
       { name: "ID.4", years: [2021, 2026] },
       { name: "Arteon", years: [2017, 2026] },
+      { name: "Scirocco", years: [1974, 2017] },
+      { name: "Corrado", years: [1988, 1995] },
+      { name: "Passat", years: [1973, 2026] },
+      { name: "T-Roc", years: [2017, 2026] },
     ],
   },
   {
@@ -471,6 +475,206 @@ export const carBrands: CarBrand[] = [
       { name: "S60", years: [2000, 2026] },
       { name: "S90", years: [2016, 2026] },
       { name: "V60", years: [2010, 2026] },
+      { name: "C30", years: [2006, 2013] },
+      { name: "V90", years: [2016, 2026] },
+    ],
+  },
+  {
+    name: "Acura",
+    models: [
+      { name: "NSX", years: [2016, 2022] },
+      { name: "Integra", years: [2023, 2026] },
+      { name: "TLX", years: [2015, 2026] },
+      { name: "MDX", years: [2001, 2026] },
+      { name: "RDX", years: [2007, 2026] },
+    ],
+  },
+  {
+    name: "Cupra",
+    models: [
+      { name: "Formentor", years: [2020, 2026] },
+      { name: "Leon", years: [2020, 2026] },
+      { name: "Born", years: [2021, 2026] },
+      { name: "Tavascan", years: [2024, 2026] },
+      { name: "Ateca", years: [2020, 2024] },
+    ],
+  },
+  {
+    name: "Citroën",
+    models: [
+      { name: "C3", years: [2002, 2026] },
+      { name: "C4", years: [2004, 2026] },
+      { name: "C5 X", years: [2022, 2026] },
+      { name: "Berlingo", years: [1996, 2026] },
+      { name: "DS3", years: [2010, 2019] },
+    ],
+  },
+  {
+    name: "Dacia",
+    models: [
+      { name: "Duster", years: [2010, 2026] },
+      { name: "Sandero", years: [2008, 2026] },
+      { name: "Spring", years: [2021, 2026] },
+      { name: "Jogger", years: [2022, 2026] },
+    ],
+  },
+  {
+    name: "DS Automobiles",
+    models: [
+      { name: "DS 3", years: [2019, 2026] },
+      { name: "DS 4", years: [2021, 2026] },
+      { name: "DS 7", years: [2018, 2026] },
+      { name: "DS 9", years: [2020, 2026] },
+    ],
+  },
+  {
+    name: "Genesis",
+    models: [
+      { name: "G70", years: [2018, 2026] },
+      { name: "G80", years: [2017, 2026] },
+      { name: "G90", years: [2017, 2026] },
+      { name: "GV70", years: [2021, 2026] },
+      { name: "GV80", years: [2020, 2026] },
+    ],
+  },
+  {
+    name: "Infiniti",
+    models: [
+      { name: "Q50", years: [2014, 2026] },
+      { name: "Q60", years: [2017, 2024] },
+      { name: "QX50", years: [2019, 2026] },
+      { name: "QX80", years: [2011, 2026] },
+    ],
+  },
+  {
+    name: "Kia",
+    models: [
+      { name: "Stinger", years: [2018, 2024] },
+      { name: "EV6", years: [2022, 2026] },
+      { name: "Sportage", years: [1993, 2026] },
+      { name: "Sorento", years: [2002, 2026] },
+      { name: "Ceed", years: [2007, 2026] },
+      { name: "Picanto", years: [2004, 2026] },
+    ],
+  },
+  {
+    name: "Lancia",
+    models: [
+      { name: "Delta", years: [1979, 2014] },
+      { name: "Stratos", years: [1973, 1978] },
+      { name: "037", years: [1982, 1983] },
+      { name: "Ypsilon", years: [2003, 2026] },
+      { name: "Gamma", years: [2024, 2026] },
+    ],
+  },
+  {
+    name: "Lincoln",
+    models: [
+      { name: "Navigator", years: [1998, 2026] },
+      { name: "Aviator", years: [2020, 2026] },
+      { name: "Corsair", years: [2020, 2026] },
+    ],
+  },
+  {
+    name: "Lucid",
+    models: [
+      { name: "Air", years: [2022, 2026] },
+      { name: "Gravity", years: [2025, 2026] },
+    ],
+  },
+  {
+    name: "Morgan",
+    models: [
+      { name: "Plus Four", years: [2020, 2026] },
+      { name: "Plus Six", years: [2019, 2026] },
+      { name: "Super 3", years: [2022, 2026] },
+    ],
+  },
+  {
+    name: "Opel",
+    models: [
+      { name: "Corsa", years: [1982, 2026] },
+      { name: "Astra", years: [1991, 2026] },
+      { name: "Mokka", years: [2012, 2026] },
+      { name: "Grandland", years: [2017, 2026] },
+      { name: "Insignia", years: [2008, 2024] },
+    ],
+  },
+  {
+    name: "Polestar",
+    models: [
+      { name: "1", years: [2019, 2021] },
+      { name: "2", years: [2020, 2026] },
+      { name: "3", years: [2024, 2026] },
+      { name: "4", years: [2024, 2026] },
+    ],
+  },
+  {
+    name: "Rimac",
+    models: [
+      { name: "Nevera", years: [2021, 2026] },
+      { name: "Concept One", years: [2013, 2014] },
+    ],
+  },
+  {
+    name: "Rivian",
+    models: [
+      { name: "R1T", years: [2022, 2026] },
+      { name: "R1S", years: [2022, 2026] },
+      { name: "R2", years: [2026, 2026] },
+    ],
+  },
+  {
+    name: "Seat",
+    models: [
+      { name: "Leon", years: [1999, 2026] },
+      { name: "Ibiza", years: [1984, 2026] },
+      { name: "Arona", years: [2017, 2026] },
+      { name: "Ateca", years: [2016, 2026] },
+    ],
+  },
+  {
+    name: "Skoda",
+    models: [
+      { name: "Octavia", years: [1996, 2026] },
+      { name: "Superb", years: [2001, 2026] },
+      { name: "Kodiaq", years: [2017, 2026] },
+      { name: "Kamiq", years: [2019, 2026] },
+      { name: "Fabia", years: [1999, 2026] },
+      { name: "Enyaq", years: [2021, 2026] },
+    ],
+  },
+  {
+    name: "Smart",
+    models: [
+      { name: "ForTwo", years: [1998, 2024] },
+      { name: "ForFour", years: [2004, 2024] },
+      { name: "#1", years: [2023, 2026] },
+      { name: "#3", years: [2024, 2026] },
+    ],
+  },
+  {
+    name: "SSC",
+    models: [
+      { name: "Tuatara", years: [2020, 2026] },
+      { name: "Ultimate Aero", years: [2007, 2013] },
+    ],
+  },
+  {
+    name: "Suzuki",
+    models: [
+      { name: "Swift Sport", years: [2005, 2026] },
+      { name: "Jimny", years: [1998, 2026] },
+      { name: "Vitara", years: [1988, 2026] },
+      { name: "S-Cross", years: [2014, 2026] },
+    ],
+  },
+  {
+    name: "Wiesmann",
+    models: [
+      { name: "Project Thunderball", years: [2024, 2026] },
+      { name: "MF5", years: [2009, 2014] },
+      { name: "GT", years: [2003, 2013] },
     ],
   },
 ];
