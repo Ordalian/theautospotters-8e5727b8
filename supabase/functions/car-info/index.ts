@@ -48,9 +48,21 @@ Respond ONLY with a JSON array, no markdown, no extra text. Example format:
 [{"name":"2.0L Turbo I4","displacement":"2.0L","fuel":"Petrol","hp":255},{"name":"3.0L V6","displacement":"3.0L","fuel":"Petrol","hp":382}]
 If you're unsure, give your best guess with common engines for that model. Return at most 8 options.`;
     } else if (action === "description") {
-      prompt = `Write a short, enthusiast-friendly description (3-4 sentences) of the ${year} ${brand} ${model}. 
-Include key specs like engine, horsepower, 0-60 time if known, and what makes it special.
-Respond with plain text only, no markdown, no JSON.`;
+      prompt = `Write an enthusiast-friendly profile of the ${year} ${brand} ${model}. Include ALL of the following sections as plain text with clear headings using emoji:
+
+🏎️ Overview: 2-3 sentences about what this car is, its generation/chassis code, and why enthusiasts care about it.
+
+⚙️ Key Specs: Engine type, displacement, horsepower, torque, transmission, drivetrain, 0-60 time, and top speed (use best available data).
+
+📊 Production: How many were built (total production numbers for this generation/year if known). If it's a limited edition, mention the exact number. If unknown, say "production figures not publicly available."
+
+🏆 Notable Achievements: Any racing heritage, lap records, awards, or industry firsts.
+
+💡 Fun Facts: 2-3 interesting or surprising facts about this car that most people don't know. These could be about its design, engineering quirks, celebrity owners, appearances in movies/games, nicknames, or unusual features.
+
+💰 Market: Current approximate market value range if known.
+
+Keep it concise but packed with real data. Respond with plain text only, no markdown formatting, no JSON.`;
     } else {
       return new Response(
         JSON.stringify({ error: "Invalid action" }),
