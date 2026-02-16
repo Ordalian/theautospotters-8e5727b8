@@ -38,10 +38,10 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4 shadow-inner text-destructive">
             <Car className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">AutoSpot</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-red-600">AutoSpot</h1>
           <p className="mt-2 text-muted-foreground">Spot. Collect. Compete.</p>
         </div>
 
@@ -60,8 +60,8 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-secondary/50"
-              />
+                className="bg-secondary/50" />
+
               <Input
                 type="password"
                 placeholder="Password"
@@ -69,8 +69,8 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="bg-secondary/50"
-              />
+                className="bg-secondary/50" />
+
               <Button type="submit" className="w-full font-semibold" disabled={loading}>
                 {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
               </Button>
@@ -79,16 +79,16 @@ const Auth = () => {
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
+                className="text-sm text-muted-foreground hover:text-primary transition-colors">
+
                 {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
               </button>
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default Auth;
