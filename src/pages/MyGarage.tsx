@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ItalianFlagBg from "@/components/ItalianFlagBg";
 import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSortSelect";
+import { RarityBadge } from "@/components/RarityBadge";
+import { QualityBadge } from "@/components/QualityBadge";
 
 interface SpottedCar {
   id: string;
@@ -21,6 +23,8 @@ interface SpottedCar {
   car_meet: boolean;
   image_url: string | null;
   created_at: string;
+  quality_rating: number | null;
+  rarity_rating: number | null;
 }
 
 const MyGarage = () => {
@@ -101,8 +105,18 @@ const MyGarage = () => {
               <div
                 key={car.id}
                 onClick={() => navigate(`/car/${car.id}`)}
-                className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors"
+                className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors relative"
               >
+                {/* Rating badges in top right corner */}
+                <div className="absolute top-2 right-2 z-10 flex flex-col gap-1.5">
+                  <div className="rounded-lg bg-background/80 backdrop-blur px-2 py-1">
+                    <RarityBadge level={car.rarity_rating || 5} size="sm" />
+                  </div>
+                  <div className="rounded-lg bg-background/80 backdrop-blur px-2 py-1">
+                    <QualityBadge level={car.quality_rating || 3} size="sm" />
+                  </div>
+                </div>
+
                 {car.image_url ? (
                   <div className="h-44 overflow-hidden">
                     <img
@@ -122,7 +136,7 @@ const MyGarage = () => {
                         (e.target as HTMLImageElement).parentElement!.classList.add("bg-secondary/30", "flex", "items-center", "justify-center");
                       }}
                     />
-                    <div className="absolute bottom-2 right-2 rounded-full bg-background/70 backdrop-blur px-2 py-0.5 text-[10px] text-muted-foreground">
+                    <div className="absolute bottom-2 left-2 rounded-full bg-background/70 backdrop-blur px-2 py-0.5 text-[10px] text-muted-foreground">
                       Auto image
                     </div>
                   </div>

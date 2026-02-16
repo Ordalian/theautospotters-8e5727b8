@@ -9,6 +9,14 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Camera, Check, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PhotoUploadDialog, PhotoPreview, type PhotoSourceType } from "@/components/PhotoUpload";
+import { CarConditionSelector } from "@/components/CarConditionSelector";
+import { 
+  type CarCondition, 
+  type PhotoSource,
+  calculateQualityRating,
+  calculateRarityRating 
+} from "@/lib/carRatings";
 
 const AddCar = () => {
   const { user } = useAuth();
@@ -35,6 +43,12 @@ const AddCar = () => {
   const [locationName, setLocationName] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // New rating system states
+  const [carCondition, setCarCondition] = useState<CarCondition>("good");
+  const [photoSourceType, setPhotoSourceType] = useState<PhotoSourceType | null>(null);
+  const [isPhotoBlurry, setIsPhotoBlurry] = useState(false);
+  const [showPhotoDialog, setShowPhotoDialog] = useState(false);
 
   // Search states
   const [brandSearch, setBrandSearch] = useState(brand);
@@ -63,12 +77,18 @@ const AddCar = () => {
     }
   }, [brand]);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
+  const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setPhotoSourceType(source);
+    setIsPhotoBlurry(false); // Default to clear, user can change
+  };
+
+  const handleRemovePhoto = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setPhotoSourceType(null);
+    setIsPhotoBlurry(false);
   };
 
   const handleSubmit = async () => {
@@ -93,6 +113,20 @@ const AddCar = () => {
         imageUrl = urlData.publicUrl;
       }
 
+      // Calculate photo source enum
+      let photoSource: PhotoSource = "none";
+      if (photoSourceType && imageFile) {
+        if (photoSourceType === "camera") {
+          photoSource = isPhotoBlurry ? "camera_blurry" : "camera_clear";
+        } else {
+          photoSource = isPhotoBlurry ? "gallery_blurry" : "gallery_clear";
+        }
+      }
+
+      // Calculate ratings
+      const qualityRating = calculateQualityRating(photoSource, carCondition);
+      const rarityRating = calculateRarityRating(brand, model);
+
       const { error } = await supabase.from("cars").insert({
         user_id: user.id,
         brand,
@@ -108,6 +142,10 @@ const AddCar = () => {
         latitude: coords?.lat || null,
         longitude: coords?.lng || null,
         location_name: locationName || null,
+        car_condition: carCondition,
+        photo_source: photoSource,
+        quality_rating: qualityRating.level,
+        rarity_rating: rarityRating.level,
       });
 
       if (error) throw error;
@@ -442,41 +480,43 @@ const AddCar = () => {
           )}
         </div>
 
+        {/* Car Condition */}
+        <div className="space-y-3">
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Car Condition
+          </Label>
+          <CarConditionSelector value={carCondition} onChange={setCarCondition} />
+        </div>
+
         {/* Photo (optional) */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             Photo (optional)
           </Label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageSelect}
-            className="hidden"
-          />
           {imagePreview ? (
-            <div className="relative rounded-xl overflow-hidden border border-border">
-              <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
-              <button
-                onClick={() => {
-                  setImageFile(null);
-                  setImagePreview(null);
-                }}
-                className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur px-3 py-1 text-xs font-medium"
-              >
-                Remove
-              </button>
-            </div>
+            <PhotoPreview
+              imageUrl={imagePreview}
+              onRemove={handleRemovePhoto}
+              isBlurry={isPhotoBlurry}
+              onBlurryChange={setIsPhotoBlurry}
+            />
           ) : (
             <button
-              onClick={() => fileInputRef.current?.click()}
+              type="button"
+              onClick={() => setShowPhotoDialog(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-8 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
             >
               <Camera className="h-5 w-5" />
-              <span className="text-sm font-medium">Upload a photo</span>
+              <span className="text-sm font-medium">Add a photo</span>
             </button>
           )}
         </div>
+        
+        <PhotoUploadDialog
+          open={showPhotoDialog}
+          onOpenChange={setShowPhotoDialog}
+          onPhotoSelect={handlePhotoSelect}
+        />
       </div>
 
       {/* Done Button */}
