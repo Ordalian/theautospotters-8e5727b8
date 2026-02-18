@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchEngines } from "@/lib/carInfoFromWikipedia";
 import { carBrands, getModelsForBrand, getYearsForModel } from "@/data/carData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -382,23 +383,14 @@ const AddCar = () => {
                 if (engines.length === 0 && !loadingEngines) {
                   setLoadingEngines(true);
                   try {
-                    const { data, error } = await supabase.functions.invoke("car-info", {
-                      body: { action: "engines", brand, model, year: parseInt(year) },
-                    });
-                    if (error) {
-                      console.error("car-info error:", error);
-                      toast.error(error.message || "Could not load engines");
-                      return;
-                    }
-                    if (data?.engines) {
-                      setEngines(data.engines);
-                      if (data.engines.length === 0) {
-                        toast.info("No engines found for this car");
-                      }
+                    const list = await fetchEngines(brand, model, parseInt(year));
+                    setEngines(list);
+                    if (list.length === 0) {
+                      toast.info("Aucun moteur trouvé pour ce modèle");
                     }
                   } catch (err: any) {
-                    console.error("car-info exception:", err);
-                    toast.error(err.message || "Could not load engines");
+                    console.error("fetchEngines error:", err);
+                    toast.error(err?.message || "Impossible de charger les moteurs");
                   } finally {
                     setLoadingEngines(false);
                   }

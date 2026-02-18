@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchDescription } from "@/lib/carInfoFromWikipedia";
 import { ArrowLeft, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ItalianFlagBg from "@/components/ItalianFlagBg";
@@ -47,28 +48,19 @@ const CarDetails = () => {
 
   useEffect(() => {
     if (!car) return;
-    const fetchDescription = async () => {
+    const loadDescription = async () => {
       setLoadingDesc(true);
       try {
-        const { data, error } = await supabase.functions.invoke("car-info", {
-          body: { action: "description", brand: car.brand, model: car.model, year: car.year },
-        });
-        if (error) {
-          console.error("car-info error:", error);
-          setDescription(`Could not load description: ${error.message || "Unknown error"}`);
-          return;
-        }
-        if (data?.description) {
-          setDescription(data.description);
-        }
+        const text = await fetchDescription(car.brand, car.model, car.year);
+        setDescription(text);
       } catch (err: any) {
-        console.error("car-info exception:", err);
-        setDescription(`Error loading description: ${err.message || "Unknown error"}`);
+        console.error("fetchDescription error:", err);
+        setDescription(`Impossible de charger la description : ${err?.message || "erreur inconnue"}`);
       } finally {
         setLoadingDesc(false);
       }
     };
-    fetchDescription();
+    loadDescription();
   }, [car]);
 
   const getBadges = (c: CarDetail) => {
