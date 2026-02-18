@@ -13,7 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -37,14 +36,29 @@ serve(async (req) => {
     }
 
     const { images } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
-    // Build content array with images
-    const content: any[] = [
-      {
-        type: "text",
-        text: `You are an expert car identifier. Analyze the provided image(s) of a car and identify:
+    // Prepare image parts for Gemini
+    const parts: any[] = [];
+    
+    for (const img of images) {
+      // img is a base64 data URL like "data:image/jpeg;base64,..."
+      const matches = img.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+      if (matches) {
+        const mimeType = matches[1];
+        const base64Data = matches[2];
+        parts.push({
+          inline_data: {
+            mime_type: mimeType,
+            data: base64Data
+          }
+        });
+      }
+    }
+
+    parts.push({
+      text: `You are an expert car identifier. Analyze the provided image(s) of a car and identify:
 1. The brand/manufacturer
 2. The exact model name
 3. The approximate year or year range
@@ -53,54 +67,39 @@ Respond ONLY with a JSON object in this exact format (no markdown, no extra text
 {"brand": "Brand Name", "model": "Model Name", "year": "2024", "confidence": 0.85}
 
 The confidence should be a number between 0 and 1 representing how confident you are in the identification.
-If you cannot identify the car, use your best guess and set confidence accordingly.`,
-      },
-    ];
-
-    for (const img of images) {
-      content.push({
-        type: "image_url",
-        image_url: { url: img },
-      });
-    }
+If you cannot identify the car, use your best guess and set confidence accordingly.`
+    });
 
     const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [{ role: "user", content }],
+          contents: [
+            {
+              parts: parts
+            }
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 256,
+          }
         }),
       }
     );
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      throw new Error("AI gateway error");
+      console.error("Gemini API error:", response.status, t);
+      throw new Error("Gemini API error: " + response.status);
     }
 
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // Parse JSON from response (handle potential markdown wrapping)
     let parsed;
     try {
       const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -112,6 +111,7 @@ If you cannot identify the car, use your best guess and set confidence according
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (e) {
     console.error("identify-car error:", e);
     return new Response(
