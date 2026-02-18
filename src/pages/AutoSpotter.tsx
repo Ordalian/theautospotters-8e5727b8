@@ -1,12 +1,11 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ArrowLeft, Camera, Brain, Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { PhotoUploadDialog, type PhotoSourceType } from "@/components/PhotoUpload";
 
 interface CarResult {
   brand: string;
@@ -18,7 +17,6 @@ interface CarResult {
 const AutoSpotter = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<CarResult | null>(null);
@@ -26,18 +24,24 @@ const AutoSpotter = () => {
   const [correctBrand, setCorrectBrand] = useState("");
   const [correctModel, setCorrectModel] = useState("");
   const [correctYear, setCorrectYear] = useState("");
+  // Source de la première photo (camera ou galerie) pour le système de points
+  const [primaryPhotoSourceType, setPrimaryPhotoSourceType] = useState<PhotoSourceType | null>(null);
+  const [showPhotoDialog, setShowPhotoDialog] = useState(false);
 
-  const handleAddImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (images.length + files.length > 4) {
+  const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
+    if (images.length >= 4) {
       toast.error("Maximum 4 images allowed");
       return;
     }
-    const newImages = files.map((file) => ({
+    const newImage = {
       file,
       preview: URL.createObjectURL(file),
-    }));
-    setImages((prev) => [...prev, ...newImages]);
+    };
+    setImages((prev) => [...prev, newImage]);
+    // On utilise la source de la première photo pour le calcul des points plus tard
+    if (!primaryPhotoSourceType) {
+      setPrimaryPhotoSourceType(source);
+    }
   };
 
   const removeImage = (index: number) => {
@@ -97,6 +101,7 @@ const AutoSpotter = () => {
     if (model) params.set("model", model);
     if (year) params.set("year", year);
     if (imageUrl) params.set("image_url", imageUrl);
+    if (primaryPhotoSourceType) params.set("photo_source_type", primaryPhotoSourceType);
     navigate(`/add-car?${params.toString()}`);
   };
 
@@ -143,21 +148,18 @@ const AutoSpotter = () => {
           ))}
           {images.length < 4 && (
             <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleAddImage}
-                className="hidden"
-              />
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => setShowPhotoDialog(true)}
                 className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
               >
                 <Camera className="h-6 w-6" />
                 <span className="text-xs font-medium">Add photo</span>
               </button>
+              <PhotoUploadDialog
+                open={showPhotoDialog}
+                onOpenChange={setShowPhotoDialog}
+                onPhotoSelect={handlePhotoSelect}
+              />
             </>
           )}
         </div>

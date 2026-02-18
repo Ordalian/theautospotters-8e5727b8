@@ -51,6 +51,14 @@ const AddCar = () => {
   const [isPhotoBlurry, setIsPhotoBlurry] = useState(false);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
 
+  // Initialiser la source de la photo si elle vient d'AutoSpotter
+  useEffect(() => {
+    const sourceFromQuery = searchParams.get("photo_source_type") as PhotoSourceType | null;
+    if (sourceFromQuery) {
+      setPhotoSourceType(sourceFromQuery);
+    }
+  }, []);
+
   // Search states
   const [brandSearch, setBrandSearch] = useState(brand);
   const [modelSearch, setModelSearch] = useState(model);
@@ -116,7 +124,7 @@ const AddCar = () => {
 
       // Calculate photo source enum
       let photoSource: PhotoSource = "none";
-      if (photoSourceType && imageFile) {
+      if (photoSourceType && (imageFile || imagePreview)) {
         if (photoSourceType === "camera") {
           photoSource = isPhotoBlurry ? "camera_blurry" : "camera_clear";
         } else {
