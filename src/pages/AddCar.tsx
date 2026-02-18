@@ -385,11 +385,20 @@ const AddCar = () => {
                     const { data, error } = await supabase.functions.invoke("car-info", {
                       body: { action: "engines", brand, model, year: parseInt(year) },
                     });
-                    if (!error && data?.engines) {
-                      setEngines(data.engines);
+                    if (error) {
+                      console.error("car-info error:", error);
+                      toast.error(error.message || "Could not load engines");
+                      return;
                     }
-                  } catch {
-                    toast.error("Could not load engines");
+                    if (data?.engines) {
+                      setEngines(data.engines);
+                      if (data.engines.length === 0) {
+                        toast.info("No engines found for this car");
+                      }
+                    }
+                  } catch (err: any) {
+                    console.error("car-info exception:", err);
+                    toast.error(err.message || "Could not load engines");
                   } finally {
                     setLoadingEngines(false);
                   }

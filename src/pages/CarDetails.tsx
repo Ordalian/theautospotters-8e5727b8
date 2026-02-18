@@ -53,11 +53,17 @@ const CarDetails = () => {
         const { data, error } = await supabase.functions.invoke("car-info", {
           body: { action: "description", brand: car.brand, model: car.model, year: car.year },
         });
-        if (!error && data?.description) {
+        if (error) {
+          console.error("car-info error:", error);
+          setDescription(`Could not load description: ${error.message || "Unknown error"}`);
+          return;
+        }
+        if (data?.description) {
           setDescription(data.description);
         }
-      } catch {
-        // silently fail
+      } catch (err: any) {
+        console.error("car-info exception:", err);
+        setDescription(`Error loading description: ${err.message || "Unknown error"}`);
       } finally {
         setLoadingDesc(false);
       }
