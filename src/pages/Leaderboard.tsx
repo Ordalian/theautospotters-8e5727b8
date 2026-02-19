@@ -1,33 +1,86 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Trophy, Medal, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export type LeaderboardSortOption = "spots" | "avg_quality" | "avg_rarity" | "car_level";
 
 interface LeaderboardEntry {
   user_id: string;
   username: string | null;
   avatar_url: string | null;
   car_count: number;
+  avg_quality: number;
+  avg_rarity: number;
+  car_level: number;
 }
+
+const SORT_OPTIONS: { value: LeaderboardSortOption; label: string; valueLabel: string }[] = [
+  { value: "spots", label: "Nombre de spots", valueLabel: "spots" },
+  { value: "avg_quality", label: "Qualité moyenne", valueLabel: "qualité" },
+  { value: "avg_rarity", label: "Rareté moyenne", valueLabel: "rareté" },
+  { value: "car_level", label: "Car level", valueLabel: "niveau" },
+];
 
 const Leaderboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<LeaderboardSortOption>("spots");
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       const { data, error } = await supabase.rpc("get_leaderboard");
       if (!error && data) {
-        setEntries(data as LeaderboardEntry[]);
+        setEntries((data as LeaderboardEntry[]) ?? []);
       }
       setLoading(false);
     };
     fetchLeaderboard();
   }, []);
+
+  const sortedEntries = useMemo(() => {
+    const list = [...entries];
+    switch (sortBy) {
+      case "spots":
+        return list.sort((a, b) => Number(b.car_count) - Number(a.car_count));
+      case "avg_quality":
+        return list.sort((a, b) => (b.avg_quality ?? 0) - (a.avg_quality ?? 0));
+      case "avg_rarity":
+        return list.sort((a, b) => (b.avg_rarity ?? 0) - (a.avg_rarity ?? 0));
+      case "car_level":
+        return list.sort((a, b) => (b.car_level ?? 0) - (a.car_level ?? 0));
+      default:
+        return list;
+    }
+  }, [entries, sortBy]);
+
+  const getDisplayValue = (entry: LeaderboardEntry) => {
+    switch (sortBy) {
+      case "spots":
+        return String(entry.car_count);
+      case "avg_quality":
+        return (entry.avg_quality ?? 0).toFixed(1);
+      case "avg_rarity":
+        return (entry.avg_rarity ?? 0).toFixed(1);
+      case "car_level":
+        return (entry.car_level ?? 0).toFixed(1);
+      default:
+        return String(entry.car_count);
+    }
+  };
+
+  const getValueLabel = () => SORT_OPTIONS.find((o) => o.value === sortBy)?.valueLabel ?? "spots";
 
   const getRankIcon = (rank: number) => {
     if (rank === 0) return <Trophy className="h-6 w-6 text-yellow-400" />;
@@ -43,6 +96,20 @@ const Leaderboard = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold">Leaderboard</h1>
+        <div className="ml-auto">
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as LeaderboardSortOption)}>
+            <SelectTrigger className="w-[140px] h-9 text-xs">
+              <SelectValue placeholder="Trier par" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </header>
 
       <div className="p-4 max-w-lg mx-auto relative z-10">
@@ -58,7 +125,7 @@ const Leaderboard = () => {
           </div>
         ) : (
           <div className="space-y-2 mt-4">
-            {entries.map((entry, i) => (
+            {sortedEntries.map((entry, i) => (
               <div
                 key={entry.user_id}
                 className={`flex items-center gap-4 rounded-xl border p-4 transition-colors ${
@@ -77,8 +144,8 @@ const Leaderboard = () => {
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold text-lg leading-none">{entry.car_count}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">spots</p>
+                  <p className="font-bold text-lg leading-none">{getDisplayValue(entry)}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{getValueLabel()}</p>
                 </div>
               </div>
             ))}

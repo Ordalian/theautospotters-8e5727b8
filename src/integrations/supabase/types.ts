@@ -149,6 +149,9 @@ export type Database = {
           car_count: number
           user_id: string
           username: string
+          avg_quality: number
+          avg_rarity: number
+          car_level: number
         }[]
       }
     }

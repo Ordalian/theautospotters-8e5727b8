@@ -150,12 +150,17 @@ const CarDetails = () => {
         )}
 
         <div className="p-4 space-y-5">
-          {/* Title + Year + Ratings */}
+          {/* Title + Year + Série + Ratings */}
           <div>
             <h2 className="text-2xl font-bold">
               {car.brand} {car.model}
             </h2>
-            <p className="text-muted-foreground">{car.year}{car.edition ? ` · ${car.edition}` : ""}</p>
+            <p className="text-muted-foreground">{car.year}</p>
+            {car.edition?.trim() && (
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Série : <span className="font-medium text-foreground">{car.edition}</span>
+              </p>
+            )}
             <div className="flex items-center gap-2 mt-1.5">
               <RatingExplainer
                 rarityLevel={car.rarity_rating ?? 5}
