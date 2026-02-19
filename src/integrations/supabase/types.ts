@@ -17,8 +17,10 @@ export type Database = {
       cars: {
         Row: {
           brand: string
+          car_condition: string | null
           car_meet: boolean
           created_at: string
+          edition: string | null
           engine: string | null
           id: string
           image_url: string | null
@@ -27,7 +29,11 @@ export type Database = {
           longitude: number | null
           model: string
           modified: boolean
+          modified_comment: string | null
           parked: boolean
+          photo_source: string | null
+          quality_rating: number | null
+          rarity_rating: number | null
           seen_on_road: boolean
           stock: boolean
           user_id: string
@@ -35,8 +41,10 @@ export type Database = {
         }
         Insert: {
           brand: string
+          car_condition?: string | null
           car_meet?: boolean
           created_at?: string
+          edition?: string | null
           engine?: string | null
           id?: string
           image_url?: string | null
@@ -45,7 +53,11 @@ export type Database = {
           longitude?: number | null
           model: string
           modified?: boolean
+          modified_comment?: string | null
           parked?: boolean
+          photo_source?: string | null
+          quality_rating?: number | null
+          rarity_rating?: number | null
           seen_on_road?: boolean
           stock?: boolean
           user_id: string
@@ -53,8 +65,10 @@ export type Database = {
         }
         Update: {
           brand?: string
+          car_condition?: string | null
           car_meet?: boolean
           created_at?: string
+          edition?: string | null
           engine?: string | null
           id?: string
           image_url?: string | null
@@ -63,7 +77,11 @@ export type Database = {
           longitude?: number | null
           model?: string
           modified?: boolean
+          modified_comment?: string | null
           parked?: boolean
+          photo_source?: string | null
+          quality_rating?: number | null
+          rarity_rating?: number | null
           seen_on_road?: boolean
           stock?: boolean
           user_id?: string
