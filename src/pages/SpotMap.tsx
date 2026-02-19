@@ -249,13 +249,13 @@ const SpotMap = () => {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 relative">
+      <div className="flex-1 min-h-0 relative" style={{ minHeight: "calc(100vh - 120px)" }}>
         {loading ? (
           <div className="flex items-center justify-center h-full py-20">
             <div className="animate-pulse text-muted-foreground">Chargement de la carte...</div>
           </div>
         ) : (
-          <div ref={mapRef} className="z-0 h-full w-full" />
+          <div ref={mapRef} className="z-0 absolute inset-0" />
         )}
       </div>
     </div>
