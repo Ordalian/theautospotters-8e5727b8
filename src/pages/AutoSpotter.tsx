@@ -6,6 +6,7 @@ import { ArrowLeft, Camera, Brain, Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
+import { resizeImage } from "@/lib/imageUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { PhotoUploadDialog, type PhotoSourceType } from "@/components/PhotoUpload";
 
@@ -58,16 +59,9 @@ const AutoSpotter = () => {
     setAnalyzing(true);
     setResult(null);
     try {
-      // Convert images to base64
+      // Resize & compress images before sending (much faster on mobile data)
       const base64Images = await Promise.all(
-        images.map(
-          (img) =>
-            new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.readAsDataURL(img.file);
-            })
-        )
+        images.map((img) => resizeImage(img.file, 800, 0.7))
       );
 
       const data = await callCarApi<CarResult>({ action: "identify", images: base64Images });
