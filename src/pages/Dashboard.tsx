@@ -123,32 +123,32 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
-      <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <Car className="h-5 w-5 text-primary" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 ring-1 ring-primary/20">
+            <Car className="h-4.5 w-4.5 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">AutoSpot</h1>
+          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent">AutoSpot</h1>
         </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}><User className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon" onClick={handleSignOut}><LogOut className="h-5 w-5" /></Button>
+        <div className="flex items-center gap-0.5">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => navigate("/profile")}><User className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={handleSignOut}><LogOut className="h-5 w-5" /></Button>
         </div>
       </header>
 
-      <main className="p-6 max-w-2xl mx-auto relative z-10">
-        <h2 className="text-lg font-medium text-muted-foreground mb-6">Hey, {displayName} 👋</h2>
-        <div className="grid grid-cols-2 gap-4">
+      <main className="p-5 max-w-2xl mx-auto relative z-10">
+        <h2 className="text-base font-medium text-muted-foreground mb-5">Hey, <span className="text-foreground font-semibold">{displayName}</span> 👋</h2>
+        <div className="grid grid-cols-2 gap-3">
           {tiles.map((tile) => (
             <button
               key={tile.title}
               onClick={tile.onClick}
-              className={`relative group overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br ${tile.gradient} p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/30 active:scale-[0.98] aspect-square`}
+              className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20"
             >
-              <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/60 backdrop-blur-sm p-4">
+              <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
                 {tile.title === "Friends' Garages" && currentFriendSpot ? (
                   <>
-                    <div className="flex-1 overflow-hidden rounded-lg mb-2 relative min-h-0">
+                    <div className="flex-1 overflow-hidden rounded-lg relative min-h-0">
                       {currentFriendSpot.image_url ? (
                         <img
                           key={currentFriendSpot.id}
@@ -163,29 +163,26 @@ const Dashboard = () => {
                         </div>
                       )}
                       {friendNotificationCount > 0 && (
-                        <span className="absolute top-0.5 right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
+                        <span className="absolute top-1.5 right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
                           {friendNotificationCount > 99 ? "99+" : friendNotificationCount}
                         </span>
                       )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-xs truncate text-foreground">
-                        {currentFriendSpot.brand} {currentFriendSpot.model}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground truncate">
-                        {currentFriendSpot.year}
-                        {currentFriendSpot.username && ` · ${currentFriendSpot.username}`}
-                      </p>
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 rounded-b-lg">
+                        <h3 className="font-bold text-xs text-foreground leading-tight">Friends' Garages</h3>
+                        {currentFriendSpot.username && (
+                          <p className="text-[10px] text-muted-foreground truncate">by {currentFriendSpot.username}</p>
+                        )}
+                      </div>
                     </div>
                   </>
                 ) : tile.image ? (
                   <>
-                    <div className="flex-1 overflow-hidden rounded-lg mb-2">
+                    <div className="flex-1 overflow-hidden rounded-lg mb-2 relative">
                       <img src={tile.image} alt="Latest spot" className="h-full w-full object-cover rounded-lg" loading="lazy" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 rounded-b-lg">
+                        <h3 className="font-bold text-xs text-foreground leading-tight">{tile.title}</h3>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -193,18 +190,18 @@ const Dashboard = () => {
                     <div className="flex flex-1 items-center justify-center relative">
                       {tile.title === "Friends' Garages" && tile.notificationCount > 0 ? (
                         <>
-                          <Users className="h-12 w-12 text-primary fill-primary/80 animate-pulse-slow group-hover:fill-primary transition-colors" />
-                          <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
+                          <Users className="h-11 w-11 text-primary/80 group-hover:text-primary transition-colors" />
+                          <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
                             {tile.notificationCount > 99 ? "99+" : tile.notificationCount}
                           </span>
                         </>
                       ) : (
-                        <tile.icon className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                        <tile.icon className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
                       )}
                     </div>
                     <div>
                       <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
                     </div>
                   </>
                 )}
@@ -215,17 +212,17 @@ const Dashboard = () => {
 
         <button
           onClick={() => navigate("/map", { state: { mapCenter } })}
-          className="mt-4 w-full rounded-2xl border border-border/50 overflow-hidden bg-card/60 backdrop-blur-sm text-left transition-all hover:scale-[1.01] hover:border-primary/30 active:scale-[0.99]"
+          className="mt-3 w-full rounded-2xl border border-border/60 overflow-hidden bg-card/80 text-left transition-all hover:scale-[1.01] hover:border-primary/40 active:scale-[0.99] shadow-lg shadow-black/20"
         >
-          <div className="h-44 relative">
-            <Suspense fallback={<div className="h-full w-full bg-secondary/20" />}>
+          <div className="h-40 relative">
+            <Suspense fallback={<div className="h-full w-full bg-secondary/20 animate-pulse" />}>
               <DashboardMap spots={mapSpots} center={mapCenter} />
             </Suspense>
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-card/80 to-transparent" />
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <div className="absolute bottom-3 left-4 z-10 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" />
-              <span className="font-bold text-sm">Spot Map</span>
-              <span className="text-xs text-muted-foreground">• {mapSpots.length} located</span>
+              <span className="font-bold text-sm text-white">Spot Map</span>
+              <span className="text-xs text-white/60">• {mapSpots.length} located</span>
             </div>
           </div>
         </button>
