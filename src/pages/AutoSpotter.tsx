@@ -72,10 +72,16 @@ const AutoSpotter = () => {
         body: { images: base64Images },
       });
 
-      if (error) throw error;
+      if (error) {
+        const msg = (data as { error?: string })?.error || error.message;
+        throw new Error(msg);
+      }
+      if ((data as { error?: string })?.error) {
+        throw new Error((data as { error: string }).error);
+      }
       setResult(data as CarResult);
     } catch (err: any) {
-      toast.error(err.message || "Failed to analyze images");
+      toast.error(err.message || "Reconnaissance impossible. Vérifiez la clé API (voir ci-dessous).");
     } finally {
       setAnalyzing(false);
     }
@@ -128,9 +134,10 @@ const AutoSpotter = () => {
         {/* Info */}
         <div className="flex items-center gap-3 rounded-xl bg-accent/10 border border-accent/20 p-4">
           <Brain className="h-8 w-8 text-accent shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            Upload up to 4 photos of a car and our AI will identify it for you.
-          </p>
+          <div className="text-sm text-muted-foreground">
+            <p>Ajoutez jusqu’à 4 photos : l’IA identifiera la voiture.</p>
+            <p className="mt-1 text-xs opacity-80">Clé requise : ajoutez <strong>GEMINI_API_KEY</strong> dans Supabase (Edge Functions → identify-car → Secrets). Clé gratuite : <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="underline">aistudio.google.com/apikey</a></p>
+          </div>
         </div>
 
         {/* Image Grid */}
