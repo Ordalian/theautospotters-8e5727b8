@@ -87,7 +87,7 @@ const AutoSpotter = () => {
       const isGeneric = /non-2xx|encountered an error/i.test(msg);
       toast.error(
         isGeneric
-          ? "Clé API manquante ou invalide. Ajoutez GEMINI_API_KEY dans Supabase → Edge Functions → identify-car → Secrets."
+          ? "Clé API manquante ou invalide. Ajoutez IDENTIFY_CAR_API_KEY dans Supabase → Edge Functions → Secrets."
           : msg
       );
     } finally {
@@ -144,7 +144,7 @@ const AutoSpotter = () => {
           <Brain className="h-8 w-8 text-accent shrink-0" />
           <div className="text-sm text-muted-foreground">
             <p>Ajoutez jusqu’à 4 photos : l’IA identifiera la voiture.</p>
-            <p className="mt-1 text-xs opacity-80">Clé requise : ajoutez <strong>GEMINI_API_KEY</strong> dans Supabase (Edge Functions → identify-car → Secrets). Clé gratuite : <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="underline">aistudio.google.com/apikey</a></p>
+            <p className="mt-1 text-xs opacity-80">Clé requise : ajoutez <strong>IDENTIFY_CAR_API_KEY</strong> dans Supabase (Edge Functions → Secrets). Clé gratuite : <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="underline">aistudio.google.com/apikey</a></p>
           </div>
         </div>
 

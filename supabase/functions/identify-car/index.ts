@@ -36,11 +36,11 @@ serve(async (req) => {
     }
 
     const { images } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
+    const API_KEY = Deno.env.get("IDENTIFY_CAR_API_KEY");
+    if (!API_KEY) {
       return new Response(
         JSON.stringify({
-          error: "GEMINI_API_KEY is not configured. Add it in Supabase: Edge Functions → identify-car → Secrets. Get a free key at https://aistudio.google.com/apikey",
+          error: "IDENTIFY_CAR_API_KEY is not configured. Add it in Supabase: Edge Functions → Secrets (name: IDENTIFY_CAR_API_KEY).",
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -80,7 +80,7 @@ If you cannot identify the car, use your best guess and set confidence according
     });
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,10 +101,10 @@ If you cannot identify the car, use your best guess and set confidence according
       try {
         const errJson = JSON.parse(responseText);
         if (errJson.error?.message) message = errJson.error.message;
-        else if (response.status === 403) message = "Clé API Gemini invalide ou quota dépassé. Vérifiez GEMINI_API_KEY sur https://aistudio.google.com/apikey";
-        else if (response.status === 429) message = "Quota Gemini dépassé. Réessayez plus tard.";
+        else if (response.status === 403) message = "Clé IDENTIFY_CAR_API_KEY invalide ou quota dépassé.";
+        else if (response.status === 429) message = "Quota dépassé. Réessayez plus tard.";
       } catch {
-        if (response.status === 403) message = "Clé API Gemini invalide. Vérifiez GEMINI_API_KEY dans les secrets Supabase.";
+        if (response.status === 403) message = "Clé IDENTIFY_CAR_API_KEY invalide. Vérifiez les secrets Supabase.";
         if (response.status === 429) message = "Quota dépassé. Réessayez plus tard.";
       }
       return new Response(
