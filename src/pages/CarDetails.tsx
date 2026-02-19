@@ -31,6 +31,8 @@ const CarDetails = () => {
   const [loading, setLoading] = useState(true);
   const [description, setDescription] = useState<string | null>(null);
   const [loadingDesc, setLoadingDesc] = useState(false);
+  const [engines, setEngines] = useState<{ name: string; displacement: string; fuel: string; hp: number }[]>([]);
+  const [loadingEngines, setLoadingEngines] = useState(false);
 
   useEffect(() => {
     if (!user || !id) return;
@@ -64,6 +66,25 @@ const CarDetails = () => {
       }
     };
     loadDescription();
+  }, [car]);
+
+  useEffect(() => {
+    if (!car) return;
+    const loadEngines = async () => {
+      setLoadingEngines(true);
+      try {
+        const data = await callCarApi<{ engines: { name: string; displacement: string; fuel: string; hp: number }[] }>({
+          action: "engines", brand: car.brand, model: car.model, year: car.year,
+        });
+        setEngines(data.engines ?? []);
+      } catch (err: any) {
+        console.error("car-api engines error:", err);
+        setEngines([]);
+      } finally {
+        setLoadingEngines(false);
+      }
+    };
+    loadEngines();
   }, [car]);
 
   const getBadges = (c: CarDetail) => {
@@ -162,20 +183,44 @@ const CarDetails = () => {
             Spotted on {new Date(car.created_at).toLocaleDateString()}
           </p>
 
-          {/* AI Description */}
+          {/* Description (IA) */}
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              About this car
+              À propos de ce modèle
             </p>
             {loadingDesc ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading car info...
+                Chargement de la description...
               </div>
             ) : description ? (
               <div className="text-sm leading-relaxed whitespace-pre-line">{description}</div>
             ) : (
-              <p className="text-sm text-muted-foreground">Could not load description.</p>
+              <p className="text-sm text-muted-foreground">Impossible de charger la description.</p>
+            )}
+          </div>
+
+          {/* Moteurs (ce modèle) */}
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Moteurs (ce modèle)
+            </p>
+            {loadingEngines ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Chargement des moteurs...
+              </div>
+            ) : engines.length > 0 ? (
+              <ul className="space-y-2">
+                {engines.map((eng, i) => (
+                  <li key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/30 last:border-0">
+                    <span className="font-medium">{eng.name}</span>
+                    <span className="text-muted-foreground">{eng.hp} ch • {eng.fuel}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucun moteur trouvé pour ce modèle.</p>
             )}
           </div>
         </div>
