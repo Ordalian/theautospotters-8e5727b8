@@ -146,12 +146,12 @@ export type Database = {
         Args: never
         Returns: {
           avatar_url: string
-          car_count: number
-          user_id: string
-          username: string
           avg_quality: number
           avg_rarity: number
+          car_count: number
           car_level: number
+          user_id: string
+          username: string
         }[]
       }
     }

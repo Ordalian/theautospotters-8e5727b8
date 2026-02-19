@@ -1,13 +1,14 @@
-import { useEffect, useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Car } from "lucide-react";
+import { ArrowLeft, Plus, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ItalianFlagBg from "@/components/ItalianFlagBg";
 import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSortSelect";
 import { RatingExplainer } from "@/components/RatingExplainer";
+import { useQuery } from "@tanstack/react-query";
 
 interface SpottedCar {
   id: string;
@@ -30,9 +31,21 @@ interface SpottedCar {
 const MyGarage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [cars, setCars] = useState<SpottedCar[]>([]);
-  const [loading, setLoading] = useState(true);
   const [sortOption, setSortOption] = useState<GarageSortOption>("newest");
+
+  const { data: cars = [], isLoading: loading } = useQuery({
+    queryKey: ["my-cars", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cars")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      return (data as unknown as SpottedCar[]) || [];
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
 
   const sortedCars = useMemo(() => {
     const sorted = [...cars];
@@ -48,20 +61,6 @@ const MyGarage = () => {
     }
   }, [cars, sortOption]);
 
-  useEffect(() => {
-    if (!user) return;
-    const fetchCars = async () => {
-      const { data } = await supabase
-        .from("cars")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      setCars((data as unknown as SpottedCar[]) || []);
-      setLoading(false);
-    };
-    fetchCars();
-  }, [user]);
-
   const getBadges = (car: SpottedCar) => {
     const badges: string[] = [];
     if (car.seen_on_road) badges.push("🛣️ Road");
@@ -75,7 +74,6 @@ const MyGarage = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background relative">
       <ItalianFlagBg />
-      {/* Header */}
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-10">
         <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
@@ -87,12 +85,11 @@ const MyGarage = () => {
         </div>
       </header>
 
-      {/* Car List */}
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-3 pb-24">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-pulse text-muted-foreground">Loading your garage...</div>
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : cars.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -113,37 +110,21 @@ const MyGarage = () => {
                       src={car.image_url}
                       alt={`${car.brand} ${car.model}`}
                       className="h-full w-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                 ) : (
-                  <div className="h-44 overflow-hidden relative">
-                    <img
-                      src={`https://source.unsplash.com/800x600/?${encodeURIComponent(car.brand + " " + car.model + " car")}`}
-                      alt={`${car.brand} ${car.model}`}
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                        (e.target as HTMLImageElement).parentElement!.classList.add("bg-secondary/30", "flex", "items-center", "justify-center");
-                      }}
-                    />
-                    <div className="absolute bottom-2 left-2 rounded-full bg-background/70 backdrop-blur px-2 py-0.5 text-[10px] text-muted-foreground">
-                      Auto image
-                    </div>
+                  <div className="h-44 overflow-hidden bg-secondary/20 flex items-center justify-center">
+                    <Car className="h-16 w-16 text-muted-foreground/20" />
                   </div>
                 )}
                 <div className="p-4">
                   <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="font-bold text-lg">
-                      {car.brand} {car.model}
-                    </h3>
+                    <h3 className="font-bold text-lg">{car.brand} {car.model}</h3>
                     <span className="text-sm text-muted-foreground shrink-0">{car.year}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    <RatingExplainer
-                      rarityLevel={car.rarity_rating ?? 5}
-                      qualityLevel={car.quality_rating ?? 3}
-                      size="sm"
-                    />
+                    <RatingExplainer rarityLevel={car.rarity_rating ?? 5} qualityLevel={car.quality_rating ?? 3} size="sm" />
                   </div>
                   {car.modified && car.modified_comment?.trim() && (
                     <p className="text-xs text-muted-foreground mt-2 line-clamp-2 border-l-2 border-primary/30 pl-2">
@@ -152,12 +133,7 @@ const MyGarage = () => {
                   )}
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {getBadges(car).map((badge) => (
-                      <span
-                        key={badge}
-                        className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
-                      >
-                        {badge}
-                      </span>
+                      <span key={badge} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">{badge}</span>
                     ))}
                   </div>
                 </div>
@@ -167,14 +143,9 @@ const MyGarage = () => {
         </div>
       </ScrollArea>
 
-      {/* Add Car Button */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
-        <Button
-          onClick={() => navigate("/add-car")}
-          className="w-full h-12 text-base font-bold rounded-xl gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Add a Car
+        <Button onClick={() => navigate("/add-car")} className="w-full h-12 text-base font-bold rounded-xl gap-2">
+          <Plus className="h-5 w-5" /> Add a Car
         </Button>
       </div>
     </div>
