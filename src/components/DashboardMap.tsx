@@ -8,16 +8,26 @@ interface Spot {
   longitude: number;
 }
 
-const DashboardMap = ({ spots }: { spots: Spot[] }) => {
+const ZOOM_2KM = 14;
+
+interface DashboardMapProps {
+  spots: Spot[];
+  center?: { lat: number; lng: number } | null;
+}
+
+const DashboardMap = ({ spots, center }: DashboardMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
+    const [initLat, initLng] = center ? [center.lat, center.lng] : [30, 0];
+    const initZoom = center ? ZOOM_2KM : 1;
+
     const map = L.map(mapRef.current, {
-      center: [30, 0],
-      zoom: 1,
+      center: [initLat, initLng],
+      zoom: initZoom,
       zoomControl: false,
       dragging: false,
       scrollWheelZoom: false,
@@ -32,7 +42,7 @@ const DashboardMap = ({ spots }: { spots: Spot[] }) => {
       map.remove();
       mapInstance.current = null;
     };
-  }, []);
+  }, [center?.lat, center?.lng]);
 
   useEffect(() => {
     if (!mapInstance.current) return;
