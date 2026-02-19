@@ -17,6 +17,24 @@ function jsonResponse(data: unknown, status = 200) {
 function errResponse(message: string, status = 500) {
   return jsonResponse({ error: message }, status);
 }
+function parseEngines(text: string): { name: string; displacement: string; fuel: string; hp: number }[] {
+  try {
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter((e: any) => e && typeof e.name === "string" && typeof e.hp === "number" && e.hp >= 30 && e.hp <= 2000)
+        .map((e: any) => ({
+          name: String(e.name || ""),
+          displacement: String(e.displacement ?? e.name ?? ""),
+          fuel: String(e.fuel || "Petrol"),
+          hp: Number(e.hp),
+        }))
+        .slice(0, 15);
+    }
+  } catch { /* ignore */ }
+  return [];
+}
 
 const AI_MODELS = [
   { name: "google/gemini-2.5-flash", useMaxTokens: true },
@@ -160,25 +178,7 @@ Reply ONLY with a valid JSON array of strings, each string being one edition/tri
 Reply ONLY with a valid JSON array of engine options, no other text or markdown.
 Each object: "name" (e.g. "2.0 TFSI", "3.0L I6"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"), "hp" (number). List all engine options for this model/year (up to 15). If unsure, return [].`;
       const text = await callAI(API_KEY, [{ role: "user", content: prompt }]);
-      let engines: { name: string; displacement: string; fuel: string; hp: number }[] = [];
-      try {
-        const jsonMatch = text.match(/\[[\s\S]*\]/);
-        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-        if (Array.isArray(parsed)) {
-          engines = parsed
-            .filter((e: any) => e && typeof e.name === "string" && typeof e.hp === "number" && e.hp >= 30 && e.hp <= 2000)
-            .map((e: any) => ({
-              name: String(e.name || ""),
-              displacement: String(e.displacement ?? e.name ?? ""),
-              fuel: String(e.fuel || "Petrol"),
-              hp: Number(e.hp),
-            }))
-            .slice(0, 15);
-        }
-      } catch {
-        // keep []
-      }
-      return jsonResponse({ engines });
+      return jsonResponse({ engines: parseEngines(text) });
     }
 
     // —— action: description ——
@@ -195,6 +195,45 @@ Structure: one or two short paragraphs covering origin of the model, main techni
       ]);
       const final = description || `Aucune description pour la ${year} ${brand} ${model}.`;
       return jsonResponse({ description: final });
+    }
+
+    // —— action: car-info (combined description + engines in one call) ——
+    if (body.action === "car-info") {
+      const { brand, model, year, edition } = body;
+      if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
+
+      const editionHint = edition ? ` (version/édition: ${edition})` : "";
+      const prompt = `For the ${year} ${brand} ${model}${editionHint}, provide TWO things in a single JSON response:
+
+1. "description": A short encyclopedic description in French (style Wikipedia, factual, neutral, no emojis, no bullet symbols, no section titles, no asterisks). Cover origin, technical characteristics, production context, notable facts. Max 1200 characters.
+
+2. "engines": A JSON array of engine options. Each object has: "name" (e.g. "2.0 TFSI"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"), "hp" (number). Up to 15 engines.
+
+Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. No markdown, no extra text.`;
+
+      const text = await callAI(API_KEY, [
+        { role: "system", content: "You are an expert automotive encyclopedia. Return only the requested JSON, no preamble." },
+        { role: "user", content: prompt },
+      ]);
+
+      let description = `Aucune description pour la ${year} ${brand} ${model}.`;
+      let engines: { name: string; displacement: string; fuel: string; hp: number }[] = [];
+
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+        if (parsed.description && typeof parsed.description === "string") {
+          description = parsed.description.trim();
+        }
+        if (Array.isArray(parsed.engines)) {
+          engines = parseEngines(JSON.stringify(parsed.engines));
+        }
+      } catch {
+        // fallback: try to extract description from raw text
+        if (text.length > 20) description = text;
+      }
+
+      return jsonResponse({ description, engines });
     }
 
     return errResponse("action required: 'identify', 'engines', 'editions' or 'description'.", 400);
