@@ -42,6 +42,12 @@ const DashboardMap = ({ spots, center }: DashboardMapProps) => {
       map.remove();
       mapInstance.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    if (mapInstance.current && center) {
+      mapInstance.current.setView([center.lat, center.lng], ZOOM_2KM);
+    }
   }, [center?.lat, center?.lng]);
 
   useEffect(() => {

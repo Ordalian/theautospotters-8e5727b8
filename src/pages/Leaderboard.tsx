@@ -42,7 +42,18 @@ const Leaderboard = () => {
     const fetchLeaderboard = async () => {
       const { data, error } = await supabase.rpc("get_leaderboard");
       if (!error && data) {
-        setEntries((data as LeaderboardEntry[]) ?? []);
+        const raw = (data as Record<string, unknown>[]) ?? [];
+        setEntries(
+          raw.map((e) => ({
+            user_id: e.user_id as string,
+            username: (e.username as string | null) ?? null,
+            avatar_url: (e.avatar_url as string | null) ?? null,
+            car_count: Number(e.car_count ?? 0),
+            avg_quality: Number(e.avg_quality ?? 0),
+            avg_rarity: Number(e.avg_rarity ?? 0),
+            car_level: Number(e.car_level ?? 0),
+          }))
+        );
       }
       setLoading(false);
     };
