@@ -18,35 +18,46 @@ function errResponse(message: string, status = 500) {
   return jsonResponse({ error: message }, status);
 }
 
+const AI_MODELS = [
+  { name: "google/gemini-2.5-flash", useMaxTokens: true },
+  { name: "openai/gpt-5-mini", useMaxTokens: false },
+];
+
 async function callAI(apiKey: string, messages: { role: string; content: string | object[] }[]): Promise<string> {
-  const requestBody: Record<string, unknown> = {
-    model: "openai/gpt-5-mini",
-    messages,
-    max_completion_tokens: 4096,
-  };
+  for (const model of AI_MODELS) {
+    const body: Record<string, unknown> = { model: model.name, messages };
+    if (model.useMaxTokens) {
+      body.temperature = 0.4;
+      body.max_tokens = 1024;
+    } else {
+      body.max_completion_tokens = 8192;
+    }
 
-  console.log("Calling AI gateway, model:", requestBody.model);
+    console.log("Trying AI model:", model.name);
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestBody),
-  });
+    if (!response.ok) {
+      const t = await response.text();
+      console.error(`Model ${model.name} failed:`, response.status, t);
+      if (response.status === 429) throw new Error("Rate limit exceeded, please try again later.");
+      if (response.status === 402) throw new Error("AI credits exhausted.");
+      if (response.status >= 500) continue;
+      throw new Error(`AI gateway error (${response.status}): ${t}`);
+    }
 
-  if (!response.ok) {
-    const t = await response.text();
-    console.error("AI gateway error:", response.status, t);
-    if (response.status === 429) throw new Error("Rate limit exceeded, please try again later.");
-    if (response.status === 402) throw new Error("AI credits exhausted.");
-    throw new Error(`AI gateway error (${response.status}): ${t}`);
+    const data = await response.json();
+    const content = (data.choices?.[0]?.message?.content || "").trim();
+    if (content) return content;
+    console.warn(`Model ${model.name} returned empty content, trying next...`);
   }
-
-  const data = await response.json();
-  console.log("AI response:", JSON.stringify(data).substring(0, 500));
-  return (data.choices?.[0]?.message?.content || "").trim();
+  throw new Error("All AI models failed or returned empty content.");
 }
 
 serve(async (req) => {
