@@ -19,18 +19,21 @@ function errResponse(message: string, status = 500) {
 }
 
 async function callAI(apiKey: string, messages: { role: string; content: string | object[] }[]): Promise<string> {
+  const requestBody: Record<string, unknown> = {
+    model: "openai/gpt-5-mini",
+    messages,
+    max_completion_tokens: 1024,
+  };
+
+  console.log("Calling AI gateway, model:", requestBody.model);
+
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages,
-      temperature: 0.4,
-      max_tokens: 1024,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -38,7 +41,7 @@ async function callAI(apiKey: string, messages: { role: string; content: string 
     console.error("AI gateway error:", response.status, t);
     if (response.status === 429) throw new Error("Rate limit exceeded, please try again later.");
     if (response.status === 402) throw new Error("AI credits exhausted.");
-    throw new Error("AI gateway error.");
+    throw new Error(`AI gateway error (${response.status}): ${t}`);
   }
 
   const data = await response.json();
@@ -63,9 +66,8 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !userData?.user) {
       return errResponse("Unauthorized.", 401);
     }
 
