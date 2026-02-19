@@ -28,6 +28,11 @@ interface CarDetail {
   rarity_rating: number | null;
 }
 
+interface CarInfoResult {
+  description: string;
+  engines: { name: string; displacement: string; fuel: string; hp: number }[];
+}
+
 const CarDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -49,33 +54,25 @@ const CarDetails = () => {
 
   const carKey = car ? `${car.brand}-${car.model}-${car.year}-${car.edition || ""}` : "";
 
-  const { data: description, isLoading: loadingDesc } = useQuery({
-    queryKey: ["car-description", carKey],
+  // Single combined call for description + engines
+  const { data: carInfo, isLoading: loadingInfo } = useQuery({
+    queryKey: ["car-info", carKey],
     queryFn: async () => {
-      const data = await callCarApi<{ description: string }>({
-        action: "description", brand: car!.brand, model: car!.model, year: car!.year,
+      return callCarApi<CarInfoResult>({
+        action: "car-info",
+        brand: car!.brand,
+        model: car!.model,
+        year: car!.year,
         ...(car!.edition ? { edition: car!.edition } : {}),
       });
-      return data.description || `Aucune description pour la ${car!.year} ${car!.brand} ${car!.model}.`;
-    },
-    enabled: !!car,
-    staleTime: 30 * 60 * 1000, // Cache AI descriptions 30 min
-    gcTime: 60 * 60 * 1000,
-  });
-
-  const { data: engines = [], isLoading: loadingEngines } = useQuery({
-    queryKey: ["car-engines", carKey],
-    queryFn: async () => {
-      const data = await callCarApi<{ engines: { name: string; displacement: string; fuel: string; hp: number }[] }>({
-        action: "engines", brand: car!.brand, model: car!.model, year: car!.year,
-        ...(car!.edition ? { edition: car!.edition } : {}),
-      });
-      return data.engines ?? [];
     },
     enabled: !!car,
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
   });
+
+  const description = carInfo?.description;
+  const engines = carInfo?.engines ?? [];
 
   const getBadges = (c: CarDetail) => {
     const badges: string[] = [];
@@ -167,9 +164,9 @@ const CarDetails = () => {
 
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">À propos de ce modèle</p>
-            {loadingDesc ? (
+            {loadingInfo ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Chargement de la description...
+                <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
               </div>
             ) : description ? (
               <div className="text-sm leading-relaxed text-pretty whitespace-pre-line">{description}</div>
@@ -180,9 +177,9 @@ const CarDetails = () => {
 
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Moteurs (ce modèle)</p>
-            {loadingEngines ? (
+            {loadingInfo ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Chargement des moteurs...
+                <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
               </div>
             ) : engines.length > 0 ? (
               <ul className="space-y-2">
