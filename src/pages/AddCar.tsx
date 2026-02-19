@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { callCarApi } from "@/lib/carApi";
 import { carBrands, getModelsForBrand, getYearsForModel } from "@/data/carData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -390,11 +391,10 @@ const AddCar = () => {
                 if (engines.length === 0 && !loadingEngines) {
                   setLoadingEngines(true);
                   try {
-                    const { data, error } = await supabase.functions.invoke("car-api", {
-                      body: { action: "engines", brand, model, year: parseInt(year) },
+                    const data = await callCarApi<{ engines: { name: string; displacement: string; fuel: string; hp: number }[] }>({
+                      action: "engines", brand, model, year: parseInt(year),
                     });
-                    if (error) throw new Error((data as { error?: string })?.error || error.message);
-                    const list = (data as { engines?: { name: string; displacement: string; fuel: string; hp: number }[] })?.engines ?? [];
+                    const list = data.engines ?? [];
                     setEngines(list);
                     if (list.length === 0) toast.info("Aucun moteur trouvé pour ce modèle");
                   } catch (err: any) {

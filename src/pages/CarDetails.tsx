@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { callCarApi } from "@/lib/carApi";
 import { ArrowLeft, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ItalianFlagBg from "@/components/ItalianFlagBg";
@@ -50,11 +51,10 @@ const CarDetails = () => {
     const loadDescription = async () => {
       setLoadingDesc(true);
       try {
-        const { data, error } = await supabase.functions.invoke("car-api", {
-          body: { action: "description", brand: car.brand, model: car.model, year: car.year },
+        const data = await callCarApi<{ description: string }>({
+          action: "description", brand: car.brand, model: car.model, year: car.year,
         });
-        if (error) throw new Error((data as { error?: string })?.error || error.message);
-        const text = (data as { description?: string })?.description;
+        const text = data.description;
         setDescription(text || `Aucune description pour la ${car.year} ${car.brand} ${car.model}.`);
       } catch (err: any) {
         console.error("car-api error:", err);

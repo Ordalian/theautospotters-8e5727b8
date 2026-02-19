@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Camera, Brain, Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { callCarApi } from "@/lib/carApi";
 import { useAuth } from "@/hooks/useAuth";
 import { PhotoUploadDialog, type PhotoSourceType } from "@/components/PhotoUpload";
 
@@ -68,20 +69,8 @@ const AutoSpotter = () => {
         )
       );
 
-      const { data, error } = await supabase.functions.invoke("car-api", {
-        body: { action: "identify", images: base64Images },
-      });
-
-      const payload = data as { error?: string } | null;
-      const serverMessage = payload?.error;
-
-      if (error) {
-        throw new Error(serverMessage || error.message || "Erreur du serveur");
-      }
-      if (serverMessage) {
-        throw new Error(serverMessage);
-      }
-      setResult(data as CarResult);
+      const data = await callCarApi<CarResult>({ action: "identify", images: base64Images });
+      setResult(data);
     } catch (err: any) {
       const msg = err?.message || "Reconnaissance impossible.";
       const isGeneric = /non-2xx|encountered an error/i.test(msg);
