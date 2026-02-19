@@ -47,7 +47,7 @@ const CarDetails = () => {
         .select("*")
         .eq("id", id)
         .maybeSingle();
-      setCar(data as CarDetail | null);
+      setCar(data as unknown as CarDetail | null);
       setLoading(false);
     };
     fetchCar();
