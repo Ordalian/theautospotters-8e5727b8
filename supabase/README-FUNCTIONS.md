@@ -17,4 +17,4 @@ Dans **Supabase** → **Edge Functions** → **Secrets** :
 2. Copie tout le contenu de **`supabase/functions/car-api/index.ts`** dans l’éditeur.
 3. Clique sur **Deploy** (ou **Deploy updates**).
 
-Tu peux supprimer ou ne plus déployer les anciennes fonctions **identify-car** et **car-info** : l’app n’appelle plus que **car-api**.
+Les anciennes fonctions **identify-car** et **car-info** ont été supprimées du projet ; seule **car-api** est utilisée.
