@@ -1,16 +1,24 @@
 /**
- * Appel direct à l’Edge Function car-api avec la clé anon (évite le 401 JWT).
+ * Call the car-api Edge Function with the user's auth token.
  */
 
+import { supabase } from "@/integrations/supabase/client";
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export async function callCarApi<T>(body: object): Promise<T> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+
+  if (!token) {
+    throw new Error("You must be logged in to use this feature.");
+  }
+
   const res = await fetch(`${SUPABASE_URL}/functions/v1/car-api`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(body),
   });
