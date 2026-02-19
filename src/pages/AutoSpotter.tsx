@@ -36,12 +36,13 @@ const AutoSpotter = () => {
       toast.error("Maximum 4 images allowed");
       return;
     }
-    const newImage = {
-      file,
-      preview: URL.createObjectURL(file),
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setImages((prev) => [...prev, { file, preview: dataUrl }]);
     };
-    setImages((prev) => [...prev, newImage]);
-    // On utilise la source de la première photo pour le calcul des points plus tard
+    reader.onerror = () => toast.error("Impossible de charger l'image");
+    reader.readAsDataURL(file);
     if (!primaryPhotoSourceType) {
       setPrimaryPhotoSourceType(source);
     }

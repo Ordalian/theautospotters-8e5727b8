@@ -105,9 +105,12 @@ const AddCar = () => {
 
   const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.onerror = () => toast.error("Impossible de charger l'image");
+    reader.readAsDataURL(file);
     setPhotoSourceType(source);
-    setIsPhotoBlurry(false); // Default to clear, user can change
+    setIsPhotoBlurry(false);
   };
 
   const handleRemovePhoto = () => {
