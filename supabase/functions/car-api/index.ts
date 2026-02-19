@@ -22,7 +22,7 @@ async function callAI(apiKey: string, messages: { role: string; content: string 
   const requestBody: Record<string, unknown> = {
     model: "openai/gpt-5-mini",
     messages,
-    max_completion_tokens: 1024,
+    max_completion_tokens: 4096,
   };
 
   console.log("Calling AI gateway, model:", requestBody.model);
@@ -45,6 +45,7 @@ async function callAI(apiKey: string, messages: { role: string; content: string 
   }
 
   const data = await response.json();
+  console.log("AI response:", JSON.stringify(data).substring(0, 500));
   return (data.choices?.[0]?.message?.content || "").trim();
 }
 
@@ -175,9 +176,12 @@ Each object: "name" (e.g. "2.0 TFSI", "3.0L I6"), "displacement" (e.g. "2.0L"), 
       if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
 
       const editionHint = edition ? ` (version/édition: ${edition})` : "";
-      const prompt = `You are a car expert. Write a short encyclopedic description of the ${year} ${brand} ${model}${editionHint} in French, in the style of Wikipedia: factual, neutral tone, no emojis, no bullet symbols.
+      const prompt = `Write a short encyclopedic description of the ${year} ${brand} ${model}${editionHint} in French, in the style of Wikipedia: factual, neutral tone, no emojis, no bullet symbols.
 Structure: one or two short paragraphs covering origin of the model, main technical characteristics (engine, power, chassis), production context, and notable facts. Maximum 1200 characters. Do not use section titles or asterisks.`;
-      const description = await callAI(API_KEY, [{ role: "user", content: prompt }]);
+      const description = await callAI(API_KEY, [
+        { role: "system", content: "You are an expert automotive encyclopedia writer. Always respond with the requested content directly, no preamble." },
+        { role: "user", content: prompt },
+      ]);
       const final = description || `Aucune description pour la ${year} ${brand} ${model}.`;
       return jsonResponse({ description: final });
     }
