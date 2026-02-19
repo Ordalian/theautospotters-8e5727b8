@@ -56,7 +56,7 @@ const MyGarage = () => {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      setCars((data as SpottedCar[]) || []);
+      setCars((data as unknown as SpottedCar[]) || []);
       setLoading(false);
     };
     fetchCars();
