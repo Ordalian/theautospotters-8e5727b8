@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import ItalianFlagBg from "@/components/ItalianFlagBg";
+import BlackGoldBg from "@/components/BlackGoldBg";
 import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSortSelect";
 import { RatingExplainer } from "@/components/RatingExplainer";
 import { useQuery } from "@tanstack/react-query";
@@ -73,8 +73,8 @@ const MyGarage = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background relative">
-      <ItalianFlagBg />
-      <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-10">
+      <BlackGoldBg />
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>

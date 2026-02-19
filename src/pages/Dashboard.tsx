@@ -1,10 +1,10 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Brain, Trophy, LogOut, User, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ItalianFlagBg from "@/components/ItalianFlagBg";
+import BlackGoldBg from "@/components/BlackGoldBg";
 import { useQuery } from "@tanstack/react-query";
 
 const DashboardMap = lazy(() => import("@/components/DashboardMap"));
@@ -16,7 +16,7 @@ const Dashboard = () => {
   const { data } = useQuery({
     queryKey: ["dashboard", user?.id],
     queryFn: async () => {
-      const [carsRes, profileRes, friendsPendingRes] = await Promise.all([
+      const [carsRes, profileRes, friendsPendingRes, friendshipsRes] = await Promise.all([
         supabase
           .from("cars")
           .select("id, image_url, latitude, longitude, created_at")
@@ -28,6 +28,11 @@ const Dashboard = () => {
           .select("*", { count: "exact", head: true })
           .eq("addressee_id", user!.id)
           .eq("status", "pending"),
+        supabase
+          .from("friendships")
+          .select("requester_id, addressee_id")
+          .eq("status", "accepted")
+          .or(`requester_id.eq.${user!.id},addressee_id.eq.${user!.id}`),
       ]);
 
       const cars = carsRes.data || [];
@@ -43,6 +48,33 @@ const Dashboard = () => {
         ? { lat: lastPosition.latitude!, lng: lastPosition.longitude! }
         : null;
 
+      let friendSpots: { id: string; brand: string; model: string; year: number; image_url: string | null; username: string | null }[] = [];
+      const friendships = friendshipsRes.data || [];
+      if (friendships.length > 0) {
+        const friendIds = friendships.map((f) =>
+          f.requester_id === user!.id ? f.addressee_id : f.requester_id
+        );
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, username")
+          .in("user_id", friendIds);
+        const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
+        const { data: friendCars } = await supabase
+          .from("cars")
+          .select("id, brand, model, year, image_url, user_id, created_at")
+          .in("user_id", friendIds)
+          .order("created_at", { ascending: false })
+          .limit(10);
+        friendSpots = (friendCars || []).map((c) => ({
+          id: c.id,
+          brand: c.brand,
+          model: c.model,
+          year: c.year,
+          image_url: c.image_url,
+          username: profileMap.get(c.user_id) || null,
+        }));
+      }
+
       return {
         latestCarImage,
         carCount: cars.length,
@@ -50,6 +82,7 @@ const Dashboard = () => {
         mapCenter,
         username: profileRes.data?.username ?? null,
         friendNotificationCount: friendsPendingRes.count ?? 0,
+        friendSpots,
       };
     },
     enabled: !!user,
@@ -62,11 +95,23 @@ const Dashboard = () => {
   const mapCenter = data?.mapCenter ?? null;
   const displayName = data?.username?.trim() || user?.email?.split("@")[0] || "Spotter";
   const friendNotificationCount = data?.friendNotificationCount ?? 0;
+  const friendSpots = data?.friendSpots ?? [];
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
   };
+
+  const [friendsTileIndex, setFriendsTileIndex] = useState(0);
+  useEffect(() => {
+    if (friendSpots.length <= 1) return;
+    const t = setInterval(() => {
+      setFriendsTileIndex((i) => (i + 1) % friendSpots.length);
+    }, 5000);
+    return () => clearInterval(t);
+  }, [friendSpots.length]);
+
+  const currentFriendSpot = friendSpots[friendsTileIndex] ?? null;
 
   const tiles = [
     { title: "My Garage", subtitle: `${carCount} car${carCount !== 1 ? "s" : ""} spotted`, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0 },
@@ -77,8 +122,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background relative">
-      <ItalianFlagBg />
-      <header className="flex items-center justify-between px-6 py-4 border-b border-border/50 relative z-10">
+      <BlackGoldBg />
+      <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <Car className="h-5 w-5 text-primary" />
@@ -101,28 +146,68 @@ const Dashboard = () => {
               className={`relative group overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br ${tile.gradient} p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/30 active:scale-[0.98] aspect-square`}
             >
               <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/60 backdrop-blur-sm p-4">
-                {tile.image ? (
-                  <div className="flex-1 overflow-hidden rounded-lg mb-2">
-                    <img src={tile.image} alt="Latest spot" className="h-full w-full object-cover rounded-lg" loading="lazy" />
-                  </div>
-                ) : (
-                  <div className="flex flex-1 items-center justify-center relative">
-                    {tile.title === "Friends' Garages" && tile.notificationCount > 0 ? (
-                      <>
-                        <Users className="h-12 w-12 text-primary fill-primary/80 animate-pulse-slow group-hover:fill-primary transition-colors" />
-                        <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
-                          {tile.notificationCount > 99 ? "99+" : tile.notificationCount}
+                {tile.title === "Friends' Garages" && currentFriendSpot ? (
+                  <>
+                    <div className="flex-1 overflow-hidden rounded-lg mb-2 relative min-h-0">
+                      {currentFriendSpot.image_url ? (
+                        <img
+                          key={currentFriendSpot.id}
+                          src={currentFriendSpot.image_url}
+                          alt={`${currentFriendSpot.brand} ${currentFriendSpot.model}`}
+                          className="h-full w-full object-cover rounded-lg transition-opacity duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-full w-full rounded-lg bg-secondary/50 flex items-center justify-center">
+                          <Car className="h-10 w-10 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      {friendNotificationCount > 0 && (
+                        <span className="absolute top-0.5 right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
+                          {friendNotificationCount > 99 ? "99+" : friendNotificationCount}
                         </span>
-                      </>
-                    ) : (
-                      <tile.icon className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                    )}
-                  </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-xs truncate text-foreground">
+                        {currentFriendSpot.brand} {currentFriendSpot.model}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {currentFriendSpot.year}
+                        {currentFriendSpot.username && ` · ${currentFriendSpot.username}`}
+                      </p>
+                    </div>
+                  </>
+                ) : tile.image ? (
+                  <>
+                    <div className="flex-1 overflow-hidden rounded-lg mb-2">
+                      <img src={tile.image} alt="Latest spot" className="h-full w-full object-cover rounded-lg" loading="lazy" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-1 items-center justify-center relative">
+                      {tile.title === "Friends' Garages" && tile.notificationCount > 0 ? (
+                        <>
+                          <Users className="h-12 w-12 text-primary fill-primary/80 animate-pulse-slow group-hover:fill-primary transition-colors" />
+                          <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
+                            {tile.notificationCount > 99 ? "99+" : tile.notificationCount}
+                          </span>
+                        </>
+                      ) : (
+                        <tile.icon className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                    </div>
+                  </>
                 )}
-                <div>
-                  <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{tile.subtitle}</p>
-                </div>
               </div>
             </button>
           ))}

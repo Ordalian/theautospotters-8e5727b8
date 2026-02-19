@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, Search, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import L from "leaflet";
@@ -207,7 +207,7 @@ const SpotMap = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background animate-slide-in-right">
-      <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-[1000]">
+      <header className="sticky top-0 z-[1000] flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -216,10 +216,9 @@ const SpotMap = () => {
       </header>
 
       {!loading && (
-        <div className="px-4 py-2 border-b border-border/50 bg-background/95 z-[999] space-y-1">
+        <div className="sticky top-14 z-[999] px-4 py-2 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 space-y-1">
           <div className="flex gap-2">
             <div className="relative flex-1 flex items-center">
-              <Search className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="Rechercher (ex: Clio V)..."
                 value={searchQuery}
@@ -227,7 +226,7 @@ const SpotMap = () => {
                   setSearchQuery(e.target.value);
                   setFocusIndex(-1);
                 }}
-                className="pl-9 h-10 bg-secondary/30"
+                className="pl-3 h-10 bg-secondary/30"
               />
             </div>
             {searchLower && filteredSpots.length > 0 && (
@@ -250,17 +249,13 @@ const SpotMap = () => {
         </div>
       )}
 
-      <div className="flex-1 relative">
+      <div className="flex-1 min-h-0 relative">
         {loading ? (
           <div className="flex items-center justify-center h-full py-20">
             <div className="animate-pulse text-muted-foreground">Chargement de la carte...</div>
           </div>
         ) : (
-          <div
-            ref={mapRef}
-            className="z-0"
-            style={{ height: "calc(100vh - 65px)", width: "100%" }}
-          />
+          <div ref={mapRef} className="z-0 h-full w-full" />
         )}
       </div>
     </div>

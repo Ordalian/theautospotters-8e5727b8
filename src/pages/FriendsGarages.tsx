@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, UserPlus, Search, Car, X } from "lucide-react";
+import { ArrowLeft, UserPlus, Car, X } from "lucide-react";
+import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -170,7 +171,8 @@ const FriendsGarages = () => {
 
   return (
     <div className="min-h-screen bg-background relative">
-      <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-10">
+      <BlackGoldBg />
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button variant="ghost" size="icon" onClick={() => selectedFriend ? setSelectedFriend(null) : navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
