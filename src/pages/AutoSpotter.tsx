@@ -72,16 +72,24 @@ const AutoSpotter = () => {
         body: { images: base64Images },
       });
 
+      const payload = data as { error?: string } | null;
+      const serverMessage = payload?.error;
+
       if (error) {
-        const msg = (data as { error?: string })?.error || error.message;
-        throw new Error(msg);
+        throw new Error(serverMessage || error.message || "Erreur du serveur");
       }
-      if ((data as { error?: string })?.error) {
-        throw new Error((data as { error: string }).error);
+      if (serverMessage) {
+        throw new Error(serverMessage);
       }
       setResult(data as CarResult);
     } catch (err: any) {
-      toast.error(err.message || "Reconnaissance impossible. Vérifiez la clé API (voir ci-dessous).");
+      const msg = err?.message || "Reconnaissance impossible.";
+      const isGeneric = /non-2xx|encountered an error/i.test(msg);
+      toast.error(
+        isGeneric
+          ? "Clé API manquante ou invalide. Ajoutez GEMINI_API_KEY dans Supabase → Edge Functions → identify-car → Secrets."
+          : msg
+      );
     } finally {
       setAnalyzing(false);
     }
