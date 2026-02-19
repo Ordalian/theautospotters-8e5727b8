@@ -18,14 +18,18 @@ interface PhotoUploadDialogProps {
 }
 
 export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUploadDialogProps) {
-  const handleFileSelect = async (source: PhotoSourceType) => {
+  const handleFileSelect = (source: PhotoSourceType) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    
+    // Sur mobile : ouvre la caméra arrière (ou galerie selon le choix utilisateur)
     if (source === "camera") {
-      input.capture = "environment"; // Use back camera
+      input.setAttribute("capture", "environment");
     }
+
+    const cleanup = () => {
+      input.remove();
+    };
 
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
@@ -33,43 +37,50 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
         onPhotoSelect(file, source);
         onOpenChange(false);
       }
+      cleanup();
     };
 
+    input.oncancel = cleanup;
+    document.body.appendChild(input);
     input.click();
+    // Retrait après un court délai si aucun choix (certains navigateurs ne déclenchent pas cancel)
+    setTimeout(cleanup, 30000);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add a Photo</DialogTitle>
+          <DialogTitle>Ajouter une photo</DialogTitle>
           <DialogDescription>
-            Choose how you want to add a photo of the car
+            Prendre une photo avec l’appareil ou choisir depuis la galerie
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-3 py-4">
           <Button
+            type="button"
             variant="outline"
             className="h-24 flex flex-col gap-2 hover:border-primary"
             onClick={() => handleFileSelect("camera")}
           >
             <Camera className="h-8 w-8" />
             <div className="text-center">
-              <div className="font-semibold">Take Photo</div>
-              <div className="text-xs text-muted-foreground">Use camera (+3 quality)</div>
+              <div className="font-semibold">Prendre une photo</div>
+              <div className="text-xs text-muted-foreground">Ouvre la caméra du téléphone (+3 qualité)</div>
             </div>
           </Button>
 
           <Button
+            type="button"
             variant="outline"
             className="h-24 flex flex-col gap-2 hover:border-primary"
             onClick={() => handleFileSelect("gallery")}
           >
             <Image className="h-8 w-8" />
             <div className="text-center">
-              <div className="font-semibold">Choose from Gallery</div>
-              <div className="text-xs text-muted-foreground">Select existing photo (+2 quality)</div>
+              <div className="font-semibold">Galerie</div>
+              <div className="text-xs text-muted-foreground">Choisir une photo existante (+2 qualité)</div>
             </div>
           </Button>
         </div>

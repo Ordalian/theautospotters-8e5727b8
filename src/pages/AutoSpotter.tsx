@@ -142,10 +142,9 @@ const AutoSpotter = () => {
         {/* Info */}
         <div className="flex items-center gap-3 rounded-xl bg-accent/10 border border-accent/20 p-4">
           <Brain className="h-8 w-8 text-accent shrink-0" />
-          <div className="text-sm text-muted-foreground">
-            <p>Ajoutez jusqu’à 4 photos : l’IA identifiera la voiture.</p>
-            <p className="mt-1 text-xs opacity-80">Clé requise : ajoutez <strong>IDENTIFY_CAR_API_KEY</strong> dans Supabase (Edge Functions → Secrets). Clé gratuite : <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="underline">aistudio.google.com/apikey</a></p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Ajoutez jusqu’à 4 photos : l’IA identifiera la voiture (marque, modèle, année).
+          </p>
         </div>
 
         {/* Image Grid */}
