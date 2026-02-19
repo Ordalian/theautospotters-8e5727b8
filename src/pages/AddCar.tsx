@@ -390,7 +390,7 @@ const AddCar = () => {
                 if (engines.length === 0 && !loadingEngines) {
                   setLoadingEngines(true);
                   try {
-                    const { data, error } = await supabase.functions.invoke("car-info", {
+                    const { data, error } = await supabase.functions.invoke("car-api", {
                       body: { action: "engines", brand, model, year: parseInt(year) },
                     });
                     if (error) throw new Error((data as { error?: string })?.error || error.message);
@@ -398,7 +398,7 @@ const AddCar = () => {
                     setEngines(list);
                     if (list.length === 0) toast.info("Aucun moteur trouvé pour ce modèle");
                   } catch (err: any) {
-                    console.error("car-info error:", err);
+                    console.error("car-api error:", err);
                     toast.error(err?.message || "Impossible de charger les moteurs");
                   } finally {
                     setLoadingEngines(false);

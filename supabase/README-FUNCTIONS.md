@@ -1,17 +1,20 @@
 # Edge Functions – Configuration
 
-## Clés requises (Secrets Supabase)
+## Une seule fonction : car-api
 
-Dans **Supabase** → **Edge Functions** → **Secrets**, ajoute **2 secrets** (clés API Gemini gratuites sur [aistudio.google.com/apikey](https://aistudio.google.com/apikey)) :
+Reconnaissance de voiture, liste des moteurs et description utilisent **une seule** Edge Function : **car-api**, avec **une seule** clé.
 
-| Nom du secret            | Utilisation                          |
-|--------------------------|--------------------------------------|
-| `IDENTIFY_CAR_API_KEY`   | Reconnaissance de voiture (AutoSpotter) |
-| `CAR_INFO_API_KEY`      | Moteurs + description (fiche voiture, ajout au garage) |
+## Secret requis (Supabase)
+
+Dans **Supabase** → **Edge Functions** → **Secrets** :
+
+- **Nom :** `GEMINI_API_KEY`
+- **Valeur :** ta clé API Gemini (gratuite : [aistudio.google.com/apikey](https://aistudio.google.com/apikey))
 
 ## Déploiement
 
-1. Copier le contenu de `supabase/functions/identify-car/index.ts` dans l’éditeur Supabase (identify-car) → **Deploy**.
-2. Copier le contenu de `supabase/functions/car-info/index.ts` dans l’éditeur Supabase (car-info) → **Deploy**.
+1. Dans Supabase, crée une nouvelle Edge Function nommée **car-api** (ou renomme une existante).
+2. Copie tout le contenu de **`supabase/functions/car-api/index.ts`** dans l’éditeur.
+3. Clique sur **Deploy** (ou **Deploy updates**).
 
-Les deux fonctions n’exigent **pas** d’authentification (pas de 401). Elles utilisent uniquement les clés ci-dessus.
+Tu peux supprimer ou ne plus déployer les anciennes fonctions **identify-car** et **car-info** : l’app n’appelle plus que **car-api**.

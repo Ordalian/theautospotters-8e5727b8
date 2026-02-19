@@ -68,8 +68,8 @@ const AutoSpotter = () => {
         )
       );
 
-      const { data, error } = await supabase.functions.invoke("identify-car", {
-        body: { images: base64Images },
+      const { data, error } = await supabase.functions.invoke("car-api", {
+        body: { action: "identify", images: base64Images },
       });
 
       const payload = data as { error?: string } | null;
@@ -87,7 +87,7 @@ const AutoSpotter = () => {
       const isGeneric = /non-2xx|encountered an error/i.test(msg);
       toast.error(
         isGeneric
-          ? "Clé API manquante ou invalide. Ajoutez IDENTIFY_CAR_API_KEY dans Supabase → Edge Functions → Secrets."
+          ? "Clé API manquante ou invalide. Ajoutez GEMINI_API_KEY dans Supabase → Edge Functions → Secrets."
           : msg
       );
     } finally {

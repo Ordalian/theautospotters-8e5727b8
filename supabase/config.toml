@@ -1,7 +1,4 @@
 project_id = "qbbhsrlyttjgdkuovjwk"
 
-[functions.identify-car]
-verify_jwt = false
-
-[functions.car-info]
+[functions.car-api]
 verify_jwt = false

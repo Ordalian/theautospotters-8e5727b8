@@ -50,14 +50,14 @@ const CarDetails = () => {
     const loadDescription = async () => {
       setLoadingDesc(true);
       try {
-        const { data, error } = await supabase.functions.invoke("car-info", {
+        const { data, error } = await supabase.functions.invoke("car-api", {
           body: { action: "description", brand: car.brand, model: car.model, year: car.year },
         });
         if (error) throw new Error((data as { error?: string })?.error || error.message);
         const text = (data as { description?: string })?.description;
         setDescription(text || `Aucune description pour la ${car.year} ${car.brand} ${car.model}.`);
       } catch (err: any) {
-        console.error("car-info error:", err);
+        console.error("car-api error:", err);
         setDescription(`Impossible de charger la description : ${err?.message || "erreur inconnue"}`);
       } finally {
         setLoadingDesc(false);
