@@ -93,14 +93,39 @@ The confidence should be a number between 0 and 1. If you cannot identify the ca
       return jsonResponse(parsed);
     }
 
-    // —— action: engines ——
-    if (body.action === "engines") {
+    // —— action: editions —— (trims / limited series for brand+model+year)
+    if (body.action === "editions") {
       const { brand, model, year } = body;
       if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
 
-      const prompt = `You are a car expert. For the car: ${year} ${brand} ${model}.
+      const prompt = `You are a car expert. For the ${year} ${brand} ${model}, list the main trim levels, editions, and limited series (e.g. "GT Line", "Sport", "Limited Edition 500", "M Package").
+Reply ONLY with a valid JSON array of strings, each string being one edition/trim name. No other text or markdown. Use 5 to 20 entries. If you don't know, return [].`;
+      const text = await callAI(API_KEY, [{ role: "user", content: prompt }]);
+      let editions: string[] = [];
+      try {
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+        if (Array.isArray(parsed)) {
+          editions = parsed
+            .filter((e: unknown) => typeof e === "string" && e.trim().length > 0)
+            .map((e: unknown) => String(e).trim())
+            .slice(0, 25);
+        }
+      } catch {
+        // keep []
+      }
+      return jsonResponse({ editions });
+    }
+
+    // —— action: engines ——
+    if (body.action === "engines") {
+      const { brand, model, year, edition } = body;
+      if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
+
+      const editionHint = edition ? ` (trim/edition: ${edition})` : "";
+      const prompt = `You are a car expert. For the car: ${year} ${brand} ${model}${editionHint}.
 Reply ONLY with a valid JSON array of engine options, no other text or markdown.
-Each object: "name" (e.g. "2.0L I4"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"), "hp" (number). Max 8 engines. If unsure, return [].`;
+Each object: "name" (e.g. "2.0 TFSI", "3.0L I6"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"), "hp" (number). List all engine options for this model/year (up to 15). If unsure, return [].`;
       const text = await callAI(API_KEY, [{ role: "user", content: prompt }]);
       let engines: { name: string; displacement: string; fuel: string; hp: number }[] = [];
       try {
@@ -115,7 +140,7 @@ Each object: "name" (e.g. "2.0L I4"), "displacement" (e.g. "2.0L"), "fuel" ("Pet
               fuel: String(e.fuel || "Petrol"),
               hp: Number(e.hp),
             }))
-            .slice(0, 8);
+            .slice(0, 15);
         }
       } catch {
         // keep []
@@ -125,25 +150,18 @@ Each object: "name" (e.g. "2.0L I4"), "displacement" (e.g. "2.0L"), "fuel" ("Pet
 
     // —— action: description ——
     if (body.action === "description") {
-      const { brand, model, year } = body;
+      const { brand, model, year, edition } = body;
       if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
 
-      const prompt = `You are a car expert. Write a detailed profile of the ${year} ${brand} ${model} in French with these sections:
-
-🏎️ Overview — generation, chassis codes, design philosophy
-⚙️ Key Specs — engine(s), hp, torque, 0-60, top speed
-📊 Production — total units built, production years, factory
-🏆 Notable Achievements — racing heritage, awards, records
-💡 Fun Facts — engineering quirks, pop culture appearances
-💰 Market — current value range for this model/year
-
-Keep it informative and engaging. Under 1500 characters total.`;
+      const editionHint = edition ? ` (version/édition: ${edition})` : "";
+      const prompt = `You are a car expert. Write a short encyclopedic description of the ${year} ${brand} ${model}${editionHint} in French, in the style of Wikipedia: factual, neutral tone, no emojis, no bullet symbols.
+Structure: one or two short paragraphs covering origin of the model, main technical characteristics (engine, power, chassis), production context, and notable facts. Maximum 1200 characters. Do not use section titles or asterisks.`;
       const description = await callAI(API_KEY, [{ role: "user", content: prompt }]);
       const final = description || `Aucune description pour la ${year} ${brand} ${model}.`;
       return jsonResponse({ description: final });
     }
 
-    return errResponse("action required: 'identify', 'engines' or 'description'.", 400);
+    return errResponse("action required: 'identify', 'engines', 'editions' or 'description'.", 400);
   } catch (e) {
     console.error("car-api error:", e);
     return errResponse(e instanceof Error ? e.message : "Unknown error", 500);

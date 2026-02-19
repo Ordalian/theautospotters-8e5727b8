@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ItalianFlagBg from "@/components/ItalianFlagBg";
 import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSortSelect";
-import { RarityBadge } from "@/components/RarityBadge";
-import { QualityBadge } from "@/components/QualityBadge";
+import { RatingExplainer } from "@/components/RatingExplainer";
 
 interface SpottedCar {
   id: string;
@@ -20,6 +19,7 @@ interface SpottedCar {
   parked: boolean;
   stock: boolean;
   modified: boolean;
+  modified_comment: string | null;
   car_meet: boolean;
   image_url: string | null;
   created_at: string;
@@ -105,18 +105,8 @@ const MyGarage = () => {
               <div
                 key={car.id}
                 onClick={() => navigate(`/car/${car.id}`)}
-                className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors relative"
+                className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors"
               >
-                {/* Rating badges in top right corner */}
-                <div className="absolute top-2 right-2 z-10 flex flex-col gap-1.5">
-                  <div className="rounded-lg bg-background/80 backdrop-blur px-2 py-1">
-                    <RarityBadge level={car.rarity_rating || 5} size="sm" />
-                  </div>
-                  <div className="rounded-lg bg-background/80 backdrop-blur px-2 py-1">
-                    <QualityBadge level={car.quality_rating || 3} size="sm" />
-                  </div>
-                </div>
-
                 {car.image_url ? (
                   <div className="h-44 overflow-hidden">
                     <img
@@ -142,12 +132,24 @@ const MyGarage = () => {
                   </div>
                 )}
                 <div className="p-4">
-                  <div className="flex items-baseline justify-between">
+                  <div className="flex items-baseline justify-between gap-2">
                     <h3 className="font-bold text-lg">
                       {car.brand} {car.model}
                     </h3>
-                    <span className="text-sm text-muted-foreground">{car.year}</span>
+                    <span className="text-sm text-muted-foreground shrink-0">{car.year}</span>
                   </div>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <RatingExplainer
+                      rarityLevel={car.rarity_rating ?? 5}
+                      qualityLevel={car.quality_rating ?? 3}
+                      size="sm"
+                    />
+                  </div>
+                  {car.modified && car.modified_comment?.trim() && (
+                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2 border-l-2 border-primary/30 pl-2">
+                      {car.modified_comment}
+                    </p>
+                  )}
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {getBadges(car).map((badge) => (
                       <span

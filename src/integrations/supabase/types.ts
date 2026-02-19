@@ -19,6 +19,7 @@ export type Database = {
           brand: string
           car_meet: boolean
           created_at: string
+          edition: string | null
           engine: string | null
           id: string
           image_url: string | null
@@ -27,6 +28,7 @@ export type Database = {
           longitude: number | null
           model: string
           modified: boolean
+          modified_comment: string | null
           parked: boolean
           seen_on_road: boolean
           stock: boolean
@@ -37,6 +39,7 @@ export type Database = {
           brand: string
           car_meet?: boolean
           created_at?: string
+          edition?: string | null
           engine?: string | null
           id?: string
           image_url?: string | null
@@ -45,6 +48,7 @@ export type Database = {
           longitude?: number | null
           model: string
           modified?: boolean
+          modified_comment?: string | null
           parked?: boolean
           seen_on_road?: boolean
           stock?: boolean
@@ -55,6 +59,7 @@ export type Database = {
           brand?: string
           car_meet?: boolean
           created_at?: string
+          edition?: string | null
           engine?: string | null
           id?: string
           image_url?: string | null
@@ -63,6 +68,7 @@ export type Database = {
           longitude?: number | null
           model?: string
           modified?: boolean
+          modified_comment?: string | null
           parked?: boolean
           seen_on_road?: boolean
           stock?: boolean

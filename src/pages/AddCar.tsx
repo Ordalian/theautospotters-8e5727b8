@@ -37,10 +37,15 @@ const AddCar = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(searchParams.get("image_url") || null);
   const [loading, setLoading] = useState(false);
+  const [edition, setEdition] = useState("");
+  const [editions, setEditions] = useState<string[]>([]);
+  const [loadingEditions, setLoadingEditions] = useState(false);
+  const [showEditions, setShowEditions] = useState(false);
   const [engine, setEngine] = useState(searchParams.get("engine") || "");
   const [engines, setEngines] = useState<{ name: string; displacement: string; fuel: string; hp: number }[]>([]);
   const [loadingEngines, setLoadingEngines] = useState(false);
   const [showEngines, setShowEngines] = useState(false);
+  const [modifiedComment, setModifiedComment] = useState("");
   const [locationName, setLocationName] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -83,8 +88,20 @@ const AddCar = () => {
       setModel("");
       setModelSearch("");
       setYear("");
+      setEdition("");
+      setEditions([]);
+      setEngines([]);
+      setEngine("");
     }
   }, [brand]);
+
+  // Reset edition and engines when year changes (so user refetches for new year)
+  useEffect(() => {
+    setEdition("");
+    setEditions([]);
+    setEngines([]);
+    setEngine("");
+  }, [year]);
 
   const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
     setImageFile(file);
@@ -141,10 +158,12 @@ const AddCar = () => {
         brand,
         model,
         year: parseInt(year),
+        edition: edition || null,
         seen_on_road: seenOnRoad,
         parked,
         stock,
         modified,
+        modified_comment: modified ? (modifiedComment.trim().slice(0, 500) || null) : null,
         car_meet: carMeet,
         image_url: imageUrl,
         engine: engine || null,
@@ -315,6 +334,73 @@ const AddCar = () => {
           </div>
         </div>
 
+        {/* Edition / Série limitée */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Édition / Série limitée (optionnel)
+          </Label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!brand || !model || !year) return;
+                if (editions.length === 0 && !loadingEditions) {
+                  setLoadingEditions(true);
+                  try {
+                    const data = await callCarApi<{ editions: string[] }>({
+                      action: "editions", brand, model, year: parseInt(year),
+                    });
+                    setEditions(data.editions ?? []);
+                  } catch (err: any) {
+                    console.error("car-api editions error:", err);
+                    toast.error(err?.message || "Impossible de charger les éditions");
+                    setEditions([]);
+                  } finally {
+                    setLoadingEditions(false);
+                  }
+                }
+                setShowEditions(!showEditions);
+              }}
+              disabled={!year}
+              className={cn(
+                "flex h-10 w-full items-center justify-between rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm",
+                !year && "opacity-50 cursor-not-allowed",
+                !edition && "text-muted-foreground"
+              )}
+            >
+              {loadingEditions ? "Chargement..." : edition || (year ? "Choisir ou ignorer" : "Sélectionnez l'année d'abord")}
+            </button>
+            {showEditions && (
+              <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
+                <button
+                  onClick={() => {
+                    setEdition("");
+                    setShowEditions(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary/50 transition-colors border-b border-border/50"
+                >
+                  Ignorer / Non connu
+                </button>
+                {editions.map((ed) => (
+                  <button
+                    key={ed}
+                    onClick={() => {
+                      setEdition(ed);
+                      setShowEditions(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary/50 transition-colors"
+                  >
+                    {ed}
+                  </button>
+                ))}
+                {editions.length === 0 && !loadingEditions && (
+                  <div className="px-4 py-3 text-sm text-muted-foreground">Aucune édition trouvée</div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Spotting Context */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
@@ -355,7 +441,7 @@ const AddCar = () => {
               }}
             />
             <ToggleChip
-              label="🔧 Modified"
+              label="🔧 Modifié"
               checked={modified}
               onChange={(v) => {
                 setModified(v);
@@ -363,6 +449,20 @@ const AddCar = () => {
               }}
             />
           </div>
+          {modified && (
+            <div className="pt-1">
+              <Label className="text-xs text-muted-foreground">Commentaire (optionnel, 500 car. max)</Label>
+              <textarea
+                value={modifiedComment}
+                onChange={(e) => setModifiedComment(e.target.value.slice(0, 500))}
+                placeholder="Décrivez les modifications..."
+                maxLength={500}
+                className="mt-1 w-full rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm min-h-[80px] resize-y"
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground mt-0.5">{modifiedComment.length}/500</p>
+            </div>
+          )}
         </div>
 
         {/* Car Meet */}
@@ -392,7 +492,7 @@ const AddCar = () => {
                   setLoadingEngines(true);
                   try {
                     const data = await callCarApi<{ engines: { name: string; displacement: string; fuel: string; hp: number }[] }>({
-                      action: "engines", brand, model, year: parseInt(year),
+                      action: "engines", brand, model, year: parseInt(year), ...(edition ? { edition } : {}),
                     });
                     const list = data.engines ?? [];
                     setEngines(list);

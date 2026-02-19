@@ -6,21 +6,26 @@ import { callCarApi } from "@/lib/carApi";
 import { ArrowLeft, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ItalianFlagBg from "@/components/ItalianFlagBg";
+import { RatingExplainer } from "@/components/RatingExplainer";
 
 interface CarDetail {
   id: string;
   brand: string;
   model: string;
   year: number;
+  edition: string | null;
   engine: string | null;
   seen_on_road: boolean;
   parked: boolean;
   stock: boolean;
   modified: boolean;
+  modified_comment: string | null;
   car_meet: boolean;
   image_url: string | null;
   location_name: string | null;
   created_at: string;
+  quality_rating: number | null;
+  rarity_rating: number | null;
 }
 
 const CarDetails = () => {
@@ -54,7 +59,7 @@ const CarDetails = () => {
       setLoadingDesc(true);
       try {
         const data = await callCarApi<{ description: string }>({
-          action: "description", brand: car.brand, model: car.model, year: car.year,
+          action: "description", brand: car.brand, model: car.model, year: car.year, ...(car.edition ? { edition: car.edition } : {}),
         });
         const text = data.description;
         setDescription(text || `Aucune description pour la ${car.year} ${car.brand} ${car.model}.`);
@@ -74,7 +79,7 @@ const CarDetails = () => {
       setLoadingEngines(true);
       try {
         const data = await callCarApi<{ engines: { name: string; displacement: string; fuel: string; hp: number }[] }>({
-          action: "engines", brand: car.brand, model: car.model, year: car.year,
+          action: "engines", brand: car.brand, model: car.model, year: car.year, ...(car.edition ? { edition: car.edition } : {}),
         });
         setEngines(data.engines ?? []);
       } catch (err: any) {
@@ -145,13 +150,28 @@ const CarDetails = () => {
         )}
 
         <div className="p-4 space-y-5">
-          {/* Title + Year */}
+          {/* Title + Year + Ratings */}
           <div>
             <h2 className="text-2xl font-bold">
               {car.brand} {car.model}
             </h2>
-            <p className="text-muted-foreground">{car.year}</p>
+            <p className="text-muted-foreground">{car.year}{car.edition ? ` · ${car.edition}` : ""}</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <RatingExplainer
+                rarityLevel={car.rarity_rating ?? 5}
+                qualityLevel={car.quality_rating ?? 3}
+                size="md"
+              />
+            </div>
           </div>
+
+          {/* Modified comment */}
+          {car.modified && car.modified_comment?.trim() && (
+            <div className="rounded-xl border border-border/50 bg-card p-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Modifications</p>
+              <p className="text-sm leading-relaxed">{car.modified_comment}</p>
+            </div>
+          )}
 
           {/* Engine */}
           {car.engine && (
@@ -183,7 +203,7 @@ const CarDetails = () => {
             Spotted on {new Date(car.created_at).toLocaleDateString()}
           </p>
 
-          {/* Description (IA) */}
+          {/* Description (style encyclopédique) */}
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               À propos de ce modèle
@@ -194,7 +214,9 @@ const CarDetails = () => {
                 Chargement de la description...
               </div>
             ) : description ? (
-              <div className="text-sm leading-relaxed whitespace-pre-line">{description}</div>
+              <div className="text-sm leading-relaxed text-pretty whitespace-pre-line">
+                {description}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">Impossible de charger la description.</p>
             )}
