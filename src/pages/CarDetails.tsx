@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +6,7 @@ import { ArrowLeft, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ItalianFlagBg from "@/components/ItalianFlagBg";
 import { RatingExplainer } from "@/components/RatingExplainer";
+import { useQuery } from "@tanstack/react-query";
 
 interface CarDetail {
   id: string;
@@ -32,65 +32,50 @@ const CarDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [car, setCar] = useState<CarDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [description, setDescription] = useState<string | null>(null);
-  const [loadingDesc, setLoadingDesc] = useState(false);
-  const [engines, setEngines] = useState<{ name: string; displacement: string; fuel: string; hp: number }[]>([]);
-  const [loadingEngines, setLoadingEngines] = useState(false);
 
-  useEffect(() => {
-    if (!user || !id) return;
-    const fetchCar = async () => {
+  const { data: car, isLoading: loading } = useQuery({
+    queryKey: ["car", id],
+    queryFn: async () => {
       const { data } = await supabase
         .from("cars")
         .select("*")
-        .eq("id", id)
+        .eq("id", id!)
         .maybeSingle();
-      setCar(data as unknown as CarDetail | null);
-      setLoading(false);
-    };
-    fetchCar();
-  }, [user, id]);
+      return data as unknown as CarDetail | null;
+    },
+    enabled: !!user && !!id,
+    staleTime: 10 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    if (!car) return;
-    const loadDescription = async () => {
-      setLoadingDesc(true);
-      try {
-        const data = await callCarApi<{ description: string }>({
-          action: "description", brand: car.brand, model: car.model, year: car.year, ...(car.edition ? { edition: car.edition } : {}),
-        });
-        const text = data.description;
-        setDescription(text || `Aucune description pour la ${car.year} ${car.brand} ${car.model}.`);
-      } catch (err: any) {
-        console.error("car-api error:", err);
-        setDescription(`Impossible de charger la description : ${err?.message || "erreur inconnue"}`);
-      } finally {
-        setLoadingDesc(false);
-      }
-    };
-    loadDescription();
-  }, [car]);
+  const carKey = car ? `${car.brand}-${car.model}-${car.year}-${car.edition || ""}` : "";
 
-  useEffect(() => {
-    if (!car) return;
-    const loadEngines = async () => {
-      setLoadingEngines(true);
-      try {
-        const data = await callCarApi<{ engines: { name: string; displacement: string; fuel: string; hp: number }[] }>({
-          action: "engines", brand: car.brand, model: car.model, year: car.year, ...(car.edition ? { edition: car.edition } : {}),
-        });
-        setEngines(data.engines ?? []);
-      } catch (err: any) {
-        console.error("car-api engines error:", err);
-        setEngines([]);
-      } finally {
-        setLoadingEngines(false);
-      }
-    };
-    loadEngines();
-  }, [car]);
+  const { data: description, isLoading: loadingDesc } = useQuery({
+    queryKey: ["car-description", carKey],
+    queryFn: async () => {
+      const data = await callCarApi<{ description: string }>({
+        action: "description", brand: car!.brand, model: car!.model, year: car!.year,
+        ...(car!.edition ? { edition: car!.edition } : {}),
+      });
+      return data.description || `Aucune description pour la ${car!.year} ${car!.brand} ${car!.model}.`;
+    },
+    enabled: !!car,
+    staleTime: 30 * 60 * 1000, // Cache AI descriptions 30 min
+    gcTime: 60 * 60 * 1000,
+  });
+
+  const { data: engines = [], isLoading: loadingEngines } = useQuery({
+    queryKey: ["car-engines", carKey],
+    queryFn: async () => {
+      const data = await callCarApi<{ engines: { name: string; displacement: string; fuel: string; hp: number }[] }>({
+        action: "engines", brand: car!.brand, model: car!.model, year: car!.year,
+        ...(car!.edition ? { edition: car!.edition } : {}),
+      });
+      return data.engines ?? [];
+    },
+    enabled: !!car,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+  });
 
   const getBadges = (c: CarDetail) => {
     const badges: string[] = [];
@@ -123,7 +108,6 @@ const CarDetails = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <ItalianFlagBg />
-      {/* Header */}
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-10">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
@@ -134,14 +118,9 @@ const CarDetails = () => {
       </header>
 
       <div className="relative z-10 max-w-2xl mx-auto">
-        {/* Image */}
         {car.image_url ? (
           <div className="w-full h-64 overflow-hidden">
-            <img
-              src={car.image_url}
-              alt={`${car.brand} ${car.model}`}
-              className="h-full w-full object-cover"
-            />
+            <img src={car.image_url} alt={`${car.brand} ${car.model}`} className="h-full w-full object-cover" loading="lazy" />
           </div>
         ) : (
           <div className="w-full h-64 flex items-center justify-center bg-secondary/20">
@@ -150,11 +129,8 @@ const CarDetails = () => {
         )}
 
         <div className="p-4 space-y-5">
-          {/* Title + Year + Série + Ratings */}
           <div>
-            <h2 className="text-2xl font-bold">
-              {car.brand} {car.model}
-            </h2>
+            <h2 className="text-2xl font-bold">{car.brand} {car.model}</h2>
             <p className="text-muted-foreground">{car.year}</p>
             {car.edition?.trim() && (
               <p className="text-sm text-muted-foreground mt-0.5">
@@ -162,15 +138,10 @@ const CarDetails = () => {
               </p>
             )}
             <div className="flex items-center gap-2 mt-1.5">
-              <RatingExplainer
-                rarityLevel={car.rarity_rating ?? 5}
-                qualityLevel={car.quality_rating ?? 3}
-                size="md"
-              />
+              <RatingExplainer rarityLevel={car.rarity_rating ?? 5} qualityLevel={car.quality_rating ?? 3} size="md" />
             </div>
           </div>
 
-          {/* Modified comment */}
           {car.modified && car.modified_comment?.trim() && (
             <div className="rounded-xl border border-border/50 bg-card p-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Modifications</p>
@@ -178,7 +149,6 @@ const CarDetails = () => {
             </div>
           )}
 
-          {/* Engine */}
           {car.engine && (
             <div className="rounded-xl border border-border/50 bg-card p-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Engine</p>
@@ -186,56 +156,33 @@ const CarDetails = () => {
             </div>
           )}
 
-          {/* Badges */}
           <div className="flex flex-wrap gap-1.5">
             {getBadges(car).map((badge) => (
-              <span
-                key={badge}
-                className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
-              >
-                {badge}
-              </span>
+              <span key={badge} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">{badge}</span>
             ))}
           </div>
 
-          {/* Location */}
-          {car.location_name && (
-            <p className="text-sm text-muted-foreground">📍 {car.location_name}</p>
-          )}
+          {car.location_name && <p className="text-sm text-muted-foreground">📍 {car.location_name}</p>}
+          <p className="text-sm text-muted-foreground">Spotted on {new Date(car.created_at).toLocaleDateString()}</p>
 
-          {/* Spotted date */}
-          <p className="text-sm text-muted-foreground">
-            Spotted on {new Date(car.created_at).toLocaleDateString()}
-          </p>
-
-          {/* Description (style encyclopédique) */}
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              À propos de ce modèle
-            </p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">À propos de ce modèle</p>
             {loadingDesc ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Chargement de la description...
+                <Loader2 className="h-4 w-4 animate-spin" /> Chargement de la description...
               </div>
             ) : description ? (
-              <div className="text-sm leading-relaxed text-pretty whitespace-pre-line">
-                {description}
-              </div>
+              <div className="text-sm leading-relaxed text-pretty whitespace-pre-line">{description}</div>
             ) : (
               <p className="text-sm text-muted-foreground">Impossible de charger la description.</p>
             )}
           </div>
 
-          {/* Moteurs (ce modèle) */}
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Moteurs (ce modèle)
-            </p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Moteurs (ce modèle)</p>
             {loadingEngines ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Chargement des moteurs...
+                <Loader2 className="h-4 w-4 animate-spin" /> Chargement des moteurs...
               </div>
             ) : engines.length > 0 ? (
               <ul className="space-y-2">
