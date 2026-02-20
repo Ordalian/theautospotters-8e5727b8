@@ -9,11 +9,11 @@ export interface ThemeOption {
 }
 
 export const THEMES: ThemeOption[] = [
-  { id: "noir-or", label: "Noir et Or", preview: { bg: "#0d0d0d", accent: "#d4af37", text: "#f0ede5" } },
-  { id: "bleu-alpine", label: "Bleu Alpine", preview: { bg: "#0a1628", accent: "#2e6bc6", text: "#e0eaf5" } },
-  { id: "rose-barbie", label: "Rose Barbie", preview: { bg: "#1a0a14", accent: "#e84393", text: "#f8e8f0" } },
-  { id: "vert-rallye", label: "Vert Rallye", preview: { bg: "#0a1a0e", accent: "#27ae60", text: "#e0f5e8" } },
-  { id: "glace-arctique", label: "Glace Arctique", preview: { bg: "#0c1520", accent: "#5bc0de", text: "#e8f4f8" } },
+  { id: "noir-or", label: "Noir et Or", preview: { bg: "#0d0d0d", accent: "#d4af37", text: "#f5f0e0" } },
+  { id: "bleu-alpine", label: "Bleu Alpine", preview: { bg: "#050a18", accent: "#2864dc", text: "#c8deff" } },
+  { id: "rose-barbie", label: "Rose Barbie", preview: { bg: "#12050d", accent: "#e84393", text: "#ffd6ec" } },
+  { id: "vert-rallye", label: "Vert Rallye", preview: { bg: "#040d06", accent: "#1db954", text: "#c8ffd8" } },
+  { id: "glace-arctique", label: "Glace Arctique", preview: { bg: "#060e18", accent: "#40d8e0", text: "#d0f8ff" } },
 ];
 
 interface ThemeCtx {
