@@ -238,10 +238,19 @@ const CarDetails = () => {
                 <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
               </div>
             ) : description ? (
-              <div className="text-sm leading-[1.8] text-pretty space-y-3">
-                {description.split(/\n+/).map((paragraph, i) => (
-                  <p key={i}>{paragraph}</p>
-                ))}
+              <div className="text-sm leading-[1.85] text-pretty space-y-4">
+                {(() => {
+                  // Split into paragraphs: first by newlines, then group sentences (~2-3 per paragraph)
+                  const rawParagraphs = description.split(/\n+/).filter((p: string) => p.trim());
+                  const result: string[] = [];
+                  for (const para of rawParagraphs) {
+                    const sentences = para.match(/[^.!?]+[.!?]+/g) || [para];
+                    for (let i = 0; i < sentences.length; i += 2) {
+                      result.push(sentences.slice(i, i + 2).join("").trim());
+                    }
+                  }
+                  return result.filter(Boolean).map((p, i) => <p key={i}>{p}</p>);
+                })()}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Impossible de charger la description.</p>
