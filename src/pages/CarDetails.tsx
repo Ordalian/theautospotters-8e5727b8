@@ -54,12 +54,12 @@ const CarDetails = () => {
   const { data: car, isLoading: loading } = useQuery({
     queryKey: ["car", id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase
         .from("cars")
-        .select("*")
+        .select("id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name")
         .eq("id", id!)
-        .maybeSingle();
-      return data as unknown as CarDetail | null;
+        .maybeSingle() as any);
+      return data as CarDetail | null;
     },
     enabled: !!user && !!id,
     staleTime: 10 * 60 * 1000,
