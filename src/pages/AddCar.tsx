@@ -43,6 +43,7 @@ const AddCar = () => {
   const [editions, setEditions] = useState<string[]>([]);
   const [loadingEditions, setLoadingEditions] = useState(false);
   const [showEditions, setShowEditions] = useState(false);
+  const [finitions, setFinitions] = useState("");
   const [engine, setEngine] = useState(searchParams.get("engine") || "");
   const [engines, setEngines] = useState<{ name: string; displacement: string; fuel: string; hp: number }[]>([]);
   const [loadingEngines, setLoadingEngines] = useState(false);
@@ -168,6 +169,7 @@ const AddCar = () => {
         model,
         year: parseInt(year),
         edition: edition || null,
+        finitions: finitions.trim() || null,
         seen_on_road: seenOnRoad,
         parked,
         stock,
@@ -428,6 +430,19 @@ const AddCar = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Finitions (optionnel) */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Finitions (optionnel)
+          </Label>
+          <Input
+            placeholder="ex. GT Line, Sport Pack, Business..."
+            value={finitions}
+            onChange={(e) => setFinitions(e.target.value)}
+            className="bg-secondary/30"
+          />
         </div>
 
         {/* Spotting Context */}

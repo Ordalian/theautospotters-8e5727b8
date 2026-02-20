@@ -15,6 +15,7 @@ interface CarDetail {
   year: number;
   edition: string | null;
   engine: string | null;
+  finitions: string | null;
   seen_on_road: boolean;
   parked: boolean;
   stock: boolean;
@@ -132,6 +133,11 @@ const CarDetails = () => {
             {car.edition?.trim() && (
               <p className="text-sm text-muted-foreground mt-0.5">
                 Série : <span className="font-medium text-foreground">{car.edition}</span>
+              </p>
+            )}
+            {car.finitions?.trim() && (
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Finitions : <span className="font-medium text-foreground">{car.finitions}</span>
               </p>
             )}
             <div className="flex items-center gap-2 mt-1.5">
