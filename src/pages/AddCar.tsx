@@ -172,6 +172,7 @@ const AddCar = () => {
         model,
         year: parseInt(year),
         edition: edition || null,
+        finitions: finitions.trim() || null,
         seen_on_road: seenOnRoad,
         parked,
         stock,

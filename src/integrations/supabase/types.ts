@@ -22,6 +22,7 @@ export type Database = {
           created_at: string
           edition: string | null
           engine: string | null
+          finitions: string | null
           id: string
           image_url: string | null
           latitude: number | null
@@ -46,6 +47,7 @@ export type Database = {
           created_at?: string
           edition?: string | null
           engine?: string | null
+          finitions?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -70,6 +72,7 @@ export type Database = {
           created_at?: string
           edition?: string | null
           engine?: string | null
+          finitions?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
