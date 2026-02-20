@@ -20,6 +20,7 @@ export type Database = {
           car_condition: string | null
           car_meet: boolean
           created_at: string
+          delivered_by_user_id: string | null
           edition: string | null
           engine: string | null
           finitions: string | null
@@ -46,6 +47,7 @@ export type Database = {
           car_condition?: string | null
           car_meet?: boolean
           created_at?: string
+          delivered_by_user_id?: string | null
           edition?: string | null
           engine?: string | null
           finitions?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           car_condition?: string | null
           car_meet?: boolean
           created_at?: string
+          delivered_by_user_id?: string | null
           edition?: string | null
           engine?: string | null
           finitions?: string | null
@@ -92,6 +95,30 @@ export type Database = {
           stock?: boolean
           user_id?: string
           year?: number
+        }
+        Relationships: []
+      }
+      deliveries: {
+        Row: {
+          id: string
+          sender_id: string
+          receiver_id: string
+          car_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sender_id: string
+          receiver_id: string
+          car_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          sender_id?: string
+          receiver_id?: string
+          car_id?: string
+          created_at?: string
         }
         Relationships: []
       }
@@ -124,6 +151,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           id: string
+          last_delivery_at: string | null
           pinned_car_id: string | null
           theme: string | null
           user_id: string
@@ -133,6 +161,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          last_delivery_at?: string | null
           pinned_car_id?: string | null
           theme?: string | null
           user_id: string
@@ -142,6 +171,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          last_delivery_at?: string | null
           pinned_car_id?: string | null
           theme?: string | null
           user_id?: string

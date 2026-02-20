@@ -26,6 +26,7 @@ const AddCar = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isDeliveryMode = searchParams.get("delivery") === "1";
 
   // Prefill from query params (from AutoSpotter)
   const [brand, setBrand] = useState(searchParams.get("brand") || "");
@@ -132,6 +133,10 @@ const AddCar = () => {
       toast.error("Please fill in brand, model, and year");
       return;
     }
+    if (isDeliveryMode && !imageFile && !imagePreview) {
+      toast.error("La photo est obligatoire pour une livraison (caméra ou galerie)");
+      return;
+    }
     setLoading(true);
     try {
       let imageUrl: string | null = imagePreview && !imageFile ? imagePreview : null;
@@ -166,7 +171,7 @@ const AddCar = () => {
       const qualityRating = calculateQualityRating(photoSource, carCondition);
       const rarityRating = calculateRarityRating(brand, model);
 
-      const { error } = await supabase.from("cars").insert({
+      const insertPayload = {
         user_id: user.id,
         brand,
         model,
@@ -189,17 +194,33 @@ const AddCar = () => {
         photo_source: photoSource,
         quality_rating: qualityRating.level,
         rarity_rating: rarityRating.level,
-      });
+      };
 
-      if (error) {
-        const dbMsg = error.message || "Database error";
-        const err: any = new Error(dbMsg);
-        err.details = error.details;
-        err.hint = error.hint;
-        throw err;
+      if (isDeliveryMode) {
+        const { data: inserted, error } = await supabase
+          .from("cars")
+          .insert(insertPayload)
+          .select("id")
+          .single();
+        if (error) {
+          const err: any = new Error(error.message);
+          err.details = error.details;
+          err.hint = error.hint;
+          throw err;
+        }
+        toast.success("Voiture ajoutée. Choisis l'ami à qui la livrer.");
+        navigate(`/deliver-car/select-friend?carId=${inserted.id}`);
+      } else {
+        const { error } = await supabase.from("cars").insert(insertPayload);
+        if (error) {
+          const err: any = new Error(error.message);
+          err.details = error.details;
+          err.hint = error.hint;
+          throw err;
+        }
+        toast.success(`${brand} ${model} added to your garage!`);
+        navigate("/garage");
       }
-      toast.success(`${brand} ${model} added to your garage!`);
-      navigate("/garage");
     } catch (err: any) {
       const msg =
         err?.message
@@ -263,7 +284,7 @@ const AddCar = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/garage")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(isDeliveryMode ? "/friends" : "/garage")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold">Add a Car</h1>
@@ -764,10 +785,10 @@ const AddCar = () => {
           <CarConditionSelector value={carCondition} onChange={setCarCondition} />
         </div>
 
-        {/* Photo (optional) */}
+        {/* Photo (optional, required for delivery) */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Photo (optional)
+            Photo {isDeliveryMode ? "(obligatoire pour la livraison)" : "(optional)"}
           </Label>
           {imagePreview ? (
             <PhotoPreview

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, UserPlus, Car, X, Check } from "lucide-react";
+import { ArrowLeft, UserPlus, Car, X, Check, Package } from "lucide-react";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,14 @@ interface FriendRequest {
   username: string | null;
 }
 
+interface DeliveryNotification {
+  id: string;
+  sender_username: string | null;
+  car_brand: string;
+  car_model: string;
+  created_at: string;
+}
+
 const FriendsGarages = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -59,6 +67,32 @@ const FriendsGarages = () => {
   const [friendSort, setFriendSort] = useState<GarageSortOption>("newest");
   const [removeConfirm, setRemoveConfirm] = useState<{ friendshipId: string; username: string } | null>(null);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
+  const [lastDeliveryAt, setLastDeliveryAt] = useState<string | null>(null);
+  const [deliveryPopupOpen, setDeliveryPopupOpen] = useState(false);
+  const [deliveryNotifications, setDeliveryNotifications] = useState<DeliveryNotification[]>([]);
+  const [tick, setTick] = useState(0);
+
+  const DELIVERY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+  const deliveryCooldown = useMemo(() => {
+    if (!lastDeliveryAt) return { active: false, remainingMs: 0 };
+    const end = new Date(lastDeliveryAt).getTime() + DELIVERY_COOLDOWN_MS;
+    const remaining = end - Date.now();
+    return { active: remaining > 0, remainingMs: Math.max(0, remaining) };
+  }, [lastDeliveryAt, tick]);
+
+  const deliveryTimerFormatted = useMemo(() => {
+    if (!deliveryCooldown.active) return "24:00:00";
+    const s = Math.floor((deliveryCooldown.remainingMs / 1000) % 60);
+    const m = Math.floor((deliveryCooldown.remainingMs / 60000) % 60);
+    const h = Math.floor(deliveryCooldown.remainingMs / 3600000);
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  }, [deliveryCooldown.active, deliveryCooldown.remainingMs]);
+
+  const deliveryCircleProgress = useMemo(() => {
+    if (!deliveryCooldown.active) return 1;
+    return 1 - deliveryCooldown.remainingMs / DELIVERY_COOLDOWN_MS;
+  }, [deliveryCooldown.active, deliveryCooldown.remainingMs]);
 
   const sortedFriendCars = useMemo(() => {
     const sorted = [...friendCars];
@@ -75,8 +109,57 @@ const FriendsGarages = () => {
   }, [friendCars, friendSort]);
 
   useEffect(() => {
-    if (user) fetchFriends();
+    if (user) {
+      fetchFriends();
+      fetchDeliveryState();
+    }
   }, [user]);
+
+  useEffect(() => {
+    if (!lastDeliveryAt) return;
+    const end = new Date(lastDeliveryAt).getTime() + DELIVERY_COOLDOWN_MS;
+    if (end <= Date.now()) return;
+    const interval = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [lastDeliveryAt]);
+
+  const fetchDeliveryState = async () => {
+    if (!user) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("last_delivery_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setLastDeliveryAt(profile?.last_delivery_at ?? null);
+
+    const { data: deliveries } = await supabase
+      .from("deliveries")
+      .select("id, sender_id, car_id, created_at")
+      .eq("receiver_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (deliveries?.length) {
+      const senderIds = [...new Set(deliveries.map((d) => d.sender_id))];
+      const carIds = deliveries.map((d) => d.car_id);
+      const [profilesRes, carsRes] = await Promise.all([
+        supabase.from("profiles").select("user_id, username").in("user_id", senderIds),
+        supabase.from("cars").select("id, brand, model").in("id", carIds),
+      ]);
+      const profileMap = new Map(profilesRes.data?.map((p) => [p.user_id, p.username]) || []);
+      const carMap = new Map(carsRes.data?.map((c) => [c.id, c]) || []);
+      setDeliveryNotifications(
+        deliveries.map((d) => ({
+          id: d.id,
+          sender_username: profileMap.get(d.sender_id) ?? null,
+          car_brand: carMap.get(d.car_id)?.brand ?? "?",
+          car_model: carMap.get(d.car_id)?.model ?? "?",
+          created_at: d.created_at,
+        }))
+      );
+    } else {
+      setDeliveryNotifications([]);
+    }
+  };
 
   const fetchRequests = async () => {
     if (!user) return;
@@ -239,6 +322,93 @@ const FriendsGarages = () => {
       <div className="p-4 max-w-2xl mx-auto space-y-6 relative z-10">
         {!selectedFriend && (
           <>
+            {/* Tuile Livraison */}
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              {deliveryCooldown.active ? (
+                <div className="flex items-center gap-4 p-4">
+                  <div className="relative h-16 w-16 shrink-0">
+                    <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-muted/30"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        fill="none"
+                        d="M18 2.5 a 15.5 15.5 0 0 1 0 31 a 15.5 15.5 0 0 1 0 -31"
+                      />
+                      <path
+                        className="text-primary transition-all duration-1000"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeDasharray="97.4"
+                        strokeDashoffset={97.4 - 97.4 * deliveryCircleProgress}
+                        fill="none"
+                        strokeLinecap="round"
+                        d="M18 2.5 a 15.5 15.5 0 0 1 0 31 a 15.5 15.5 0 0 1 0 -31"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">Livraison</p>
+                    <p className="text-2xl font-mono tabular-nums text-muted-foreground">{deliveryTimerFormatted}</p>
+                    <p className="text-xs text-muted-foreground">Prochaine livraison possible dans</p>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDeliveryPopupOpen(true)}
+                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-muted/30 transition-colors"
+                >
+                  <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Package className="h-7 w-7 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">Livraison</p>
+                    <p className="text-sm text-muted-foreground">Envoyer une voiture à un ami (1 fois / 24h)</p>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            <Dialog open={deliveryPopupOpen} onOpenChange={setDeliveryPopupOpen}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Livraison</DialogTitle>
+                  <DialogDescription>Voulez-vous livrer une voiture à un ami ?</DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button variant="outline" onClick={() => setDeliveryPopupOpen(false)} className="gap-1">
+                    <X className="h-4 w-4" /> Non
+                  </Button>
+                  <Button onClick={() => { setDeliveryPopupOpen(false); navigate("/deliver-car"); }} className="gap-1">
+                    <Check className="h-4 w-4" /> Oui
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Notifications livraisons reçues */}
+            {deliveryNotifications.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Livraisons reçues
+                </h2>
+                {deliveryNotifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className="rounded-xl border border-primary/20 bg-primary/5 p-3 flex items-center gap-3"
+                  >
+                    <Package className="h-5 w-5 text-primary shrink-0" />
+                    <p className="text-sm">
+                      <span className="font-semibold">{n.sender_username || "Quelqu'un"}</span>
+                      {" vous a envoyé "}
+                      <span className="font-semibold">{n.car_brand} {n.car_model}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Add Friend */}
             <div className="flex gap-2">
               <Input

@@ -36,6 +36,7 @@ interface CarDetail {
   created_at: string;
   quality_rating: number | null;
   rarity_rating: number | null;
+  delivered_by_user_id: string | null;
 }
 
 interface CarInfoResult {
@@ -56,12 +57,24 @@ const CarDetails = () => {
     queryFn: async () => {
       const { data } = await (supabase
         .from("cars")
-        .select("id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name")
+        .select("id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id")
         .eq("id", id!)
         .maybeSingle() as any);
       return data as CarDetail | null;
     },
     enabled: !!user && !!id,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const deliveredByUserId = car?.delivered_by_user_id ?? null;
+  const { data: deliveredByProfile } = useQuery({
+    queryKey: ["profile", deliveredByUserId],
+    queryFn: async () => {
+      if (!deliveredByUserId) return null;
+      const { data } = await supabase.from("profiles").select("username").eq("user_id", deliveredByUserId).maybeSingle();
+      return data?.username ?? null;
+    },
+    enabled: !!deliveredByUserId,
     staleTime: 10 * 60 * 1000,
   });
 
@@ -183,6 +196,11 @@ const CarDetails = () => {
             {car.finitions?.trim() && (
               <p className="text-sm text-muted-foreground mt-0.5">
                 Finitions : <span className="font-medium text-foreground">{car.finitions}</span>
+              </p>
+            )}
+            {car.delivered_by_user_id && (
+              <p className="text-sm text-primary mt-1.5 font-medium">
+                Voiture spottée et livrée par {deliveredByProfile ?? "un ami"}
               </p>
             )}
             <div className="flex items-center gap-2 mt-1.5">

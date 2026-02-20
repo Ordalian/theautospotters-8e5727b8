@@ -18,6 +18,8 @@ const Profile = lazy(() => import("./pages/Profile"));
 const GarageSettings = lazy(() => import("./pages/GarageSettings"));
 const SpotMap = lazy(() => import("./pages/SpotMap"));
 const FriendsGarages = lazy(() => import("./pages/FriendsGarages"));
+const DeliverCarChoice = lazy(() => import("./pages/DeliverCarChoice"));
+const DeliverSelectFriend = lazy(() => import("./pages/DeliverSelectFriend"));
 const CarDetails = lazy(() => import("./pages/CarDetails"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -70,6 +72,8 @@ const App = () => (
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/garage-settings" element={<ProtectedRoute><GarageSettings /></ProtectedRoute>} />
                 <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
+                <Route path="/deliver-car" element={<ProtectedRoute><DeliverCarChoice /></ProtectedRoute>} />
+                <Route path="/deliver-car/select-friend" element={<ProtectedRoute><DeliverSelectFriend /></ProtectedRoute>} />
                 <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
                 <Route path="/car/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />

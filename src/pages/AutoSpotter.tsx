@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Camera, Brain, Plus, X, Loader2 } from "lucide-react";
@@ -19,6 +19,8 @@ interface CarResult {
 
 const AutoSpotter = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isDeliveryMode = searchParams.get("delivery") === "1";
   const { user } = useAuth();
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
@@ -101,6 +103,7 @@ const AutoSpotter = () => {
     if (year) params.set("year", year);
     if (imageUrl) params.set("image_url", imageUrl);
     if (primaryPhotoSourceType) params.set("photo_source_type", primaryPhotoSourceType);
+    if (isDeliveryMode) params.set("delivery", "1");
     navigate(`/add-car?${params.toString()}`);
   };
 
@@ -117,7 +120,7 @@ const AutoSpotter = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(isDeliveryMode ? "/friends" : "/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold">The AutoSpotter</h1>
