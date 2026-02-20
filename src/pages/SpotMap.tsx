@@ -151,7 +151,6 @@ const SpotMap = () => {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
     }).addTo(map);
 
-    L.control.zoom({ position: "bottomright" }).addTo(map);
     mapInstance.current = map;
 
     return () => {
@@ -266,7 +265,7 @@ const SpotMap = () => {
       </header>
 
       {!loading && (
-        <div className="sticky top-14 z-[999] px-4 py-2 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 space-y-1">
+        <div className="sticky top-14 z-[999] px-4 py-2 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 space-y-2">
           <div className="flex gap-2">
             <div className="relative flex-1 flex items-center">
               <Input
@@ -293,6 +292,73 @@ const SpotMap = () => {
             </div>
             )}
           </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => mapInstance.current?.zoomOut()}
+                aria-label="Zoom arrière"
+              >
+                −
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => mapInstance.current?.zoomIn()}
+                aria-label="Zoom avant"
+              >
+                +
+              </Button>
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-9 w-9 rounded-full shadow-lg shadow-primary/50 ring-2 ring-primary/30 hover:ring-primary/50 hover:shadow-primary/60 transition-all"
+                  aria-label="Légende"
+                >
+                  <Info className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Légende de la carte</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 text-sm">
+                  <p className="font-medium text-muted-foreground">Couleurs</p>
+                  <ul className="space-y-1.5">
+                    <li className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full bg-[#dc2626] shrink-0" />
+                      <span>Mes spots</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full bg-[#16a34a] shrink-0" />
+                      <span>Spots des amis</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full bg-[#2563eb] shrink-0" />
+                      <span>Spots de la communauté</span>
+                    </li>
+                  </ul>
+                  <p className="font-medium text-muted-foreground pt-2">Formes</p>
+                  <ul className="space-y-1.5">
+                    <li className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full border-2 border-muted-foreground shrink-0" />
+                      <span>Position précise (Ma position GPS, Choisir un lieu)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-3 w-3 border-2 border-muted-foreground shrink-0 rounded-none" style={{ width: 12, height: 12 }} />
+                      <span>Spots non GPS</span>
+                    </li>
+                  </ul>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           {searchLower && (
             <p className="text-xs text-muted-foreground">Rayon : 50 km</p>
           )}
@@ -305,51 +371,7 @@ const SpotMap = () => {
             <div className="animate-pulse text-muted-foreground">Chargement de la carte...</div>
           </div>
         ) : (
-          <>
-            <div ref={mapRef} className="z-0 absolute inset-0" />
-            <div className="absolute bottom-16 right-4 z-[1000] flex flex-col gap-1">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="secondary" size="icon" className="h-10 w-10 rounded-full shadow-lg" aria-label="Légende">
-                    <Info className="h-5 w-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle>Légende de la carte</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-3 text-sm">
-                    <p className="font-medium text-muted-foreground">Couleurs</p>
-                    <ul className="space-y-1.5">
-                      <li className="flex items-center gap-2">
-                        <span className="h-3 w-3 rounded-full bg-[#dc2626] shrink-0" />
-                        <span>Mes spots</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="h-3 w-3 rounded-full bg-[#16a34a] shrink-0" />
-                        <span>Spots des amis</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="h-3 w-3 rounded-full bg-[#2563eb] shrink-0" />
-                        <span>Spots des autres</span>
-                      </li>
-                    </ul>
-                    <p className="font-medium text-muted-foreground pt-2">Formes</p>
-                    <ul className="space-y-1.5">
-                      <li className="flex items-center gap-2">
-                        <span className="h-3 w-3 rounded-full border-2 border-muted-foreground shrink-0" />
-                        <span>Position précise (Ma position GPS, Choisir un lieu)</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="h-3 w-3 border-2 border-muted-foreground shrink-0 rounded-sm" style={{ width: 12, height: 12 }} />
-                        <span>Lieu général (Écrire un lieu)</span>
-                      </li>
-                    </ul>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </>
+          <div ref={mapRef} className="z-0 absolute inset-0" />
         )}
       </div>
     </div>

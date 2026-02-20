@@ -1,10 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme, THEMES, type ThemeId } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Car, Check, Palette, Pin } from "lucide-react";
+import { ArrowLeft, Car, Check, Palette, Pin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import BlackGoldBg from "@/components/BlackGoldBg";
 
@@ -25,6 +32,8 @@ const GarageSettings = () => {
   const [cars, setCars] = useState<CarOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [choiceDialogOpen, setChoiceDialogOpen] = useState(false);
+  const [spotSearchQuery, setSpotSearchQuery] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -50,12 +59,14 @@ const GarageSettings = () => {
     if (!user) return;
     setSaving(true);
     try {
-      const { error } = await (supabase
+      const { error } = await supabase
         .from("profiles")
-        .update({ pinned_car_id: carId } as any)
-        .eq("user_id", user.id) as any);
+        .update({ pinned_car_id: carId })
+        .eq("user_id", user.id);
       if (error) throw error;
       setPinnedCarId(carId);
+      setChoiceDialogOpen(false);
+      setSpotSearchQuery("");
       toast.success(carId ? "Spot épinglé mis à jour" : "Spot épinglé retiré");
     } catch (err: any) {
       toast.error(err?.message || "Erreur");
@@ -63,6 +74,16 @@ const GarageSettings = () => {
       setSaving(false);
     }
   };
+
+  const spotSearchLower = spotSearchQuery.trim().toLowerCase();
+  const filteredCarsForChoice = useMemo(() => {
+    if (!spotSearchLower) return cars;
+    return cars.filter(
+      (c) =>
+        `${c.brand} ${c.model}`.toLowerCase().includes(spotSearchLower) ||
+        String(c.year).includes(spotSearchLower)
+    );
+  }, [cars, spotSearchLower]);
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -107,62 +128,96 @@ const GarageSettings = () => {
         <section className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Pin className="h-5 w-5 text-primary" />
-            Spot épinglé sur la tuile Mon garage
+            Spot épinglé
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Choisis le spot affiché sur la tuile « My Garage » du tableau de bord.
-          </p>
           {loading ? (
             <p className="text-sm text-muted-foreground">Chargement…</p>
           ) : (
-            <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
                 onClick={() => handleSavePinned(null)}
                 disabled={saving}
-                className={`w-full flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
+                className={`flex-1 flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
                   !pinnedCarId ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
                 }`}
               >
                 <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
                   <Car className="h-6 w-6 text-muted-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium">Dernier spot (par défaut)</p>
                   <p className="text-xs text-muted-foreground">Le plus récent s'affiche</p>
                 </div>
-                {!pinnedCarId && <Check className="ml-auto h-4 w-4 text-primary" />}
+                {!pinnedCarId && <Check className="ml-auto h-4 w-4 text-primary shrink-0" />}
               </button>
-              {cars.map((car) => (
-                <button
-                  key={car.id}
-                  type="button"
-                  onClick={() => handleSavePinned(car.id)}
-                  disabled={saving}
-                  className={`w-full flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
-                    pinnedCarId === car.id ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
-                  }`}
-                >
-                  {car.image_url ? (
-                    <img
-                      src={car.image_url}
-                      alt={`${car.brand} ${car.model}`}
-                      className="h-12 w-12 rounded-lg object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
-                      <Car className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{car.brand} {car.model}</p>
-                    <p className="text-xs text-muted-foreground">{car.year}</p>
-                  </div>
-                  {pinnedCarId === car.id && <Check className="ml-auto h-4 w-4 text-primary shrink-0" />}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setChoiceDialogOpen(true)}
+                disabled={saving}
+                className={`flex-1 flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
+                  pinnedCarId ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
+                  <Search className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium">Au choix</p>
+                  <p className="text-xs text-muted-foreground">Rechercher un spot</p>
+                </div>
+                {pinnedCarId && <Check className="ml-auto h-4 w-4 text-primary shrink-0" />}
+              </button>
             </div>
           )}
+
+          <Dialog open={choiceDialogOpen} onOpenChange={setChoiceDialogOpen}>
+            <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Choisir un spot à épingler</DialogTitle>
+              </DialogHeader>
+              <Input
+                placeholder="Rechercher dans mes spots (marque, modèle, année)..."
+                value={spotSearchQuery}
+                onChange={(e) => setSpotSearchQuery(e.target.value)}
+                className="bg-secondary/30"
+              />
+              <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1">
+                {filteredCarsForChoice.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">Aucun spot trouvé</p>
+                ) : (
+                  filteredCarsForChoice.map((car) => (
+                    <button
+                      key={car.id}
+                      type="button"
+                      onClick={() => handleSavePinned(car.id)}
+                      disabled={saving}
+                      className={`w-full flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
+                        pinnedCarId === car.id ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
+                      }`}
+                    >
+                      {car.image_url ? (
+                        <img
+                          src={car.image_url}
+                          alt={`${car.brand} ${car.model}`}
+                          className="h-12 w-12 rounded-lg object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
+                          <Car className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{car.brand} {car.model}</p>
+                        <p className="text-xs text-muted-foreground">{car.year}</p>
+                      </div>
+                      {pinnedCarId === car.id && <Check className="h-4 w-4 text-primary shrink-0" />}
+                    </button>
+                  ))
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </section>
       </div>
     </div>
