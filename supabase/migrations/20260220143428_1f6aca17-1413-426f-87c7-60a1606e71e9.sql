@@ -1,0 +1,1 @@
+ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS finitions text DEFAULT NULL;
