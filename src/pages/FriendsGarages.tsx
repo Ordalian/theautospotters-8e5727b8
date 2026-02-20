@@ -6,6 +6,14 @@ import { ArrowLeft, UserPlus, Car, X } from "lucide-react";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Carousel,
@@ -43,6 +51,7 @@ const FriendsGarages = () => {
   const [recentSpots, setRecentSpots] = useState<FriendCar[]>([]);
   const [loading, setLoading] = useState(true);
   const [friendSort, setFriendSort] = useState<GarageSortOption>("newest");
+  const [removeConfirm, setRemoveConfirm] = useState<{ friendshipId: string; username: string } | null>(null);
 
   const sortedFriendCars = useMemo(() => {
     const sorted = [...friendCars];
@@ -164,6 +173,7 @@ const FriendsGarages = () => {
   const handleRemoveFriend = async (friendshipId: string) => {
     await supabase.from("friendships").delete().eq("id", friendshipId);
     toast.success("Ami retiré");
+    setRemoveConfirm(null);
     setSelectedFriend(null);
     setFriendCars([]);
     fetchFriends();
@@ -262,15 +272,46 @@ const FriendsGarages = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={(e) => { e.stopPropagation(); handleRemoveFriend(friend.friendship_id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRemoveConfirm({
+                          friendshipId: friend.friendship_id,
+                          username: friend.username || "cet ami",
+                        });
+                      }}
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </button>
                 ))
-              )}
-            </div>
-          </>
+)}
+          </div>
+
+          {/* Confirmation suppression ami */}
+          <Dialog open={!!removeConfirm} onOpenChange={(open) => !open && setRemoveConfirm(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Retirer cet ami ?</DialogTitle>
+                <DialogDescription>
+                  {removeConfirm
+                    ? `Êtes-vous sûr de vouloir retirer ${removeConfirm.username} de vos amis ? Cette action pourra être annulée en renvoyant une demande.`
+                    : ""}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setRemoveConfirm(null)}>
+                  Annuler
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => removeConfirm && handleRemoveFriend(removeConfirm.friendshipId)}
+                >
+                  Retirer
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
         )}
 
         {/* Friend's Garage */}
