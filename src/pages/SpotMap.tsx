@@ -61,11 +61,11 @@ const SpotMap = () => {
 
   useEffect(() => {
     const fetchSpots = async () => {
-      const { data: myCars } = await supabase
+      const { data: myCars } = await (supabase
         .from("cars")
         .select("id, brand, model, year, latitude, longitude, location_name, location_precision, image_url, user_id, created_at")
         .not("latitude", "is", null)
-        .not("longitude", "is", null);
+        .not("longitude", "is", null) as any) as { data: any[] | null };
 
       let friendIdSet = new Set<string>();
       if (user) {

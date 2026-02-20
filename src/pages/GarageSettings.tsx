@@ -29,11 +29,11 @@ const GarageSettings = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase
         .from("profiles")
         .select("pinned_car_id")
         .eq("user_id", user.id)
-        .maybeSingle();
+        .maybeSingle() as any);
       if (profile?.pinned_car_id) setPinnedCarId(profile.pinned_car_id);
 
       const { data: carsData } = await supabase
@@ -50,10 +50,10 @@ const GarageSettings = () => {
     if (!user) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase
         .from("profiles")
-        .update({ pinned_car_id: carId })
-        .eq("user_id", user.id);
+        .update({ pinned_car_id: carId } as any)
+        .eq("user_id", user.id) as any);
       if (error) throw error;
       setPinnedCarId(carId);
       toast.success(carId ? "Spot épinglé mis à jour" : "Spot épinglé retiré");
