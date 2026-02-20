@@ -88,33 +88,34 @@ const DeliverSelectFriend = () => {
     if (!user || !car || !selectedFriend) return;
     setDelivering(true);
     try {
+      const insertPayload = {
+        user_id: selectedFriend.user_id,
+        brand: car.brand,
+        model: car.model,
+        year: car.year,
+        edition: (car.edition as string) ?? null,
+        finitions: (car.finitions as string) ?? null,
+        seen_on_road: (car.seen_on_road as boolean) ?? false,
+        parked: (car.parked as boolean) ?? false,
+        stock: (car.stock as boolean) ?? true,
+        modified: (car.modified as boolean) ?? false,
+        modified_comment: (car.modified_comment as string) ?? null,
+        car_meet: (car.car_meet as boolean) ?? false,
+        image_url: car.image_url,
+        engine: (car.engine as string) ?? null,
+        latitude: (car.latitude as number) ?? null,
+        longitude: (car.longitude as number) ?? null,
+        location_name: (car.location_name as string) ?? null,
+        location_precision: (car.location_precision as string) ?? null,
+        car_condition: (car.car_condition as string) ?? "good",
+        photo_source: (car.photo_source as string) ?? null,
+        quality_rating: (car.quality_rating as number) ?? 3,
+        rarity_rating: (car.rarity_rating as number) ?? 5,
+        delivered_by_user_id: user.id,
+      };
       const { data: newCar, error: insertErr } = await supabase
         .from("cars")
-        .insert({
-          user_id: selectedFriend.user_id,
-          brand: car.brand,
-          model: car.model,
-          year: car.year,
-          edition: car.edition ?? null,
-          finitions: car.finitions ?? null,
-          seen_on_road: car.seen_on_road ?? false,
-          parked: car.parked ?? false,
-          stock: car.stock ?? true,
-          modified: car.modified ?? false,
-          modified_comment: car.modified_comment ?? null,
-          car_meet: car.car_meet ?? false,
-          image_url: car.image_url,
-          engine: car.engine ?? null,
-          latitude: car.latitude ?? null,
-          longitude: car.longitude ?? null,
-          location_name: car.location_name ?? null,
-          location_precision: car.location_precision ?? null,
-          car_condition: car.car_condition ?? "good",
-          photo_source: car.photo_source ?? null,
-          quality_rating: car.quality_rating ?? 3,
-          rarity_rating: car.rarity_rating ?? 5,
-          delivered_by_user_id: user.id,
-        })
+        .insert(insertPayload)
         .select("id")
         .single();
 
