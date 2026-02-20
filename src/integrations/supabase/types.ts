@@ -27,7 +27,6 @@ export type Database = {
           image_url: string | null
           latitude: number | null
           location_name: string | null
-          location_precision: string | null
           longitude: number | null
           model: string
           modified: boolean
@@ -53,7 +52,6 @@ export type Database = {
           image_url?: string | null
           latitude?: number | null
           location_name?: string | null
-          location_precision?: string | null
           longitude?: number | null
           model: string
           modified?: boolean
@@ -79,7 +77,6 @@ export type Database = {
           image_url?: string | null
           latitude?: number | null
           location_name?: string | null
-          location_precision?: string | null
           longitude?: number | null
           model?: string
           modified?: boolean
@@ -124,7 +121,6 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           id: string
-          pinned_car_id: string | null
           theme: string | null
           user_id: string
           username: string | null
@@ -133,7 +129,6 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
-          pinned_car_id?: string | null
           theme?: string | null
           user_id: string
           username?: string | null
@@ -142,7 +137,6 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
-          pinned_car_id?: string | null
           theme?: string | null
           user_id?: string
           username?: string | null
