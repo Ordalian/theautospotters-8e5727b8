@@ -36,7 +36,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     return (localStorage.getItem("app-theme") as ThemeId) || "noir-or";
   });
 
-  // Charger le thème du profil quand l'utilisateur est connecté
+  // Load theme from profile when user is logged in
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
