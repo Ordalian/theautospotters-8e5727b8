@@ -100,27 +100,35 @@ export type Database = {
       }
       deliveries: {
         Row: {
-          id: string
-          sender_id: string
-          receiver_id: string
           car_id: string
           created_at: string
+          id: string
+          receiver_id: string
+          sender_id: string
         }
         Insert: {
-          id?: string
-          sender_id: string
-          receiver_id: string
           car_id: string
           created_at?: string
+          id?: string
+          receiver_id: string
+          sender_id: string
         }
         Update: {
-          id?: string
-          sender_id?: string
-          receiver_id?: string
           car_id?: string
           created_at?: string
+          id?: string
+          receiver_id?: string
+          sender_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_car"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       friendships: {
         Row: {
