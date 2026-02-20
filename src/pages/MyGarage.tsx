@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Car, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Car, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSortSelect";
 import { RatingExplainer } from "@/components/RatingExplainer";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface SpottedCar {
   id: string;
@@ -31,7 +32,25 @@ interface SpottedCar {
 const MyGarage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [sortOption, setSortOption] = useState<GarageSortOption>("newest");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, carId: string) => {
+    e.stopPropagation();
+    if (!confirm("Supprimer ce spot ?")) return;
+    setDeletingId(carId);
+    try {
+      const { error } = await supabase.from("cars").delete().eq("id", carId).eq("user_id", user!.id);
+      if (error) throw error;
+      toast.success("Spot supprimé");
+      queryClient.invalidateQueries({ queryKey: ["my-cars", user?.id] });
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la suppression");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const { data: cars = [], isLoading: loading } = useQuery({
     queryKey: ["my-cars", user?.id],
@@ -102,8 +121,18 @@ const MyGarage = () => {
               <div
                 key={car.id}
                 onClick={() => navigate(`/car/${car.id}`)}
-                className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors"
+                className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors relative"
               >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-black/40 text-white hover:bg-red-500/90 hover:text-white"
+                  onClick={(e) => handleDelete(e, car.id)}
+                  disabled={deletingId === car.id}
+                  aria-label="Supprimer le spot"
+                >
+                  {deletingId === car.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
                 {car.image_url ? (
                   <div className="h-44 overflow-hidden">
                     <img

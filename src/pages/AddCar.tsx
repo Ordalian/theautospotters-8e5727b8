@@ -184,6 +184,7 @@ const AddCar = () => {
         latitude: coords?.lat || null,
         longitude: coords?.lng || null,
         location_name: locationName || null,
+        location_precision: locationMode === "text" ? "general" : "precise",
         car_condition: carCondition,
         photo_source: photoSource,
         quality_rating: qualityRating.level,
@@ -716,11 +717,11 @@ const AddCar = () => {
           {locationMode === "text" && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
-                Ex : Saint Amand les Eaux · ou « route entre Salesches et Neuville » (point médian)
+                Ex : Paris / New York… · ou « entre Paris et Versailles / près de… » (point médian)
               </p>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Ville, lieu ou « entre X et Y »..."
+                  placeholder="Paris / New York… ou « entre Paris et Versailles »..."
                   value={locationSearchQuery}
                   onChange={(e) => setLocationSearchQuery(e.target.value)}
                   className="bg-secondary/30 flex-1"

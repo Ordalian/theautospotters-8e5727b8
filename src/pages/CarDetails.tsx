@@ -1,15 +1,24 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
-import { ArrowLeft, Car, Loader2 } from "lucide-react";
+import { ArrowLeft, Car, Loader2, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { RatingExplainer } from "@/components/RatingExplainer";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface CarDetail {
   id: string;
+  user_id: string;
   brand: string;
   model: string;
   year: number;
@@ -38,6 +47,9 @@ const CarDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: car, isLoading: loading } = useQuery({
     queryKey: ["car", id],
@@ -85,6 +97,23 @@ const CarDetails = () => {
     return badges;
   };
 
+  const handleDelete = async () => {
+    if (!car || !user || car.user_id !== user.id) return;
+    if (!confirm("Supprimer ce spot ?")) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("cars").delete().eq("id", car.id).eq("user_id", user.id);
+      if (error) throw error;
+      toast.success("Spot supprimé");
+      queryClient.invalidateQueries({ queryKey: ["my-cars", user.id] });
+      navigate("/garage");
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la suppression");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -110,16 +139,32 @@ const CarDetails = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold truncate">
+        <h1 className="text-xl font-bold truncate flex-1">
           {car.brand} {car.model}
         </h1>
+        {user && car.user_id === user.id && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={handleDelete}
+            disabled={deleting}
+            aria-label="Supprimer le spot"
+          >
+            {deleting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 className="h-5 w-5" />}
+          </Button>
+        )}
       </header>
 
       <div className="relative z-10 max-w-2xl mx-auto">
         {car.image_url ? (
-          <div className="w-full h-64 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setPhotoPopupOpen(true)}
+            className="w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl"
+          >
             <img src={car.image_url} alt={`${car.brand} ${car.model}`} className="h-full w-full object-cover" loading="lazy" />
-          </div>
+          </button>
         ) : (
           <div className="w-full h-64 flex items-center justify-center bg-secondary/20">
             <Car className="h-20 w-20 text-muted-foreground/20" />
@@ -202,6 +247,28 @@ const CarDetails = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={photoPopupOpen} onOpenChange={setPhotoPopupOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto p-0 overflow-hidden bg-black/95 border-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{car.brand} {car.model} – photo</DialogTitle>
+          </DialogHeader>
+          <button
+            type="button"
+            onClick={() => setPhotoPopupOpen(false)}
+            className="absolute right-2 top-2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+            aria-label="Fermer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={car.image_url!}
+            alt={`${car.brand} ${car.model}`}
+            className="max-w-full max-h-[90vh] w-auto h-auto object-contain mx-auto"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,7 @@ const Dashboard = () => {
           .select("id, image_url, latitude, longitude, created_at")
           .eq("user_id", user!.id)
           .order("created_at", { ascending: false }),
-        supabase.from("profiles").select("username").eq("user_id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("username, pinned_car_id").eq("user_id", user!.id).maybeSingle(),
         supabase
           .from("friendships")
           .select("*", { count: "exact", head: true })
@@ -36,7 +36,9 @@ const Dashboard = () => {
       ]);
 
       const cars = carsRes.data || [];
-      const latestCarImage = cars.length > 0 ? cars[0].image_url : null;
+      const pinnedCarId = profileRes.data?.pinned_car_id ?? null;
+      const pinnedCar = pinnedCarId ? cars.find((c) => c.id === pinnedCarId) : null;
+      const latestCarImage = (pinnedCar?.image_url ?? cars[0]?.image_url) ?? null;
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const mapSpots = cars
         .filter((c) => c.latitude && c.longitude && c.created_at >= sevenDaysAgo)
@@ -113,6 +115,16 @@ const Dashboard = () => {
 
   const currentFriendSpot = friendSpots[friendsTileIndex] ?? null;
 
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) setProfileMenuOpen(false);
+    };
+    if (profileMenuOpen) document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [profileMenuOpen]);
+
   const tiles = [
     { title: "My Garage", subtitle: `${carCount} car${carCount !== 1 ? "s" : ""} spotted`, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0 },
     { title: "Friends' Garages", subtitle: "See your friends", icon: Users, image: null, onClick: () => navigate("/friends"), gradient: "from-blue-500/20 to-blue-500/5", notificationCount: friendNotificationCount },
@@ -130,8 +142,37 @@ const Dashboard = () => {
           </div>
           <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent">AutoSpot</h1>
         </div>
-        <div className="flex items-center gap-0.5">
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => navigate("/profile")}><User className="h-5 w-5" /></Button>
+        <div className="flex items-center gap-0.5 relative" ref={profileMenuRef}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-primary"
+            onClick={() => setProfileMenuOpen((o) => !o)}
+            aria-expanded={profileMenuOpen}
+            aria-haspopup="true"
+          >
+            <User className="h-5 w-5" />
+          </Button>
+          {profileMenuOpen && (
+            <div className="absolute right-0 top-full mt-1 py-1 min-w-[180px] rounded-xl border border-border bg-card shadow-lg z-50">
+              <button
+                type="button"
+                className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 rounded-t-xl"
+                onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }}
+              >
+                <User className="h-4 w-4" />
+                Mon profil
+              </button>
+              <button
+                type="button"
+                className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 rounded-b-xl"
+                onClick={() => { setProfileMenuOpen(false); navigate("/garage-settings"); }}
+              >
+                <Car className="h-4 w-4" />
+                Mon garage
+              </button>
+            </div>
+          )}
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={handleSignOut}><LogOut className="h-5 w-5" /></Button>
         </div>
       </header>

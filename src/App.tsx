@@ -15,6 +15,7 @@ const AddCar = lazy(() => import("./pages/AddCar"));
 const AutoSpotter = lazy(() => import("./pages/AutoSpotter"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Profile = lazy(() => import("./pages/Profile"));
+const GarageSettings = lazy(() => import("./pages/GarageSettings"));
 const SpotMap = lazy(() => import("./pages/SpotMap"));
 const FriendsGarages = lazy(() => import("./pages/FriendsGarages"));
 const CarDetails = lazy(() => import("./pages/CarDetails"));
@@ -67,6 +68,7 @@ const App = () => (
                 <Route path="/autospotter" element={<ProtectedRoute><AutoSpotter /></ProtectedRoute>} />
                 <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/garage-settings" element={<ProtectedRoute><GarageSettings /></ProtectedRoute>} />
                 <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
                 <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
                 <Route path="/car/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />

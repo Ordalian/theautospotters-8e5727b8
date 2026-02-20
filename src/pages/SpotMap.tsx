@@ -2,11 +2,18 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight, ChevronLeft, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const ZOOM_2KM = 14;
 const SEARCH_RADIUS_KM = 50;
@@ -30,6 +37,7 @@ interface MapSpot {
   latitude: number;
   longitude: number;
   location_name: string | null;
+  location_precision: string | null;
   image_url: string | null;
   user_id: string;
   username: string | null;
@@ -42,21 +50,38 @@ const SpotMap = () => {
   const mapCenterFromState = (location.state as { mapCenter?: { lat: number; lng: number } | null })?.mapCenter ?? null;
 
   const [allSpots, setAllSpots] = useState<MapSpot[]>([]);
+  const [friendIds, setFriendIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [userCenter, setUserCenter] = useState<{ lat: number; lng: number } | null>(mapCenterFromState);
   const [focusIndex, setFocusIndex] = useState(-1);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.CircleMarker[]>([]);
+  const markersRef = useRef<(L.CircleMarker | L.Marker)[]>([]);
 
   useEffect(() => {
     const fetchSpots = async () => {
       const { data: myCars } = await supabase
         .from("cars")
-        .select("id, brand, model, year, latitude, longitude, location_name, image_url, user_id, created_at")
+        .select("id, brand, model, year, latitude, longitude, location_name, location_precision, image_url, user_id, created_at")
         .not("latitude", "is", null)
         .not("longitude", "is", null);
+
+      let friendIdSet = new Set<string>();
+      if (user) {
+        const { data: friendships } = await supabase
+          .from("friendships")
+          .select("requester_id, addressee_id")
+          .eq("status", "accepted")
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+        if (friendships) {
+          friendships.forEach((f) => {
+            const other = f.requester_id === user.id ? f.addressee_id : f.requester_id;
+            friendIdSet.add(other);
+          });
+        }
+        setFriendIds(friendIdSet);
+      }
 
       if (myCars) {
         const userIds = [...new Set(myCars.map((c) => c.user_id))];
@@ -70,6 +95,7 @@ const SpotMap = () => {
             ...c,
             latitude: c.latitude!,
             longitude: c.longitude!,
+            location_precision: c.location_precision ?? "precise",
             username: profileMap.get(c.user_id) || null,
           }))
         );
@@ -77,7 +103,7 @@ const SpotMap = () => {
       setLoading(false);
     };
     fetchSpots();
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -118,12 +144,14 @@ const SpotMap = () => {
     const map = L.map(mapRef.current, {
       center: [initLat, initLng],
       zoom: center ? ZOOM_2KM : 2,
+      zoomControl: false,
     });
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
     }).addTo(map);
 
+    L.control.zoom({ position: "bottomright" }).addTo(map);
     mapInstance.current = map;
 
     return () => {
@@ -145,9 +173,16 @@ const SpotMap = () => {
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
+    const isFriend = (uid: string) => friendIds.has(uid);
+    const getColor = (spot: MapSpot) => {
+      if (spot.user_id === user?.id) return "#dc2626"; // red — mes spots
+      if (isFriend(spot.user_id)) return "#16a34a"; // green — amis
+      return "#2563eb"; // blue — non amis
+    };
+
     displaySpots.forEach((spot) => {
-      const isOwn = spot.user_id === user?.id;
-      const color = isOwn ? "hsl(14, 100%, 55%)" : "#3b82f6";
+      const color = getColor(spot);
+      const isPrecise = spot.location_precision !== "general";
       const popupEl = document.createElement("div");
       popupEl.style.fontSize = "13px";
       popupEl.style.fontFamily = "sans-serif";
@@ -170,30 +205,45 @@ const SpotMap = () => {
         img.style.marginTop = "4px";
         popupEl.appendChild(img);
       }
-      const marker = L.circleMarker([spot.latitude, spot.longitude], {
-        radius: 8,
-        color,
-        fillColor: color,
-        fillOpacity: 0.8,
-        weight: 2,
-      })
-        .bindPopup(popupEl)
-        .addTo(map);
-      markersRef.current.push(marker);
+
+      if (isPrecise) {
+        const marker = L.circleMarker([spot.latitude, spot.longitude], {
+          radius: 8,
+          color,
+          fillColor: color,
+          fillOpacity: 0.9,
+          weight: 2,
+        })
+          .bindPopup(popupEl)
+          .addTo(map);
+        markersRef.current.push(marker);
+      } else {
+        const size = 10;
+        const icon = L.divIcon({
+          className: "spot-marker-square",
+          html: `<div style="width:${size * 2}px;height:${size * 2}px;background:${color};border:2px solid #fff;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
+          iconSize: [size * 2, size * 2],
+          iconAnchor: [size, size],
+        });
+        const marker = L.marker([spot.latitude, spot.longitude], { icon })
+          .bindPopup(popupEl)
+          .addTo(map);
+        markersRef.current.push(marker);
+      }
     });
 
     if (searchLower && filteredSpots.length > 0) {
       const bounds = L.latLngBounds(filteredSpots.map((s) => [s.latitude, s.longitude]));
       map.fitBounds(bounds.pad(0.15));
     }
-  }, [displaySpots, filteredSpots, searchLower, user?.id]);
+  }, [displaySpots, filteredSpots, searchLower, user?.id, friendIds]);
 
   useEffect(() => {
     if (focusIndex < 0 || focusIndex >= filteredSpots.length || !mapInstance.current) return;
     const spot = filteredSpots[focusIndex];
     mapInstance.current.setView([spot.latitude, spot.longitude], Math.max(mapInstance.current.getZoom(), 15));
     const idx = displaySpots.findIndex((s) => s.id === spot.id);
-    if (idx >= 0 && markersRef.current[idx]) markersRef.current[idx].openPopup();
+    if (idx >= 0 && markersRef.current[idx]) (markersRef.current[idx] as L.Marker).openPopup?.();
   }, [focusIndex, filteredSpots, displaySpots]);
 
   const goNext = () => {
@@ -255,7 +305,51 @@ const SpotMap = () => {
             <div className="animate-pulse text-muted-foreground">Chargement de la carte...</div>
           </div>
         ) : (
-          <div ref={mapRef} className="z-0 absolute inset-0" />
+          <>
+            <div ref={mapRef} className="z-0 absolute inset-0" />
+            <div className="absolute bottom-16 right-4 z-[1000] flex flex-col gap-1">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="secondary" size="icon" className="h-10 w-10 rounded-full shadow-lg" aria-label="Légende">
+                    <Info className="h-5 w-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>Légende de la carte</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 text-sm">
+                    <p className="font-medium text-muted-foreground">Couleurs</p>
+                    <ul className="space-y-1.5">
+                      <li className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full bg-[#dc2626] shrink-0" />
+                        <span>Mes spots</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full bg-[#16a34a] shrink-0" />
+                        <span>Spots des amis</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full bg-[#2563eb] shrink-0" />
+                        <span>Spots des autres</span>
+                      </li>
+                    </ul>
+                    <p className="font-medium text-muted-foreground pt-2">Formes</p>
+                    <ul className="space-y-1.5">
+                      <li className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full border-2 border-muted-foreground shrink-0" />
+                        <span>Position précise (Ma position GPS, Choisir un lieu)</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="h-3 w-3 border-2 border-muted-foreground shrink-0 rounded-sm" style={{ width: 12, height: 12 }} />
+                        <span>Lieu général (Écrire un lieu)</span>
+                      </li>
+                    </ul>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </>
         )}
       </div>
     </div>
