@@ -57,10 +57,10 @@ const MyGarage = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("cars")
-        .select("*")
+        .select("id, brand, model, year, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
-      return (data as unknown as SpottedCar[]) || [];
+      return (data as SpottedCar[]) || [];
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
