@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme, THEMES, type ThemeId } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, User, Check, UserPlus, X } from "lucide-react";
+import { ArrowLeft, User, Check, UserPlus, X, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ interface FriendRequest {
 
 const Profile = () => {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
@@ -130,6 +132,38 @@ const Profile = () => {
             </Button>
           </div>
         )}
+
+        {/* Theme Selector */}
+        <div className="space-y-3">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Palette className="h-5 w-5 text-primary" />
+            Thème de l'application
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTheme(t.id)}
+                className={`relative flex items-center gap-3 rounded-xl border-2 p-3 transition-all ${
+                  theme === t.id
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                <div
+                  className="h-10 w-10 shrink-0 rounded-lg border border-white/10"
+                  style={{
+                    background: `linear-gradient(135deg, ${t.preview.bg} 0%, ${t.preview.accent} 100%)`,
+                  }}
+                />
+                <span className="text-sm font-semibold">{t.label}</span>
+                {theme === t.id && (
+                  <Check className="absolute right-2 top-2 h-4 w-4 text-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Friend Requests */}
         {requests.length > 0 && (
