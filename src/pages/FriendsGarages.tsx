@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, UserPlus, Car, X } from "lucide-react";
+import { ArrowLeft, UserPlus, Car, X, Check } from "lucide-react";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,12 @@ interface FriendCar {
   username: string | null;
 }
 
+interface FriendRequest {
+  id: string;
+  requester_id: string;
+  username: string | null;
+}
+
 const FriendsGarages = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -52,6 +58,7 @@ const FriendsGarages = () => {
   const [loading, setLoading] = useState(true);
   const [friendSort, setFriendSort] = useState<GarageSortOption>("newest");
   const [removeConfirm, setRemoveConfirm] = useState<{ friendshipId: string; username: string } | null>(null);
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
 
   const sortedFriendCars = useMemo(() => {
     const sorted = [...friendCars];
@@ -70,6 +77,23 @@ const FriendsGarages = () => {
   useEffect(() => {
     if (user) fetchFriends();
   }, [user]);
+
+  const fetchRequests = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("friendships")
+      .select("id, requester_id")
+      .eq("addressee_id", user.id)
+      .eq("status", "pending");
+    if (data?.length) {
+      const userIds = data.map((r) => r.requester_id);
+      const { data: profiles } = await supabase.from("profiles").select("user_id, username").in("user_id", userIds);
+      const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
+      setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id) || null })));
+    } else {
+      setRequests([]);
+    }
+  };
 
   const fetchFriends = async () => {
     if (!user) return;
@@ -116,6 +140,7 @@ const FriendsGarages = () => {
       setFriends([]);
       setRecentSpots([]);
     }
+    fetchRequests();
     setLoading(false);
   };
 
@@ -171,12 +196,32 @@ const FriendsGarages = () => {
   };
 
   const handleRemoveFriend = async (friendshipId: string) => {
-    await supabase.from("friendships").delete().eq("id", friendshipId);
+    const { error } = await supabase.from("friendships").delete().eq("id", friendshipId);
+    if (error) {
+      toast.error(error.message || "Impossible de retirer cet ami");
+      return;
+    }
     toast.success("Ami retiré");
     setRemoveConfirm(null);
     setSelectedFriend(null);
     setFriendCars([]);
     fetchFriends();
+  };
+
+  const handleAcceptRequest = async (id: string) => {
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    if (error) {
+      toast.error(error.message || "Erreur");
+      return;
+    }
+    toast.success("Demande acceptée !");
+    fetchFriends(); // rafraîchit amis + demandes
+  };
+
+  const handleDeclineRequest = async (id: string) => {
+    await supabase.from("friendships").delete().eq("id", id);
+    toast.success("Demande refusée");
+    fetchRequests();
   };
 
   return (
@@ -208,6 +253,31 @@ const FriendsGarages = () => {
                 Ajouter
               </Button>
             </div>
+
+            {/* Demandes d'amis */}
+            {requests.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Demandes d'amis ({requests.length})
+                </h2>
+                {requests.map((req) => (
+                  <div
+                    key={req.id}
+                    className="flex items-center justify-between rounded-xl border border-border bg-card p-3"
+                  >
+                    <span className="font-medium">{req.username || "Anonyme"}</span>
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" onClick={() => handleAcceptRequest(req.id)} className="gap-1">
+                        <Check className="h-4 w-4" /> Accepter
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => handleDeclineRequest(req.id)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Recent Spots Carousel */}
             {recentSpots.length > 0 && (
@@ -299,12 +369,16 @@ const FriendsGarages = () => {
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className="gap-2 sm:gap-0">
-                <Button variant="outline" onClick={() => setRemoveConfirm(null)}>
+                <Button type="button" variant="outline" onClick={() => setRemoveConfirm(null)}>
                   Annuler
                 </Button>
                 <Button
+                  type="button"
                   variant="destructive"
-                  onClick={() => removeConfirm && handleRemoveFriend(removeConfirm.friendshipId)}
+                  onClick={() => {
+                    if (!removeConfirm) return;
+                    handleRemoveFriend(removeConfirm.friendshipId);
+                  }}
                 >
                   Retirer
                 </Button>
