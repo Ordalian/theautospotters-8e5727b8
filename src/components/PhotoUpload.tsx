@@ -17,6 +17,10 @@ interface PhotoUploadDialogProps {
   onPhotoSelect: (file: File, source: PhotoSourceType) => void;
 }
 
+/**
+ * Popup in-app : choix entre appareil photo (caméra dans l'app) ou galerie.
+ * Caméra = getUserMedia dans l'app ; Galerie = sélecteur système (galerie/caméra).
+ */
 export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUploadDialogProps) {
   const [mode, setMode] = useState<"choice" | "camera">("choice");
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -45,7 +49,6 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
     input.type = "file";
     input.accept = "image/*";
     input.setAttribute("multiple", "false");
-    // Do not use capture so the system opens gallery (or offers both) in-app
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
@@ -120,40 +123,40 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
             {mode === "camera" ? "Prendre une photo" : "Ajouter une photo"}
           </DialogTitle>
           <DialogDescription>
-            {" "}avec l’{mode === "choice"
+            {mode === "choice"
               ? "Choisissez : caméra dans l'app ou galerie."
               : "La caméra s'ouvre dans l'application."}
           </DialogDescription>
         </DialogHeader>
 
         {mode === "choice" ? (
-        <div className="grid gap-3 py-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-24 flex flex-col gap-2 hover:border-primary"
-            onClick={startCamera}
-          >
-            <Camera className="h-8 w-8" />
-            <div className="text-center">
-              <div className="font-semibold">Appareil photo</div>
-              <div className="text-xs text-muted-foreground">Caméra dans l'app (+3 qualité)</div>
-            </div>
-          </Button>
+          <div className="grid gap-3 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-24 flex flex-col gap-2 hover:border-primary"
+              onClick={startCamera}
+            >
+              <Camera className="h-8 w-8" />
+              <div className="text-center">
+                <div className="font-semibold">Appareil photo</div>
+                <div className="text-xs text-muted-foreground">Caméra dans l'app (+3 qualité)</div>
+              </div>
+            </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="h-24 flex flex-col gap-2 hover:border-primary"
-            onClick={openGallery}
-          >
-            <Image className="h-8 w-8" />
-            <div className="text-center">
-              <div className="font-semibold">Galerie</div>
-              <div className="text-xs text-muted-foreground">Choisir une photo dans la galerie (+2 qualité)</div>
-            </div>
-          </Button>
-        </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-24 flex flex-col gap-2 hover:border-primary"
+              onClick={openGallery}
+            >
+              <Image className="h-8 w-8" />
+              <div className="text-center">
+                <div className="font-semibold">Galerie</div>
+                <div className="text-xs text-muted-foreground">Choisir une photo dans la galerie (+2 qualité)</div>
+              </div>
+            </Button>
+          </div>
         ) : (
           <div className="space-y-3 py-2">
             <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-black">
@@ -192,7 +195,7 @@ export function PhotoPreview({ imageUrl, onRemove, isBlurry = false, onBlurryCha
   return (
     <div className="relative rounded-xl overflow-hidden border border-border">
       <img src={imageUrl} alt="Preview" className="w-full h-48 object-cover" />
-      
+
       <button
         onClick={onRemove}
         className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur p-2 hover:bg-background transition-colors"

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { Loader2 } from "lucide-react";
 
 // Lazy-load all pages
@@ -56,21 +57,23 @@ const App = () => (
       <Toaster />
       <BrowserRouter>
         <AuthProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/garage" element={<ProtectedRoute><MyGarage /></ProtectedRoute>} />
-              <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
-              <Route path="/autospotter" element={<ProtectedRoute><AutoSpotter /></ProtectedRoute>} />
-              <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
-              <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
-              <Route path="/car/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+          <ThemeProvider>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+                <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/garage" element={<ProtectedRoute><MyGarage /></ProtectedRoute>} />
+                <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
+                <Route path="/autospotter" element={<ProtectedRoute><AutoSpotter /></ProtectedRoute>} />
+                <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
+                <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
+                <Route path="/car/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
