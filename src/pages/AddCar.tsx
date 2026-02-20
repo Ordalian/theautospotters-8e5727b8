@@ -135,7 +135,10 @@ const AddCar = () => {
         const { error: uploadErr } = await supabase.storage
           .from("car-photos")
           .upload(path, imageFile);
-        if (uploadErr) throw uploadErr;
+        if (uploadErr) {
+          const storageMsg = uploadErr.message || "Upload failed";
+          throw new Error(`Photo: ${storageMsg}`);
+        }
         const { data: urlData } = supabase.storage
           .from("car-photos")
           .getPublicUrl(path);
@@ -179,11 +182,25 @@ const AddCar = () => {
         rarity_rating: rarityRating.level,
       });
 
-      if (error) throw error;
+      if (error) {
+        const dbMsg = error.message || "Database error";
+        const err: any = new Error(dbMsg);
+        err.details = error.details;
+        err.hint = error.hint;
+        throw err;
+      }
       toast.success(`${brand} ${model} added to your garage!`);
       navigate("/garage");
     } catch (err: any) {
-      toast.error(err.message || "Failed to add car");
+      const msg =
+        err?.message
+        ?? err?.error_description
+        ?? (typeof err?.details === "string" ? err.details : null)
+        ?? (err?.error ? String(err.error) : null)
+        ?? "Failed to add car";
+      const hint = err?.hint ? ` (${err.hint})` : "";
+      toast.error(`${msg}${hint}`);
+      console.error("Add car error:", err);
     } finally {
       setLoading(false);
     }

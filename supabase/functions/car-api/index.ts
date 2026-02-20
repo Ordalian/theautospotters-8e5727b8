@@ -176,7 +176,7 @@ Reply ONLY with a valid JSON array of strings, each string being one edition/tri
       const editionHint = edition ? ` (trim/edition: ${edition})` : "";
       const prompt = `You are a car expert. For the car: ${year} ${brand} ${model}${editionHint}.
 Reply ONLY with a valid JSON array of engine options, no other text or markdown.
-Each object: "name" (e.g. "2.0 TFSI", "3.0L I6"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"), "hp" (number). List all engine options for this model/year (up to 15). If unsure, return [].`;
+Each object: "name" (e.g. "2.0 TFSI", "3.0L I6"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). List ALL engine options including LPG/autogas and dual-fuel where applicable (e.g. Renault LPG, many European models). Up to 15 engines. If unsure, return [].`;
       const text = await callAI(API_KEY, [{ role: "user", content: prompt }]);
       return jsonResponse({ engines: parseEngines(text) });
     }
@@ -207,7 +207,7 @@ Structure: one or two short paragraphs covering origin of the model, main techni
 
 1. "description": A short encyclopedic description in French (style Wikipedia, factual, neutral, no emojis, no bullet symbols, no section titles, no asterisks). Cover origin, technical characteristics, production context, notable facts. Max 1200 characters.
 
-2. "engines": A JSON array of engine options. Each object has: "name" (e.g. "2.0 TFSI"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"), "hp" (number). Up to 15 engines.
+2. "engines": A JSON array of engine options. Each object has: "name" (e.g. "2.0 TFSI"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). Include LPG/autogas and dual-fuel where applicable (e.g. Renault). Up to 15 engines.
 
 Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. No markdown, no extra text.`;
 

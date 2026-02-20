@@ -44,6 +44,8 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
+    input.setAttribute("multiple", "false");
+    // Do not use capture so the system opens gallery (or offers both) in-app
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
@@ -112,13 +114,15 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[100vw] max-w-[100vw] h-[100dvh] max-h-[100dvh] rounded-none sm:max-w-md sm:h-auto sm:max-h-[90vh] sm:rounded-lg flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {mode === "camera" ? "Prendre une photo" : "Ajouter une photo"}
           </DialogTitle>
           <DialogDescription>
-            Prendre une photo avec l’appareil ou choisir depuis la galerie
+            {" "}avec l’{mode === "choice"
+              ? "Choisissez : caméra dans l'app ou galerie."
+              : "La caméra s'ouvre dans l'application."}
           </DialogDescription>
         </DialogHeader>
 
@@ -132,8 +136,8 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
           >
             <Camera className="h-8 w-8" />
             <div className="text-center">
-              <div className="font-semibold">Prendre une photo</div>
-              <div className="text-xs text-muted-foreground">Ouvre la caméra du téléphone (+3 qualité)</div>
+              <div className="font-semibold">Appareil photo</div>
+              <div className="text-xs text-muted-foreground">Caméra dans l'app (+3 qualité)</div>
             </div>
           </Button>
 
@@ -146,7 +150,7 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
             <Image className="h-8 w-8" />
             <div className="text-center">
               <div className="font-semibold">Galerie</div>
-              <div className="text-xs text-muted-foreground">Choisir une photo existante (+2 qualité)</div>
+              <div className="text-xs text-muted-foreground">Choisir une photo dans la galerie (+2 qualité)</div>
             </div>
           </Button>
         </div>
