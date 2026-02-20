@@ -17,6 +17,7 @@ function jsonResponse(data: unknown, status = 200) {
 function errResponse(message: string, status = 500) {
   return jsonResponse({ error: message }, status);
 }
+
 function parseEngines(text: string): { name: string; displacement: string; fuel: string; hp: number }[] {
   try {
     const jsonMatch = text.match(/\[[\s\S]*\]/);
@@ -78,13 +79,61 @@ async function callAI(apiKey: string, messages: { role: string; content: string 
   throw new Error("All AI models failed or returned empty content.");
 }
 
+// ── Wikipedia fetch ──────────────────────────────────────────────────
+
+async function fetchWikipediaContent(brand: string, model: string): Promise<{ text: string; lang: string } | null> {
+  const query = `${brand} ${model}`;
+  const userAgent = "TheAutoSpotters/1.0 (car-api edge function)";
+
+  for (const lang of ["fr", "en"]) {
+    try {
+      // Step 1: search
+      const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=3&format=json`;
+      const searchRes = await fetch(searchUrl, { headers: { "User-Agent": userAgent } });
+      if (!searchRes.ok) continue;
+      const searchData = await searchRes.json();
+      const results = searchData?.query?.search;
+      if (!results?.length) continue;
+
+      // Pick best title (prefer one containing brand or model name)
+      const brandLower = brand.toLowerCase();
+      const modelLower = model.toLowerCase();
+      const best = results.find((r: any) => {
+        const t = r.title.toLowerCase();
+        return t.includes(brandLower) || t.includes(modelLower);
+      }) || results[0];
+
+      // Step 2: get extract
+      const extractUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=true&exlimit=1&titles=${encodeURIComponent(best.title)}&format=json`;
+      const extractRes = await fetch(extractUrl, { headers: { "User-Agent": userAgent } });
+      if (!extractRes.ok) continue;
+      const extractData = await extractRes.json();
+      const pages = extractData?.query?.pages;
+      if (!pages) continue;
+
+      const page = Object.values(pages)[0] as any;
+      const extract = page?.extract;
+      if (!extract || extract.length < 100) continue;
+
+      // Truncate to ~4000 chars to fit in prompt
+      const truncated = extract.length > 4000 ? extract.slice(0, 4000) + "…" : extract;
+      console.log(`Wikipedia: found article "${best.title}" (${lang}), ${extract.length} chars`);
+      return { text: truncated, lang };
+    } catch (e) {
+      console.warn(`Wikipedia ${lang} search failed:`, e);
+    }
+  }
+
+  console.log("Wikipedia: no article found for", query);
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Validate authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return errResponse("Missing authorization header.", 401);
@@ -144,13 +193,28 @@ The confidence should be a number between 0 and 1. If you cannot identify the ca
       return jsonResponse(parsed);
     }
 
-    // —— action: editions —— (trims / limited series for brand+model+year)
+    // —— action: editions ——
     if (body.action === "editions") {
       const { brand, model, year } = body;
       if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
 
-      const prompt = `You are a car expert. For the ${year} ${brand} ${model}, list the main trim levels, editions, and limited series (e.g. "GT Line", "Sport", "Limited Edition 500", "M Package").
+      const wiki = await fetchWikipediaContent(brand, model);
+
+      let prompt: string;
+      if (wiki) {
+        prompt = `Voici le contenu de l'article Wikipedia (${wiki.lang}) pour la ${brand} ${model} :
+
+---
+${wiki.text}
+---
+
+À partir de ce texte, extrais la liste des finitions, éditions spéciales, séries limitées et niveaux de finition (ex: "GT Line", "Sport", "Limited Edition", "M Package").
+Réponds UNIQUEMENT avec un tableau JSON de strings. Pas de markdown, pas d'autre texte. Entre 5 et 25 entrées. Si tu ne trouves rien dans le texte, utilise tes connaissances pour compléter.`;
+      } else {
+        prompt = `You are a car expert. For the ${year} ${brand} ${model}, list the main trim levels, editions, and limited series (e.g. "GT Line", "Sport", "Limited Edition 500", "M Package").
 Reply ONLY with a valid JSON array of strings, each string being one edition/trim name. No other text or markdown. Use 5 to 20 entries. If you don't know, return [].`;
+      }
+
       const text = await callAI(API_KEY, [{ role: "user", content: prompt }]);
       let editions: string[] = [];
       try {
@@ -162,9 +226,7 @@ Reply ONLY with a valid JSON array of strings, each string being one edition/tri
             .map((e: unknown) => String(e).trim())
             .slice(0, 25);
         }
-      } catch {
-        // keep []
-      }
+      } catch { /* keep [] */ }
       return jsonResponse({ editions });
     }
 
@@ -173,10 +235,25 @@ Reply ONLY with a valid JSON array of strings, each string being one edition/tri
       const { brand, model, year, edition } = body;
       if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
 
+      const wiki = await fetchWikipediaContent(brand, model);
       const editionHint = edition ? ` (trim/edition: ${edition})` : "";
-      const prompt = `You are a car expert. For the car: ${year} ${brand} ${model}${editionHint}.
+
+      let prompt: string;
+      if (wiki) {
+        prompt = `Voici le contenu de l'article Wikipedia (${wiki.lang}) pour la ${brand} ${model} :
+
+---
+${wiki.text}
+---
+
+À partir de ce texte, extrais TOUTES les motorisations disponibles pour la ${year} ${brand} ${model}${editionHint}.
+Réponds UNIQUEMENT avec un tableau JSON. Chaque objet : "name" (ex: "2.0 TFSI"), "displacement" (ex: "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (nombre). Inclus les versions GPL/LPG si mentionnées. Jusqu'à 15 moteurs. Si le texte ne contient pas assez d'infos, complète avec tes connaissances.`;
+      } else {
+        prompt = `You are a car expert. For the car: ${year} ${brand} ${model}${editionHint}.
 Reply ONLY with a valid JSON array of engine options, no other text or markdown.
-Each object: "name" (e.g. "2.0 TFSI", "3.0L I6"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). List ALL engine options including LPG/autogas and dual-fuel where applicable (e.g. Renault LPG, many European models). Up to 15 engines. If unsure, return [].`;
+Each object: "name" (e.g. "2.0 TFSI", "3.0L I6"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). List ALL engine options including LPG/autogas and dual-fuel where applicable. Up to 15 engines. If unsure, return [].`;
+      }
+
       const text = await callAI(API_KEY, [{ role: "user", content: prompt }]);
       return jsonResponse({ engines: parseEngines(text) });
     }
@@ -186,9 +263,24 @@ Each object: "name" (e.g. "2.0 TFSI", "3.0L I6"), "displacement" (e.g. "2.0L"), 
       const { brand, model, year, edition } = body;
       if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
 
+      const wiki = await fetchWikipediaContent(brand, model);
       const editionHint = edition ? ` (version/édition: ${edition})` : "";
-      const prompt = `Write a short encyclopedic description of the ${year} ${brand} ${model}${editionHint} in French, in the style of Wikipedia: factual, neutral tone, no emojis, no bullet symbols.
+
+      let prompt: string;
+      if (wiki) {
+        prompt = `Voici le contenu de l'article Wikipedia (${wiki.lang}) pour la ${brand} ${model} :
+
+---
+${wiki.text}
+---
+
+À partir de ce texte, rédige une description encyclopédique courte de la ${year} ${brand} ${model}${editionHint} en français, dans le style Wikipedia : factuel, ton neutre, pas d'emojis, pas de puces.
+Structure : un ou deux courts paragraphes couvrant l'origine du modèle, les caractéristiques techniques principales, le contexte de production et les faits notables. Maximum 1200 caractères. Pas de titres de section ni d'astérisques.`;
+      } else {
+        prompt = `Write a short encyclopedic description of the ${year} ${brand} ${model}${editionHint} in French, in the style of Wikipedia: factual, neutral tone, no emojis, no bullet symbols.
 Structure: one or two short paragraphs covering origin of the model, main technical characteristics (engine, power, chassis), production context, and notable facts. Maximum 1200 characters. Do not use section titles or asterisks.`;
+      }
+
       const description = await callAI(API_KEY, [
         { role: "system", content: "You are an expert automotive encyclopedia writer. Always respond with the requested content directly, no preamble." },
         { role: "user", content: prompt },
@@ -197,19 +289,38 @@ Structure: one or two short paragraphs covering origin of the model, main techni
       return jsonResponse({ description: final });
     }
 
-    // —— action: car-info (combined description + engines in one call) ——
+    // —— action: car-info (combined description + engines) ——
     if (body.action === "car-info") {
       const { brand, model, year, edition } = body;
       if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
 
+      const wiki = await fetchWikipediaContent(brand, model);
       const editionHint = edition ? ` (version/édition: ${edition})` : "";
-      const prompt = `For the ${year} ${brand} ${model}${editionHint}, provide TWO things in a single JSON response:
+
+      let prompt: string;
+      if (wiki) {
+        prompt = `Voici le contenu de l'article Wikipedia (${wiki.lang}) pour la ${brand} ${model} :
+
+---
+${wiki.text}
+---
+
+À partir de ce texte, fournis DEUX choses pour la ${year} ${brand} ${model}${editionHint} dans une seule réponse JSON :
+
+1. "description": Une description encyclopédique courte en français (style Wikipedia, factuel, neutre, pas d'emojis, pas de puces, pas de titres, pas d'astérisques). Couvre l'origine, les caractéristiques techniques, le contexte de production, les faits notables. Max 1200 caractères.
+
+2. "engines": Un tableau JSON des motorisations. Chaque objet : "name" (ex: "2.0 TFSI"), "displacement" (ex: "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (nombre). Inclus GPL/LPG si mentionné. Jusqu'à 15 moteurs. Si le texte ne contient pas assez d'infos sur les moteurs, complète avec tes connaissances.
+
+Réponds UNIQUEMENT avec un objet JSON valide : {"description": "...", "engines": [...]}. Pas de markdown, pas d'autre texte.`;
+      } else {
+        prompt = `For the ${year} ${brand} ${model}${editionHint}, provide TWO things in a single JSON response:
 
 1. "description": A short encyclopedic description in French (style Wikipedia, factual, neutral, no emojis, no bullet symbols, no section titles, no asterisks). Cover origin, technical characteristics, production context, notable facts. Max 1200 characters.
 
-2. "engines": A JSON array of engine options. Each object has: "name" (e.g. "2.0 TFSI"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). Include LPG/autogas and dual-fuel where applicable (e.g. Renault). Up to 15 engines.
+2. "engines": A JSON array of engine options. Each object has: "name" (e.g. "2.0 TFSI"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). Include LPG/autogas and dual-fuel where applicable. Up to 15 engines.
 
 Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. No markdown, no extra text.`;
+      }
 
       const text = await callAI(API_KEY, [
         { role: "system", content: "You are an expert automotive encyclopedia. Return only the requested JSON, no preamble." },
@@ -229,7 +340,6 @@ Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. N
           engines = parseEngines(JSON.stringify(parsed.engines));
         }
       } catch {
-        // fallback: try to extract description from raw text
         if (text.length > 20) description = text;
       }
 
