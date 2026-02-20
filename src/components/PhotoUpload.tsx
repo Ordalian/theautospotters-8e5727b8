@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Camera, Image, X } from "lucide-react";
+import { useRef } from "react";
+import { Image, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,30 +17,12 @@ interface PhotoUploadDialogProps {
   onPhotoSelect: (file: File, source: PhotoSourceType) => void;
 }
 
+/**
+ * Un seul bouton « Choisir une photo » : ouvre le sélecteur du téléphone (caméra ou galerie)
+ * une seule fois, sans redemander « galerie » après avoir choisi galerie dans l'app.
+ */
 export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUploadDialogProps) {
-  const [mode, setMode] = useState<"choice" | "camera">("choice");
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    if (!open) {
-      setMode("choice");
-      stopCamera();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    return () => stopCamera();
-  }, []);
-
-  const openGallery = () => {
+  const openPicker = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
@@ -58,120 +40,25 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
     setTimeout(() => input.remove(), 60000);
   };
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setMode("camera");
-    } catch (err) {
-      console.error("Camera error:", err);
-      onOpenChange(false);
-    }
-  };
-
-  useEffect(() => {
-    if (mode !== "camera" || !streamRef.current) return;
-    const video = videoRef.current;
-    if (video) {
-      video.srcObject = streamRef.current;
-      video.play().catch(() => {});
-    }
-  }, [mode]);
-
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    if (!video || !streamRef.current) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
-    canvas.toBlob(
-      (blob) => {
-        stopCamera();
-        if (blob) {
-          const file = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
-          onPhotoSelect(file, "camera");
-          onOpenChange(false);
-        }
-        setMode("choice");
-      },
-      "image/jpeg",
-      0.9
-    );
-  };
-
-  const backFromCamera = () => {
-    stopCamera();
-    setMode("choice");
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {mode === "camera" ? "Prendre une photo" : "Ajouter une photo"}
-          </DialogTitle>
+          <DialogTitle>Ajouter une photo</DialogTitle>
           <DialogDescription>
-            Prendre une photo avec l’appareil ou choisir depuis la galerie
+            Le téléphone ouvrira directement le sélecteur (caméra ou galerie) une seule fois.
           </DialogDescription>
         </DialogHeader>
-
-        {mode === "choice" ? (
-        <div className="grid gap-3 py-4">
+        <div className="py-4">
           <Button
             type="button"
-            variant="outline"
-            className="h-24 flex flex-col gap-2 hover:border-primary"
-            onClick={startCamera}
-          >
-            <Camera className="h-8 w-8" />
-            <div className="text-center">
-              <div className="font-semibold">Prendre une photo</div>
-              <div className="text-xs text-muted-foreground">Ouvre la caméra du téléphone (+3 qualité)</div>
-            </div>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="h-24 flex flex-col gap-2 hover:border-primary"
-            onClick={openGallery}
+            className="w-full h-24 flex flex-col gap-2"
+            onClick={openPicker}
           >
             <Image className="h-8 w-8" />
-            <div className="text-center">
-              <div className="font-semibold">Galerie</div>
-              <div className="text-xs text-muted-foreground">Choisir une photo existante (+2 qualité)</div>
-            </div>
+            <span className="font-semibold">Choisir une photo</span>
           </Button>
         </div>
-        ) : (
-          <div className="space-y-3 py-2">
-            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-black">
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                playsInline
-                muted
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={backFromCamera} className="flex-1">
-                <X className="h-4 w-4 mr-1" />
-                Retour
-              </Button>
-              <Button type="button" onClick={capturePhoto} className="flex-1">
-                <Camera className="h-4 w-4 mr-1" />
-                Capturer
-              </Button>
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );
@@ -188,7 +75,7 @@ export function PhotoPreview({ imageUrl, onRemove, isBlurry = false, onBlurryCha
   return (
     <div className="relative rounded-xl overflow-hidden border border-border">
       <img src={imageUrl} alt="Preview" className="w-full h-48 object-cover" />
-      
+
       <button
         onClick={onRemove}
         className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur p-2 hover:bg-background transition-colors"

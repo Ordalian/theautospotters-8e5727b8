@@ -7,11 +7,13 @@ import { carBrands, getModelsForBrand, getYearsForModel } from "@/data/carData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Camera, Check, MapPin, Loader2 } from "lucide-react";
+import { ArrowLeft, Camera, Check, MapPin, Loader2, Map, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PhotoUploadDialog, PhotoPreview, type PhotoSourceType } from "@/components/PhotoUpload";
 import { CarConditionSelector } from "@/components/CarConditionSelector";
+import { LocationMapPicker } from "@/components/LocationMapPicker";
+import { searchPlaceOrMidpoint, reverseGeocode } from "@/lib/geocode";
 import { 
   type CarCondition, 
   type PhotoSource,
@@ -49,7 +51,11 @@ const AddCar = () => {
   const [locationName, setLocationName] = useState("");
   const [gettingLocation, setGettingLocation] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  
+  const [locationMode, setLocationMode] = useState<"gps" | "map" | "text">("gps");
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [locationSearchQuery, setLocationSearchQuery] = useState("");
+  const [locationSearchLoading, setLocationSearchLoading] = useState(false);
+
   // New rating system states
   const [carCondition, setCarCondition] = useState<CarCondition>("good");
   const [photoSourceType, setPhotoSourceType] = useState<PhotoSourceType | null>(null);
@@ -186,6 +192,26 @@ const AddCar = () => {
       toast.error(err.message || "Failed to add car");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLocationSearch = async () => {
+    const q = locationSearchQuery.trim();
+    if (!q) return;
+    setLocationSearchLoading(true);
+    try {
+      const result = await searchPlaceOrMidpoint(q);
+      if (result) {
+        setCoords({ lat: result.lat, lng: result.lng });
+        setLocationName(result.displayName);
+        toast.success("Lieu enregistré");
+      } else {
+        toast.error("Aucun lieu trouvé");
+      }
+    } catch {
+      toast.error("Erreur de recherche");
+    } finally {
+      setLocationSearchLoading(false);
     }
   };
 
@@ -553,44 +579,148 @@ const AddCar = () => {
         {/* Location */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Location
+            Localisation
           </Label>
-          <div className="flex gap-2">
-            <Input
-              placeholder="City, Country..."
-              value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              className="bg-secondary/30 flex-1"
-            />
-            <Button
+          <div className="flex gap-2 flex-wrap">
+            <button
               type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              disabled={gettingLocation}
-              onClick={() => {
-                setGettingLocation(true);
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                    setGettingLocation(false);
-                    toast.success("Location captured!");
-                  },
-                  () => {
-                    setGettingLocation(false);
-                    toast.error("Could not get location");
-                  }
-                );
-              }}
+              onClick={() => setLocationMode("gps")}
+              className={cn(
+                "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all",
+                locationMode === "gps"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-secondary/30 text-muted-foreground hover:border-muted-foreground/30"
+              )}
             >
-              {gettingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-            </Button>
+              <MapPin className="h-4 w-4" />
+              Ma position GPS
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocationMode("map")}
+              className={cn(
+                "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all",
+                locationMode === "map"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-secondary/30 text-muted-foreground hover:border-muted-foreground/30"
+              )}
+            >
+              <Map className="h-4 w-4" />
+              Choisir sur la carte
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocationMode("text")}
+              className={cn(
+                "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all",
+                locationMode === "text"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-secondary/30 text-muted-foreground hover:border-muted-foreground/30"
+              )}
+            >
+              <Pencil className="h-4 w-4" />
+              Écrire un lieu
+            </button>
           </div>
-          {coords && (
-            <p className="text-xs text-muted-foreground">
-              📍 GPS: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
-            </p>
+
+          {locationMode === "gps" && (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={gettingLocation}
+                onClick={() => {
+                  setGettingLocation(true);
+                  navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                      const lat = pos.coords.latitude;
+                      const lng = pos.coords.longitude;
+                      setCoords({ lat, lng });
+                      setGettingLocation(false);
+                      const name = await reverseGeocode(lat, lng);
+                      if (name) setLocationName(name);
+                      toast.success("Position enregistrée");
+                    },
+                    () => {
+                      setGettingLocation(false);
+                      toast.error("Impossible d'obtenir la position");
+                    }
+                  );
+                }}
+              >
+                {gettingLocation ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <MapPin className="h-4 w-4 mr-2" />}
+                Utiliser ma position
+              </Button>
+              {coords && (
+                <p className="text-xs text-muted-foreground">
+                  📍 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+                  {locationName && ` · ${locationName}`}
+                </p>
+              )}
+            </div>
           )}
+
+          {locationMode === "map" && (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowMapPicker(true)}
+              >
+                <Map className="h-4 w-4 mr-2" />
+                Ouvrir la carte et choisir un point
+              </Button>
+              {coords && (
+                <p className="text-xs text-muted-foreground">
+                  📍 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+                  {locationName && ` · ${locationName}`}
+                </p>
+              )}
+            </div>
+          )}
+
+          {locationMode === "text" && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Ex : Saint Amand les Eaux · ou « route entre Salesches et Neuville » (point médian)
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ville, lieu ou « entre X et Y »..."
+                  value={locationSearchQuery}
+                  onChange={(e) => setLocationSearchQuery(e.target.value)}
+                  className="bg-secondary/30 flex-1"
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleLocationSearch())}
+                />
+                <Button
+                  type="button"
+                  disabled={!locationSearchQuery.trim() || locationSearchLoading}
+                  onClick={handleLocationSearch}
+                >
+                  {locationSearchLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "OK"}
+                </Button>
+              </div>
+              {coords && locationName && (
+                <p className="text-xs text-muted-foreground">
+                  📍 {locationName}
+                </p>
+              )}
+            </div>
+          )}
+
+          <LocationMapPicker
+            open={showMapPicker}
+            onOpenChange={setShowMapPicker}
+            initialCenter={coords}
+            onSelect={async (lat, lng) => {
+              setCoords({ lat, lng });
+              const name = await reverseGeocode(lat, lng);
+              if (name) setLocationName(name);
+              toast.success("Lieu enregistré");
+            }}
+          />
         </div>
 
         {/* Car Condition */}
