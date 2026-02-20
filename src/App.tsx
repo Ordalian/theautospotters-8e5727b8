@@ -6,11 +6,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { Loader2 } from "lucide-react";
+import MyGarage from "./pages/MyGarage";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const MyGarage = lazy(() => import("./pages/MyGarage"));
 const AddCar = lazy(() => import("./pages/AddCar"));
 const AutoSpotter = lazy(() => import("./pages/AutoSpotter"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
