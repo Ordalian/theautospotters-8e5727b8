@@ -238,7 +238,11 @@ const CarDetails = () => {
                 <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
               </div>
             ) : description ? (
-              <div className="text-sm leading-relaxed text-pretty whitespace-pre-line">{description}</div>
+              <div className="text-sm leading-[1.8] text-pretty space-y-3">
+                {description.split(/\n+/).map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">Impossible de charger la description.</p>
             )}
