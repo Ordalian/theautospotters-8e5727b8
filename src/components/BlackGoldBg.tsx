@@ -12,9 +12,9 @@ const THEME_GRADIENTS: Record<string, string> = {
     radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0, 160, 255, 0.08) 0%, transparent 50%)
   `,
   "rose-barbie": `
-    linear-gradient(145deg, #140810 0%, #2e0e22 50%, #180a12 100%),
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 80, 160, 0.18) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255, 130, 200, 0.10) 0%, transparent 50%)
+    linear-gradient(145deg, #10050a 0%, #30081e 50%, #140710 100%),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(200, 20, 126, 0.22) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(200, 20, 126, 0.12) 0%, transparent 50%)
   `,
   "vert-rallye": `
     linear-gradient(145deg, #040d06 0%, #0a2410 50%, #050e07 100%),

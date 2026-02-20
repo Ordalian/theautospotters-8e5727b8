@@ -90,33 +90,33 @@
   }
 
   [data-theme="rose-barbie"] {
-    --background: 340 35% 7%;
-    --foreground: 345 40% 96%;
+    --background: 330 40% 6%;
+    --foreground: 340 50% 96%;
 
-    --card: 342 30% 11%;
-    --card-foreground: 345 40% 96%;
+    --card: 332 35% 10%;
+    --card-foreground: 340 50% 96%;
 
-    --popover: 342 30% 11%;
-    --popover-foreground: 345 40% 96%;
+    --popover: 332 35% 10%;
+    --popover-foreground: 340 50% 96%;
 
-    --primary: 340 100% 65%;
-    --primary-foreground: 340 30% 98%;
+    --primary: 330 90% 45%;
+    --primary-foreground: 330 30% 98%;
 
-    --secondary: 342 28% 15%;
-    --secondary-foreground: 345 30% 92%;
+    --secondary: 332 35% 14%;
+    --secondary-foreground: 340 35% 92%;
 
-    --muted: 342 24% 17%;
-    --muted-foreground: 340 18% 52%;
+    --muted: 332 30% 16%;
+    --muted-foreground: 335 25% 50%;
 
-    --accent: 350 100% 72%;
-    --accent-foreground: 340 35% 7%;
+    --accent: 325 100% 55%;
+    --accent-foreground: 330 40% 98%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 342 22% 22%;
-    --input: 342 22% 22%;
-    --ring: 340 100% 65%;
+    --border: 330 50% 28%;
+    --input: 330 50% 28%;
+    --ring: 330 90% 45%;
 
     --radius: 0.75rem;
 
