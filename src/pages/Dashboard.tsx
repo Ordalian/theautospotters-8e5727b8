@@ -22,7 +22,7 @@ const Dashboard = () => {
           .select("id, image_url, latitude, longitude, created_at")
           .eq("user_id", user!.id)
           .order("created_at", { ascending: false }),
-        supabase.from("profiles").select("username, pinned_car_id").eq("user_id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("username, pinned_car_id").eq("user_id", user!.id).maybeSingle() as any,
         supabase
           .from("friendships")
           .select("*", { count: "exact", head: true })
