@@ -11,7 +11,7 @@ export interface ThemeOption {
 export const THEMES: ThemeOption[] = [
   { id: "noir-or", label: "Noir et Or", preview: { bg: "#0d0d0d", accent: "#d4af37", text: "#f5f0e0" } },
   { id: "bleu-alpine", label: "Bleu Alpine", preview: { bg: "#050a18", accent: "#2864dc", text: "#c8deff" } },
-  { id: "rose-barbie", label: "Rose Barbie", preview: { bg: "#12050d", accent: "#e84393", text: "#ffd6ec" } },
+  { id: "rose-barbie", label: "Rose Barbie", preview: { bg: "#140810", accent: "#ff50a0", text: "#ffe0f0" } },
   { id: "vert-rallye", label: "Vert Rallye", preview: { bg: "#040d06", accent: "#1db954", text: "#c8ffd8" } },
   { id: "glace-arctique", label: "Glace Arctique", preview: { bg: "#060e18", accent: "#40d8e0", text: "#d0f8ff" } },
 ];
