@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ThemeId = "noir-or" | "bleu-alpine" | "rose-barbie" | "vert-rallye" | "glace-arctique";
+export type ThemeId = "noir-or" | "bleu-alpine" | "rose-barbie" | "vert-rallye" | "glace-arctique" | "ferrari-red";
 
 export interface ThemeOption {
   id: ThemeId;
@@ -16,9 +16,10 @@ export const THEMES: ThemeOption[] = [
   { id: "rose-barbie", label: "Rose Barbie", preview: { bg: "#10050a", accent: "#c8147e", text: "#ffd0ea" } },
   { id: "vert-rallye", label: "Vert Rallye", preview: { bg: "#040d06", accent: "#1db954", text: "#c8ffd8" } },
   { id: "glace-arctique", label: "Glace Arctique", preview: { bg: "#060e18", accent: "#40d8e0", text: "#d0f8ff" } },
+  { id: "ferrari-red", label: "Ferrari Red", preview: { bg: "#0d0505", accent: "#dc2626", text: "#ffd6d6" } },
 ];
 
-const VALID_THEMES: ThemeId[] = ["noir-or", "bleu-alpine", "rose-barbie", "vert-rallye", "glace-arctique"];
+const VALID_THEMES: ThemeId[] = ["noir-or", "bleu-alpine", "rose-barbie", "vert-rallye", "glace-arctique", "ferrari-red"];
 function isValidTheme(t: string | null): t is ThemeId {
   return t != null && VALID_THEMES.includes(t as ThemeId);
 }
