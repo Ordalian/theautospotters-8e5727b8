@@ -16,27 +16,35 @@ export type Database = {
     Tables: {
       car_photos: {
         Row: {
-          id: string
           car_id: string
+          created_at: string
+          id: string
           image_url: string
           position: number
-          created_at: string
         }
         Insert: {
-          id?: string
           car_id: string
+          created_at?: string
+          id?: string
           image_url: string
           position?: number
-          created_at?: string
         }
         Update: {
-          id?: string
           car_id?: string
+          created_at?: string
+          id?: string
           image_url?: string
           position?: number
-          created_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "car_photos_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cars: {
         Row: {
@@ -126,82 +134,15 @@ export type Database = {
           user_id?: string
           year?: number
         }
-        Relationships: []
-      }
-      garage_groups: {
-        Row: {
-          id: string
-          user_id: string
-          name: string
-          sort_order: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          name: string
-          sort_order?: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          name?: string
-          sort_order?: number
-          created_at?: string
-        }
-        Relationships: []
-      }
-      notifications: {
-        Row: {
-          id: string
-          user_id: string
-          type: string
-          data: Json
-          read_at: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          type: string
-          data?: Json
-          read_at?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          type?: string
-          data?: Json
-          read_at?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      owned_vehicles: {
-        Row: {
-          id: string
-          user_id: string
-          car_id: string | null
-          license_plate: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          car_id?: string | null
-          license_plate: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          car_id?: string | null
-          license_plate?: string
-          created_at?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cars_garage_group_id_fkey"
+            columns: ["garage_group_id"]
+            isOneToOne: false
+            referencedRelation: "garage_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       deliveries: {
         Row: {
@@ -259,6 +200,89 @@ export type Database = {
         }
         Relationships: []
       }
+      garage_groups: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      owned_vehicles: {
+        Row: {
+          car_id: string | null
+          created_at: string
+          id: string
+          license_plate: string
+          user_id: string
+        }
+        Insert: {
+          car_id?: string | null
+          created_at?: string
+          id?: string
+          license_plate: string
+          user_id: string
+        }
+        Update: {
+          car_id?: string | null
+          created_at?: string
+          id?: string
+          license_plate?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owned_vehicles_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -309,6 +333,7 @@ export type Database = {
           username: string
         }[]
       }
+      normalize_license_plate: { Args: { plate: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
