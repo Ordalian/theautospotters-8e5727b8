@@ -251,7 +251,6 @@ const MyGarage = () => {
                   <Select
                     value={car.garage_group_id ?? "none"}
                     onValueChange={(v) => handleAssignGroup(car.id, v === "none" ? null : v)}
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <SelectTrigger className="w-[130px] h-8 rounded-full bg-black/40 text-white border-0 text-xs">
                       <SelectValue placeholder="Groupe" />
