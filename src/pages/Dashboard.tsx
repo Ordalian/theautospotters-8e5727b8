@@ -206,10 +206,6 @@ const Dashboard = () => {
                       loading="lazy"
                       title={tile.title}
                     />
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 rounded-b-lg z-10">
-                      <h3 className="font-bold text-xs leading-tight">{tile.title}</h3>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
-                    </div>
                   </div>
                 ) : tile.image ? (
                   <>
