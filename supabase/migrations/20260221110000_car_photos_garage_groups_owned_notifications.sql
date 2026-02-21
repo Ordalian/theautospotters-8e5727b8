@@ -72,13 +72,28 @@ CREATE TABLE IF NOT EXISTS public.owned_vehicles (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   car_id UUID REFERENCES public.cars(id) ON DELETE SET NULL,
   license_plate TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  CONSTRAINT owned_vehicle_car_same_user CHECK (
-    car_id IS NULL OR EXISTS (SELECT 1 FROM public.cars c WHERE c.id = car_id AND c.user_id = owned_vehicles.user_id)
-  )
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
 ALTER TABLE public.owned_vehicles ENABLE ROW LEVEL SECURITY;
+
+-- Vérifier que car_id appartient au même user (PostgreSQL n'accepte pas les sous-requêtes dans CHECK)
+CREATE OR REPLACE FUNCTION public.owned_vehicles_validate_car_owner()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.car_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.cars c WHERE c.id = NEW.car_id AND c.user_id = NEW.user_id
+  ) THEN
+    RAISE EXCEPTION 'owned_vehicles: car_id must belong to the same user_id';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS owned_vehicles_validate_car_owner_trigger ON public.owned_vehicles;
+CREATE TRIGGER owned_vehicles_validate_car_owner_trigger
+  BEFORE INSERT OR UPDATE ON public.owned_vehicles
+  FOR EACH ROW EXECUTE FUNCTION public.owned_vehicles_validate_car_owner();
 
 CREATE POLICY "Users can manage own owned_vehicles"
   ON public.owned_vehicles FOR ALL
