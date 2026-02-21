@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Car, Users, Brain, Trophy, LogOut, User, MapPin } from "lucide-react";
+import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { useQuery } from "@tanstack/react-query";
@@ -125,9 +125,17 @@ const Dashboard = () => {
     return () => document.removeEventListener("click", close);
   }, [profileMenuOpen]);
 
-  const tiles = [
+  const mainTiles = [
+    { title: "Zone de jeu", subtitle: "Défis et jeux", icon: Gamepad2, image: null, onClick: () => {}, gradient: "from-violet-500/20 to-violet-500/5", notificationCount: 0 },
+    { title: "Magasin", subtitle: "Boutique", icon: Store, image: null, onClick: () => {}, gradient: "from-rose-500/20 to-rose-500/5", notificationCount: 0 },
+  ];
+
+  const garageTiles = [
     { title: "My Garage", subtitle: `${carCount} car${carCount !== 1 ? "s" : ""} spotted`, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0 },
     { title: "Friends' Garages", subtitle: "See your friends", icon: Users, image: null, onClick: () => navigate("/friends"), gradient: "from-blue-500/20 to-blue-500/5", notificationCount: friendNotificationCount },
+  ];
+
+  const smallTiles = [
     { title: "The AutoSpotter", subtitle: "AI car recognition", icon: Brain, image: null, onClick: () => navigate("/autospotter"), gradient: "from-emerald-500/20 to-emerald-500/5", notificationCount: 0 },
     { title: "Leaderboard", subtitle: "Top spotters", icon: Trophy, image: null, onClick: () => navigate("/leaderboard"), gradient: "from-amber-500/20 to-amber-500/5", notificationCount: 0 },
   ];
@@ -179,8 +187,31 @@ const Dashboard = () => {
 
       <main className="p-5 max-w-2xl mx-auto relative z-10">
         <h2 className="text-base font-medium text-muted-foreground mb-5">Hey, <span className="text-foreground font-semibold">{displayName}</span> 👋</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {tiles.map((tile) => (
+
+        {/* Zone de jeu (gauche) + Magasin (droite) — tuiles principales */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {mainTiles.map((tile) => (
+            <button
+              key={tile.title}
+              onClick={tile.onClick}
+              className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20"
+            >
+              <div className={`flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3 bg-gradient-to-br ${tile.gradient}`}>
+                <div className="flex flex-1 items-center justify-center relative">
+                  <tile.icon className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* My Garage + Friends — tuiles garage */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {garageTiles.map((tile) => (
             <button
               key={tile.title}
               onClick={tile.onClick}
@@ -246,6 +277,25 @@ const Dashboard = () => {
                     </div>
                   </>
                 )}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* AutoSpotter + Leaderboard — tuiles réduites (~1/3 hauteur) */}
+        <div className="grid grid-cols-2 gap-3">
+          {smallTiles.map((tile) => (
+            <button
+              key={tile.title}
+              onClick={tile.onClick}
+              className="relative group overflow-hidden rounded-xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] h-20 shadow-lg shadow-black/20"
+            >
+              <div className={`flex h-full w-full flex-row items-center gap-3 rounded-lg bg-card/90 p-3 bg-gradient-to-r ${tile.gradient}`}>
+                <tile.icon className="h-8 w-8 shrink-0 text-muted-foreground/40 group-hover:text-primary/50 transition-colors" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-sm leading-tight truncate">{tile.title}</h3>
+                  <p className="text-[10px] text-muted-foreground truncate">{tile.subtitle}</p>
+                </div>
               </div>
             </button>
           ))}

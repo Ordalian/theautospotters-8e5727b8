@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, UserPlus, Car, X, Check, Package } from "lucide-react";
+import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight } from "lucide-react";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,13 @@ interface FriendCar {
   created_at: string;
   user_id: string;
   username: string | null;
+  garage_group_id: string | null;
+}
+
+interface FriendGarageGroup {
+  id: string;
+  name: string;
+  sort_order: number;
 }
 
 interface FriendRequest {
@@ -62,9 +69,11 @@ const FriendsGarages = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [friendCars, setFriendCars] = useState<FriendCar[]>([]);
+  const [friendGroups, setFriendGroups] = useState<FriendGarageGroup[]>([]);
   const [recentSpots, setRecentSpots] = useState<FriendCar[]>([]);
   const [loading, setLoading] = useState(true);
   const [friendSort, setFriendSort] = useState<GarageSortOption>("newest");
+  const [friendGroupFilter, setFriendGroupFilter] = useState<string | null>(null);
   const [removeConfirm, setRemoveConfirm] = useState<{ friendshipId: string; username: string } | null>(null);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [lastDeliveryAt, setLastDeliveryAt] = useState<string | null>(null);
@@ -107,6 +116,25 @@ const FriendsGarages = () => {
         return sorted;
     }
   }, [friendCars, friendSort]);
+
+  const friendCarsByGroup = useMemo(() => {
+    const result: { id: string; name: string; cars: FriendCar[] }[] = [];
+    const noGroup = friendCars.filter((c) => !c.garage_group_id);
+    if (noGroup.length > 0) {
+      result.push({ id: "none", name: "Sans groupe", cars: noGroup.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) });
+    }
+    for (const g of friendGroups) {
+      const groupCars = friendCars.filter((c) => c.garage_group_id === g.id);
+      if (groupCars.length > 0) {
+        result.push({
+          id: g.id,
+          name: g.name,
+          cars: groupCars.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+        });
+      }
+    }
+    return result;
+  }, [friendCars, friendGroups]);
 
   useEffect(() => {
     if (user) {
@@ -268,14 +296,22 @@ const FriendsGarages = () => {
 
   const handleSelectFriend = async (friend: Friend) => {
     setSelectedFriend(friend);
-    const { data } = await supabase
-      .from("cars")
-      .select("id, brand, model, year, engine, image_url, created_at, user_id")
-      .eq("user_id", friend.user_id)
-      .order("created_at", { ascending: false });
-    setFriendCars(
-      (data || []).map((c) => ({ ...c, username: friend.username }))
-    );
+    setFriendGroupFilter(null);
+    const [carsRes, groupsRes] = await Promise.all([
+      supabase
+        .from("cars")
+        .select("id, brand, model, year, engine, image_url, created_at, user_id, garage_group_id")
+        .eq("user_id", friend.user_id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("garage_groups")
+        .select("id, name, sort_order")
+        .eq("user_id", friend.user_id)
+        .order("sort_order", { ascending: true })
+        .order("name"),
+    ]);
+    setFriendCars((carsRes.data || []).map((c) => ({ ...c, username: friend.username })));
+    setFriendGroups((groupsRes.data as FriendGarageGroup[]) ?? []);
   };
 
   const handleRemoveFriend = async (friendshipId: string) => {
@@ -561,13 +597,57 @@ const FriendsGarages = () => {
         {/* Friend's Garage */}
         {selectedFriend && (
           <div className="space-y-3">
-            <div className="flex justify-end">
-              <GarageSortSelect value={friendSort} onChange={setFriendSort} />
+            <div className="flex items-center justify-between gap-2">
+              {friendGroupFilter ? (
+                <Button variant="ghost" size="sm" onClick={() => setFriendGroupFilter(null)} className="shrink-0">
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Retour aux groupes
+                </Button>
+              ) : null}
+              <GarageSortSelect
+                value={friendSort}
+                onChange={(v) => { setFriendSort(v); setFriendGroupFilter(null); }}
+              />
             </div>
-            {sortedFriendCars.length === 0 ? (
+            {friendCars.length === 0 ? (
               <p className="text-muted-foreground text-sm">Ce garage est vide pour l'instant.</p>
+            ) : friendSort === "group" && !friendGroupFilter ? (
+              <div className="grid gap-3">
+                {friendCarsByGroup.map(({ id, name, cars: groupCars }) => {
+                  const first = groupCars[0];
+                  return (
+                    <div
+                      key={id}
+                      onClick={() => setFriendGroupFilter(id)}
+                      className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors flex"
+                    >
+                      <div className="w-28 h-28 shrink-0 overflow-hidden bg-secondary/20">
+                        {first?.image_url ? (
+                          <img src={first.image_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Car className="h-10 w-10 text-muted-foreground/30" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4 flex-1 flex items-center justify-between">
+                        <div>
+                          <h3 className="font-bold text-lg">{name}</h3>
+                          <p className="text-sm text-muted-foreground">{groupCars.length} véhicule{groupCars.length > 1 ? "s" : ""}</p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              sortedFriendCars.map((car) => (
+              (friendGroupFilter
+                ? friendCars.filter(
+                    (c) =>
+                      friendGroupFilter === "none" ? !c.garage_group_id : c.garage_group_id === friendGroupFilter
+                  )
+                : sortedFriendCars
+              ).map((car) => (
                 <div key={car.id} onClick={() => navigate(`/car/${car.id}`)} className="rounded-xl border border-border bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors">
                   {car.image_url ? (
                     <img src={car.image_url} alt={`${car.brand} ${car.model}`} className="h-40 w-full object-cover" />

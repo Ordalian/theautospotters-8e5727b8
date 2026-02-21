@@ -61,6 +61,7 @@ const MyGarage = () => {
   const [newGroupName, setNewGroupName] = useState("");
   const [creatingGroup, setCreatingGroup] = useState(false);
   const brandFilter = searchParams.get("brand") ?? null;
+  const groupFilter = searchParams.get("group") ?? null;
 
   const handleDelete = async (e: React.MouseEvent, carId: string) => {
     e.stopPropagation();
@@ -108,7 +109,13 @@ const MyGarage = () => {
   });
 
   const sortedCars = useMemo(() => {
-    let list = brandFilter ? cars.filter((c) => c.brand === brandFilter) : [...cars];
+    let list = brandFilter
+      ? cars.filter((c) => c.brand === brandFilter)
+      : groupFilter
+        ? groupFilter === "none"
+          ? cars.filter((c) => !c.garage_group_id)
+          : cars.filter((c) => c.garage_group_id === groupFilter)
+        : [...cars];
     switch (sortOption) {
       case "newest":
         return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -119,7 +126,7 @@ const MyGarage = () => {
       default:
         return list;
     }
-  }, [cars, sortOption, brandFilter]);
+  }, [cars, sortOption, brandFilter, groupFilter]);
 
   const carsByBrand = useMemo(() => {
     const map = new Map<string, SpottedCar[]>();
@@ -133,6 +140,27 @@ const MyGarage = () => {
     }
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [cars]);
+
+  const carsByGroup = useMemo(() => {
+    const result: { id: string; name: string; cars: SpottedCar[] }[] = [];
+    const groupMap = new Map<string, GarageGroup>();
+    for (const g of groups) groupMap.set(g.id, g);
+    const noGroupCars = cars.filter((c) => !c.garage_group_id);
+    if (noGroupCars.length > 0) {
+      result.push({ id: "none", name: "Sans groupe", cars: noGroupCars.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) });
+    }
+    for (const g of groups) {
+      const groupCars = cars.filter((c) => c.garage_group_id === g.id);
+      if (groupCars.length > 0) {
+        result.push({
+          id: g.id,
+          name: g.name,
+          cars: groupCars.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+        });
+      }
+    }
+    return result;
+  }, [cars, groups]);
 
   const handleCreateGroup = async () => {
     if (!newGroupName.trim() || !user) return;
@@ -184,11 +212,11 @@ const MyGarage = () => {
     <div className="flex min-h-screen flex-col bg-background relative">
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <Button variant="ghost" size="icon" onClick={() => brandFilter ? setSearchParams({}) : navigate("/")}>
+        <Button variant="ghost" size="icon" onClick={() => (brandFilter || groupFilter) ? setSearchParams({}) : navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold truncate flex-1">
-          {brandFilter ? brandFilter : "Mon Garage"}
+          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? "Sans groupe" : "Groupe")) : "Mon Garage"}
         </h1>
         <div className="flex items-center gap-2">
           <GarageSortSelect value={sortOption} onChange={setSortOption} />
@@ -211,7 +239,7 @@ const MyGarage = () => {
               <h3 className="font-semibold text-lg">Aucune voiture</h3>
               <p className="text-muted-foreground text-sm mt-1">Spottez ou ajoutez votre première voiture !</p>
             </div>
-          ) : sortOption === "brand" && !brandFilter ? (
+          ) : sortOption === "brand" && !brandFilter && !groupFilter ? (
             <div className="grid gap-3">
               {carsByBrand.map(([brandName, brandCars]) => {
                 const first = brandCars[0];
@@ -234,6 +262,36 @@ const MyGarage = () => {
                       <div>
                         <h3 className="font-bold text-lg">{brandName}</h3>
                         <p className="text-sm text-muted-foreground">{brandCars.length} véhicule{brandCars.length > 1 ? "s" : ""}</p>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : sortOption === "group" && !brandFilter && !groupFilter ? (
+            <div className="grid gap-3">
+              {carsByGroup.map(({ id, name, cars: groupCars }) => {
+                const first = groupCars[0];
+                return (
+                  <div
+                    key={id}
+                    onClick={() => setSearchParams({ group: id })}
+                    className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors flex"
+                  >
+                    <div className="w-28 h-28 shrink-0 overflow-hidden bg-secondary/20">
+                      {first?.image_url ? (
+                        <img src={first.image_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Car className="h-10 w-10 text-muted-foreground/30" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4 flex-1 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-lg">{name}</h3>
+                        <p className="text-sm text-muted-foreground">{groupCars.length} véhicule{groupCars.length > 1 ? "s" : ""}</p>
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
