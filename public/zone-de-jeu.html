@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Zone de Jeu</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:#0e1225;
+    display:flex;align-items:center;justify-content:center;
+    min-height:100vh;font-family:'Inter',sans-serif;
+  }
+  .card{
+    width:290px;height:290px;border-radius:18px;
+    background:#12172e;position:relative;overflow:hidden;
+    box-shadow:0 6px 32px rgba(0,0,0,0.6);
+  }
+  .grid{
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(0,180,255,0.055) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,180,255,0.055) 1px,transparent 1px);
+    background-size:28px 28px;
+  }
+  .laser{position:absolute;top:0;height:100%;width:1.5px;opacity:0.3;}
+  .l1{left:26%;background:linear-gradient(to bottom,transparent 5%,#ff00ff 50%,transparent 95%);animation:lp 4s infinite;}
+  .l2{left:63%;background:linear-gradient(to bottom,transparent 5%,#00e5ff 50%,transparent 95%);animation:lp 4s 2s infinite;}
+  @keyframes lp{0%,100%{opacity:0.18}50%{opacity:0.5}}
+  .lh{position:absolute;left:0;width:100%;height:1.5px;bottom:36%;background:linear-gradient(to right,transparent,#ff00ff 30%,#00e5ff 70%,transparent);opacity:0.28;}
+  .ground{position:absolute;left:0;right:0;height:2px;bottom:68px;background:linear-gradient(to right,transparent,#ff00ff 20%,#00e5ff 80%,transparent);opacity:0.48;}
+  .scanlines{position:absolute;inset:0;pointer-events:none;z-index:50;border-radius:18px;background:repeating-linear-gradient(to bottom,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 3px);}
+  .corner{position:absolute;width:13px;height:13px;border-color:#00ffff;border-style:solid;opacity:0.38;}
+  .tl{top:9px;left:9px;border-width:1.5px 0 0 1.5px}
+  .tr{top:9px;right:9px;border-width:1.5px 1.5px 0 0}
+  .bl{bottom:9px;left:9px;border-width:0 0 1.5px 1.5px}
+  .br{bottom:9px;right:9px;border-width:0 1.5px 1.5px 0}
+
+  .card-label{
+    position:absolute;bottom:0;left:0;right:0;padding:10px 13px;
+    background:linear-gradient(to top,rgba(8,10,25,0.97) 55%,transparent);
+    z-index:60;
+  }
+  .card-label h3{font-weight:700;font-size:13px;color:#fff;margin-bottom:2px;text-shadow:0 1px 4px rgba(0,0,0,0.9);}
+  .card-label p{font-size:10px;color:rgba(255,255,255,0.45);font-weight:400;}
+
+  .seq{position:absolute;inset:0;display:none;}
+  .seq.active{display:block;}
+
+  .car-wrap{position:absolute;left:50%;transform:translateX(-50%);text-align:center;}
+  .car-wrap.falling{top:-220px;animation:fall 1.1s cubic-bezier(0.22,0.61,0.36,1) forwards;}
+  @keyframes fall{
+    0%  {top:-220px;transform:translateX(-50%) rotate(-6deg);}
+    78% {top:106px;transform:translateX(-50%) rotate(2.5deg);}
+    88% {top:100px;transform:translateX(-50%) rotate(-1deg);}
+    100%{top:103px;transform:translateX(-50%) rotate(0);}
+  }
+  .car-shadow{
+    position:absolute;left:50%;transform:translateX(-50%);
+    width:210px;height:12px;bottom:68px;opacity:0;
+    background:radial-gradient(ellipse,rgba(0,0,0,0.85)0%,transparent 68%);
+  }
+  .scan-bar{
+    position:absolute;left:4%;width:92%;height:3px;z-index:20;opacity:0;top:100px;
+    background:linear-gradient(to right,transparent,#00ffff 18%,#fff 50%,#00ffff 82%,transparent);
+    box-shadow:0 0 14px #00ffff,0 0 28px rgba(0,255,255,0.35);
+  }
+  .scan-txt{
+    position:absolute;top:16px;left:50%;transform:translateX(-50%);
+    color:#00ffff;font-family:'Press Start 2P',monospace;font-size:4.5px;
+    letter-spacing:1.5px;text-shadow:0 0 8px #00ffff;opacity:0;white-space:nowrap;
+  }
+  .car8{position:absolute;bottom:58px;left:-320px;image-rendering:pixelated;}
+  #sl{position:absolute;inset:0;pointer-events:none;opacity:0;}
+  .spd{position:absolute;height:1.5px;right:0;background:linear-gradient(to right,transparent,rgba(255,255,255,0.85));}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="grid"></div>
+  <div class="laser l1"></div><div class="laser l2"></div>
+  <div class="lh"></div><div class="ground"></div>
+  <div class="scanlines"></div>
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- SEQ 0 · PORSCHE 911 TURBO (3.3)    -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="seq" id="s0">
+    <div class="car-shadow" id="sh0"></div>
+    <div class="car-wrap falling" id="c0">
+      <!-- Highly detailed Porsche 911 Turbo illustration-quality SVG -->
+      <svg width="280" height="130" viewBox="0 0 280 130" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Body paint: deep blue with metallic feel -->
+          <linearGradient id="p_body" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#7ec8f8"/>
+            <stop offset="18%" stop-color="#4e9ee0"/>
+            <stop offset="55%" stop-color="#2a6dbe"/>
+            <stop offset="85%" stop-color="#1a4d96"/>
+            <stop offset="100%" stop-color="#0e3070"/>
+          </linearGradient>
+          <linearGradient id="p_hood" x1="0" y1="0" x2="0.3" y2="1">
+            <stop offset="0%" stop-color="#5aaaf0"/>
+            <stop offset="40%" stop-color="#3a82d0"/>
+            <stop offset="100%" stop-color="#1e5aaa"/>
+          </linearGradient>
+          <linearGradient id="p_roof" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#1e5aaa"/>
+            <stop offset="40%" stop-color="#3a82d0"/>
+            <stop offset="100%" stop-color="#2a72c0"/>
+          </linearGradient>
+          <linearGradient id="p_wind" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="rgba(180,230,255,0.9)"/>
+            <stop offset="50%" stop-color="rgba(120,190,255,0.55)"/>
+            <stop offset="100%" stop-color="rgba(60,140,220,0.15)"/>
+          </linearGradient>
+          <radialGradient id="p_hl1" cx="40%" cy="40%" r="55%">
+            <stop offset="0%" stop-color="white"/>
+            <stop offset="35%" stop-color="#fff8d0"/>
+            <stop offset="75%" stop-color="#f0c060" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#e0a000" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="p_hl2" cx="35%" cy="38%" r="55%">
+            <stop offset="0%" stop-color="white"/>
+            <stop offset="50%" stop-color="#fffce0" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#f0b000" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="p_rim" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#c0c0c8"/>
+            <stop offset="50%" stop-color="#e8e8f0"/>
+            <stop offset="100%" stop-color="#909098"/>
+          </linearGradient>
+          <radialGradient id="p_tire" cx="40%" cy="35%" r="60%">
+            <stop offset="0%" stop-color="#2a2a3a"/>
+            <stop offset="100%" stop-color="#0a0a14"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Ground shadow -->
+        <ellipse cx="145" cy="128" rx="128" ry="7" fill="rgba(0,0,20,0.5)"/>
+
+        <!-- ── REAR WHALE TAIL SPOILER ── -->
+        <path d="M220 46 Q240 40 268 38 L270 42 Q262 44 255 46 L256 56 L224 60 Z" fill="#1050a0"/>
+        <path d="M220 46 L256 46 L256 50 L220 52 Z" fill="#1a60b8"/>
+        <rect x="220" y="52" width="5" height="12" fill="#0e3a80" rx="1"/>
+        <rect x="240" y="50" width="5" height="12" fill="#0e3a80" rx="1"/>
+
+        <!-- ── MAIN BODY ── -->
+        <!-- Lower body sill -->
+        <path d="M36 104 L256 104 L260 114 L32 114 Z" fill="#0e3070"/>
+        <!-- Front valance -->
+        <path d="M22 104 Q28 94 44 88 L44 114 L22 114 Z" fill="#0e3070"/>
+        <!-- Rear valance -->
+        <path d="M256 104 L260 114 L274 114 L270 104 Z" fill="#0e3070"/>
+
+        <!-- Main body upper -->
+        <path d="M36 104 Q44 80 72 66 Q100 54 140 50 L188 49 Q224 49 250 60 Q268 70 272 88 L272 104 Z" fill="url(#p_body)"/>
+
+        <!-- Front fender bump -->
+        <path d="M36 104 Q44 80 72 66 L76 72 Q58 84 50 106 Z" fill="#2060b0"/>
+
+        <!-- Rear wide fender - 911 Turbo flared -->
+        <path d="M230 56 Q258 54 270 68 Q276 78 272 96 L268 94 Q270 80 262 70 Q252 60 232 58 Z" fill="#2a70c8"/>
+
+        <!-- Hood (very long, flat Porsche 911 hood) -->
+        <path d="M36 104 Q44 80 72 66 Q100 54 140 50 L144 57 Q108 60 82 72 Q60 83 48 104 Z" fill="url(#p_hood)"/>
+
+        <!-- Hood center crease / indent -->
+        <path d="M100 68 Q138 58 168 57 L168 60 Q138 61 100 71 Z" fill="rgba(255,255,255,0.12)"/>
+        <!-- Hood right crease -->
+        <path d="M110 66 Q148 57 175 56 L175 57 Q148 58 110 67 Z" fill="rgba(0,0,0,0.12)"/>
+
+        <!-- ── CABIN / ROOF ── -->
+        <!-- The iconic 911 rounded fastback roofline -->
+        <path d="M108 52 Q116 22 156 12 Q190 4 220 14 Q246 24 258 46 L270 56 L108 56 Z" fill="url(#p_roof)"/>
+
+        <!-- A-pillar -->
+        <path d="M108 56 Q116 22 152 12 L148 56 Z" fill="#1555a0"/>
+
+        <!-- Windshield - very curved, glassy -->
+        <path d="M112 54 Q120 24 156 12 Q188 4 216 14 Q240 24 252 46 L260 54 Z" fill="url(#p_wind)"/>
+        <!-- Windshield glare streak -->
+        <path d="M126 44 Q136 26 162 14 L158 20 Q140 28 130 46 Z" fill="rgba(255,255,255,0.32)"/>
+        <path d="M144 46 Q150 32 170 18 L168 24 Q154 34 146 48 Z" fill="rgba(255,255,255,0.18)"/>
+
+        <!-- Rear quarter window (small 911 style) -->
+        <path d="M80 56 L108 56 L108 68 L82 67 Z" fill="rgba(100,180,250,0.45)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
+
+        <!-- Door area -->
+        <path d="M148 54 Q150 78 152 106" stroke="rgba(0,0,40,0.3)" stroke-width="1.2" fill="none"/>
+
+        <!-- Door handle -->
+        <path d="M162 83 Q178 82 180 85 Q178 88 162 87 Z" fill="#1d5aaa" stroke="rgba(200,230,255,0.3)" stroke-width="0.5"/>
+
+        <!-- Body side highlight (light catching top edge) -->
+        <path d="M108 56 Q145 52 230 56" stroke="rgba(160,220,255,0.45)" stroke-width="2" fill="none"/>
+        <!-- Lower body reflection band -->
+        <path d="M60 92 Q140 82 240 84 Q260 85 270 90" stroke="rgba(100,180,255,0.18)" stroke-width="3" fill="none"/>
+
+        <!-- Side mirror -->
+        <path d="M224 58 Q238 55 240 62 L226 65 Z" fill="#1e5aaa" stroke="rgba(100,180,255,0.25)" stroke-width="0.8"/>
+
+        <!-- ── FRONT HEADLIGHTS (911's iconic round lamps) ── -->
+        <!-- Outer housing bezel -->
+        <circle cx="48" cy="78" r="20" fill="#0a1e50"/>
+        <circle cx="48" cy="78" r="18" fill="#0e2460"/>
+        <!-- Reflector bowl -->
+        <circle cx="48" cy="78" r="16" fill="#1a3a80"/>
+        <!-- Main lamp -->
+        <circle cx="48" cy="78" r="14" fill="url(#p_hl1)"/>
+        <!-- Bright center -->
+        <circle cx="48" cy="78" r="8"  fill="rgba(255,252,200,0.95)"/>
+        <circle cx="48" cy="78" r="4"  fill="white"/>
+        <!-- Halo ring -->
+        <circle cx="48" cy="78" r="16" fill="none" stroke="rgba(255,240,140,0.4)" stroke-width="1.5"/>
+        <circle cx="48" cy="78" r="12" fill="none" stroke="rgba(255,240,100,0.25)" stroke-width="1"/>
+        <!-- Bezel ring -->
+        <circle cx="48" cy="78" r="18" fill="none" stroke="rgba(80,120,180,0.8)" stroke-width="1.5"/>
+
+        <!-- Secondary/inner headlight -->
+        <circle cx="70" cy="82" r="12" fill="#0a1e50"/>
+        <circle cx="70" cy="82" r="10" fill="#0e2460"/>
+        <circle cx="70" cy="82" r="8"  fill="url(#p_hl2)"/>
+        <circle cx="70" cy="82" r="5"  fill="rgba(255,250,190,0.9)"/>
+        <circle cx="70" cy="82" r="2.5" fill="white"/>
+        <circle cx="70" cy="82" r="10" fill="none" stroke="rgba(80,120,180,0.6)" stroke-width="1"/>
+
+        <!-- Headlight surround / eyebrow -->
+        <path d="M28 68 Q48 60 88 70" stroke="rgba(100,160,220,0.5)" stroke-width="2" fill="none"/>
+
+        <!-- Front grille area -->
+        <path d="M24 102 Q30 90 46 86 L46 106 L24 106 Z" fill="#080e28"/>
+        <!-- Grille bars -->
+        <line x1="27" y1="96" x2="45" y2="92" stroke="#1a3060" stroke-width="1.2"/>
+        <line x1="26" y1="100" x2="45" y2="96" stroke="#1a3060" stroke-width="1.2"/>
+        <line x1="26" y1="104" x2="45" y2="100" stroke="#1a3060" stroke-width="1.2"/>
+        <!-- Front fog / turn orange -->
+        <path d="M54 100 Q70 98 72 103 Q70 108 54 106 Z" fill="#ff8800" opacity="0.85"/>
+        <path d="M56 101 Q68 100 70 103 Q68 106 56 105 Z" fill="#ffaa00" opacity="0.6"/>
+        <!-- License plate -->
+        <rect x="78" y="108" width="38" height="12" rx="2" fill="#c8c8e0"/>
+        <rect x="79" y="109" width="36" height="10" rx="1" fill="#e8e8f8"/>
+
+        <!-- ── TAIL LIGHTS ── -->
+        <!-- 911 classic wraparound horizontal tail -->
+        <path d="M258 64 L274 66 L274 90 L258 88 Z" fill="#cc0000" opacity="0.88"/>
+        <!-- Upper bright strip -->
+        <path d="M258 64 L274 66 L274 72 L258 70 Z" fill="#ff2222"/>
+        <!-- Dividing lines -->
+        <line x1="259" y1="68" x2="273" y2="69.5" stroke="rgba(0,0,0,0.4)" stroke-width="1.2"/>
+        <line x1="259" y1="74" x2="273" y2="75.5" stroke="rgba(0,0,0,0.3)" stroke-width="1"/>
+        <line x1="259" y1="80" x2="273" y2="81.5" stroke="rgba(0,0,0,0.3)" stroke-width="1"/>
+        <!-- Reverse / fog lower -->
+        <path d="M258 88 L274 90 L274 96 L258 94 Z" fill="#ff8800" opacity="0.6"/>
+
+        <!-- Exhaust pipes (dual) -->
+        <ellipse cx="262" cy="112" rx="6" ry="4" fill="#060c22" stroke="#1a2a4a" stroke-width="1"/>
+        <ellipse cx="262" cy="112" rx="4" ry="2.5" fill="#111" opacity="0.9"/>
+        <ellipse cx="270" cy="112" rx="6" ry="4" fill="#060c22" stroke="#1a2a4a" stroke-width="1"/>
+        <ellipse cx="270" cy="112" rx="4" ry="2.5" fill="#111" opacity="0.9"/>
+
+        <!-- ── WHEELS ── -->
+        <!-- REAR WHEEL (Turbo: wider) -->
+        <circle cx="210" cy="114" r="24" fill="url(#p_tire)"/>
+        <!-- Tire sidewall texture -->
+        <circle cx="210" cy="114" r="24" fill="none" stroke="#1e2030" stroke-width="3"/>
+        <!-- BBS-style multi-spoke rim -->
+        <circle cx="210" cy="114" r="18" fill="url(#p_rim)"/>
+        <circle cx="210" cy="114" r="15" fill="#b8b8c8"/>
+        <circle cx="210" cy="114" r="12" fill="#d0d0dc"/>
+        <!-- Spokes (5 spoke) -->
+        <line x1="210" y1="96"  x2="210" y2="132" stroke="#888898" stroke-width="3"/>
+        <line x1="194" y1="103" x2="226" y2="125" stroke="#888898" stroke-width="3"/>
+        <line x1="194" y1="125" x2="226" y2="103" stroke="#888898" stroke-width="3"/>
+        <line x1="198" y1="97"  x2="222" y2="131" stroke="#888898" stroke-width="2"/>
+        <line x1="222" y1="97"  x2="198" y2="131" stroke="#888898" stroke-width="2"/>
+        <!-- Center cap -->
+        <circle cx="210" cy="114" r="7"  fill="#c8c8d8"/>
+        <circle cx="210" cy="114" r="4"  fill="#e0e0ec"/>
+        <!-- Lug bolts -->
+        <circle cx="210" cy="102" r="1.5" fill="#888"/>
+        <circle cx="222" cy="109" r="1.5" fill="#888"/>
+        <circle cx="218" cy="123" r="1.5" fill="#888"/>
+        <circle cx="202" cy="123" r="1.5" fill="#888"/>
+        <circle cx="198" cy="109" r="1.5" fill="#888"/>
+        <!-- Brake caliper red -->
+        <path d="M200 103 Q208 99 218 104" stroke="#dd0000" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+        <!-- Wheel arch rear -->
+        <path d="M184 116 Q188 90 210 87 Q232 84 238 116" fill="none" stroke="#0e3070" stroke-width="3"/>
+        <!-- Arch lip -->
+        <path d="M184 116 Q188 90 210 87 Q232 84 238 116" fill="none" stroke="rgba(100,160,255,0.3)" stroke-width="1.5"/>
+
+        <!-- FRONT WHEEL -->
+        <circle cx="72" cy="114" r="22" fill="url(#p_tire)"/>
+        <circle cx="72" cy="114" r="22" fill="none" stroke="#1e2030" stroke-width="3"/>
+        <circle cx="72" cy="114" r="16" fill="url(#p_rim)"/>
+        <circle cx="72" cy="114" r="13" fill="#b8b8c8"/>
+        <circle cx="72" cy="114" r="10" fill="#d0d0dc"/>
+        <line x1="72" y1="98"  x2="72"  y2="130" stroke="#888898" stroke-width="2.5"/>
+        <line x1="58" y1="105" x2="86"  y2="123" stroke="#888898" stroke-width="2.5"/>
+        <line x1="58" y1="123" x2="86"  y2="105" stroke="#888898" stroke-width="2.5"/>
+        <line x1="62" y1="99"  x2="82"  y2="129" stroke="#888898" stroke-width="1.5"/>
+        <line x1="82" y1="99"  x2="62"  y2="129" stroke="#888898" stroke-width="1.5"/>
+        <circle cx="72" cy="114" r="6" fill="#c8c8d8"/>
+        <circle cx="72" cy="114" r="3.5" fill="#e0e0ec"/>
+        <circle cx="72" cy="103" r="1.2" fill="#888"/>
+        <circle cx="82" cy="109" r="1.2" fill="#888"/>
+        <circle cx="79" cy="122" r="1.2" fill="#888"/>
+        <circle cx="65" cy="122" r="1.2" fill="#888"/>
+        <circle cx="62" cy="109" r="1.2" fill="#888"/>
+        <path d="M63 105 Q70 101 80 106" stroke="#dd0000" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+        <!-- Wheel arch front -->
+        <path d="M36 116 Q42 92 72 89 Q100 86 108 116" fill="none" stroke="#0e3070" stroke-width="3"/>
+        <path d="M36 116 Q42 92 72 89 Q100 86 108 116" fill="none" stroke="rgba(100,160,255,0.3)" stroke-width="1.5"/>
+
+        <!-- Neon underglow -->
+        <ellipse cx="148" cy="126" rx="130" ry="5" fill="rgba(0,80,220,0.3)"/>
+      </svg>
+    </div>
+
+    <div class="scan-bar" id="sc0"></div>
+    <div class="scan-txt" id="st0">▶ PORSCHE 911 TURBO</div>
+
+    <!-- 8-bit Porsche: multi-color pixel art like reference right side -->
+    <div class="car8" id="c8_0">
+      <svg width="270" height="108" viewBox="0 0 270 108" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+        <!-- Pixel Porsche 911 Turbo - colorful, recognizable silhouette -->
+        <!-- === SPOILER === -->
+        <rect x="202" y="4"  width="56"  height="6"  fill="#00f5ff"/>
+        <rect x="204" y="10" width="52"  height="4"  fill="#00ccdd"/>
+        <rect x="208" y="14" width="8"   height="12" fill="#00aacc"/>
+        <rect x="228" y="12" width="8"   height="14" fill="#00aacc"/>
+        <!-- === ROOF === -->
+        <rect x="84"  y="16" width="128" height="8"  fill="#dd66ff"/>
+        <rect x="84"  y="16" width="42"  height="8"  fill="#aa44cc"/>
+        <rect x="126" y="16" width="42"  height="8"  fill="#cc55ee"/>
+        <rect x="168" y="16" width="44"  height="8"  fill="#ee88ff"/>
+        <!-- Roof highlight -->
+        <rect x="96"  y="18" width="100" height="3"  fill="rgba(255,255,255,0.35)"/>
+        <!-- === UPPER CABIN === -->
+        <rect x="68"  y="24" width="160" height="8"  fill="#9933ee"/>
+        <rect x="68"  y="24" width="52"  height="8"  fill="#7722cc"/>
+        <rect x="120" y="24" width="52"  height="8"  fill="#aa44ff"/>
+        <rect x="172" y="24" width="56"  height="8"  fill="#cc66ff"/>
+        <!-- === WINDSHIELD === -->
+        <rect x="72"  y="24" width="58"  height="20" fill="rgba(0,200,255,0.82)"/>
+        <rect x="74"  y="26" width="26"  height="10" fill="rgba(255,255,255,0.6)"/>
+        <rect x="74"  y="26" width="8"   height="6"  fill="rgba(255,255,255,0.8)"/>
+        <!-- === REAR QUARTER WINDOW === -->
+        <rect x="52"  y="26" width="22"  height="14" fill="rgba(0,180,255,0.65)"/>
+        <rect x="54"  y="28" width="10"  height="6"  fill="rgba(255,255,255,0.4)"/>
+        <!-- === MIDDLE BODY === -->
+        <rect x="18"  y="56" width="236" height="16" fill="#6600cc"/>
+        <rect x="18"  y="56" width="68"  height="16" fill="#4400aa"/>
+        <rect x="86"  y="56" width="68"  height="16" fill="#7722ee"/>
+        <rect x="154" y="56" width="60"  height="16" fill="#9944ff"/>
+        <rect x="214" y="56" width="40"  height="16" fill="#bb66ff"/>
+        <!-- === LOWER BODY === -->
+        <rect x="18"  y="72" width="236" height="10" fill="#5500bb"/>
+        <rect x="18"  y="72" width="60"  height="10" fill="#3300aa"/>
+        <rect x="78"  y="72" width="80"  height="10" fill="#6611cc"/>
+        <rect x="158" y="72" width="96"  height="10" fill="#8833ee"/>
+        <!-- === BODY STRIPE / CHARACTER LINE === -->
+        <rect x="18"  y="54" width="236" height="4"  fill="#cc88ff"/>
+        <rect x="18"  y="82" width="236" height="4"  fill="#440088"/>
+        <!-- === CABIN MID === -->
+        <rect x="36"  y="32" width="192" height="26" fill="#8822dd"/>
+        <rect x="36"  y="32" width="60"  height="26" fill="#6611bb"/>
+        <rect x="96"  y="32" width="60"  height="26" fill="#9933ee"/>
+        <rect x="156" y="32" width="72"  height="26" fill="#bb55ff"/>
+        <!-- === ROUND HEADLIGHTS (PIXEL) === -->
+        <!-- Main headlight - round like real 911 -->
+        <rect x="18"  y="46" width="8"   height="8"  fill="#ff8800"/><!-- corner softener -->
+        <rect x="18"  y="38" width="24"  height="28" fill="#ffff00"/>
+        <rect x="20"  y="40" width="20"  height="24" fill="white"/>
+        <rect x="22"  y="42" width="16"  height="20" fill="#ffffd0"/>
+        <rect x="26"  y="46" width="8"   height="12" fill="white"/>
+        <rect x="18"  y="56" width="24"  height="6"  fill="#ffcc00"/><!-- halo bottom -->
+        <rect x="20"  y="38" width="20"  height="4"  fill="#ffdd44"/><!-- halo top -->
+        <!-- Secondary headlight -->
+        <rect x="42"  y="44" width="16"  height="18" fill="#ffee88"/>
+        <rect x="44"  y="46" width="12"  height="14" fill="#ffffcc"/>
+        <rect x="46"  y="48" width="8"   height="10" fill="white"/>
+        <!-- Fog light orange strip -->
+        <rect x="20"  y="62" width="36"  height="6"  fill="#ff8800"/>
+        <rect x="22"  y="63" width="32"  height="4"  fill="#ffaa00"/>
+        <!-- === TAIL LIGHTS === -->
+        <rect x="240" y="32" width="18"  height="30" fill="#ff0000"/>
+        <rect x="240" y="32" width="18"  height="10" fill="#ff3333"/>
+        <rect x="242" y="34" width="14"  height="6"  fill="#ff6666"/>
+        <rect x="240" y="56" width="18"  height="6"  fill="#ff6600"/>
+        <!-- === SIDE SKIRT / SILL === -->
+        <rect x="18"  y="86" width="236" height="6"  fill="#330066"/>
+        <!-- === BUMPERS === -->
+        <rect x="4"   y="58" width="18"  height="28" fill="#440077"/>
+        <rect x="252" y="58" width="18"  height="28" fill="#440077"/>
+        <!-- === EXHAUSTS === -->
+        <rect x="254" y="82" width="8"   height="5"  fill="#111" rx="1"/>
+        <rect x="264" y="82" width="8"   height="5"  fill="#111" rx="1"/>
+        <!-- === FRONT GRILLE === -->
+        <rect x="4"   y="58" width="18"  height="28" fill="#220044"/>
+        <rect x="6"   y="62" width="14"  height="3"  fill="#440066"/>
+        <rect x="6"   y="68" width="14"  height="3"  fill="#440066"/>
+        <rect x="6"   y="74" width="14"  height="3"  fill="#440066"/>
+        <!-- === WHEELS (GOLD BBS) === -->
+        <!-- Front wheel -->
+        <rect x="38"  y="80" width="48"  height="28" rx="4" fill="#0a0a18"/>
+        <rect x="42"  y="84" width="40"  height="20" rx="3" fill="#14142a"/>
+        <rect x="46"  y="86" width="32"  height="16" fill="#ddaa00"/>
+        <rect x="50"  y="90" width="24"  height="8"  fill="#ffcc22"/>
+        <rect x="56"  y="92" width="12"  height="4"  fill="#ffe044"/>
+        <!-- BBS spokes pixel -->
+        <rect x="60"  y="84" width="4"   height="20" fill="#bb8800"/>
+        <rect x="46"  y="92" width="32"  height="4"  fill="#bb8800"/>
+        <rect x="46"  y="84" width="4"   height="6"  fill="#bb8800"/>
+        <rect x="74"  y="84" width="4"   height="6"  fill="#bb8800"/>
+        <rect x="46"  y="102" width="4"  height="4"  fill="#bb8800"/>
+        <rect x="74"  y="102" width="4"  height="4"  fill="#bb8800"/>
+        <!-- Center cap -->
+        <rect x="56"  y="88" width="12"  height="12" fill="#ddcc44"/>
+        <rect x="58"  y="90" width="8"   height="8"  fill="#ffee66"/>
+        <!-- Red caliper -->
+        <rect x="72"  y="84" width="8"   height="6"  fill="#cc0000"/>
+        <!-- Rear wheel (wider) -->
+        <rect x="176" y="76" width="58"  height="32" rx="4" fill="#0a0a18"/>
+        <rect x="180" y="80" width="50"  height="24" rx="3" fill="#14142a"/>
+        <rect x="184" y="82" width="42"  height="20" fill="#ddaa00"/>
+        <rect x="188" y="86" width="34"  height="12" fill="#ffcc22"/>
+        <rect x="196" y="88" width="18"  height="8"  fill="#ffe044"/>
+        <!-- BBS spokes rear -->
+        <rect x="202" y="80" width="4"   height="24" fill="#bb8800"/>
+        <rect x="184" y="90" width="42"  height="4"  fill="#bb8800"/>
+        <rect x="184" y="80" width="4"   height="6"  fill="#bb8800"/>
+        <rect x="222" y="80" width="4"   height="6"  fill="#bb8800"/>
+        <rect x="184" y="100" width="4"  height="6"  fill="#bb8800"/>
+        <rect x="222" y="100" width="4"  height="6"  fill="#bb8800"/>
+        <rect x="196" y="84" width="18"  height="16" fill="#ddcc44"/>
+        <rect x="198" y="86" width="14"  height="12" fill="#ffee66"/>
+        <!-- Red caliper rear -->
+        <rect x="222" y="80" width="10"  height="8"  fill="#cc0000"/>
+        <!-- === NEON UNDERGLOW === -->
+        <rect x="46"  y="107" width="178" height="4"  fill="#00ddff" opacity="0.88" rx="1"/>
+        <rect x="40"  y="104" width="190" height="3"  fill="#aa00ff" opacity="0.5"  rx="1"/>
+        <!-- === PIXEL DUST / SPARKLE on body === -->
+        <rect x="140" y="60" width="4" height="4" fill="#ff80ff" opacity="0.9"/>
+        <rect x="168" y="44" width="4" height="4" fill="#00ffff" opacity="0.8"/>
+        <rect x="194" y="64" width="4" height="4" fill="#ffff00" opacity="0.85"/>
+        <rect x="120" y="36" width="3" height="3" fill="#00ffaa" opacity="0.7"/>
+        <rect x="178" y="30" width="3" height="3" fill="#ff88ff" opacity="0.75"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- SEQ 1 · MAZDA MIATA MX-5 (NA)     -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="seq" id="s1">
+    <div class="car-shadow" id="sh1"></div>
+    <div class="car-wrap falling" id="c1">
+      <svg width="268" height="122" viewBox="0 0 268 122" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="m_body" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f8f8ff"/>
+            <stop offset="20%" stop-color="#e4e4f4"/>
+            <stop offset="55%" stop-color="#c8c8e0"/>
+            <stop offset="85%" stop-color="#a8a8c8"/>
+            <stop offset="100%" stop-color="#8888b0"/>
+          </linearGradient>
+          <linearGradient id="m_hood" x1="0" y1="0" x2="0.5" y2="1">
+            <stop offset="0%" stop-color="#ebebfb"/>
+            <stop offset="50%" stop-color="#d0d0e8"/>
+            <stop offset="100%" stop-color="#b0b0cc"/>
+          </linearGradient>
+          <linearGradient id="m_wind" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="rgba(200,240,255,0.88)"/>
+            <stop offset="50%" stop-color="rgba(140,200,255,0.5)"/>
+            <stop offset="100%" stop-color="rgba(80,160,240,0.12)"/>
+          </linearGradient>
+          <radialGradient id="m_hl" cx="38%" cy="38%" r="55%">
+            <stop offset="0%" stop-color="white"/>
+            <stop offset="40%" stop-color="#fff8d0"/>
+            <stop offset="100%" stop-color="#f0b030" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="m_tire" cx="38%" cy="35%" r="60%">
+            <stop offset="0%" stop-color="#282838"/>
+            <stop offset="100%" stop-color="#080812"/>
+          </radialGradient>
+        </defs>
+
+        <ellipse cx="138" cy="120" rx="118" ry="6" fill="rgba(0,0,20,0.45)"/>
+
+        <!-- MX-5 NA: low, long-nosed roadster -->
+        <!-- Body lower sill -->
+        <path d="M34 98 L232 98 L236 108 L30 108 Z" fill="#8888b0"/>
+        <!-- Front bumper -->
+        <path d="M20 98 Q26 86 42 80 L42 108 L20 108 Z" fill="#8888b0"/>
+        <!-- Rear bumper -->
+        <path d="M232 98 L236 108 L248 108 L244 98 Z" fill="#9090b8"/>
+        <!-- Exhaust center -->
+        <ellipse cx="240" cy="105" rx="5" ry="3.5" fill="#0a0a1a"/>
+        <ellipse cx="240" cy="105" rx="3.5" ry="2.5" fill="#111"/>
+
+        <!-- Main body -->
+        <path d="M34 98 Q42 76 68 62 Q96 50 136 46 Q168 43 198 50 Q224 57 238 72 Q248 84 248 98 Z" fill="url(#m_body)"/>
+
+        <!-- Rear fender curve -->
+        <path d="M210 58 Q232 62 244 76 Q250 86 248 98 L244 98 Q244 88 238 78 Q228 64 210 58 Z" fill="#d0d0e8"/>
+
+        <!-- Hood long flat MX-5 NA -->
+        <path d="M34 98 Q42 76 68 62 Q96 50 136 46 L140 52 Q102 56 76 68 Q54 80 44 100 Z" fill="url(#m_hood)"/>
+
+        <!-- Hood edge highlight -->
+        <path d="M72 64 Q110 54 148 51" stroke="rgba(255,255,255,0.45)" stroke-width="2" fill="none"/>
+        <!-- Hood panel line -->
+        <path d="M86 70 Q120 62 155 60 L155 62 Q120 64 86 72 Z" fill="rgba(255,255,255,0.18)"/>
+
+        <!-- Soft top roll bar visible (folded) -->
+        <rect x="148" y="48" width="42" height="9" rx="3" fill="#8888a0"/>
+        <rect x="150" y="49" width="38" height="6" rx="2" fill="#a0a0b8"/>
+
+        <!-- Windshield: very raked, sporty angle -->
+        <path d="M102 54 Q114 30 150 20 Q178 12 200 24 L215 40 L106 56 Z" fill="url(#m_wind)"/>
+        <!-- Glare -->
+        <path d="M114 46 Q126 28 154 18 L150 26 Q132 34 120 48 Z" fill="rgba(255,255,255,0.34)"/>
+        <path d="M130 50 Q138 36 158 22 L156 28 Q144 38 136 52 Z" fill="rgba(255,255,255,0.18)"/>
+
+        <!-- POP-UP HEADLIGHTS (raised) - Miata's most iconic feature -->
+        <!-- Housing box -->
+        <rect x="26" y="70" width="30" height="22" rx="2" fill="#1a1a2e" stroke="#3a3a5a" stroke-width="1.5"/>
+        <!-- Lamp unit -->
+        <rect x="28" y="72" width="26" height="18" fill="#fffcea" opacity="0.95"/>
+        <rect x="30" y="74" width="22" height="14" fill="white"/>
+        <!-- Lamp face -->
+        <rect x="31" y="75" width="20" height="12" fill="url(#m_hl)" opacity="0.9"/>
+        <!-- Bright center -->
+        <rect x="35" y="78" width="12" height="6" fill="rgba(255,255,220,0.95)"/>
+        <rect x="38" y="79" width="6"  height="4" fill="white"/>
+        <!-- Housing bezel -->
+        <rect x="24" y="68" width="34" height="26" rx="3" fill="none" stroke="#a0a0c0" stroke-width="2"/>
+
+        <!-- Side trim / body line character -->
+        <path d="M44 90 Q110 80 210 82 Q232 83 242 90" stroke="rgba(255,255,255,0.4)" stroke-width="2" fill="none"/>
+        <!-- Lower accent line -->
+        <path d="M44 96 Q120 91 234 93" stroke="rgba(180,180,220,0.3)" stroke-width="1.5" fill="none"/>
+
+        <!-- Door area -->
+        <path d="M130 50 Q132 72 134 100" stroke="rgba(0,0,40,0.2)" stroke-width="1.2" fill="none"/>
+        <!-- Door handle -->
+        <path d="M142 76 Q158 75 160 78 Q158 81 142 80 Z" fill="#b0b0cc" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+
+        <!-- Side exhaust gill -->
+        <path d="M196 64 Q210 60 224 64 L222 72 Q210 68 196 71 Z" fill="#c0c0d8"/>
+        <line x1="200" y1="66" x2="198" y2="71" stroke="#a0a0c0" stroke-width="1.2"/>
+        <line x1="206" y1="65" x2="204" y2="70" stroke="#a0a0c0" stroke-width="1.2"/>
+        <line x1="212" y1="64" x2="210" y2="69" stroke="#a0a0c0" stroke-width="1.2"/>
+        <line x1="218" y1="64" x2="216" y2="69" stroke="#a0a0c0" stroke-width="1.2"/>
+
+        <!-- Side mirror -->
+        <path d="M208 54 Q220 52 221 58 L208 60 Z" fill="#c0c0d8" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>
+
+        <!-- Tail lights MX-5 NA: round circular style -->
+        <circle cx="238" cy="76" r="13" fill="#cc0000" stroke="#880000" stroke-width="1"/>
+        <circle cx="238" cy="76" r="9"  fill="#ee1111"/>
+        <circle cx="238" cy="76" r="6"  fill="#ff3333"/>
+        <circle cx="238" cy="76" r="3"  fill="#ff6666"/>
+        <!-- Outer secondary -->
+        <circle cx="228" cy="86" r="9"  fill="#990000"/>
+        <circle cx="228" cy="86" r="6"  fill="#bb1111"/>
+        <circle cx="228" cy="86" r="3"  fill="#dd2222"/>
+
+        <!-- WHEELS -->
+        <!-- Front -->
+        <circle cx="64" cy="108" r="20" fill="url(#m_tire)"/>
+        <circle cx="64" cy="108" r="20" fill="none" stroke="#1a1a2e" stroke-width="2.5"/>
+        <!-- Silver rim -->
+        <circle cx="64" cy="108" r="14" fill="#c8c8d8" stroke="#dcdce8" stroke-width="1"/>
+        <circle cx="64" cy="108" r="11" fill="#d8d8e8"/>
+        <circle cx="64" cy="108" r="8"  fill="#c0c0d0"/>
+        <!-- Spokes -->
+        <line x1="64" y1="94"  x2="64"  y2="122" stroke="#a0a0b8" stroke-width="2.5"/>
+        <line x1="51" y1="100" x2="77"  y2="116" stroke="#a0a0b8" stroke-width="2.5"/>
+        <line x1="51" y1="116" x2="77"  y2="100" stroke="#a0a0b8" stroke-width="2.5"/>
+        <line x1="55" y1="95"  x2="73"  y2="121" stroke="#a0a0b8" stroke-width="1.5"/>
+        <line x1="73" y1="95"  x2="55"  y2="121" stroke="#a0a0b8" stroke-width="1.5"/>
+        <circle cx="64" cy="108" r="5" fill="#c8c8d8"/>
+        <circle cx="64" cy="108" r="3" fill="#e0e0ec"/>
+        <!-- Pink caliper -->
+        <path d="M56 99 Q63 95 72 100" stroke="#ff2288" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <!-- Arch -->
+        <path d="M24 110 Q32 88 64 85 Q96 82 84 110" fill="none" stroke="#9090b8" stroke-width="2.5"/>
+        <path d="M24 110 Q32 88 64 85 Q96 82 84 110" fill="none" stroke="rgba(200,200,255,0.25)" stroke-width="1.5"/>
+
+        <!-- Rear -->
+        <circle cx="200" cy="108" r="20" fill="url(#m_tire)"/>
+        <circle cx="200" cy="108" r="20" fill="none" stroke="#1a1a2e" stroke-width="2.5"/>
+        <circle cx="200" cy="108" r="14" fill="#c8c8d8" stroke="#dcdce8" stroke-width="1"/>
+        <circle cx="200" cy="108" r="11" fill="#d8d8e8"/>
+        <circle cx="200" cy="108" r="8"  fill="#c0c0d0"/>
+        <line x1="200" y1="94"  x2="200" y2="122" stroke="#a0a0b8" stroke-width="2.5"/>
+        <line x1="187" y1="100" x2="213" y2="116" stroke="#a0a0b8" stroke-width="2.5"/>
+        <line x1="187" y1="116" x2="213" y2="100" stroke="#a0a0b8" stroke-width="2.5"/>
+        <line x1="191" y1="95"  x2="209" y2="121" stroke="#a0a0b8" stroke-width="1.5"/>
+        <line x1="209" y1="95"  x2="191" y2="121" stroke="#a0a0b8" stroke-width="1.5"/>
+        <circle cx="200" cy="108" r="5" fill="#c8c8d8"/>
+        <circle cx="200" cy="108" r="3" fill="#e0e0ec"/>
+        <path d="M192 99 Q199 95 208 100" stroke="#ff2288" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M180 110 Q184 88 200 85 Q216 82 222 110" fill="none" stroke="#9090b8" stroke-width="2.5"/>
+        <path d="M180 110 Q184 88 200 85 Q216 82 222 110" fill="none" stroke="rgba(200,200,255,0.25)" stroke-width="1.5"/>
+
+        <!-- Pink underglow -->
+        <ellipse cx="140" cy="118" rx="115" ry="5" fill="rgba(255,60,180,0.28)"/>
+      </svg>
+    </div>
+    <div class="scan-bar" id="sc1"></div>
+    <div class="scan-txt" id="st1">▶ MAZDA MIATA MX-5</div>
+
+    <div class="car8" id="c8_1">
+      <svg width="256" height="100" viewBox="0 0 256 100" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+        <!-- Pixel Mazda Miata NA - pink/magenta/cyan theme -->
+        <!-- === ROOF / WINDSHIELD === -->
+        <rect x="74"  y="12" width="112" height="8"  fill="#ff44ff"/>
+        <rect x="74"  y="12" width="36"  height="8"  fill="#cc22cc"/>
+        <rect x="110" y="12" width="36"  height="8"  fill="#ee44ee"/>
+        <rect x="146" y="12" width="40"  height="8"  fill="#ff66ff"/>
+        <!-- Highlight -->
+        <rect x="82"  y="14" width="96"  height="3"  fill="rgba(255,255,255,0.4)"/>
+        <!-- === UPPER CABIN === -->
+        <rect x="60"  y="20" width="140" height="8"  fill="#ff66ee"/>
+        <rect x="60"  y="20" width="46"  height="8"  fill="#dd44cc"/>
+        <rect x="106" y="20" width="46"  height="8"  fill="#ff77ee"/>
+        <rect x="152" y="20" width="48"  height="8"  fill="#ff99ff"/>
+        <!-- === WINDSHIELD GLASS === -->
+        <rect x="64"  y="20" width="54"  height="18" fill="rgba(0,230,255,0.82)"/>
+        <rect x="66"  y="22" width="26"  height="10" fill="rgba(255,255,255,0.65)"/>
+        <rect x="66"  y="22" width="8"   height="6"  fill="rgba(255,255,255,0.85)"/>
+        <!-- === SOFT TOP FOLDED === -->
+        <rect x="142" y="22" width="44"  height="8"  fill="#777788"/>
+        <rect x="144" y="24" width="40"  height="5"  fill="#999aaa"/>
+        <!-- === BODY MID === -->
+        <rect x="16"  y="50" width="224" height="16" fill="#ee44aa"/>
+        <rect x="16"  y="50" width="64"  height="16" fill="#cc2288"/>
+        <rect x="80"  y="50" width="72"  height="16" fill="#ff55bb"/>
+        <rect x="152" y="50" width="60"  height="16" fill="#ff77cc"/>
+        <rect x="212" y="50" width="28"  height="16" fill="#ff99dd"/>
+        <!-- === LOWER BODY === -->
+        <rect x="16"  y="66" width="224" height="10" fill="#dd3399"/>
+        <rect x="16"  y="66" width="60"  height="10" fill="#bb1177"/>
+        <rect x="76"  y="66" width="80"  height="10" fill="#ee44aa"/>
+        <rect x="156" y="66" width="84"  height="10" fill="#ff66bb"/>
+        <!-- Character line -->
+        <rect x="16"  y="48" width="224" height="4"  fill="#ff88dd"/>
+        <rect x="16"  y="76" width="224" height="4"  fill="#880044"/>
+        <!-- === CABIN MID === -->
+        <rect x="30"  y="28" width="174" height="24" fill="#ff55bb"/>
+        <rect x="30"  y="28" width="56"  height="24" fill="#dd33aa"/>
+        <rect x="86"  y="28" width="56"  height="24" fill="#ff66cc"/>
+        <rect x="142" y="28" width="62"  height="24" fill="#ff88dd"/>
+        <!-- === POP-UP HEADLIGHTS (PIXEL, RAISED) === -->
+        <!-- Left pop-up box -->
+        <rect x="16"  y="34" width="28"  height="24" fill="#1a1a2e" stroke-width="0"/>
+        <rect x="18"  y="36" width="24"  height="20" fill="#ffffaa"/>
+        <rect x="20"  y="38" width="20"  height="16" fill="white"/>
+        <rect x="22"  y="40" width="16"  height="12" fill="#fffff0"/>
+        <rect x="26"  y="43" width="8"   height="6"  fill="white"/>
+        <!-- Bezel rim -->
+        <rect x="14"  y="32" width="32"  height="28" rx="2" fill="none"/>
+        <rect x="14"  y="32" width="32"  height="4"  fill="#aaaacc"/><!-- top bezel -->
+        <rect x="14"  y="56" width="32"  height="4"  fill="#aaaacc"/><!-- bottom bezel -->
+        <!-- === TAIL LIGHTS (ROUND PIXEL) === -->
+        <!-- Big circle -->
+        <rect x="224" y="36" width="18"  height="18" fill="#ff0000"/>
+        <rect x="226" y="38" width="14"  height="14" fill="#ff3333"/>
+        <rect x="228" y="40" width="10"  height="10" fill="#ff6666"/>
+        <rect x="230" y="42" width="6"   height="6"  fill="#ff9999"/>
+        <!-- Small circle below -->
+        <rect x="216" y="52" width="14"  height="14" fill="#cc0000"/>
+        <rect x="218" y="54" width="10"  height="10" fill="#ee1111"/>
+        <rect x="220" y="56" width="6"   height="6"  fill="#ff4444"/>
+        <!-- === SIDE SKIRT === -->
+        <rect x="16"  y="80" width="224" height="6"  fill="#880055"/>
+        <!-- === BUMPERS === -->
+        <rect x="4"   y="52" width="16"  height="26" fill="#aa1177"/>
+        <rect x="6"   y="56" width="12"  height="3"  fill="#cc2288"/>
+        <rect x="6"   y="62" width="12"  height="3"  fill="#cc2288"/>
+        <rect x="6"   y="68" width="12"  height="3"  fill="#cc2288"/>
+        <rect x="236" y="52" width="16"  height="26" fill="#aa1177"/>
+        <!-- Exhaust -->
+        <rect x="238" y="76" width="12"  height="5"  fill="#111" rx="1"/>
+        <!-- === WHEELS PIXEL (WHITE / PINK HUB) === -->
+        <!-- Front -->
+        <rect x="32"  y="72" width="44"  height="26" rx="3" fill="#080818"/>
+        <rect x="36"  y="76" width="36"  height="18" rx="2" fill="#12122a"/>
+        <rect x="40"  y="78" width="28"  height="14" fill="#e0e0f0"/>
+        <rect x="44"  y="82" width="20"  height="6"  fill="#c8c8e0"/>
+        <rect x="50"  y="83" width="8"   height="4"  fill="#ff44aa"/>
+        <!-- Spokes -->
+        <rect x="52"  y="76" width="4"   height="18" fill="#a0a0c0"/>
+        <rect x="40"  y="84" width="28"  height="4"  fill="#a0a0c0"/>
+        <rect x="40"  y="76" width="4"   height="4"  fill="#a0a0c0"/>
+        <rect x="64"  y="76" width="4"   height="4"  fill="#a0a0c0"/>
+        <rect x="40"  y="88" width="4"   height="6"  fill="#a0a0c0"/>
+        <rect x="64"  y="88" width="4"   height="6"  fill="#a0a0c0"/>
+        <!-- Center hub -->
+        <rect x="48"  y="80" width="12"  height="12" fill="#ff44aa"/>
+        <rect x="50"  y="82" width="8"   height="8"  fill="#ff88cc"/>
+        <!-- Caliper -->
+        <rect x="64"  y="76" width="8"   height="5"  fill="#ff0088"/>
+        <!-- Rear wheel -->
+        <rect x="174" y="72" width="48"  height="26" rx="3" fill="#080818"/>
+        <rect x="178" y="76" width="40"  height="18" rx="2" fill="#12122a"/>
+        <rect x="182" y="78" width="32"  height="14" fill="#e0e0f0"/>
+        <rect x="186" y="82" width="24"  height="6"  fill="#c8c8e0"/>
+        <rect x="192" y="83" width="10"  height="4"  fill="#ff44aa"/>
+        <rect x="196" y="76" width="4"   height="18" fill="#a0a0c0"/>
+        <rect x="182" y="84" width="32"  height="4"  fill="#a0a0c0"/>
+        <rect x="182" y="76" width="4"   height="4"  fill="#a0a0c0"/>
+        <rect x="210" y="76" width="4"   height="4"  fill="#a0a0c0"/>
+        <rect x="182" y="88" width="4"   height="6"  fill="#a0a0c0"/>
+        <rect x="210" y="88" width="4"   height="6"  fill="#a0a0c0"/>
+        <rect x="190" y="80" width="16"  height="12" fill="#ff44aa"/>
+        <rect x="192" y="82" width="12"  height="8"  fill="#ff88cc"/>
+        <rect x="210" y="76" width="8"   height="5"  fill="#ff0088"/>
+        <!-- === NEON UNDERGLOW === -->
+        <rect x="40"  y="97" width="176" height="3"  fill="#ff00cc" opacity="0.9" rx="1"/>
+        <rect x="34"  y="94" width="188" height="3"  fill="#aa00ff" opacity="0.5"  rx="1"/>
+        <!-- === PIXEL SPARKLES === -->
+        <rect x="106" y="54" width="4" height="4" fill="#00ffff" opacity="0.9"/>
+        <rect x="144" y="36" width="4" height="4" fill="#ffff00" opacity="0.75"/>
+        <rect x="170" y="56" width="4" height="4" fill="#ffffff" opacity="0.8"/>
+        <rect x="122" y="24" width="3" height="3" fill="#00ffaa" opacity="0.75"/>
+        <!-- Exhaust speed right -->
+        <rect x="234" y="64" width="14" height="6" fill="#ff44aa" rx="1"/>
+        <rect x="238" y="72" width="10" height="4" fill="#ff88cc" rx="1"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- SEQ 2 · FERRARI F40               -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="seq" id="s2">
+    <div class="car-shadow" id="sh2"></div>
+    <div class="car-wrap falling" id="c2">
+      <svg width="272" height="118" viewBox="0 0 272 118" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="f_body" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f83030"/>
+            <stop offset="20%" stop-color="#e01818"/>
+            <stop offset="55%" stop-color="#bc0808"/>
+            <stop offset="85%" stop-color="#900404"/>
+            <stop offset="100%" stop-color="#680000"/>
+          </linearGradient>
+          <linearGradient id="f_roof" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#900404"/>
+            <stop offset="45%" stop-color="#cc1010"/>
+            <stop offset="100%" stop-color="#e81818"/>
+          </linearGradient>
+          <linearGradient id="f_wind" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="rgba(160,220,255,0.82)"/>
+            <stop offset="50%" stop-color="rgba(100,180,255,0.4)"/>
+            <stop offset="100%" stop-color="rgba(40,140,220,0.1)"/>
+          </linearGradient>
+          <radialGradient id="f_hl" cx="35%" cy="35%" r="55%">
+            <stop offset="0%" stop-color="white"/>
+            <stop offset="45%" stop-color="#fff8e0"/>
+            <stop offset="100%" stop-color="#f0b000" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="f_tire" cx="38%" cy="35%" r="60%">
+            <stop offset="0%" stop-color="#2a2a36"/>
+            <stop offset="100%" stop-color="#080810"/>
+          </radialGradient>
+        </defs>
+
+        <ellipse cx="142" cy="116" rx="124" ry="6" fill="rgba(0,0,10,0.48)"/>
+
+        <!-- F40: extremely low, wedge, aggressive -->
+        <!-- Side skirt / sill -->
+        <path d="M40 96 L244 96 L248 106 L36 106 Z" fill="#600000"/>
+        <!-- Front splitter (ground effect) -->
+        <path d="M18 96 Q22 86 36 80 L36 106 L18 106 Z" fill="#600000"/>
+        <rect x="12" y="98" width="28" height="6" rx="1" fill="#440000"/>
+        <!-- Rear bumper / diffuser -->
+        <path d="M244 96 L248 106 L264 106 L260 96 Z" fill="#600000"/>
+        <!-- Rear diffuser fins -->
+        <rect x="248" y="96" width="16" height="10" fill="#3a0000"/>
+        <line x1="252" y1="96" x2="252" y2="106" stroke="#280000" stroke-width="1.5"/>
+        <line x1="257" y1="96" x2="257" y2="106" stroke="#280000" stroke-width="1.5"/>
+        <line x1="262" y1="96" x2="262" y2="106" stroke="#280000" stroke-width="1.5"/>
+        <!-- Twin center exhausts -->
+        <ellipse cx="252" cy="104" rx="6" ry="4" fill="#0a0a0a" stroke="#222" stroke-width="1"/>
+        <ellipse cx="252" cy="104" rx="4" ry="2.5" fill="#050505"/>
+        <ellipse cx="260" cy="104" rx="6" ry="4" fill="#0a0a0a" stroke="#222" stroke-width="1"/>
+        <ellipse cx="260" cy="104" rx="4" ry="2.5" fill="#050505"/>
+
+        <!-- Main lower body -->
+        <path d="M20 96 Q30 70 72 52 Q106 38 148 34 Q188 31 220 40 Q248 48 258 66 Q268 78 268 96 Z" fill="url(#f_body)"/>
+
+        <!-- Front splitter lip detail -->
+        <path d="M16 96 Q22 84 38 78 L40 84 Q28 90 24 98 Z" fill="#6a0000"/>
+
+        <!-- Rear wheel arch cover (wide fender F40) -->
+        <path d="M226 46 Q252 50 264 66 Q270 76 268 94 L264 93 Q264 78 256 66 Q244 52 226 46 Z" fill="#aa0808"/>
+
+        <!-- Long, flat hood -->
+        <path d="M20 96 Q30 70 72 52 Q106 38 148 34 L152 41 Q112 44 82 58 Q54 72 36 98 Z" fill="#c01010"/>
+
+        <!-- Hood crease (F40 has twin humps) -->
+        <path d="M92 60 Q128 50 165 47 L166 51 Q128 54 92 64 Z" fill="rgba(255,100,100,0.2)"/>
+        <path d="M106 57 Q140 48 168 46 L169 49 Q140 51 106 60 Z" fill="rgba(0,0,0,0.15)"/>
+
+        <!-- NACA DUCT on roof (F40 signature) -->
+        <rect x="186" y="34" width="32" height="11" rx="3" fill="#6a0000"/>
+        <rect x="188" y="36" width="28" height="7" rx="2" fill="#4a0000"/>
+        <!-- Duct louvers -->
+        <line x1="191" y1="37" x2="213" y2="37" stroke="#380000" stroke-width="1"/>
+        <line x1="191" y1="40" x2="213" y2="40" stroke="#380000" stroke-width="1"/>
+        <line x1="191" y1="43" x2="213" y2="43" stroke="#380000" stroke-width="1"/>
+
+        <!-- Rear heat extraction slats (F40 most iconic feature) -->
+        <rect x="232" y="32" width="32" height="20" rx="2" fill="#550000"/>
+        <rect x="234" y="34" width="8"  height="16" fill="#350000"/>
+        <rect x="244" y="34" width="8"  height="16" fill="#350000"/>
+        <rect x="254" y="34" width="8"  height="16" fill="#350000"/>
+
+        <!-- Roof - wedge, very low profile F40 -->
+        <path d="M102 42 Q112 14 152 6 Q186 0 214 12 Q238 22 250 44 L262 54 L102 54 Z" fill="url(#f_roof)"/>
+        <!-- A-pillar steep -->
+        <path d="M102 54 Q112 14 150 6 L145 54 Z" fill="#800000"/>
+        <!-- Windshield flat, raked like F40 -->
+        <path d="M106 52 Q116 16 152 6 Q184 0 210 12 Q232 22 244 44 L254 52 Z" fill="url(#f_wind)"/>
+        <!-- Glare -->
+        <path d="M116 42 Q128 20 157 8 L154 16 Q136 24 124 44 Z" fill="rgba(255,255,255,0.3)"/>
+        <path d="M136 46 Q143 28 162 12 L160 18 Q148 30 140 48 Z" fill="rgba(255,255,255,0.16)"/>
+
+        <!-- Small side window -->
+        <path d="M78 54 L102 54 L102 66 L80 65 Z" fill="rgba(100,180,250,0.4)" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+
+        <!-- Door -->
+        <path d="M144 42 Q146 68 150 98" stroke="rgba(80,0,0,0.35)" stroke-width="1.5" fill="none"/>
+        <!-- Door handle -->
+        <path d="M157 74 Q172 73 174 76 Q172 79 157 78 Z" fill="#990808" stroke="rgba(255,120,120,0.3)" stroke-width="0.5"/>
+
+        <!-- Side air intake (F40 rear quarter) -->
+        <path d="M224 56 Q240 52 254 58 L252 66 Q238 62 224 65 Z" fill="#7a0404"/>
+        <path d="M226 58 Q240 55 252 60" stroke="#520202" stroke-width="1.5" fill="none"/>
+        <path d="M226 61 Q240 58 252 63" stroke="#520202" stroke-width="1.5" fill="none"/>
+        <path d="M226 64 Q240 61 252 66" stroke="#520202" stroke-width="1" fill="none"/>
+
+        <!-- POP-UP HEADLIGHTS F40 (retracted style, wide rectangular) -->
+        <rect x="20" y="66" width="32" height="20" rx="1.5" fill="#cc0000" stroke="#880000" stroke-width="1.5"/>
+        <rect x="22" y="68" width="28" height="16" fill="#fff8f8" opacity="0.95"/>
+        <rect x="23" y="69" width="26" height="14" fill="white"/>
+        <rect x="24" y="70" width="24" height="12" fill="url(#f_hl)" opacity="0.9"/>
+        <rect x="28" y="73" width="14" height="6"  fill="rgba(255,255,220,0.95)"/>
+        <rect x="32" y="74" width="6"  height="4"  fill="white"/>
+        <!-- Inner DRL -->
+        <rect x="20" y="86" width="32" height="7"  fill="#ff5500" opacity="0.88"/>
+        <rect x="22" y="87" width="28" height="5"  fill="#ff7700" opacity="0.7"/>
+
+        <!-- Body crease / shoulder line F40 -->
+        <path d="M44 88 Q130 76 230 78 Q252 79 264 86" stroke="rgba(255,80,80,0.38)" stroke-width="2.5" fill="none"/>
+        <!-- Specular highlight body -->
+        <path d="M102 54 Q170 48 258 56" stroke="rgba(255,140,140,0.25)" stroke-width="2" fill="none"/>
+
+        <!-- Mirror -->
+        <path d="M228 48 Q242 45 243 52 L228 55 Z" fill="#990808" stroke="rgba(255,100,100,0.2)" stroke-width="0.8"/>
+
+        <!-- TAIL LIGHTS (3 round F40 style) -->
+        <circle cx="256" cy="56" r="11" fill="#cc0000" stroke="#880000" stroke-width="1"/>
+        <circle cx="256" cy="56" r="8"  fill="#ee1111"/>
+        <circle cx="256" cy="56" r="5"  fill="#ff3333"/>
+        <circle cx="256" cy="56" r="2.5" fill="#ff6666"/>
+        <circle cx="248" cy="68" r="9"  fill="#990000"/>
+        <circle cx="248" cy="68" r="6"  fill="#bb0000"/>
+        <circle cx="248" cy="68" r="3.5" fill="#dd1111"/>
+        <circle cx="258" cy="74" r="7"  fill="#aa0000"/>
+        <circle cx="258" cy="74" r="4.5" fill="#cc1111"/>
+        <circle cx="258" cy="74" r="2"  fill="#ee2222"/>
+
+        <!-- WHEELS F40 (5-spoke star, iconic) -->
+        <!-- Front -->
+        <circle cx="72" cy="104" r="20" fill="url(#f_tire)"/>
+        <circle cx="72" cy="104" r="20" fill="none" stroke="#181818" stroke-width="2.5"/>
+        <circle cx="72" cy="104" r="14" fill="#787888" stroke="#989898" stroke-width="0.8"/>
+        <circle cx="72" cy="104" r="11" fill="#888898"/>
+        <!-- 5-spoke -->
+        <polygon points="72,88 74,101 72,104 70,101" fill="#505058"/>
+        <polygon points="87,95 76,101 72,104 74,101" fill="#505058"/>
+        <polygon points="85,117 75,107 72,104 74,107" fill="#505058"/>
+        <polygon points="72,120 70,107 72,104 74,107" fill="#505058"/>
+        <polygon points="59,117 69,107 72,104 70,107" fill="#505058"/>
+        <polygon points="57,95 68,101 72,104 70,101" fill="#505058"/>
+        <circle cx="72" cy="104" r="6" fill="#aa0000"/>
+        <circle cx="72" cy="104" r="3" fill="#ff2222"/>
+        <!-- Brembo caliper yellow -->
+        <path d="M63 94 Q72 90 82 95" stroke="#ffaa00" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- Arch -->
+        <path d="M20 106 Q28 82 72 79 Q116 76 100 106" fill="none" stroke="#6a0000" stroke-width="3"/>
+        <path d="M20 106 Q28 82 72 79 Q116 76 100 106" fill="none" stroke="rgba(255,120,120,0.25)" stroke-width="1.5"/>
+
+        <!-- Rear (slightly wider) -->
+        <circle cx="210" cy="104" r="22" fill="url(#f_tire)"/>
+        <circle cx="210" cy="104" r="22" fill="none" stroke="#181818" stroke-width="2.5"/>
+        <circle cx="210" cy="104" r="16" fill="#787888" stroke="#989898" stroke-width="0.8"/>
+        <circle cx="210" cy="104" r="12" fill="#888898"/>
+        <polygon points="210,88 212,101 210,104 208,101" fill="#505058"/>
+        <polygon points="226,95  215,101 210,104 212,101" fill="#505058"/>
+        <polygon points="224,119 213,108 210,104 212,108" fill="#505058"/>
+        <polygon points="210,120 208,108 210,104 212,108" fill="#505058"/>
+        <polygon points="196,119 207,108 210,104 208,108" fill="#505058"/>
+        <polygon points="194,95  205,101 210,104 208,101" fill="#505058"/>
+        <circle cx="210" cy="104" r="7" fill="#aa0000"/>
+        <circle cx="210" cy="104" r="3.5" fill="#ff2222"/>
+        <path d="M201 94 Q210 90 220 95" stroke="#ffaa00" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M188 106 Q194 80 210 77 Q228 74 236 106" fill="none" stroke="#6a0000" stroke-width="3"/>
+        <path d="M188 106 Q194 80 210 77 Q228 74 236 106" fill="none" stroke="rgba(255,120,120,0.25)" stroke-width="1.5"/>
+
+        <!-- Red-orange underglow -->
+        <ellipse cx="148" cy="114" rx="130" ry="5" fill="rgba(255,40,0,0.28)"/>
+      </svg>
+    </div>
+    <div class="scan-bar" id="sc2"></div>
+    <div class="scan-txt" id="st2">▶ FERRARI F40</div>
+
+    <div class="car8" id="c8_2">
+      <svg width="268" height="105" viewBox="0 0 268 105" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+        <!-- Pixel Ferrari F40 - red/orange/yellow/cyan recognizable -->
+        <!-- === HEAT VENTS REAR (F40 SIGNATURE) === -->
+        <rect x="218" y="8"  width="40"  height="22" fill="#880000"/>
+        <rect x="220" y="10" width="8"   height="18" fill="#550000"/>
+        <rect x="230" y="10" width="8"   height="18" fill="#550000"/>
+        <rect x="240" y="10" width="8"   height="18" fill="#550000"/>
+        <rect x="216" y="6"  width="52"  height="6"  fill="#660000"/>
+        <!-- === NACA ROOF DUCT === -->
+        <rect x="162" y="20" width="28"  height="8"  fill="#880000"/>
+        <rect x="164" y="22" width="24"  height="5"  fill="#550000"/>
+        <!-- === ROOF NARROW WEDGE === -->
+        <rect x="90"  y="12" width="136" height="8"  fill="#ff6600"/>
+        <rect x="90"  y="12" width="44"  height="8"  fill="#dd4400"/>
+        <rect x="134" y="12" width="44"  height="8"  fill="#ff5500"/>
+        <rect x="178" y="12" width="48"  height="8"  fill="#ff7700"/>
+        <!-- Roof highlight -->
+        <rect x="98"  y="14" width="120" height="3"  fill="rgba(255,200,100,0.4)"/>
+        <!-- === UPPER CABIN WEDGE === -->
+        <rect x="72"  y="20" width="172" height="8"  fill="#ff4400"/>
+        <rect x="72"  y="20" width="56"  height="8"  fill="#cc2200"/>
+        <rect x="128" y="20" width="56"  height="8"  fill="#ff3300"/>
+        <rect x="184" y="20" width="60"  height="8"  fill="#ff5500"/>
+        <!-- === WINDSHIELD FLAT RAKED === -->
+        <rect x="76"  y="20" width="62"  height="22" fill="rgba(0,220,240,0.82)"/>
+        <rect x="78"  y="22" width="30"  height="12" fill="rgba(255,255,255,0.65)"/>
+        <rect x="78"  y="22" width="10"  height="7"  fill="rgba(255,255,255,0.85)"/>
+        <!-- === SMALL SIDE WINDOW === -->
+        <rect x="52"  y="24" width="26"  height="16" fill="rgba(0,200,220,0.65)"/>
+        <rect x="54"  y="26" width="12"  height="8"  fill="rgba(255,255,255,0.4)"/>
+        <!-- === CABIN MID === -->
+        <rect x="36"  y="28" width="196" height="22" fill="#ee2200"/>
+        <rect x="36"  y="28" width="64"  height="22" fill="#cc1800"/>
+        <rect x="100" y="28" width="64"  height="22" fill="#ff2800"/>
+        <rect x="164" y="28" width="68"  height="22" fill="#ff4400"/>
+        <!-- === BODY UPPER === -->
+        <rect x="16"  y="50" width="236" height="16" fill="#cc0000"/>
+        <rect x="16"  y="50" width="72"  height="16" fill="#aa0000"/>
+        <rect x="88"  y="50" width="72"  height="16" fill="#dd1111"/>
+        <rect x="160" y="50" width="60"  height="16" fill="#ee2222"/>
+        <rect x="220" y="50" width="32"  height="16" fill="#ff4444"/>
+        <!-- === LOWER BODY === -->
+        <rect x="16"  y="66" width="236" height="10" fill="#bb0000"/>
+        <rect x="16"  y="66" width="68"  height="10" fill="#990000"/>
+        <rect x="84"  y="66" width="80"  height="10" fill="#cc1111"/>
+        <rect x="164" y="66" width="88"  height="10" fill="#dd2222"/>
+        <!-- === BODY HIGHLIGHT / CREASE LINE === -->
+        <rect x="16"  y="48" width="236" height="4"  fill="#ff6666"/>
+        <rect x="16"  y="76" width="236" height="4"  fill="#660000"/>
+        <!-- === POP-UP HEADLIGHTS WIDE RECT === -->
+        <rect x="16"  y="38" width="36"  height="22" fill="#ffff00"/>
+        <rect x="18"  y="40" width="32"  height="18" fill="white"/>
+        <rect x="20"  y="42" width="28"  height="14" fill="#fffff0"/>
+        <rect x="24"  y="45" width="18"  height="8"  fill="white"/>
+        <rect x="28"  y="46" width="10"  height="5"  fill="#fffff8"/>
+        <!-- DRL orange strip -->
+        <rect x="16"  y="60" width="36"  height="8"  fill="#ff6600"/>
+        <rect x="18"  y="61" width="32"  height="6"  fill="#ff8800"/>
+        <!-- === REAR TAIL LIGHTS 3-UNIT === -->
+        <rect x="244" y="30" width="16"  height="16" fill="#ff0000"/>
+        <rect x="246" y="32" width="12"  height="12" fill="#ff3333"/>
+        <rect x="248" y="34" width="8"   height="8"  fill="#ff6666"/>
+        <rect x="250" y="36" width="4"   height="4"  fill="#ff9999"/>
+        <rect x="234" y="44" width="14"  height="14" fill="#cc0000"/>
+        <rect x="236" y="46" width="10"  height="10" fill="#ee1111"/>
+        <rect x="238" y="48" width="6"   height="6"  fill="#ff4444"/>
+        <rect x="244" y="52" width="12"  height="12" fill="#aa0000"/>
+        <rect x="246" y="54" width="8"   height="8"  fill="#cc1111"/>
+        <rect x="248" y="56" width="4"   height="4"  fill="#ee2222"/>
+        <!-- === REAR AIR INTAKE PIXEL === -->
+        <rect x="224" y="52" width="22"  height="12" fill="#770000"/>
+        <rect x="226" y="54" width="18"  height="3"  fill="#440000"/>
+        <rect x="226" y="58" width="18"  height="3"  fill="#440000"/>
+        <!-- === SIDE SKIRT === -->
+        <rect x="16"  y="80" width="236" height="6"  fill="#550000"/>
+        <!-- === FRONT SPLITTER === -->
+        <rect x="4"   y="76" width="16"  height="8"  fill="#440000"/>
+        <!-- === BUMPERS === -->
+        <rect x="4"   y="52" width="16"  height="28" fill="#660000"/>
+        <rect x="252" y="52" width="16"  height="28" fill="#660000"/>
+        <!-- === DIFFUSER === -->
+        <rect x="252" y="76" width="16"  height="10" fill="#330000"/>
+        <rect x="254" y="78" width="4"   height="7"  fill="#220000"/>
+        <rect x="260" y="78" width="4"   height="7"  fill="#220000"/>
+        <!-- === EXHAUSTS TWIN CENTER === -->
+        <rect x="248" y="88" width="10"  height="5"  fill="#0a0a0a" rx="1"/>
+        <rect x="260" y="88" width="10"  height="5"  fill="#0a0a0a" rx="1"/>
+        <!-- === WHEELS 5-SPOKE STAR (F40 STYLE) === -->
+        <!-- Front -->
+        <rect x="32"  y="72" width="50"  height="30" rx="3" fill="#080810"/>
+        <rect x="36"  y="76" width="42"  height="22" rx="2" fill="#10101e"/>
+        <rect x="40"  y="78" width="34"  height="18" fill="#808088"/>
+        <!-- 5-spoke star pixel -->
+        <rect x="54"  y="78" width="6"   height="18" fill="#505058"/>
+        <rect x="40"  y="86" width="34"  height="6"  fill="#505058"/>
+        <rect x="40"  y="78" width="6"   height="6"  fill="#505058"/>
+        <rect x="68"  y="78" width="6"   height="6"  fill="#505058"/>
+        <rect x="40"  y="90" width="6"   height="6"  fill="#505058"/>
+        <rect x="68"  y="90" width="6"   height="6"  fill="#505058"/>
+        <!-- Center red hub -->
+        <rect x="50"  y="84" width="14"  height="12" fill="#cc0000"/>
+        <rect x="52"  y="86" width="10"  height="8"  fill="#ff2200"/>
+        <!-- Brembo yellow pixel -->
+        <rect x="68"  y="76" width="10"  height="6"  fill="#ffaa00"/>
+        <!-- Rear wheel (slightly larger) -->
+        <rect x="178" y="68" width="58"  height="34" rx="3" fill="#080810"/>
+        <rect x="182" y="72" width="50"  height="26" rx="2" fill="#10101e"/>
+        <rect x="186" y="74" width="42"  height="22" fill="#808088"/>
+        <!-- 5-spoke rear -->
+        <rect x="204" y="74" width="6"   height="22" fill="#505058"/>
+        <rect x="186" y="84" width="42"  height="6"  fill="#505058"/>
+        <rect x="186" y="74" width="6"   height="6"  fill="#505058"/>
+        <rect x="222" y="74" width="6"   height="6"  fill="#505058"/>
+        <rect x="186" y="90" width="6"   height="6"  fill="#505058"/>
+        <rect x="222" y="90" width="6"   height="6"  fill="#505058"/>
+        <!-- Center hub rear -->
+        <rect x="200" y="80" width="18"  height="14" fill="#cc0000"/>
+        <rect x="202" y="82" width="14"  height="10" fill="#ff2200"/>
+        <!-- Brembo rear -->
+        <rect x="222" y="72" width="12"  height="7"  fill="#ffaa00"/>
+        <!-- === NEON UNDERGLOW === -->
+        <rect x="40"  y="101" width="188" height="4" fill="#ff4400" opacity="0.9" rx="1"/>
+        <rect x="34"  y="98"  width="200" height="3" fill="#ffaa00" opacity="0.5" rx="1"/>
+        <!-- === EXHAUST FIRE (right side, going left) === -->
+        <rect x="250" y="70" width="14"  height="7"  fill="#ff4400" rx="1"/>
+        <rect x="254" y="79" width="10"  height="5"  fill="#ff6600" rx="1"/>
+        <rect x="258" y="64" width="7"   height="5"  fill="#ff8800" rx="1"/>
+        <rect x="262" y="74" width="5"   height="4"  fill="#ffaa00" rx="1"/>
+        <!-- === PIXEL SPARKLES === -->
+        <rect x="136" y="54" width="4"   height="4"  fill="#00ffff" opacity="0.88"/>
+        <rect x="166" y="38" width="4"   height="4"  fill="#ffff00" opacity="0.8"/>
+        <rect x="194" y="56" width="4"   height="4"  fill="#ff80ff" opacity="0.75"/>
+        <rect x="110" y="32" width="3"   height="3"  fill="#00ffaa" opacity="0.7"/>
+        <rect x="196" y="28" width="3"   height="3"  fill="#00ddff" opacity="0.7"/>
+      </svg>
+    </div>
+  </div>
+
+  <div id="sl">
+    <div class="spd" style="top:33%;width:155px;"></div>
+    <div class="spd" style="top:41%;width:125px;"></div>
+    <div class="spd" style="top:49%;width:175px;"></div>
+    <div class="spd" style="top:57%;width:140px;"></div>
+    <div class="spd" style="top:63%;width:105px;"></div>
+  </div>
+
+  <div class="card-label">
+    <h3>Zone de jeu</h3>
+    <p>Défis et jeux</p>
+  </div>
+</div>
+
+<script>
+let timers=[];
+function T(fn,d){timers.push(setTimeout(fn,d));}
+function clearAll(){timers.forEach(clearTimeout);timers=[];}
+
+function startSeq(idx){
+  clearAll();
+  for(let i=0;i<3;i++) document.getElementById('s'+i).classList.remove('active');
+  const seq=document.getElementById('s'+idx);
+  const car=document.getElementById('c'+idx);
+  const sc=document.getElementById('sc'+idx);
+  const st=document.getElementById('st'+idx);
+  const c8=document.getElementById('c8_'+idx);
+  const sh=document.getElementById('sh'+idx);
+  const sl=document.getElementById('sl');
+
+  seq.classList.add('active');
+  car.style.cssText='animation:none;top:-220px;opacity:1;position:absolute;left:50%;transform:translateX(-50%);text-align:center;';
+  c8.style.cssText='bottom:58px;left:-320px;opacity:1;position:absolute;image-rendering:pixelated;transition:none;';
+  sc.style.cssText='position:absolute;left:4%;width:92%;height:3px;z-index:20;opacity:0;top:100px;background:linear-gradient(to right,transparent,#00ffff 18%,#fff 50%,#00ffff 82%,transparent);box-shadow:0 0 14px #00ffff,0 0 28px rgba(0,255,255,0.35);';
+  st.style.opacity='0';
+  sh.style.opacity='0';
+  sl.style.cssText='position:absolute;inset:0;pointer-events:none;opacity:0;';
+
+  // Fall
+  T(()=>{ car.style.animation='fall 1.1s cubic-bezier(0.22,0.61,0.36,1) forwards'; },300);
+  T(()=>{ sh.style.cssText='position:absolute;left:50%;transform:translateX(-50%);width:210px;height:12px;bottom:68px;opacity:1;transition:opacity 0.6s;background:radial-gradient(ellipse,rgba(0,0,0,0.85)0%,transparent 68%);'; },740);
+
+  // Impact shake
+  T(()=>{
+    const card=document.getElementById('card');
+    [['-3px','5px'],['5px','-4px'],['-3px','3px'],['3px','-2px'],['0','0']].forEach(([x,y],i)=>T(()=>{card.style.transform=`translate(${x},${y})`;},i*55));
+    burst(idx,seq);
+    smokePuffs(idx,seq);
+  },1380);
+
+  // Scan sweep
+  T(()=>{
+    st.style.cssText='position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#00ffff;font-family:\'Press Start 2P\',monospace;font-size:4.5px;letter-spacing:1.5px;text-shadow:0 0 8px #00ffff;opacity:1;transition:opacity 0.3s;white-space:nowrap;';
+    sc.style.opacity='1';
+    T(()=>{ sc.style.cssText+=';transition:top 0.88s linear;'; sc.style.top='290px'; },40);
+  },2040);
+
+  // Flicker → 8-bit drives in from LEFT
+  T(()=>{
+    sc.style.opacity='0';
+    st.style.opacity='0';
+    let f=0;
+    const fi=setInterval(()=>{
+      f++;
+      car.style.opacity=f%2===0?'0':'1';
+      c8.style.cssText='bottom:58px;left:26px;opacity:'+(f%2===0?'1':'0')+';position:absolute;image-rendering:pixelated;transition:none;';
+      if(f>=7){
+        clearInterval(fi);
+        car.style.opacity='0';
+        c8.style.cssText='bottom:58px;left:26px;opacity:1;position:absolute;image-rendering:pixelated;';
+      }
+    },115);
+  },3000);
+
+  // 8-bit EXITS to the LEFT
+  T(()=>{
+    sl.style.cssText='position:absolute;inset:0;pointer-events:none;opacity:1;transition:opacity 0.1s;';
+    c8.style.cssText='bottom:58px;left:-380px;opacity:1;position:absolute;image-rendering:pixelated;transition:left 0.62s cubic-bezier(0.55,0,1,0.45);';
+    sh.style.opacity='0';
+  },4500);
+
+  T(()=>{
+    sl.style.opacity='0';
+    seq.classList.remove('active');
+    T(()=>startSeq((idx+1)%3),600);
+  },5450);
+}
+
+function burst(idx,seq){
+  const p=[
+    ['#cc88ff','#ff44ff','#00ffff','#ffff00','#ffffff'],
+    ['#ff44aa','#00ffff','#ffffff','#ff88ff','#ffff44'],
+    ['#cc0000','#ff6600','#ffaa00','#00ffff','#ff88ff']
+  ][idx];
+  for(let i=0;i<30;i++){
+    const el=document.createElement('div');
+    const s=3+Math.random()*10;
+    el.style.cssText=`position:absolute;width:${s}px;height:${s}px;background:${p[Math.floor(Math.random()*p.length)]};left:${26+Math.random()*48}%;top:112px;border-radius:1px;opacity:1;transition:all 0.9s ease-out;z-index:15;`;
+    seq.appendChild(el);
+    T(()=>{ el.style.left=(10+Math.random()*80)+'%'; el.style.top=(28+Math.random()*58)+'%'; el.style.opacity='0'; T(()=>el.remove(),1000); },20+Math.random()*80);
+  }
+}
+
+function smokePuffs(idx,seq){
+  const d=document.createElement('div');
+  d.style.cssText='position:absolute;left:50%;transform:translateX(-50%);bottom:170px;pointer-events:none;z-index:16;';
+  d.innerHTML='<svg width="170" height="52" viewBox="0 0 170 52">'+
+    '<circle cx="60" cy="42" r="0" fill="rgba(255,255,255,0.82)" id="q0"/>'+
+    '<circle cx="82" cy="46" r="0" fill="rgba(255,255,255,0.68)" id="q1"/>'+
+    '<circle cx="104" cy="41" r="0" fill="rgba(255,255,255,0.56)" id="q2"/>'+
+    '<circle cx="70" cy="30" r="0" fill="rgba(255,255,255,0.44)" id="q3"/>'+
+    '<circle cx="94" cy="34" r="0" fill="rgba(255,255,255,0.36)" id="q4"/>'+
+  '</svg>';
+  seq.appendChild(d);
+  [24,19,21,15,17].forEach((r,i)=>T(()=>{
+    const el=d.querySelector('#q'+i);
+    if(el){el.setAttribute('r',r);el.style.transition=`r 0.5s ease-out ${i*0.07}s,opacity 0.72s ease-out ${i*0.07+0.1}s`;el.style.opacity='0';}
+  },65));
+  T(()=>d.remove(),1300);
+}
+
+startSeq(0);
+</script>
+</body>
+</html>

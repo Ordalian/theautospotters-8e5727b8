@@ -125,14 +125,14 @@ const Dashboard = () => {
     return () => document.removeEventListener("click", close);
   }, [profileMenuOpen]);
 
-  const mainTiles = [
-    { title: "Zone de jeu", subtitle: "Défis et jeux", icon: Gamepad2, image: null, onClick: () => {}, gradient: "from-violet-500/20 to-violet-500/5", notificationCount: 0 },
-    { title: "Magasin", subtitle: "Boutique", icon: Store, image: null, onClick: () => {}, gradient: "from-rose-500/20 to-rose-500/5", notificationCount: 0 },
+  const topTiles = [
+    { title: "Mon Garage", subtitle: `${carCount} voiture${carCount !== 1 ? "s" : ""} spottée${carCount !== 1 ? "s" : ""}`, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0, iframe: null as string | null },
+    { title: "Zone de Jeu", subtitle: "Défis et jeux", icon: Gamepad2, image: null, onClick: () => {}, gradient: "from-violet-500/20 to-violet-500/5", notificationCount: 0, iframe: "/zone-de-jeu.html" },
   ];
 
-  const garageTiles = [
-    { title: "My Garage", subtitle: `${carCount} car${carCount !== 1 ? "s" : ""} spotted`, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0 },
-    { title: "Friends' Garages", subtitle: "See your friends", icon: Users, image: null, onClick: () => navigate("/friends"), gradient: "from-blue-500/20 to-blue-500/5", notificationCount: friendNotificationCount },
+  const bottomTiles = [
+    { title: "Garages d'Amis", subtitle: "Voir tes amis", icon: Users, image: null, onClick: () => navigate("/friends"), gradient: "from-blue-500/20 to-blue-500/5", notificationCount: friendNotificationCount, iframe: null as string | null },
+    { title: "Magasin", subtitle: "Boutique", icon: Store, image: null, onClick: () => {}, gradient: "from-rose-500/20 to-rose-500/5", notificationCount: 0, iframe: null as string | null },
   ];
 
   const smallTiles = [
@@ -188,37 +188,65 @@ const Dashboard = () => {
       <main className="p-5 max-w-2xl mx-auto relative z-10">
         <h2 className="text-base font-medium text-muted-foreground mb-5">Hey, <span className="text-foreground font-semibold">{displayName}</span> 👋</h2>
 
-        {/* Zone de jeu (gauche) + Magasin (droite) — tuiles principales */}
+        {/* Row 1: Mon Garage + Zone de Jeu */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          {mainTiles.map((tile) => (
-            <button
-              key={tile.title}
-              onClick={tile.onClick}
-              className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20"
-            >
-              <div className={`flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3 bg-gradient-to-br ${tile.gradient}`}>
-                <div className="flex flex-1 items-center justify-center relative">
-                  <tile.icon className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* My Garage + Friends — tuiles garage */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          {garageTiles.map((tile) => (
+          {topTiles.map((tile) => (
             <button
               key={tile.title}
               onClick={tile.onClick}
               className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20"
             >
               <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
-                {tile.title === "Friends' Garages" && currentFriendSpot ? (
+                {tile.iframe ? (
+                  <div className="flex-1 overflow-hidden rounded-lg relative min-h-0">
+                    <iframe
+                      src={tile.iframe}
+                      className="absolute inset-0 w-full h-full rounded-lg pointer-events-none"
+                      style={{ border: "none" }}
+                      loading="lazy"
+                      title={tile.title}
+                    />
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 rounded-b-lg z-10">
+                      <h3 className="font-bold text-xs leading-tight">{tile.title}</h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                    </div>
+                  </div>
+                ) : tile.image ? (
+                  <>
+                    <div className="flex-1 overflow-hidden rounded-lg mb-2 relative">
+                      <img src={tile.image} alt="Latest spot" className="h-full w-full object-cover rounded-lg" loading="lazy" />
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 rounded-b-lg">
+                        <h3 className="font-bold text-xs leading-tight">{tile.title}</h3>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={`flex flex-1 items-center justify-center bg-gradient-to-br ${tile.gradient} rounded-lg`}>
+                      <tile.icon className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+                    </div>
+                    <div className="mt-2">
+                      <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Row 2: Garages d'Amis + Magasin */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {bottomTiles.map((tile) => (
+            <button
+              key={tile.title}
+              onClick={tile.onClick}
+              className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20"
+            >
+              <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
+                {tile.title === "Garages d'Amis" && currentFriendSpot ? (
                   <>
                     <div className="flex-1 overflow-hidden rounded-lg relative min-h-0">
                       {currentFriendSpot.image_url ? (
@@ -240,30 +268,20 @@ const Dashboard = () => {
                         </span>
                       )}
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 rounded-b-lg">
-                        <h3 className="font-bold text-xs text-foreground leading-tight">Friends' Garages</h3>
+                        <h3 className="font-bold text-xs leading-tight">Garages d'Amis</h3>
                         {currentFriendSpot.username && (
                           <p className="text-[10px] text-muted-foreground truncate">by {currentFriendSpot.username}</p>
                         )}
                       </div>
                     </div>
                   </>
-                ) : tile.image ? (
-                  <>
-                    <div className="flex-1 overflow-hidden rounded-lg mb-2 relative">
-                      <img src={tile.image} alt="Latest spot" className="h-full w-full object-cover rounded-lg" loading="lazy" />
-                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 rounded-b-lg">
-                        <h3 className="font-bold text-xs text-foreground leading-tight">{tile.title}</h3>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
-                      </div>
-                    </div>
-                  </>
                 ) : (
                   <>
-                    <div className="flex flex-1 items-center justify-center relative">
-                      {tile.title === "Friends' Garages" && tile.notificationCount > 0 ? (
+                    <div className={`flex flex-1 items-center justify-center bg-gradient-to-br ${tile.gradient} rounded-lg relative`}>
+                      {tile.title === "Garages d'Amis" && tile.notificationCount > 0 ? (
                         <>
                           <Users className="h-11 w-11 text-primary/80 group-hover:text-primary transition-colors" />
-                          <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
+                          <span className="absolute top-1.5 right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
                             {tile.notificationCount > 99 ? "99+" : tile.notificationCount}
                           </span>
                         </>
@@ -271,7 +289,7 @@ const Dashboard = () => {
                         <tile.icon className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
                       )}
                     </div>
-                    <div>
+                    <div className="mt-2">
                       <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
                     </div>
