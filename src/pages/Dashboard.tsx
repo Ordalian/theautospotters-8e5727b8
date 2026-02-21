@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ const DashboardMap = lazy(() => import("@/components/DashboardMap"));
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const { data } = useQuery({
@@ -125,19 +127,21 @@ const Dashboard = () => {
     return () => document.removeEventListener("click", close);
   }, [profileMenuOpen]);
 
+  const carsSpottedText = typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
+
   const topTiles = [
-    { title: "Mon Garage", subtitle: `${carCount} voiture${carCount !== 1 ? "s" : ""} spottée${carCount !== 1 ? "s" : ""}`, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0, iframe: null as string | null },
-    { title: "Zone de Jeu", subtitle: "Défis et jeux", icon: Gamepad2, image: null, onClick: () => {}, gradient: "from-violet-500/20 to-violet-500/5", notificationCount: 0, iframe: "/zone-de-jeu.html" },
+    { title: t.dash_my_garage as string, subtitle: carsSpottedText, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0, iframe: null as string | null },
+    { title: t.dash_zone_jeu as string, subtitle: t.dash_zone_jeu_sub as string, icon: Gamepad2, image: null, onClick: () => {}, gradient: "from-violet-500/20 to-violet-500/5", notificationCount: 0, iframe: "/zone-de-jeu.html" },
   ];
 
   const bottomTiles = [
-    { title: "Garages d'Amis", subtitle: "Voir tes amis", icon: Users, image: null, onClick: () => navigate("/friends"), gradient: "from-blue-500/20 to-blue-500/5", notificationCount: friendNotificationCount, iframe: null as string | null },
-    { title: "Magasin", subtitle: "Boutique", icon: Store, image: null, onClick: () => {}, gradient: "from-rose-500/20 to-rose-500/5", notificationCount: 0, iframe: null as string | null },
+    { title: t.dash_friends as string, subtitle: t.dash_friends_sub as string, icon: Users, image: null, onClick: () => navigate("/friends"), gradient: "from-blue-500/20 to-blue-500/5", notificationCount: friendNotificationCount, iframe: null as string | null },
+    { title: t.dash_shop as string, subtitle: t.dash_shop_sub as string, icon: Store, image: null, onClick: () => {}, gradient: "from-rose-500/20 to-rose-500/5", notificationCount: 0, iframe: null as string | null },
   ];
 
   const smallTiles = [
-    { title: "The AutoSpotter", subtitle: "AI car recognition", icon: Brain, image: null, onClick: () => navigate("/autospotter"), gradient: "from-emerald-500/20 to-emerald-500/5", notificationCount: 0 },
-    { title: "Leaderboard", subtitle: "Top spotters", icon: Trophy, image: null, onClick: () => navigate("/leaderboard"), gradient: "from-amber-500/20 to-amber-500/5", notificationCount: 0 },
+    { title: t.dash_autospotter as string, subtitle: t.dash_autospotter_sub as string, icon: Brain, image: null, onClick: () => navigate("/autospotter"), gradient: "from-emerald-500/20 to-emerald-500/5", notificationCount: 0 },
+    { title: t.dash_leaderboard as string, subtitle: t.dash_leaderboard_sub as string, icon: Trophy, image: null, onClick: () => navigate("/leaderboard"), gradient: "from-amber-500/20 to-amber-500/5", notificationCount: 0 },
   ];
 
   return (
@@ -163,22 +167,22 @@ const Dashboard = () => {
           </Button>
           {profileMenuOpen && (
             <div className="absolute right-0 top-full mt-1 py-1 min-w-[180px] rounded-xl border border-border bg-card shadow-lg z-50">
-              <button
-                type="button"
-                className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 rounded-t-xl"
-                onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }}
-              >
-                <User className="h-4 w-4" />
-                Mon profil
-              </button>
-              <button
-                type="button"
-                className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 rounded-b-xl"
-                onClick={() => { setProfileMenuOpen(false); navigate("/garage-settings"); }}
-              >
-                <Car className="h-4 w-4" />
-                Mon garage
-              </button>
+                <button
+                  type="button"
+                  className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 rounded-t-xl"
+                  onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }}
+                >
+                  <User className="h-4 w-4" />
+                  {t.dash_my_profile as string}
+                </button>
+                <button
+                  type="button"
+                  className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 rounded-b-xl"
+                  onClick={() => { setProfileMenuOpen(false); navigate("/garage-settings"); }}
+                >
+                  <Car className="h-4 w-4" />
+                  {t.dash_my_garage_settings as string}
+                </button>
             </div>
           )}
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={handleSignOut}><LogOut className="h-5 w-5" /></Button>
@@ -186,7 +190,7 @@ const Dashboard = () => {
       </header>
 
       <main className="p-5 max-w-2xl mx-auto relative z-10">
-        <h2 className="text-base font-medium text-muted-foreground mb-5">Hey, <span className="text-foreground font-semibold">{displayName}</span> 👋</h2>
+        <h2 className="text-base font-medium text-muted-foreground mb-5">{t.dash_hey as string} <span className="text-foreground font-semibold">{displayName}</span> 👋</h2>
 
         {/* Row 1: Mon Garage + Zone de Jeu */}
         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -202,7 +206,7 @@ const Dashboard = () => {
                     <iframe
                       src={tile.iframe}
                       className="absolute inset-0 w-full h-full rounded-lg pointer-events-none"
-                      style={{ border: "none" }}
+                      style={{ border: "none", objectFit: "cover", transform: "scale(1)", transformOrigin: "center center" }}
                       loading="lazy"
                       title={tile.title}
                     />
@@ -242,7 +246,7 @@ const Dashboard = () => {
               className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20"
             >
               <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
-                {tile.title === "Garages d'Amis" && currentFriendSpot ? (
+                 {tile.title === (t.dash_friends as string) && currentFriendSpot ? (
                   <>
                     <div className="flex-1 overflow-hidden rounded-lg relative min-h-0">
                       {currentFriendSpot.image_url ? (
@@ -264,7 +268,7 @@ const Dashboard = () => {
                         </span>
                       )}
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 rounded-b-lg">
-                        <h3 className="font-bold text-xs leading-tight">Garages d'Amis</h3>
+                        <h3 className="font-bold text-xs leading-tight">{t.dash_friends as string}</h3>
                         {currentFriendSpot.username && (
                           <p className="text-[10px] text-muted-foreground truncate">by {currentFriendSpot.username}</p>
                         )}
@@ -273,8 +277,8 @@ const Dashboard = () => {
                   </>
                 ) : (
                   <>
-                    <div className={`flex flex-1 items-center justify-center bg-gradient-to-br ${tile.gradient} rounded-lg relative`}>
-                      {tile.title === "Garages d'Amis" && tile.notificationCount > 0 ? (
+                     <div className={`flex flex-1 items-center justify-center bg-gradient-to-br ${tile.gradient} rounded-lg relative`}>
+                      {tile.title === (t.dash_friends as string) && tile.notificationCount > 0 ? (
                         <>
                           <Users className="h-11 w-11 text-primary/80 group-hover:text-primary transition-colors" />
                           <span className="absolute top-1.5 right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
@@ -326,8 +330,8 @@ const Dashboard = () => {
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <div className="absolute bottom-3 left-4 z-10 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" />
-              <span className="font-bold text-sm text-white">Spot Map</span>
-              <span className="text-xs text-white/60">• {mapSpots.length} located</span>
+              <span className="font-bold text-sm text-white">{t.dash_spot_map as string}</span>
+              <span className="text-xs text-white/60">• {mapSpots.length} {t.dash_located as string}</span>
             </div>
           </div>
         </button>

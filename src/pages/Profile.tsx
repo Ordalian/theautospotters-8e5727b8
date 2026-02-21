@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage, type Language } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,7 @@ interface NotificationRow {
 
 const Profile = () => {
   const { user } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const navigateTo = useNav();
   const queryClient = useQueryClient();
@@ -246,7 +248,7 @@ const Profile = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">Mon Profil</h1>
+        <h1 className="text-xl font-bold">{t.profile_title as string}</h1>
       </header>
 
       <div className="p-6 max-w-md mx-auto space-y-8 relative z-10">
@@ -315,7 +317,42 @@ const Profile = () => {
           </div>
         )}
 
-        {/* Mes véhicules en possession — l'utilisateur voit les plaques qu'il a liées */}
+        {/* Language */}
+        <div className="space-y-3">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            {t.profile_language as string}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t.profile_language_desc as string}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setLanguage("fr")}
+              className={`rounded-xl border-2 p-3 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                language === "fr"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-secondary/30 hover:border-primary/40"
+              }`}
+            >
+              🇫🇷 Français
+              {language === "fr" && <Check className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage("en")}
+              className={`rounded-xl border-2 p-3 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                language === "en"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-secondary/30 hover:border-primary/40"
+              }`}
+            >
+              🇬🇧 English
+              {language === "en" && <Check className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mes véhicules en possession */}
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Car className="h-5 w-5 text-primary" />
