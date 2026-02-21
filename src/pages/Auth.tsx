@@ -1,34 +1,44 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage, type Language } from "@/i18n/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Car } from "lucide-react";
+import { Car, Globe } from "lucide-react";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [signUpLanguage, setSignUpLanguage] = useState<Language | null>(null);
   const { signIn, signUp } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSignUp && !signUpLanguage) {
+      toast.error(t.auth_choose_language as string);
+      return;
+    }
     setLoading(true);
     try {
       if (isSignUp) {
         await signUp(email, password);
-        toast.success("Account created! You're logged in.");
+        if (signUpLanguage) {
+          await setLanguage(signUpLanguage);
+        }
+        toast.success(t.auth_success_signup as string);
       } else {
         await signIn(email, password);
-        toast.success("Welcome back!");
+        toast.success(t.auth_success_signin as string);
       }
       navigate("/");
     } catch (err: any) {
-      toast.error(err.message || "Authentication failed");
+      toast.error(err.message || (t.auth_error as string));
     } finally {
       setLoading(false);
     }
@@ -41,22 +51,22 @@ const Auth = () => {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
             <Car className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">AutoSpot</h1>
-          <p className="mt-2 text-muted-foreground">Spot. Collect. Compete.</p>
+          <h1 className="text-4xl font-bold tracking-tight">{t.auth_title as string}</h1>
+          <p className="mt-2 text-muted-foreground">{t.auth_subtitle as string}</p>
         </div>
 
         <Card className="border-border/50 bg-card/80 backdrop-blur">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
+            <CardTitle className="text-xl">{isSignUp ? (t.auth_create_account as string) : (t.auth_welcome_back as string)}</CardTitle>
             <CardDescription>
-              {isSignUp ? "Join the car spotting community" : "Sign in to your garage"}
+              {isSignUp ? (t.auth_join as string) : (t.auth_sign_in_desc as string)}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 type="email"
-                placeholder="Email"
+                placeholder={t.auth_email as string}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -64,15 +74,49 @@ const Auth = () => {
               />
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder={t.auth_password as string}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
                 className="bg-secondary/50"
               />
+
+              {isSignUp && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Globe className="h-4 w-4" />
+                    {t.auth_choose_language as string}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSignUpLanguage("fr")}
+                      className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
+                        signUpLanguage === "fr"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-secondary/30 hover:border-primary/40"
+                      }`}
+                    >
+                      🇫🇷 {t.auth_language_fr as string}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignUpLanguage("en")}
+                      className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
+                        signUpLanguage === "en"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-secondary/30 hover:border-primary/40"
+                      }`}
+                    >
+                      🇬🇧 {t.auth_language_en as string}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <Button type="submit" className="w-full font-semibold" disabled={loading}>
-                {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+                {loading ? (t.loading as string) : isSignUp ? (t.auth_sign_up as string) : (t.auth_sign_in as string)}
               </Button>
             </form>
             <div className="mt-4 text-center">
@@ -81,7 +125,7 @@ const Auth = () => {
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
-                {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+                {isSignUp ? (t.auth_switch_to_login as string) : (t.auth_switch_to_signup as string)}
               </button>
             </div>
           </CardContent>

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Plus, Car, Loader2, Trash2, FolderPlus, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ interface GarageGroup {
 
 const MyGarage = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -65,12 +67,12 @@ const MyGarage = () => {
 
   const handleDelete = async (e: React.MouseEvent, carId: string) => {
     e.stopPropagation();
-    if (!confirm("Supprimer ce spot ?")) return;
+    if (!confirm(t.garage_delete_confirm as string)) return;
     setDeletingId(carId);
     try {
       const { error } = await supabase.from("cars").delete().eq("id", carId).eq("user_id", user!.id);
       if (error) throw error;
-      toast.success("Spot supprimé");
+      toast.success(t.garage_deleted as string);
       queryClient.invalidateQueries({ queryKey: ["my-cars", user?.id] });
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la suppression");
@@ -147,7 +149,7 @@ const MyGarage = () => {
     for (const g of groups) groupMap.set(g.id, g);
     const noGroupCars = cars.filter((c) => !c.garage_group_id);
     if (noGroupCars.length > 0) {
-      result.push({ id: "none", name: "Sans groupe", cars: noGroupCars.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) });
+      result.push({ id: "none", name: t.garage_no_group as string, cars: noGroupCars.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) });
     }
     for (const g of groups) {
       const groupCars = cars.filter((c) => c.garage_group_id === g.id);
@@ -172,7 +174,7 @@ const MyGarage = () => {
         sort_order: groups.length,
       });
       if (error) throw error;
-      toast.success("Groupe créé");
+      toast.success(t.garage_group_created as string);
       setNewGroupName("");
       setShowNewGroupDialog(false);
       queryClient.invalidateQueries({ queryKey: ["garage-groups", user.id] });
@@ -216,11 +218,11 @@ const MyGarage = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold truncate flex-1">
-          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? "Sans groupe" : "Groupe")) : "Mon Garage"}
+          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? (t.garage_no_group as string) : "Groupe")) : (t.garage_title as string)}
         </h1>
         <div className="flex items-center gap-2">
           <GarageSortSelect value={sortOption} onChange={setSortOption} />
-          <Button variant="outline" size="icon" onClick={() => setShowNewGroupDialog(true)} className="shrink-0" aria-label="Créer un groupe">
+          <Button variant="outline" size="icon" onClick={() => setShowNewGroupDialog(true)} className="shrink-0" aria-label={t.garage_new_group as string}>
             <FolderPlus className="h-5 w-5" />
           </Button>
           <span className="text-sm text-muted-foreground hidden sm:inline">{cars.length} spots</span>
@@ -236,8 +238,8 @@ const MyGarage = () => {
           ) : cars.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Car className="h-16 w-16 text-muted-foreground/30 mb-4" />
-              <h3 className="font-semibold text-lg">Aucune voiture</h3>
-              <p className="text-muted-foreground text-sm mt-1">Spottez ou ajoutez votre première voiture !</p>
+              <h3 className="font-semibold text-lg">{t.garage_no_cars as string}</h3>
+              <p className="text-muted-foreground text-sm mt-1">{t.garage_no_cars_desc as string}</p>
             </div>
           ) : sortOption === "brand" && !brandFilter && !groupFilter ? (
             <div className="grid gap-3">
@@ -314,7 +316,7 @@ const MyGarage = () => {
                       <SelectValue placeholder="Groupe" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Aucun groupe</SelectItem>
+                      <SelectItem value="none">{t.garage_none_group as string}</SelectItem>
                       {groups.map((g) => (
                         <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                       ))}
@@ -375,18 +377,18 @@ const MyGarage = () => {
       <Dialog open={showNewGroupDialog} onOpenChange={setShowNewGroupDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nouveau groupe</DialogTitle>
+            <DialogTitle>{t.garage_new_group as string}</DialogTitle>
           </DialogHeader>
           <div className="flex gap-2 pt-2">
             <Input
-              placeholder="Nom du groupe (ex : Mes BMW)"
+              placeholder={t.garage_group_placeholder as string}
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreateGroup()}
               className="flex-1"
             />
             <Button onClick={handleCreateGroup} disabled={!newGroupName.trim() || creatingGroup}>
-              {creatingGroup ? <Loader2 className="h-4 w-4 animate-spin" /> : "Créer"}
+              {creatingGroup ? <Loader2 className="h-4 w-4 animate-spin" /> : (t.create as string)}
             </Button>
           </div>
         </DialogContent>
@@ -394,7 +396,7 @@ const MyGarage = () => {
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
         <Button onClick={() => navigate("/add-car")} className="w-full h-12 text-base font-bold rounded-xl gap-2">
-          <Plus className="h-5 w-5" /> Add a Car
+          <Plus className="h-5 w-5" /> {t.garage_add_car as string}
         </Button>
       </div>
     </div>

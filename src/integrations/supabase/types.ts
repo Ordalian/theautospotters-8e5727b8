@@ -288,6 +288,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           id: string
+          language: string
           last_delivery_at: string | null
           pinned_car_id: string | null
           theme: string | null
@@ -299,6 +300,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          language?: string
           last_delivery_at?: string | null
           pinned_car_id?: string | null
           theme?: string | null
@@ -310,6 +312,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          language?: string
           last_delivery_at?: string | null
           pinned_car_id?: string | null
           theme?: string | null

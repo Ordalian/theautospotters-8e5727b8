@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useTheme, THEMES, type ThemeId } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Car, Check, Palette, Pin, Search } from "lucide-react";
@@ -27,6 +28,7 @@ interface CarOption {
 const GarageSettings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const [pinnedCarId, setPinnedCarId] = useState<string | null>(null);
   const [cars, setCars] = useState<CarOption[]>([]);
@@ -67,7 +69,7 @@ const GarageSettings = () => {
       setPinnedCarId(carId);
       setChoiceDialogOpen(false);
       setSpotSearchQuery("");
-      toast.success(carId ? "Spot épinglé mis à jour" : "Spot épinglé retiré");
+      toast.success(carId ? (t.settings_pinned_updated as string) : (t.settings_pinned_removed as string));
     } catch (err: any) {
       toast.error(err?.message || "Erreur");
     } finally {
@@ -92,14 +94,14 @@ const GarageSettings = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">Mon garage</h1>
+        <h1 className="text-xl font-bold">{t.settings_title as string}</h1>
       </header>
 
       <div className="relative z-10 p-6 max-w-md mx-auto space-y-8">
         <section className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Palette className="h-5 w-5 text-primary" />
-            Thème de l'application
+            {t.settings_theme as string}
           </h2>
           <div className="grid grid-cols-2 gap-3">
             {THEMES.map((t) => (
@@ -128,10 +130,10 @@ const GarageSettings = () => {
         <section className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Pin className="h-5 w-5 text-primary" />
-            Spot épinglé
+            {t.settings_pinned as string}
           </h2>
           {loading ? (
-            <p className="text-sm text-muted-foreground">Chargement…</p>
+            <p className="text-sm text-muted-foreground">{t.loading as string}</p>
           ) : (
             <div className="flex flex-col sm:flex-row gap-2">
               <button
@@ -146,8 +148,8 @@ const GarageSettings = () => {
                   <Car className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-medium">Dernier spot (par défaut)</p>
-                  <p className="text-xs text-muted-foreground">Le plus récent s'affiche</p>
+                  <p className="font-medium">{t.settings_pinned_default as string}</p>
+                  <p className="text-xs text-muted-foreground">{t.settings_pinned_default_desc as string}</p>
                 </div>
                 {!pinnedCarId && <Check className="ml-auto h-4 w-4 text-primary shrink-0" />}
               </button>
@@ -163,8 +165,8 @@ const GarageSettings = () => {
                   <Search className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-medium">Au choix</p>
-                  <p className="text-xs text-muted-foreground">Rechercher un spot</p>
+                  <p className="font-medium">{t.settings_pinned_choice as string}</p>
+                  <p className="text-xs text-muted-foreground">{t.settings_pinned_search as string}</p>
                 </div>
                 {pinnedCarId && <Check className="ml-auto h-4 w-4 text-primary shrink-0" />}
               </button>
@@ -174,17 +176,17 @@ const GarageSettings = () => {
           <Dialog open={choiceDialogOpen} onOpenChange={setChoiceDialogOpen}>
             <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
               <DialogHeader>
-                <DialogTitle>Choisir un spot à épingler</DialogTitle>
+                <DialogTitle>{t.settings_pinned_dialog as string}</DialogTitle>
               </DialogHeader>
               <Input
-                placeholder="Rechercher dans mes spots (marque, modèle, année)..."
+                placeholder={t.settings_pinned_search_placeholder as string}
                 value={spotSearchQuery}
                 onChange={(e) => setSpotSearchQuery(e.target.value)}
                 className="bg-secondary/30"
               />
               <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1">
                 {filteredCarsForChoice.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">Aucun spot trouvé</p>
+                  <p className="text-sm text-muted-foreground py-4 text-center">{t.settings_pinned_none as string}</p>
                 ) : (
                   filteredCarsForChoice.map((car) => (
                     <button

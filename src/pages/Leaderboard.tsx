@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Trophy, Medal, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import {
   Select,
   SelectContent,
@@ -24,19 +25,20 @@ interface LeaderboardEntry {
   car_level: number;
 }
 
-const SORT_OPTIONS: { value: LeaderboardSortOption; label: string; valueLabel: string }[] = [
-  { value: "spots", label: "Nombre de spots", valueLabel: "spots" },
-  { value: "avg_quality", label: "Qualité moyenne", valueLabel: "qualité" },
-  { value: "avg_rarity", label: "Rareté moyenne", valueLabel: "rareté" },
-  { value: "car_level", label: "Car level", valueLabel: "niveau" },
-];
-
 const Leaderboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<LeaderboardSortOption>("spots");
+
+  const SORT_OPTIONS: { value: LeaderboardSortOption; label: string; valueLabel: string }[] = [
+    { value: "spots", label: t.leaderboard_sort_spots as string, valueLabel: t.leaderboard_val_spots as string },
+    { value: "avg_quality", label: t.leaderboard_sort_quality as string, valueLabel: t.leaderboard_val_quality as string },
+    { value: "avg_rarity", label: t.leaderboard_sort_rarity as string, valueLabel: t.leaderboard_val_rarity as string },
+    { value: "car_level", label: t.leaderboard_sort_level as string, valueLabel: t.leaderboard_val_level as string },
+  ];
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -106,11 +108,11 @@ const Leaderboard = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">Leaderboard</h1>
+        <h1 className="text-xl font-bold">{t.leaderboard_title as string}</h1>
         <div className="ml-auto">
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as LeaderboardSortOption)}>
             <SelectTrigger className="w-[140px] h-9 text-xs">
-              <SelectValue placeholder="Trier par" />
+              <SelectValue placeholder={t.leaderboard_sort_by as string} />
             </SelectTrigger>
             <SelectContent>
               {SORT_OPTIONS.map((opt) => (
@@ -131,8 +133,8 @@ const Leaderboard = () => {
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Trophy className="h-16 w-16 text-muted-foreground/30 mb-4" />
-            <h3 className="font-semibold text-lg">No spots yet</h3>
-            <p className="text-muted-foreground text-sm mt-1">Be the first to spot a car!</p>
+            <h3 className="font-semibold text-lg">{t.leaderboard_no_spots as string}</h3>
+            <p className="text-muted-foreground text-sm mt-1">{t.leaderboard_no_spots_desc as string}</p>
           </div>
         ) : (
           <div className="space-y-2 mt-4">
@@ -148,9 +150,9 @@ const Leaderboard = () => {
                 <div className="shrink-0">{getRankIcon(i)}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm truncate">
-                    {entry.username || "Anonymous Spotter"}
+                    {entry.username || (t.leaderboard_anonymous as string)}
                     {entry.user_id === user?.id && (
-                      <span className="ml-2 text-xs text-primary font-normal">(you)</span>
+                      <span className="ml-2 text-xs text-primary font-normal">{t.leaderboard_you as string}</span>
                     )}
                   </p>
                 </div>
