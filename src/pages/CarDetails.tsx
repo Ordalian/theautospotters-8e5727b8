@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
-import { ArrowLeft, Car, Loader2, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Car, Loader2, X, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { RatingExplainer } from "@/components/RatingExplainer";
@@ -50,6 +50,7 @@ const CarDetails = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
 
   const { data: car, isLoading: loading } = useQuery({
@@ -65,6 +66,29 @@ const CarDetails = () => {
     enabled: !!user && !!id,
     staleTime: 10 * 60 * 1000,
   });
+
+  const { data: extraPhotos = [] } = useQuery({
+    queryKey: ["car-photos", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("car_photos")
+        .select("id, image_url, position")
+        .eq("car_id", id!)
+        .order("position", { ascending: true });
+      return (data as { id: string; image_url: string; position: number }[]) ?? [];
+    },
+    enabled: !!id,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const allPhotoUrls = useMemo(() => {
+    if (!car) return [];
+    const main = car.image_url ? [car.image_url] : [];
+    const extra = extraPhotos
+      .map((p) => p.image_url)
+      .filter((url) => url && !main.includes(url));
+    return [...main, ...extra];
+  }, [car, extraPhotos]);
 
   const deliveredByUserId = car?.delivered_by_user_id ?? null;
   const { data: deliveredByProfile } = useQuery({
@@ -170,13 +194,25 @@ const CarDetails = () => {
       </header>
 
       <div className="relative z-10 max-w-2xl mx-auto">
-        {car.image_url ? (
+        {car.image_url || allPhotoUrls.length > 0 ? (
           <button
             type="button"
-            onClick={() => setPhotoPopupOpen(true)}
-            className="w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl"
+            onClick={() => { setPhotoIndex(0); setPhotoPopupOpen(true); }}
+            className="w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative"
           >
-            <img src={car.image_url} alt={`${car.brand} ${car.model}`} className="h-full w-full object-cover" loading="lazy" />
+            <img
+              src={allPhotoUrls[0] ?? car.image_url ?? ""}
+              alt={`${car.brand} ${car.model}`}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+            {allPhotoUrls.length > 1 && (
+              <span className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1.5 text-xs font-medium text-white backdrop-blur">
+                <ChevronLeft className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" />
+                <span>{allPhotoUrls.length} photos</span>
+              </span>
+            )}
           </button>
         ) : (
           <div className="w-full h-64 flex items-center justify-center bg-secondary/20">
@@ -279,10 +315,16 @@ const CarDetails = () => {
         </div>
       </div>
 
-      <Dialog open={photoPopupOpen} onOpenChange={setPhotoPopupOpen}>
+      <Dialog
+        open={photoPopupOpen}
+        onOpenChange={(open) => {
+          setPhotoPopupOpen(open);
+          if (!open) setPhotoIndex(0);
+        }}
+      >
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto p-0 overflow-hidden bg-black/95 border-0">
           <DialogHeader className="sr-only">
-            <DialogTitle>{car.brand} {car.model} – photo</DialogTitle>
+            <DialogTitle>{car.brand} {car.model} – photo {photoIndex + 1}/{allPhotoUrls.length}</DialogTitle>
           </DialogHeader>
           <button
             type="button"
@@ -292,12 +334,41 @@ const CarDetails = () => {
           >
             <X className="h-5 w-5" />
           </button>
+          {allPhotoUrls.length > 1 && (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => (i === 0 ? allPhotoUrls.length - 1 : i - 1)); }}
+                aria-label="Photo précédente"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-12 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => (i === allPhotoUrls.length - 1 ? 0 : i + 1)); }}
+                aria-label="Photo suivante"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </>
+          )}
           <img
-            src={car.image_url!}
+            src={allPhotoUrls[photoIndex] ?? car.image_url!}
             alt={`${car.brand} ${car.model}`}
             className="max-w-full max-h-[90vh] w-auto h-auto object-contain mx-auto"
             onClick={(e) => e.stopPropagation()}
           />
+          {allPhotoUrls.length > 1 && (
+            <p className="text-center text-sm text-white/70 pb-2">
+              {photoIndex + 1} / {allPhotoUrls.length}
+            </p>
+          )}
         </DialogContent>
       </Dialog>
     </div>

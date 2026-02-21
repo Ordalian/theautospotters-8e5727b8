@@ -19,9 +19,9 @@ const GarageSortSelect = ({ value, onChange }: GarageSortSelectProps) => (
       <SelectValue placeholder="Sort by..." />
     </SelectTrigger>
     <SelectContent>
-      <SelectItem value="newest">Newest first</SelectItem>
-      <SelectItem value="oldest">Oldest first</SelectItem>
-      <SelectItem value="brand">Brand A→Z</SelectItem>
+      <SelectItem value="newest">Plus récents</SelectItem>
+      <SelectItem value="oldest">Plus anciens</SelectItem>
+      <SelectItem value="brand">Par marque</SelectItem>
     </SelectContent>
   </Select>
 );

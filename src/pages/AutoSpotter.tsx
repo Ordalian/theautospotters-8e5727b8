@@ -17,21 +17,27 @@ interface CarResult {
   confidence: number;
 }
 
+interface IdentifyAndPlateResult extends CarResult {
+  license_plate: string | null;
+}
+
 const AutoSpotter = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isDeliveryMode = searchParams.get("delivery") === "1";
+  const isOwnedMode = searchParams.get("owned") === "1";
   const { user } = useAuth();
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<CarResult | null>(null);
+  const [extractedPlate, setExtractedPlate] = useState<string | null>(null);
   const [showCorrect, setShowCorrect] = useState(false);
   const [correctBrand, setCorrectBrand] = useState("");
   const [correctModel, setCorrectModel] = useState("");
   const [correctYear, setCorrectYear] = useState("");
-  // Source de la première photo (camera ou galerie) pour le système de points
   const [primaryPhotoSourceType, setPrimaryPhotoSourceType] = useState<PhotoSourceType | null>(null);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
+  const [savingOwned, setSavingOwned] = useState(false);
 
   const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
     if (images.length >= 4) {
@@ -61,14 +67,21 @@ const AutoSpotter = () => {
     }
     setAnalyzing(true);
     setResult(null);
+    setExtractedPlate(null);
     try {
-      // Resize & compress images before sending (much faster on mobile data)
       const base64Images = await Promise.all(
         images.map((img) => resizeImage(img.file, 800, 0.7))
       );
 
-      const data = await callCarApi<CarResult>({ action: "identify", images: base64Images });
-      setResult(data);
+      if (isOwnedMode) {
+        const data = await callCarApi<IdentifyAndPlateResult>({ action: "identify_and_extract_plate", images: base64Images });
+        setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
+        const plate = data.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+        if (plate && plate.length >= 2) setExtractedPlate(plate);
+      } else {
+        const data = await callCarApi<CarResult>({ action: "identify", images: base64Images });
+        setResult(data);
+      }
     } catch (err: any) {
       const msg = err?.message || "Reconnaissance impossible.";
       const isGeneric = /non-2xx|encountered an error/i.test(msg);
@@ -82,18 +95,21 @@ const AutoSpotter = () => {
     }
   };
 
-  const uploadFirstImageAndNavigate = async (brand: string, model: string, year: string) => {
-    let imageUrl: string | null = null;
+  const uploadAllImagesAndNavigate = async (brand: string, model: string, year: string) => {
+    const uploadedUrls: string[] = [];
     if (images.length > 0 && user) {
-      try {
-        const file = images[0].file;
-        const ext = file.name.split(".").pop();
-        const path = `${user.id}/${Date.now()}.${ext}`;
-        await supabase.storage.from("car-photos").upload(path, file);
-        const { data } = supabase.storage.from("car-photos").getPublicUrl(path);
-        imageUrl = data.publicUrl;
-      } catch {
-        // Continue without image
+      const base = `${user.id}/${Date.now()}`;
+      for (let i = 0; i < images.length; i++) {
+        try {
+          const file = images[i].file;
+          const ext = file.name.split(".").pop() || "jpg";
+          const path = i === 0 ? `${base}.${ext}` : `${base}-${i}.${ext}`;
+          await supabase.storage.from("car-photos").upload(path, file);
+          const { data } = supabase.storage.from("car-photos").getPublicUrl(path);
+          uploadedUrls.push(data.publicUrl);
+        } catch {
+          // skip failed upload
+        }
       }
     }
 
@@ -101,7 +117,10 @@ const AutoSpotter = () => {
     if (brand) params.set("brand", brand);
     if (model) params.set("model", model);
     if (year) params.set("year", year);
-    if (imageUrl) params.set("image_url", imageUrl);
+    if (uploadedUrls[0]) params.set("image_url", uploadedUrls[0]);
+    for (let i = 1; i < uploadedUrls.length; i++) {
+      params.set(`photo_${i}`, uploadedUrls[i]);
+    }
     if (primaryPhotoSourceType) params.set("photo_source_type", primaryPhotoSourceType);
     if (isDeliveryMode) params.set("delivery", "1");
     navigate(`/add-car?${params.toString()}`);
@@ -109,21 +128,45 @@ const AutoSpotter = () => {
 
   const handleAddToGarage = () => {
     if (result) {
-      uploadFirstImageAndNavigate(result.brand, result.model, result.year);
+      uploadAllImagesAndNavigate(result.brand, result.model, result.year);
     }
   };
 
   const handleCorrectSubmit = () => {
-    uploadFirstImageAndNavigate(correctBrand, correctModel, correctYear);
+    uploadAllImagesAndNavigate(correctBrand, correctModel, correctYear);
+  };
+
+  const handleSaveAsOwnedVehicle = async () => {
+    if (!user) return;
+    const plate = extractedPlate;
+    if (!plate || plate.length < 2) {
+      toast.error("Aucune plaque lisible sur la photo. Prenez une photo où la plaque est visible.");
+      return;
+    }
+    setSavingOwned(true);
+    try {
+      const { error } = await supabase.from("owned_vehicles").insert({
+        user_id: user.id,
+        license_plate: plate,
+        car_id: null,
+      });
+      if (error) throw error;
+      toast.success("Véhicule enregistré. Vous serez notifié s'il est spotté.");
+      navigate("/profile");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setSavingOwned(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50">
-        <Button variant="ghost" size="icon" onClick={() => navigate(isDeliveryMode ? "/friends" : "/")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(isOwnedMode ? "/profile" : isDeliveryMode ? "/friends" : "/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">The AutoSpotter</h1>
+        <h1 className="text-xl font-bold">{isOwnedMode ? "Mon véhicule" : "The AutoSpotter"}</h1>
       </header>
 
       <div className="p-4 max-w-lg mx-auto space-y-6">
@@ -200,18 +243,37 @@ const AutoSpotter = () => {
               </p>
             </div>
 
-            <div className="flex gap-3">
-              <Button onClick={handleAddToGarage} className="flex-1 h-11 font-bold rounded-xl gap-2">
-                <Plus className="h-4 w-4" />
-                Add to my garage
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowCorrect(true)}
-                className="flex-1 h-11 font-bold rounded-xl"
-              >
-                Correct me
-              </Button>
+            <div className="flex flex-col gap-3">
+              {isOwnedMode ? (
+                <Button
+                  onClick={handleSaveAsOwnedVehicle}
+                  disabled={!extractedPlate || savingOwned}
+                  className="w-full h-11 font-bold rounded-xl gap-2"
+                >
+                  {savingOwned ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  Enregistrer comme mon véhicule
+                </Button>
+              ) : (
+                <div className="flex gap-3">
+                  <Button onClick={handleAddToGarage} className="flex-1 h-11 font-bold rounded-xl gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add to my garage
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCorrect(true)}
+                    className="flex-1 h-11 font-bold rounded-xl"
+                  >
+                    Correct me
+                  </Button>
+                </div>
+              )}
+              {isOwnedMode && (
+                <Button variant="outline" onClick={() => uploadAllImagesAndNavigate(result.brand, result.model, result.year)} className="w-full h-11 font-bold rounded-xl gap-2">
+                  <Plus className="h-4 w-4" />
+                  Ajouter au garage aussi
+                </Button>
+              )}
             </div>
 
             {showCorrect && (

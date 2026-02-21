@@ -193,6 +193,64 @@ The confidence should be a number between 0 and 1. If you cannot identify the ca
       return jsonResponse(parsed);
     }
 
+    // —— action: extract_plate (extract license plate from car image, never shown to user) ——
+    if (body.action === "extract_plate") {
+      const images = body.images;
+      if (!images?.length) return jsonResponse({ license_plate: null });
+
+      const contentParts: object[] = [];
+      for (const img of images.slice(0, 2)) {
+        const m = img.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+        if (m) contentParts.push({ type: "image_url", image_url: { url: img } });
+      }
+      contentParts.push({
+        type: "text",
+        text: `You are an expert at reading license plates. Look at the vehicle image(s). If a license plate is visible, extract ONLY the plate characters (letters and numbers). Use uppercase. Remove spaces, dashes, and dots. Return only the raw alphanumeric string, e.g. AB123CD or XX99YY. If no plate is visible or readable, respond with exactly: null`,
+      });
+
+      const text = await callAI(API_KEY, [{ role: "user", content: contentParts }]);
+      let license_plate: string | null = null;
+      const trimmed = (text || "").trim();
+      if (trimmed && trimmed.toLowerCase() !== "null" && /^[A-Z0-9]{2,12}$/i.test(trimmed.replace(/\s/g, ""))) {
+        license_plate = trimmed.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+      }
+      return jsonResponse({ license_plate });
+    }
+
+    // —— action: identify_and_extract_plate (car + plate in one call for "owned vehicle" flow) ——
+    if (body.action === "identify_and_extract_plate") {
+      const images = body.images;
+      if (!images?.length) return errResponse("No images provided.", 400);
+
+      const contentParts: object[] = [];
+      for (const img of images) {
+        const m = img.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+        if (m) contentParts.push({ type: "image_url", image_url: { url: img } });
+      }
+      contentParts.push({
+        type: "text",
+        text: `You are an expert car identifier and license plate reader. From the image(s):
+
+1. Identify the car: brand, model, year. Reply with JSON: {"brand": "...", "model": "...", "year": "YYYY", "confidence": 0.9}
+2. If a license plate is visible, extract ONLY the plate characters (uppercase, no spaces/dashes). If not visible, use "plate": null.
+
+Respond with a single JSON object: {"brand": "...", "model": "...", "year": "...", "confidence": 0.9, "plate": "XX123YY" or null}. No markdown.`,
+      });
+
+      const text = await callAI(API_KEY, [{ role: "user", content: contentParts }]);
+      let carResult = { brand: "Unknown", model: "Unknown", year: "2024", confidence: 0.3 };
+      let plate: string | null = null;
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+        if (parsed.brand) carResult = { brand: parsed.brand, model: parsed.model || "Unknown", year: String(parsed.year || "2024"), confidence: Number(parsed.confidence) || 0.5 };
+        if (parsed.plate && /^[A-Z0-9]{2,12}$/i.test(String(parsed.plate).replace(/\s/g, ""))) {
+          plate = String(parsed.plate).replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+        }
+      } catch { /* keep defaults */ }
+      return jsonResponse({ ...carResult, license_plate: plate });
+    }
+
     // —— action: editions ——
     if (body.action === "editions") {
       const { brand, model, year } = body;
@@ -346,7 +404,7 @@ Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. N
       return jsonResponse({ description, engines });
     }
 
-    return errResponse("action required: 'identify', 'engines', 'editions' or 'description'.", 400);
+    return errResponse("action required: 'identify', 'extract_plate', 'identify_and_extract_plate', 'engines', 'editions' or 'description'.", 400);
   } catch (e) {
     console.error("car-api error:", e);
     return errResponse(e instanceof Error ? e.message : "Unknown error", 500);

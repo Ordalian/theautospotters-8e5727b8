@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      car_photos: {
+        Row: {
+          id: string
+          car_id: string
+          image_url: string
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          car_id: string
+          image_url: string
+          position?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          car_id?: string
+          image_url?: string
+          position?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       cars: {
         Row: {
           brand: string
@@ -24,9 +48,11 @@ export type Database = {
           edition: string | null
           engine: string | null
           finitions: string | null
+          garage_group_id: string | null
           id: string
           image_url: string | null
           latitude: number | null
+          license_plate: string | null
           location_name: string | null
           location_precision: string | null
           longitude: number | null
@@ -51,9 +77,11 @@ export type Database = {
           edition?: string | null
           engine?: string | null
           finitions?: string | null
+          garage_group_id?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
+          license_plate?: string | null
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
@@ -78,9 +106,11 @@ export type Database = {
           edition?: string | null
           engine?: string | null
           finitions?: string | null
+          garage_group_id?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
+          license_plate?: string | null
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
@@ -95,6 +125,81 @@ export type Database = {
           stock?: boolean
           user_id?: string
           year?: number
+        }
+        Relationships: []
+      }
+      garage_groups: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          sort_order?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          data: Json
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          data?: Json
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          data?: Json
+          read_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      owned_vehicles: {
+        Row: {
+          id: string
+          user_id: string
+          car_id: string | null
+          license_plate: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          car_id?: string | null
+          license_plate: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          car_id?: string | null
+          license_plate?: string
+          created_at?: string
         }
         Relationships: []
       }

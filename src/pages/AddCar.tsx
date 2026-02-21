@@ -3,11 +3,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
+import { resizeImage } from "@/lib/imageUtils";
 import { carBrands, getModelsForBrand, getYearsForModel } from "@/data/carData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Camera, Check, MapPin, Loader2, Map, Pencil } from "lucide-react";
+import { ArrowLeft, Camera, Check, MapPin, Loader2, Map, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PhotoUploadDialog, PhotoPreview, type PhotoSourceType } from "@/components/PhotoUpload";
@@ -39,6 +40,15 @@ const AddCar = () => {
   const [carMeet, setCarMeet] = useState(searchParams.get("car_meet") === "true");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(searchParams.get("image_url") || null);
+  const [additionalPhotoUrls, setAdditionalPhotoUrls] = useState<string[]>(() => {
+    const urls: string[] = [];
+    for (let i = 1; i <= 4; i++) {
+      const u = searchParams.get(`photo_${i}`);
+      if (u) urls.push(u);
+    }
+    return urls;
+  });
+  const [additionalPhotoFiles, setAdditionalPhotoFiles] = useState<{ file: File; preview: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [edition, setEdition] = useState("");
   const [editions, setEditions] = useState<string[]>([]);
@@ -63,6 +73,7 @@ const AddCar = () => {
   const [photoSourceType, setPhotoSourceType] = useState<PhotoSourceType | null>(null);
   const [isPhotoBlurry, setIsPhotoBlurry] = useState(false);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
+  const [showExtraPhotoDialog, setShowExtraPhotoDialog] = useState(false);
 
   // Initialiser la source de la photo si elle vient d'AutoSpotter
   useEffect(() => {
@@ -128,6 +139,23 @@ const AddCar = () => {
     setIsPhotoBlurry(false);
   };
 
+  const handleAddExtraPhoto = (file: File) => {
+    if (additionalPhotoUrls.length + additionalPhotoFiles.length >= 4) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAdditionalPhotoFiles((prev) => [...prev, { file, preview: reader.result as string }]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeAdditionalUrl = (index: number) => {
+    setAdditionalPhotoUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeAdditionalFile = (index: number) => {
+    setAdditionalPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async () => {
     if (!user || !brand || !model || !year) {
       toast.error("Please fill in brand, model, and year");
@@ -139,6 +167,26 @@ const AddCar = () => {
     }
     setLoading(true);
     try {
+      let extractedPlateFromPhoto: string | null = null;
+      if (imageFile) {
+        try {
+          const base64 = await resizeImage(imageFile, 800, 0.7);
+          const r = await callCarApi<{ license_plate: string | null }>({ action: "extract_plate", images: [base64] });
+          const plate = r?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+          if (plate && plate.length >= 2) extractedPlateFromPhoto = plate;
+        } catch {
+          /* ignore extraction errors */
+        }
+      } else if (imagePreview?.startsWith("data:")) {
+        try {
+          const r = await callCarApi<{ license_plate: string | null }>({ action: "extract_plate", images: [imagePreview] });
+          const plate = r?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+          if (plate && plate.length >= 2) extractedPlateFromPhoto = plate;
+        } catch {
+          /* ignore */
+        }
+      }
+
       let imageUrl: string | null = imagePreview && !imageFile ? imagePreview : null;
 
       if (imageFile) {
@@ -155,6 +203,20 @@ const AddCar = () => {
           .from("car-photos")
           .getPublicUrl(path);
         imageUrl = urlData.publicUrl;
+      }
+
+      const allPhotoUrls: string[] = imageUrl ? [imageUrl] : [];
+      for (const u of additionalPhotoUrls) {
+        if (u && !allPhotoUrls.includes(u)) allPhotoUrls.push(u);
+      }
+      for (const { file } of additionalPhotoFiles) {
+        const ext = file.name.split(".").pop();
+        const path = `${user.id}/${Date.now()}-${allPhotoUrls.length}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("car-photos").upload(path, file);
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from("car-photos").getPublicUrl(path);
+          allPhotoUrls.push(urlData.publicUrl);
+        }
       }
 
       // Calculate photo source enum
@@ -184,7 +246,7 @@ const AddCar = () => {
         modified,
         modified_comment: modified ? (modifiedComment.trim().slice(0, 500) || null) : null,
         car_meet: carMeet,
-        image_url: imageUrl,
+        image_url: allPhotoUrls[0] ?? imageUrl ?? null,
         engine: engine || null,
         latitude: coords?.lat || null,
         longitude: coords?.lng || null,
@@ -194,9 +256,10 @@ const AddCar = () => {
         photo_source: photoSource,
         quality_rating: qualityRating.level,
         rarity_rating: rarityRating.level,
+        license_plate: extractedPlateFromPhoto,
       };
 
-      if (isDeliveryMode) {
+      const insertCar = async () => {
         const { data: inserted, error } = await supabase
           .from("cars")
           .insert(insertPayload)
@@ -208,16 +271,24 @@ const AddCar = () => {
           err.hint = error.hint;
           throw err;
         }
+        if (allPhotoUrls.length > 1) {
+          await supabase.from("car_photos").insert(
+            allPhotoUrls.map((url, position) => ({
+              car_id: inserted.id,
+              image_url: url,
+              position,
+            }))
+          );
+        }
+        return inserted;
+      };
+
+      if (isDeliveryMode) {
+        const inserted = await insertCar();
         toast.success("Voiture ajoutée. Choisis l'ami à qui la livrer.");
         navigate(`/deliver-car/select-friend?carId=${inserted.id}`);
       } else {
-        const { error } = await supabase.from("cars").insert(insertPayload);
-        if (error) {
-          const err: any = new Error(error.message);
-          err.details = error.details;
-          err.hint = error.hint;
-          throw err;
-        }
+        await insertCar();
         toast.success(`${brand} ${model} added to your garage!`);
         navigate("/garage");
       }
@@ -785,7 +856,7 @@ const AddCar = () => {
           <CarConditionSelector value={carCondition} onChange={setCarCondition} />
         </div>
 
-        {/* Photo (optional, required for delivery) */}
+        {/* Photo (optional, required for delivery) — la plaque est extraite automatiquement de la photo si visible, jamais affichée */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             Photo {isDeliveryMode ? "(obligatoire pour la livraison)" : "(optional)"}
@@ -807,13 +878,40 @@ const AddCar = () => {
               <span className="text-sm font-medium">Add a photo</span>
             </button>
           )}
+          {(additionalPhotoUrls.length > 0 || additionalPhotoFiles.length > 0) && (
+            <div className="flex flex-wrap gap-2 items-center">
+              {additionalPhotoUrls.map((url, i) => (
+                <div key={`url-${i}`} className="relative rounded-lg overflow-hidden border border-border w-20 h-20">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => removeAdditionalUrl(i)} className="absolute top-0.5 right-0.5 rounded-full bg-black/60 p-1 text-white" aria-label="Retirer">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {additionalPhotoFiles.map((item, i) => (
+                <div key={`file-${i}`} className="relative rounded-lg overflow-hidden border border-border w-20 h-20">
+                  <img src={item.preview} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => removeAdditionalFile(i)} className="absolute top-0.5 right-0.5 rounded-full bg-black/60 p-1 text-white" aria-label="Retirer">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {additionalPhotoUrls.length + additionalPhotoFiles.length < 4 && (
+                <button type="button" onClick={() => setShowExtraPhotoDialog(true)} className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:border-primary/50">
+                  <Plus className="h-6 w-6" />
+                </button>
+              )}
+            </div>
+          )}
+          {imagePreview && additionalPhotoUrls.length + additionalPhotoFiles.length < 4 && (
+            <button type="button" onClick={() => setShowExtraPhotoDialog(true)} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1">
+              <Plus className="h-4 w-4" /> Ajouter une photo
+            </button>
+          )}
         </div>
         
-        <PhotoUploadDialog
-          open={showPhotoDialog}
-          onOpenChange={setShowPhotoDialog}
-          onPhotoSelect={handlePhotoSelect}
-        />
+        <PhotoUploadDialog open={showPhotoDialog} onOpenChange={setShowPhotoDialog} onPhotoSelect={handlePhotoSelect} />
+        <PhotoUploadDialog open={showExtraPhotoDialog} onOpenChange={setShowExtraPhotoDialog} onPhotoSelect={(file) => { handleAddExtraPhoto(file); setShowExtraPhotoDialog(false); }} />
       </div>
 
       {/* Done Button */}
