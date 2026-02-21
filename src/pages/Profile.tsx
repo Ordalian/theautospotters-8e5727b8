@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,38 @@ const Profile = () => {
   const [showAddVehicle, setShowAddVehicle] = useState(false);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const [addingVehicle, setAddingVehicle] = useState(false);
+  const [showUsernameConfirmDialog, setShowUsernameConfirmDialog] = useState(false);
+  const [usernameAvailability, setUsernameAvailability] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [initialUsername, setInitialUsername] = useState<string | null>(null);
+
+  const checkUsernameAvailable = useCallback(
+    async (value: string) => {
+      const trimmed = value.trim();
+      if (!trimmed || !user) {
+        setUsernameAvailability("idle");
+        return;
+      }
+      setUsernameAvailability("checking");
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .ilike("username", trimmed)
+        .neq("user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      setUsernameAvailability(data ? "taken" : "available");
+    },
+    [user]
+  );
+
+  useEffect(() => {
+    if (!username.trim() || usernameLocked) {
+      setUsernameAvailability("idle");
+      return;
+    }
+    const t = setTimeout(() => checkUsernameAvailable(username), 400);
+    return () => clearTimeout(t);
+  }, [username, usernameLocked, checkUsernameAvailable]);
 
   useEffect(() => {
     if (!user) return;
@@ -62,7 +94,10 @@ const Profile = () => {
         .select("username, username_locked")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data?.username) setUsername(data.username);
+      if (data?.username) {
+        setUsername(data.username);
+        setInitialUsername(data.username);
+      }
       setUsernameLocked(!!data?.username_locked);
       setLoading(false);
     };
@@ -178,12 +213,10 @@ const Profile = () => {
     toast.success("Véhicule retiré.");
   };
 
-  const handleSave = async () => {
-    if (!user || !username.trim()) {
-      toast.error("Please enter a username");
-      return;
-    }
-    if (usernameLocked) return;
+  const performSaveUsername = async () => {
+    if (!user || !username.trim()) return;
+    if (usernameLocked || usernameAvailability === "taken" || usernameAvailability === "checking") return;
+    setShowUsernameConfirmDialog(false);
     setSaving(true);
     try {
       const { error } = await supabase
@@ -192,12 +225,19 @@ const Profile = () => {
         .eq("user_id", user.id);
       if (error) throw error;
       setUsernameLocked(true);
-      toast.success("Username updated! It cannot be changed again.");
+      setInitialUsername(username.trim());
+      setUsernameAvailability("idle");
+      toast.success("Pseudo enregistré. Il ne pourra plus être modifié.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to update username");
+      toast.error(err.message || "Erreur lors de l'enregistrement.");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveClick = () => {
+    if (!username.trim() || usernameAvailability === "taken" || usernameAvailability === "checking") return;
+    setShowUsernameConfirmDialog(true);
   };
 
   return (
@@ -227,22 +267,49 @@ const Profile = () => {
                 placeholder="Choisir un pseudo..."
                 value={username}
                 onChange={(e) => !usernameLocked && setUsername(e.target.value)}
-                className="bg-secondary/30 text-lg h-12"
-                onKeyDown={(e) => !usernameLocked && e.key === "Enter" && handleSave()}
+                className={`bg-secondary/30 text-lg h-12 ${
+                  usernameAvailability === "taken"
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : usernameAvailability === "available"
+                      ? "border-green-500/50 focus-visible:ring-green-500/50"
+                      : ""
+                }`}
+                onKeyDown={(e) => !usernameLocked && e.key === "Enter" && handleSaveClick()}
                 disabled={usernameLocked}
                 readOnly={usernameLocked}
               />
+              {!usernameLocked && username.trim() && (
+                <div className="flex items-center gap-2 min-h-[20px]">
+                  {usernameAvailability === "checking" && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Vérification...
+                    </span>
+                  )}
+                  {usernameAvailability === "available" && (
+                    <span className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                      Pseudo disponible
+                    </span>
+                  )}
+                  {usernameAvailability === "taken" && (
+                    <span className="text-xs text-destructive font-medium flex items-center gap-1">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-destructive" />
+                      Ce pseudo est déjà utilisé
+                    </span>
+                  )}
+                </div>
+              )}
               {usernameLocked && (
                 <p className="text-xs text-muted-foreground">Votre pseudo ne peut plus être modifié.</p>
               )}
             </div>
             {!usernameLocked && (
               <Button
-                onClick={handleSave}
-                disabled={saving || !username.trim()}
+                onClick={handleSaveClick}
+                disabled={saving || !username.trim() || usernameAvailability === "taken" || usernameAvailability === "checking"}
                 className="w-full h-12 text-base font-bold rounded-xl gap-2"
               >
-                {saving ? "Saving..." : <><Check className="h-5 w-5" /> Sauvegarder</>}
+                {saving ? "Enregistrement..." : <><Check className="h-5 w-5" /> Sauvegarder</>}
               </Button>
             )}
           </div>
@@ -336,6 +403,25 @@ const Profile = () => {
             ))}
           </div>
         )}
+
+        <Dialog open={showUsernameConfirmDialog} onOpenChange={setShowUsernameConfirmDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmer votre pseudo</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground py-2">
+              Attention, le choix de votre pseudo est définitif.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setShowUsernameConfirmDialog(false)}>
+                Annuler
+              </Button>
+              <Button className="flex-1" onClick={performSaveUsername} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Valider"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={showAddVehicle} onOpenChange={setShowAddVehicle}>
           <DialogContent>
