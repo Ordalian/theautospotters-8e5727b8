@@ -28,6 +28,7 @@ interface FriendRequest {
 interface OwnedVehicleRow {
   id: string;
   car_id: string | null;
+  license_plate: string;
   created_at: string;
 }
 
@@ -45,6 +46,7 @@ const Profile = () => {
   const navigateTo = useNav();
   const queryClient = useQueryClient();
   const [username, setUsername] = useState("");
+  const [usernameLocked, setUsernameLocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
@@ -57,10 +59,11 @@ const Profile = () => {
     const fetchProfile = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("username")
+        .select("username, username_locked")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data?.username) setUsername(data.username);
+      setUsernameLocked(!!data?.username_locked);
       setLoading(false);
     };
     fetchProfile();
@@ -105,7 +108,7 @@ const Profile = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("owned_vehicles")
-        .select("id, car_id, created_at")
+        .select("id, car_id, license_plate, created_at")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       return (data as OwnedVehicleRow[]) ?? [];
@@ -180,14 +183,16 @@ const Profile = () => {
       toast.error("Please enter a username");
       return;
     }
+    if (usernameLocked) return;
     setSaving(true);
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ username: username.trim() })
+        .update({ username: username.trim(), username_locked: true })
         .eq("user_id", user.id);
       if (error) throw error;
-      toast.success("Username updated!");
+      setUsernameLocked(true);
+      toast.success("Username updated! It cannot be changed again.");
     } catch (err: any) {
       toast.error(err.message || "Failed to update username");
     } finally {
@@ -221,22 +226,29 @@ const Profile = () => {
               <Input
                 placeholder="Choisir un pseudo..."
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => !usernameLocked && setUsername(e.target.value)}
                 className="bg-secondary/30 text-lg h-12"
-                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+                onKeyDown={(e) => !usernameLocked && e.key === "Enter" && handleSave()}
+                disabled={usernameLocked}
+                readOnly={usernameLocked}
               />
+              {usernameLocked && (
+                <p className="text-xs text-muted-foreground">Votre pseudo ne peut plus être modifié.</p>
+              )}
             </div>
-            <Button
-              onClick={handleSave}
-              disabled={saving || !username.trim()}
-              className="w-full h-12 text-base font-bold rounded-xl gap-2"
-            >
-              {saving ? "Saving..." : <><Check className="h-5 w-5" /> Sauvegarder</>}
-            </Button>
+            {!usernameLocked && (
+              <Button
+                onClick={handleSave}
+                disabled={saving || !username.trim()}
+                className="w-full h-12 text-base font-bold rounded-xl gap-2"
+              >
+                {saving ? "Saving..." : <><Check className="h-5 w-5" /> Sauvegarder</>}
+              </Button>
+            )}
           </div>
         )}
 
-        {/* Mes véhicules en possession (privé, plaque jamais affichée) */}
+        {/* Mes véhicules en possession — l'utilisateur voit les plaques qu'il a liées */}
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Car className="h-5 w-5 text-primary" />
@@ -245,8 +257,8 @@ const Profile = () => {
           <p className="text-sm text-muted-foreground">Prenez une photo de votre véhicule pour l'enregistrer. Vous serez notifié si quelqu'un le spot.</p>
           {ownedVehicles.map((ov) => (
             <div key={ov.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
-              <span className="text-sm font-medium">
-                Véhicule enregistré · {new Date(ov.created_at).toLocaleDateString("fr-FR")}
+              <span className="text-sm font-medium font-mono">
+                {ov.license_plate} · {new Date(ov.created_at).toLocaleDateString("fr-FR")}
               </span>
               <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRemoveOwnedVehicle(ov.id)}>
                 <X className="h-4 w-4" />

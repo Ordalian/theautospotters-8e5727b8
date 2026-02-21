@@ -293,6 +293,7 @@ export type Database = {
           theme: string | null
           user_id: string
           username: string | null
+          username_locked: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -303,6 +304,7 @@ export type Database = {
           theme?: string | null
           user_id: string
           username?: string | null
+          username_locked?: boolean
         }
         Update: {
           avatar_url?: string | null
@@ -313,6 +315,7 @@ export type Database = {
           theme?: string | null
           user_id?: string
           username?: string | null
+          username_locked?: boolean
         }
         Relationships: []
       }
