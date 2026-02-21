@@ -236,7 +236,7 @@ const FriendsGarages = () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: spots } = await supabase
         .from("cars")
-        .select("id, brand, model, year, engine, image_url, created_at, user_id")
+        .select("id, brand, model, year, engine, image_url, created_at, user_id, garage_group_id")
         .in("user_id", friendUserIds)
         .gte("created_at", sevenDaysAgo)
         .order("created_at", { ascending: false })
