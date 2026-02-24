@@ -242,6 +242,8 @@ const fr: Translations = {
   car_detail_no_engines: "Aucun moteur trouvé pour ce modèle.",
   car_detail_not_found: "Voiture introuvable",
   car_detail_go_back: "Retour",
+  car_detail_prev: "Véhicule précédent",
+  car_detail_next: "Véhicule suivant",
   car_detail_delete_error: "Erreur lors de la suppression",
   car_detail_photos: "photos",
 

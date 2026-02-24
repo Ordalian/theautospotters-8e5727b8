@@ -647,8 +647,18 @@ const FriendsGarages = () => {
                       friendGroupFilter === "none" ? !c.garage_group_id : c.garage_group_id === friendGroupFilter
                   )
                 : sortedFriendCars
-              ).map((car) => (
-                <div key={car.id} onClick={() => navigate(`/car/${car.id}`)} className="rounded-xl border border-border bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors">
+              ).map((car) => {
+                const listForNav = friendGroupFilter
+                  ? friendCars.filter((c) =>
+                      friendGroupFilter === "none" ? !c.garage_group_id : c.garage_group_id === friendGroupFilter
+                    )
+                  : sortedFriendCars;
+                return (
+                <div
+                  key={car.id}
+                  onClick={() => navigate(`/car/${car.id}`, { state: { carIds: listForNav.map((c) => c.id) } })}
+                  className="rounded-xl border border-border bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors"
+                >
                   {car.image_url ? (
                     <img src={car.image_url} alt={`${car.brand} ${car.model}`} className="h-40 w-full object-cover" />
                   ) : (
@@ -661,7 +671,8 @@ const FriendsGarages = () => {
                     <p className="text-sm text-muted-foreground">{car.year}</p>
                   </div>
                 </div>
-              ))
+              );
+              })
             )}
           </div>
         )}

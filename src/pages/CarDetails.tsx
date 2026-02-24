@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,11 +47,21 @@ interface CarInfoResult {
 
 const CarDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
+
+  const carIds = (location.state as { carIds?: string[] } | null)?.carIds ?? null;
+  const currentIndex = carIds && id ? carIds.indexOf(id) : -1;
+  const prevId = carIds && carIds.length > 1 && id
+    ? carIds[currentIndex <= 0 ? carIds.length - 1 : currentIndex - 1]
+    : null;
+  const nextId = carIds && carIds.length > 1 && id
+    ? carIds[currentIndex < 0 || currentIndex >= carIds.length - 1 ? 0 : currentIndex + 1]
+    : null;
   const [photoIndex, setPhotoIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
 
@@ -173,6 +183,30 @@ const CarDetails = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
+      {carIds && carIds.length > 1 && (
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="fixed left-2 top-1/2 -translate-y-1/2 z-30 h-12 w-12 rounded-full bg-background/90 backdrop-blur border border-border/60 shadow-lg hover:bg-primary/20 hover:border-primary/40"
+            onClick={() => prevId && navigate(`/car/${prevId}`, { state: { carIds } })}
+            aria-label={t.car_detail_prev as string}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="fixed right-2 top-1/2 -translate-y-1/2 z-30 h-12 w-12 rounded-full bg-background/90 backdrop-blur border border-border/60 shadow-lg hover:bg-primary/20 hover:border-primary/40"
+            onClick={() => nextId && navigate(`/car/${nextId}`, { state: { carIds } })}
+            aria-label={t.car_detail_next as string}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </>
+      )}
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />

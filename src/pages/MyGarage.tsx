@@ -363,7 +363,7 @@ const MyGarage = () => {
                     {deletingId === car.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </Button>
                 </div>
-                <div onClick={() => navigate(`/car/${car.id}`)} className="cursor-pointer">
+                <div onClick={() => navigate(`/car/${car.id}`, { state: { carIds: sortedCars.map((c) => c.id) } })} className="cursor-pointer">
                   {car.image_url ? (
                     <div className="h-44 overflow-hidden">
                       <img

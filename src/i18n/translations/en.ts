@@ -240,6 +240,8 @@ const en: Translations = {
   car_detail_no_engines: "No engines found for this model.",
   car_detail_not_found: "Car not found",
   car_detail_go_back: "Go back",
+  car_detail_prev: "Previous vehicle",
+  car_detail_next: "Next vehicle",
   car_detail_delete_error: "Error deleting spot",
   car_detail_photos: "photos",
 
