@@ -106,8 +106,8 @@ const VehicleTypeMenu = () => {
       </header>
 
       <main className="flex-1 p-4 max-w-lg mx-auto w-full space-y-4">
-        {/* Tuiles par type : dernier spot affiché */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Tuiles par type : 3 colonnes, dernière ligne Train + Hot Wheels (2 cols) à hauteur réduite */}
+        <div className="grid grid-cols-3 gap-3 grid-rows-[auto_auto_5rem]">
           {/* Tous */}
           <button
             onClick={() => navigate("/garage")}
@@ -138,7 +138,8 @@ const VehicleTypeMenu = () => {
             </div>
           </button>
 
-          {VEHICLE_TYPES.filter((v) => v.key !== "hot_wheels").map(({ key, icon: Icon, gradient }) => {
+          {/* Car, Truck, Motorcycle, Boat, Plane : tuiles carrées */}
+          {VEHICLE_TYPES.filter((v) => v.key !== "hot_wheels" && v.key !== "train").map(({ key, icon: Icon, gradient }) => {
             const count = counts[key] || 0;
             const latest = latestByType[key];
             return (
@@ -174,19 +175,45 @@ const VehicleTypeMenu = () => {
             );
           })}
 
-          {/* Hot Wheels : largeur 2 cols, hauteur réduite */}
+          {/* Train : même ligne que Hot Wheels, hauteur réduite */}
+          {(() => {
+            const key = "train";
+            const count = counts[key] || 0;
+            const latest = latestByType[key];
+            const { icon: Icon, gradient } = VEHICLE_TYPES.find((v) => v.key === "train")!;
+            return (
+              <button
+                onClick={() => navigate(`/garage?type=${key}`)}
+                className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] h-full min-h-0 shadow-lg shadow-black/20"
+              >
+                <div className="flex h-full w-full flex-col justify-center items-center rounded-xl bg-card/90 p-2 bg-gradient-to-br from-amber-500/20 to-amber-500/5">
+                  {latest?.image_url ? (
+                    <div className="flex-1 w-full min-h-0 rounded-lg overflow-hidden">
+                      <img src={latest.image_url} alt="" className="h-full w-full object-cover rounded-lg" loading="lazy" />
+                    </div>
+                  ) : (
+                    <Icon className="h-8 w-8 text-muted-foreground/40 group-hover:text-primary/60 transition-colors shrink-0" />
+                  )}
+                  <h3 className="font-bold text-xs leading-tight truncate w-full text-center mt-1">{t[LABEL_KEYS[key]] as string}</h3>
+                  <p className="text-[10px] text-muted-foreground">{count} spot{count !== 1 ? "s" : ""}</p>
+                </div>
+              </button>
+            );
+          })()}
+
+          {/* Hot Wheels : largeur 2 colonnes (même largeur que 2 tuiles), même hauteur réduite que Train */}
           <button
             onClick={() => navigate("/garage?type=hot_wheels")}
-            className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] col-span-2 h-20 shadow-lg shadow-black/20"
+            className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] col-span-2 h-full min-h-0 shadow-lg shadow-black/20"
           >
             <div className="flex h-full w-full flex-row items-center gap-3 rounded-xl bg-card/90 p-3 bg-gradient-to-r from-rose-500/20 to-rose-500/5">
               {latestByType.hot_wheels?.image_url ? (
-                <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden">
+                <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden">
                   <img src={latestByType.hot_wheels.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                 </div>
               ) : (
-                <div className="w-14 h-14 shrink-0 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                  <Sparkles className="h-7 w-7 text-muted-foreground/50" />
+                <div className="w-12 h-12 shrink-0 rounded-lg bg-rose-500/20 flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-muted-foreground/50" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
