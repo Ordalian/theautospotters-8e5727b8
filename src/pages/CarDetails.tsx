@@ -110,19 +110,40 @@ const CarDetails = () => {
     swipeState.current = null;
   };
 
-  const { data: car, isLoading: loading } = useQuery({
+  const { data: carRaw, isLoading: loading } = useQuery({
     queryKey: ["car", id],
     queryFn: async () => {
-      const { data } = await (supabase
-        .from("cars")
-        .select("id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type, linked_car_id")
-        .eq("id", id!)
-        .maybeSingle() as any);
-      return data as CarDetail | null;
+      const colsWithType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type";
+      const colsWithoutType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id";
+      const { data, error } = await supabase.from("cars").select(colsWithType).eq("id", id!).maybeSingle();
+      if (!error && data) return data as (Omit<CarDetail, "linked_car_id"> & { linked_car_id?: string | null }) | null;
+      const { data: fallback, error: err2 } = await supabase.from("cars").select(colsWithoutType).eq("id", id!).maybeSingle();
+      if (err2) throw err2;
+      return fallback ? ({ ...fallback, vehicle_type: "car" } as Omit<CarDetail, "linked_car_id"> & { linked_car_id?: string | null }) : null;
     },
     enabled: !!user && !!id,
     staleTime: 10 * 60 * 1000,
   });
+
+  const { data: linkedCarId } = useQuery({
+    queryKey: ["car-linked-id", id],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.from("cars").select("linked_car_id").eq("id", id!).maybeSingle();
+        if (error) return null;
+        return (data as { linked_car_id: string | null } | null)?.linked_car_id ?? null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!id && !!carRaw,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const car = useMemo((): CarDetail | null => {
+    if (!carRaw) return null;
+    return { ...carRaw, vehicle_type: carRaw.vehicle_type ?? "car", linked_car_id: linkedCarId ?? carRaw.linked_car_id ?? null } as CarDetail;
+  }, [carRaw, linkedCarId]);
 
   const isOwner = !!user && car?.user_id === user.id;
   const needLinkType = car ? ((car.vehicle_type || "car") === "hot_wheels" ? "spot" : "hot_wheels") : null;
