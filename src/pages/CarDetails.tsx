@@ -131,7 +131,7 @@ const CarDetails = () => {
       try {
         const { data, error } = await supabase.from("cars").select("linked_car_id").eq("id", id!).maybeSingle();
         if (error) return null;
-        return (data as { linked_car_id: string | null } | null)?.linked_car_id ?? null;
+        return (data as any)?.linked_car_id ?? null;
       } catch {
         return null;
       }
@@ -142,7 +142,7 @@ const CarDetails = () => {
 
   const car = useMemo((): CarDetail | null => {
     if (!carRaw) return null;
-    return { ...carRaw, vehicle_type: carRaw.vehicle_type ?? "car", linked_car_id: linkedCarId ?? carRaw.linked_car_id ?? null } as CarDetail;
+    return { ...carRaw, vehicle_type: carRaw.vehicle_type ?? "car", linked_car_id: linkedCarId } as CarDetail;
   }, [carRaw, linkedCarId]);
 
   const isOwner = !!user && car?.user_id === user.id;
@@ -262,9 +262,9 @@ const CarDetails = () => {
     if (!user || !car || car.user_id !== user.id) return;
     setLinking(true);
     try {
-      const { error: e1 } = await supabase.from("cars").update({ linked_car_id: targetId }).eq("id", car.id).eq("user_id", user.id);
+      const { error: e1 } = await supabase.from("cars").update({ linked_car_id: targetId } as any).eq("id", car.id).eq("user_id", user.id);
       if (e1) throw e1;
-      const { error: e2 } = await supabase.from("cars").update({ linked_car_id: car.id }).eq("id", targetId).eq("user_id", user.id);
+      const { error: e2 } = await supabase.from("cars").update({ linked_car_id: car.id } as any).eq("id", targetId).eq("user_id", user.id);
       if (e2) throw e2;
       toast.success(t.car_detail_linked as string);
       setLinkDialogOpen(false);

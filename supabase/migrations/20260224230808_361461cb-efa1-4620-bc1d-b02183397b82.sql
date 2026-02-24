@@ -1,0 +1,1 @@
+ALTER TABLE public.cars ADD COLUMN linked_car_id uuid REFERENCES public.cars(id) DEFAULT NULL;
