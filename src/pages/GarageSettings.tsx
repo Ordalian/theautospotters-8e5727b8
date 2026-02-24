@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useTheme, THEMES, type ThemeId } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Car, Check, Palette, Pin, Search } from "lucide-react";
+import { ArrowLeft, Car, Check, ChevronLeft, Palette, Pin, Search, Truck, Bike, Ship, Plane, TrainFront, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,7 +23,18 @@ interface CarOption {
   year: number;
   image_url: string | null;
   created_at: string;
+  vehicle_type: string;
 }
+
+const PIN_VEHICLE_TYPES = [
+  { key: "car", icon: Car, gradient: "from-primary/20 to-primary/5", labelKey: "garage_menu_cars" },
+  { key: "truck", icon: Truck, gradient: "from-blue-500/20 to-blue-500/5", labelKey: "garage_menu_trucks" },
+  { key: "motorcycle", icon: Bike, gradient: "from-emerald-500/20 to-emerald-500/5", labelKey: "garage_menu_motorcycles" },
+  { key: "boat", icon: Ship, gradient: "from-cyan-500/20 to-cyan-500/5", labelKey: "garage_menu_boats" },
+  { key: "plane", icon: Plane, gradient: "from-violet-500/20 to-violet-500/5", labelKey: "garage_menu_planes" },
+  { key: "train", icon: TrainFront, gradient: "from-amber-500/20 to-amber-500/5", labelKey: "garage_menu_trains" },
+  { key: "hot_wheels", icon: Sparkles, gradient: "from-rose-500/20 to-rose-500/5", labelKey: "garage_menu_hot_wheels" },
+] as const;
 
 const GarageSettings = () => {
   const { user } = useAuth();
@@ -35,6 +46,7 @@ const GarageSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [choiceDialogOpen, setChoiceDialogOpen] = useState(false);
+  const [pinDialogTypeFilter, setPinDialogTypeFilter] = useState<string | null>(null);
   const [spotSearchQuery, setSpotSearchQuery] = useState("");
 
   useEffect(() => {
@@ -49,7 +61,7 @@ const GarageSettings = () => {
 
       const { data: carsData } = await supabase
         .from("cars")
-        .select("id, brand, model, year, image_url, created_at")
+        .select("id, brand, model, year, image_url, created_at, vehicle_type")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       setCars((carsData as CarOption[]) || []);
@@ -68,6 +80,7 @@ const GarageSettings = () => {
       if (error) throw error;
       setPinnedCarId(carId);
       setChoiceDialogOpen(false);
+      setPinDialogTypeFilter(null);
       setSpotSearchQuery("");
       toast.success(carId ? (t.settings_pinned_updated as string) : (t.settings_pinned_removed as string));
     } catch (err: any) {
@@ -79,13 +92,25 @@ const GarageSettings = () => {
 
   const spotSearchLower = spotSearchQuery.trim().toLowerCase();
   const filteredCarsForChoice = useMemo(() => {
-    if (!spotSearchLower) return cars;
-    return cars.filter(
+    let list = cars;
+    if (pinDialogTypeFilter) {
+      list = list.filter((c) => (c.vehicle_type || "car") === pinDialogTypeFilter);
+    }
+    if (!spotSearchLower) return list;
+    return list.filter(
       (c) =>
         `${c.brand} ${c.model}`.toLowerCase().includes(spotSearchLower) ||
         String(c.year).includes(spotSearchLower)
     );
-  }, [cars, spotSearchLower]);
+  }, [cars, spotSearchLower, pinDialogTypeFilter]);
+
+  const onChoiceDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setPinDialogTypeFilter(null);
+      setSpotSearchQuery("");
+    }
+    setChoiceDialogOpen(open);
+  };
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -173,51 +198,90 @@ const GarageSettings = () => {
             </div>
           )}
 
-          <Dialog open={choiceDialogOpen} onOpenChange={setChoiceDialogOpen}>
+          <Dialog open={choiceDialogOpen} onOpenChange={onChoiceDialogOpenChange}>
             <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
               <DialogHeader>
-                <DialogTitle>{t.settings_pinned_dialog as string}</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  {pinDialogTypeFilter ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 -ml-2"
+                        onClick={() => { setPinDialogTypeFilter(null); setSpotSearchQuery(""); }}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                      {t[PIN_VEHICLE_TYPES.find((x) => x.key === pinDialogTypeFilter)?.labelKey ?? "garage_menu_cars"] as string}
+                    </>
+                  ) : (
+                    t.settings_pinned_dialog as string
+                  )}
+                </DialogTitle>
               </DialogHeader>
-              <Input
-                placeholder={t.settings_pinned_search_placeholder as string}
-                value={spotSearchQuery}
-                onChange={(e) => setSpotSearchQuery(e.target.value)}
-                className="bg-secondary/30"
-              />
-              <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1">
-                {filteredCarsForChoice.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">{t.settings_pinned_none as string}</p>
-                ) : (
-                  filteredCarsForChoice.map((car) => (
-                    <button
-                      key={car.id}
-                      type="button"
-                      onClick={() => handleSavePinned(car.id)}
-                      disabled={saving}
-                      className={`w-full flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
-                        pinnedCarId === car.id ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
-                      }`}
-                    >
-                      {car.image_url ? (
-                        <img
-                          src={car.image_url}
-                          alt={`${car.brand} ${car.model}`}
-                          className="h-12 w-12 rounded-lg object-cover shrink-0"
-                        />
-                      ) : (
-                        <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
-                          <Car className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{car.brand} {car.model}</p>
-                        <p className="text-xs text-muted-foreground">{car.year}</p>
-                      </div>
-                      {pinnedCarId === car.id && <Check className="h-4 w-4 text-primary shrink-0" />}
-                    </button>
-                  ))
-                )}
-              </div>
+              {!pinDialogTypeFilter ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {PIN_VEHICLE_TYPES.map(({ key, icon: Icon, gradient, labelKey }) => {
+                    const count = cars.filter((c) => (c.vehicle_type || "car") === key).length;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setPinDialogTypeFilter(key)}
+                        className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 p-3 transition-all border-border bg-gradient-to-br ${gradient} hover:border-primary/40`}
+                      >
+                        <Icon className="h-8 w-8 text-muted-foreground" />
+                        <span className="text-xs font-medium text-center leading-tight">{t[labelKey] as string}</span>
+                        <span className="text-[10px] text-muted-foreground">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <>
+                  <Input
+                    placeholder={t.settings_pinned_search_placeholder as string}
+                    value={spotSearchQuery}
+                    onChange={(e) => setSpotSearchQuery(e.target.value)}
+                    className="bg-secondary/30"
+                  />
+                  <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1">
+                    {filteredCarsForChoice.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4 text-center">{t.settings_pinned_none as string}</p>
+                    ) : (
+                      filteredCarsForChoice.map((car) => (
+                        <button
+                          key={car.id}
+                          type="button"
+                          onClick={() => handleSavePinned(car.id)}
+                          disabled={saving}
+                          className={`w-full flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
+                            pinnedCarId === car.id ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
+                          }`}
+                        >
+                          {car.image_url ? (
+                            <img
+                              src={car.image_url}
+                              alt={`${car.brand} ${car.model}`}
+                              className="h-12 w-12 rounded-lg object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
+                              <Car className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{car.brand} {car.model}</p>
+                            <p className="text-xs text-muted-foreground">{car.year}</p>
+                          </div>
+                          {pinnedCarId === car.id && <Check className="h-4 w-4 text-primary shrink-0" />}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
             </DialogContent>
           </Dialog>
         </section>
