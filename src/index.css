@@ -254,6 +254,19 @@
   }
 }
 
+/* Linked-car (Hot Wheels pairing) — uses primary tokens with slight warmth */
+.linked-car-bg { background-color: hsl(var(--secondary)); }
+.linked-car-header { background-color: hsl(var(--card)); border-color: hsl(var(--primary) / 0.3); color: hsl(var(--foreground)); }
+.linked-car-card { background-color: hsl(var(--card) / 0.95); border-color: hsl(var(--primary) / 0.25); }
+.linked-car-section { background-color: hsl(var(--card) / 0.9); border-color: hsl(var(--primary) / 0.2); }
+.linked-car-text { color: hsl(var(--foreground)); }
+.linked-car-muted { color: hsl(var(--muted-foreground)); }
+.linked-car-accent { color: hsl(var(--primary)); }
+.linked-car-badge { background-color: hsl(var(--primary) / 0.15); color: hsl(var(--primary)); }
+.linked-car-ring { --tw-ring-color: hsl(var(--primary) / 0.3); }
+.linked-car-btn { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.linked-car-btn:hover { background-color: hsl(var(--primary) / 0.85); }
+
 @layer base {
   * {
     @apply border-border;
