@@ -202,6 +202,25 @@ const MyGarage = () => {
     }
   };
 
+  const garageTitleByType: Record<string, keyof typeof t> = {
+    car: "garage_title_cars",
+    truck: "garage_title_trucks",
+    motorcycle: "garage_title_motorcycles",
+    boat: "garage_title_boats",
+    plane: "garage_title_planes",
+    train: "garage_title_trains",
+    hot_wheels: "garage_title_hot_wheels",
+  };
+  const garageAddLabelByType: Record<string, keyof typeof t> = {
+    car: "garage_add_car",
+    truck: "garage_add_truck",
+    motorcycle: "garage_add_motorcycle",
+    boat: "garage_add_boat",
+    plane: "garage_add_plane",
+    train: "garage_add_train",
+    hot_wheels: "garage_add_hot_wheels",
+  };
+
   const getBadges = (car: SpottedCar) => {
     const badges: string[] = [];
     if (car.seen_on_road) badges.push("🛣️ Road");
@@ -216,11 +235,11 @@ const MyGarage = () => {
     <div className="flex min-h-screen flex-col bg-background relative">
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <Button variant="ghost" size="icon" onClick={() => (brandFilter || groupFilter) ? setSearchParams({ type: typeFilter }) : navigate("/garage-menu")}>
+        <Button variant="ghost" size="icon" onClick={() => (brandFilter || groupFilter || searchParams.get("type")) ? setSearchParams({}) : navigate("/garage-menu")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold truncate flex-1">
-          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? (t.garage_no_group as string) : "Groupe")) : (t.garage_title as string)}
+          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? (t.garage_no_group as string) : "Groupe")) : (searchParams.get("type") && garageTitleByType[typeFilter] ? (t[garageTitleByType[typeFilter]] as string) : (t.garage_title as string))}
         </h1>
         <div className="flex items-center gap-2">
           <GarageSortSelect value={sortOption} onChange={setSortOption} />
@@ -397,8 +416,8 @@ const MyGarage = () => {
       </Dialog>
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-30">
-        <Button onClick={() => navigate("/add-car")} className="w-full h-12 text-base font-bold rounded-xl gap-2">
-          <Plus className="h-5 w-5" /> {t.garage_add_car as string}
+        <Button onClick={() => navigate(typeFilter ? `/add-car?vehicle_type=${typeFilter}` : "/add-car")} className="w-full h-12 text-base font-bold rounded-xl gap-2">
+          <Plus className="h-5 w-5" /> {garageAddLabelByType[typeFilter] ? (t[garageAddLabelByType[typeFilter]] as string) : (t.garage_add_vehicle as string)}
         </Button>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
 import { resizeImage, blurPlateInImage, dataUrlToFile } from "@/lib/imageUtils";
-import { carBrands, getModelsForBrand, getYearsForModel } from "@/data/carData";
+import { getBrandsForVehicleType, getModelsForBrand, getYearsForModel } from "@/data/carData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,16 +92,21 @@ const AddCar = () => {
   const [showModels, setShowModels] = useState(false);
   const [showYears, setShowYears] = useState(false);
 
-  const filteredBrands = carBrands.filter((b) =>
+  const validVehicleTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
+  const vehicleTypeParam = searchParams.get("vehicle_type") || "car";
+  const vehicleType = validVehicleTypes.includes(vehicleTypeParam) ? vehicleTypeParam : "car";
+  const brandsForType = getBrandsForVehicleType(vehicleType);
+
+  const filteredBrands = brandsForType.filter((b) =>
     b.name.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
-  const models = getModelsForBrand(brand);
+  const models = getModelsForBrand(brand, vehicleType);
   const filteredModels = models.filter((m) =>
     m.name.toLowerCase().includes(modelSearch.toLowerCase())
   );
 
-  const years = getYearsForModel(brand, model);
+  const years = getYearsForModel(brand, model, vehicleType);
 
   // Reset model/year when brand changes
   useEffect(() => {
@@ -268,10 +273,6 @@ const AddCar = () => {
       // Calculate ratings
       const qualityRating = calculateQualityRating(photoSource, carCondition);
       const rarityRating = calculateRarityRating(brand, model);
-
-      const validVehicleTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
-      const vehicleTypeParam = searchParams.get("vehicle_type") || "car";
-      const vehicleType = validVehicleTypes.includes(vehicleTypeParam) ? vehicleTypeParam : "car";
 
       const insertPayload: Record<string, any> = {
         user_id: user.id,

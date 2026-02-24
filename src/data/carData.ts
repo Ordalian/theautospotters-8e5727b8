@@ -891,13 +891,103 @@ export const carBrands: CarBrand[] = [
   { name: "Weltmeister", models: [{ name: "EX5", years: [2018, 2022] }, { name: "W6", years: [2021, 2022] }] },
 ];
 
-export function getModelsForBrand(brandName: string): CarModel[] {
-  const brand = carBrands.find((b) => b.name === brandName);
+// Camions
+export const truckBrands: CarBrand[] = [
+  { name: "Scania", models: [{ name: "R Series", years: [2004, 2026] }, { name: "S Series", years: [2016, 2026] }, { name: "P Series", years: [2004, 2026] }, { name: "L Series", years: [1996, 2026] }] },
+  { name: "Volvo Trucks", models: [{ name: "FH", years: [1993, 2026] }, { name: "FM", years: [1998, 2026] }, { name: "FE", years: [2006, 2026] }, { name: "VNR", years: [2017, 2026] }] },
+  { name: "MAN", models: [{ name: "TGX", years: [2007, 2026] }, { name: "TGS", years: [2007, 2026] }, { name: "TGM", years: [2005, 2026] }, { name: "TGX 2020", years: [2020, 2026] }] },
+  { name: "DAF", models: [{ name: "XF", years: [1997, 2026] }, { name: "CF", years: [1992, 2026] }, { name: "LF", years: [2001, 2026] }] },
+  { name: "Iveco", models: [{ name: "S-Way", years: [2019, 2026] }, { name: "Stralis", years: [2002, 2020] }, { name: "Trakker", years: [2004, 2026] }, { name: "Daily", years: [1978, 2026] }] },
+  { name: "Kenworth", models: [{ name: "T680", years: [2012, 2026] }, { name: "W990", years: [2019, 2026] }, { name: "T880", years: [2015, 2026] }] },
+  { name: "Peterbilt", models: [{ name: "579", years: [2015, 2026] }, { name: "567", years: [2017, 2026] }, { name: "389", years: [1997, 2026] }] },
+  { name: "Freightliner", models: [{ name: "Cascadia", years: [2007, 2026] }, { name: "Coronado", years: [2002, 2026] }, { name: "M2", years: [2002, 2026] }] },
+  { name: "Mack", models: [{ name: "Anthem", years: [2018, 2026] }, { name: "Pinnacle", years: [2002, 2026] }, { name: "Granite", years: [2001, 2026] }] },
+  { name: "Mercedes-Benz Trucks", models: [{ name: "Actros", years: [1996, 2026] }, { name: "Arocs", years: [2013, 2026] }, { name: "Econic", years: [1999, 2026] }] },
+  { name: "Renault Trucks", models: [{ name: "T", years: [2013, 2026] }, { name: "K", years: [2013, 2026] }, { name: "C", years: [2013, 2026] }, { name: "D", years: [2013, 2026] }] },
+  { name: "Navistar", models: [{ name: "LT", years: [2018, 2026] }, { name: "RH", years: [2015, 2026] }] },
+  { name: "Isuzu", models: [{ name: "Elf", years: [1959, 2026] }, { name: "Forward", years: [1970, 2026] }, { name: "Giga", years: [1994, 2026] }] },
+];
+
+// Motos
+export const motorcycleBrands: CarBrand[] = [
+  { name: "Honda", models: [{ name: "CBR600RR", years: [2003, 2026] }, { name: "CBR1000RR", years: [2004, 2026] }, { name: "Africa Twin", years: [2016, 2026] }, { name: "Gold Wing", years: [1975, 2026] }, { name: "CB650R", years: [2019, 2026] }, { name: "PCX", years: [2010, 2026] }] },
+  { name: "Yamaha", models: [{ name: "YZF-R1", years: [1998, 2026] }, { name: "MT-09", years: [2014, 2026] }, { name: "Tracer 9", years: [2021, 2026] }, { name: "XSR900", years: [2016, 2026] }, { name: "Niken", years: [2018, 2024] }] },
+  { name: "Kawasaki", models: [{ name: "Ninja ZX-10R", years: [2004, 2026] }, { name: "Z900", years: [2017, 2026] }, { name: "Versys 1000", years: [2012, 2026] }, { name: "H2", years: [2015, 2026] }] },
+  { name: "Suzuki", models: [{ name: "GSX-R1000", years: [2001, 2026] }, { name: "Hayabusa", years: [1999, 2026] }, { name: "V-Strom 1050", years: [2020, 2026] }, { name: "Burgman", years: [1998, 2026] }] },
+  { name: "Ducati", models: [{ name: "Panigale V4", years: [2018, 2026] }, { name: "Monster", years: [1993, 2026] }, { name: "Multistrada", years: [2003, 2026] }, { name: "Scrambler", years: [2015, 2026] }] },
+  { name: "Harley-Davidson", models: [{ name: "Sportster", years: [1957, 2026] }, { name: "Street Glide", years: [2006, 2026] }, { name: "Road King", years: [1994, 2026] }, { name: "LiveWire", years: [2019, 2026] }] },
+  { name: "BMW Motorrad", models: [{ name: "R 1250 GS", years: [2019, 2026] }, { name: "S 1000 RR", years: [2009, 2026] }, { name: "R 18", years: [2020, 2026] }, { name: "CE 04", years: [2022, 2026] }] },
+  { name: "KTM", models: [{ name: "1290 Super Duke", years: [2014, 2026] }, { name: "890 Adventure", years: [2020, 2026] }, { name: "RC 8C", years: [2021, 2026] }] },
+  { name: "Triumph", models: [{ name: "Street Triple", years: [2007, 2026] }, { name: "Tiger 900", years: [2020, 2026] }, { name: "Bonneville", years: [1959, 2026] }, { name: "Speed Triple", years: [1994, 2026] }] },
+  { name: "Royal Enfield", models: [{ name: "Classic 350", years: [2009, 2026] }, { name: "Himalayan", years: [2018, 2026] }, { name: "Interceptor 650", years: [2018, 2026] }] },
+  { name: "Aprilia", models: [{ name: "RSV4", years: [2009, 2026] }, { name: "Tuono V4", years: [2011, 2026] }, { name: "Tuareg 660", years: [2022, 2026] }] },
+  { name: "MV Agusta", models: [{ name: "Brutale", years: [2001, 2026] }, { name: "Dragster", years: [2014, 2026] }, { name: "Superveloce", years: [2020, 2026] }] },
+];
+
+// Bateaux
+export const boatBrands: CarBrand[] = [
+  { name: "Beneteau", models: [{ name: "Oceanis 46.1", years: [2019, 2026] }, { name: "First 36", years: [2022, 2026] }, { name: "Antares", years: [1998, 2026] }, { name: "Flyer", years: [2000, 2026] }] },
+  { name: "Jeanneau", models: [{ name: "Sun Odyssey 410", years: [2018, 2026] }, { name: "NC 1095", years: [2020, 2026] }, { name: "Cap Camarat", years: [1985, 2026] }] },
+  { name: "Sunseeker", models: [{ name: "Manhattan 66", years: [2018, 2026] }, { name: "Predator 74", years: [2003, 2020] }, { name: "76 Yacht", years: [2015, 2026] }] },
+  { name: "Princess", models: [{ name: "V55", years: [2019, 2026] }, { name: "F45", years: [2018, 2026] }, { name: "S72", years: [2022, 2026] }] },
+  { name: "Azimut", models: [{ name: "S7", years: [2020, 2026] }, { name: "Grande 35M", years: [2021, 2026] }, { name: "Magellano", years: [2010, 2026] }] },
+  { name: "Ferretti", models: [{ name: "500", years: [2018, 2026] }, { name: "720", years: [2020, 2026] }, { name: "Infy 90", years: [2022, 2026] }] },
+  { name: "Sea Ray", models: [{ name: "SPX 190", years: [2015, 2026] }, { name: "Sundancer 350", years: [2010, 2026] }] },
+  { name: "Boston Whaler", models: [{ name: "Montauk", years: [1973, 2026] }, { name: "Outrage", years: [1985, 2026] }, { name: "Dauntless", years: [1994, 2026] }] },
+];
+
+// Avions
+export const planeBrands: CarBrand[] = [
+  { name: "Boeing", models: [{ name: "737", years: [1967, 2026] }, { name: "747", years: [1969, 2026] }, { name: "777", years: [1994, 2026] }, { name: "787 Dreamliner", years: [2011, 2026] }] },
+  { name: "Airbus", models: [{ name: "A320", years: [1988, 2026] }, { name: "A330", years: [1994, 2026] }, { name: "A350", years: [2015, 2026] }, { name: "A380", years: [2007, 2021] }] },
+  { name: "Cessna", models: [{ name: "172 Skyhawk", years: [1956, 2026] }, { name: "Citation", years: [1972, 2026] }, { name: "Caravan", years: [1984, 2026] }] },
+  { name: "Piper", models: [{ name: "PA-28 Cherokee", years: [1961, 2026] }, { name: "M350", years: [2014, 2026] }, { name: "M600", years: [2016, 2026] }] },
+  { name: "Embraer", models: [{ name: "E-Jet E2", years: [2018, 2026] }, { name: "Phenom 300", years: [2008, 2026] }, { name: "Praetor 600", years: [2019, 2026] }] },
+  { name: "Gulfstream", models: [{ name: "G650", years: [2012, 2026] }, { name: "G700", years: [2022, 2026] }, { name: "G500", years: [2018, 2026] }] },
+  { name: "Dassault", models: [{ name: "Falcon 8X", years: [2016, 2026] }, { name: "Falcon 6X", years: [2023, 2026] }] },
+  { name: "Bombardier", models: [{ name: "Global 7500", years: [2018, 2026] }, { name: "Challenger 350", years: [2014, 2026] }] },
+];
+
+// Trains
+export const trainBrands: CarBrand[] = [
+  { name: "Alstom", models: [{ name: "TGV", years: [1981, 2026] }, { name: "AGV", years: [2008, 2026] }, { name: "Pendolino", years: [1988, 2026] }, { name: "Coradia", years: [1997, 2026] }] },
+  { name: "Siemens", models: [{ name: "Velaro", years: [1999, 2026] }, { name: "Desiro", years: [1998, 2026] }, { name: "Mireo", years: [2016, 2026] }] },
+  { name: "Bombardier", models: [{ name: "Talent", years: [1996, 2026] }, { name: "Traxx", years: [1999, 2026] }, { name: "Zefiro", years: [2009, 2026] }] },
+  { name: "Stadler", models: [{ name: "FLIRT", years: [2004, 2026] }, { name: "KISS", years: [2008, 2026] }, { name: "EC250", years: [2018, 2026] }] },
+  { name: "SNCF", models: [{ name: "TGV Duplex", years: [1996, 2026] }, { name: "TGV Ouigo", years: [2013, 2026] }, { name: "TER 2N", years: [1996, 2026] }] },
+];
+
+// Hot Wheels / jouets
+export const hotWheelsBrands: CarBrand[] = [
+  { name: "Hot Wheels", models: [{ name: "Original", years: [1968, 2026] }, { name: "Premium", years: [1998, 2026] }, { name: "Elite", years: [2010, 2026] }, { name: "Custom", years: [1968, 2026] }] },
+  { name: "Matchbox", models: [{ name: "Lesney", years: [1953, 2026] }, { name: "Superfast", years: [1969, 2026] }, { name: "Collectors", years: [1992, 2026] }] },
+  { name: "Majorette", models: [{ name: "Classic", years: [1961, 2026] }, { name: "Premium", years: [2000, 2026] }] },
+  { name: "Corgi", models: [{ name: "Classics", years: [1956, 2026] }, { name: "Vanguards", years: [1993, 2026] }] },
+  { name: "Greenlight", models: [{ name: "Diecast", years: [2000, 2026] }, { name: "Hollywood", years: [2005, 2026] }] },
+];
+
+const VEHICLE_BRANDS: Record<string, CarBrand[]> = {
+  car: carBrands,
+  truck: truckBrands,
+  motorcycle: motorcycleBrands,
+  boat: boatBrands,
+  plane: planeBrands,
+  train: trainBrands,
+  hot_wheels: hotWheelsBrands,
+};
+
+export function getBrandsForVehicleType(vehicleType: string): CarBrand[] {
+  return VEHICLE_BRANDS[vehicleType] ?? carBrands;
+}
+
+export function getModelsForBrand(brandName: string, vehicleType?: string): CarModel[] {
+  const brands = vehicleType ? (VEHICLE_BRANDS[vehicleType] ?? carBrands) : carBrands;
+  const brand = brands.find((b) => b.name === brandName);
   return brand ? brand.models : [];
 }
 
-export function getYearsForModel(brandName: string, modelName: string): number[] {
-  const models = getModelsForBrand(brandName);
+export function getYearsForModel(brandName: string, modelName: string, vehicleType?: string): number[] {
+  const models = getModelsForBrand(brandName, vehicleType);
   const model = models.find((m) => m.name === modelName);
   if (!model) return [];
   const years: number[] = [];
