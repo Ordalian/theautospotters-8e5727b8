@@ -174,9 +174,12 @@ const AddCar = () => {
     }
     setLoading(true);
     try {
-      let extractedPlateFromPhoto: string | null = null;
+      // Use plate passed from AutoSpotter if available, otherwise extract from photo
+      let extractedPlateFromPhoto: string | null = searchParams.get("extracted_plate") || null;
       let mainImageFileToUpload: File | null = null;
+
       if (imageFile) {
+        // Fresh file upload (not from AutoSpotter) → extract plate + blur
         try {
           const base64 = await resizeImage(imageFile, 800, 0.7);
           const r = await callCarApi<{ license_plate: string | null; plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [base64] });
@@ -192,6 +195,7 @@ const AddCar = () => {
           mainImageFileToUpload = imageFile;
         }
       } else if (imagePreview?.startsWith("data:")) {
+        // Data URL (not from AutoSpotter) → extract plate + blur
         try {
           const r = await callCarApi<{ license_plate: string | null; plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [imagePreview] });
           const plate = r?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
@@ -204,6 +208,7 @@ const AddCar = () => {
           /* ignore */
         }
       }
+      // If imagePreview is a public URL (from AutoSpotter), blur was already done there
 
       let imageUrl: string | null = imagePreview && !imageFile ? imagePreview : null;
 

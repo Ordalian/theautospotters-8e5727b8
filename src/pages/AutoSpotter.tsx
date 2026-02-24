@@ -136,6 +136,8 @@ const AutoSpotter = () => {
     }
     if (primaryPhotoSourceType) params.set("photo_source_type", primaryPhotoSourceType);
     if (isDeliveryMode) params.set("delivery", "1");
+    // Pass extracted plate for owned_vehicles bonus matching
+    if (extractedPlate) params.set("extracted_plate", extractedPlate);
     navigate(`/add-car?${params.toString()}`);
   };
 
