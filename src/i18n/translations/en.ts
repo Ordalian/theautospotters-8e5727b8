@@ -163,6 +163,8 @@ const en: Translations = {
   add_car_editions_error: "Unable to load editions",
   add_car_engine_no_results: "No engines found for this model",
   add_car_select_brand_model_year: "Select brand, model and year first",
+  add_car_spot_date: "Spot date",
+  add_car_spot_date_desc: "When was this photo taken?",
 
   // AutoSpotter
   autospotter_title: "AutoSpotter",
