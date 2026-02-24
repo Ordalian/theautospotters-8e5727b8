@@ -214,7 +214,6 @@ const Profile = () => {
     queryClient.invalidateQueries({ queryKey: ["owned-vehicles", user.id] });
     toast.success(t.profile_vehicle_removed as string);
     queryClient.invalidateQueries({ queryKey: ["owned-vehicles", user.id] });
-    };
   };
 
   const performSaveUsername = async () => {
