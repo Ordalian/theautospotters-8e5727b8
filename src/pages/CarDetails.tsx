@@ -240,7 +240,7 @@ const CarDetails = () => {
         ...(car!.edition ? { edition: car!.edition } : {}),
       });
     },
-    enabled: !!car,
+    enabled: !!car && !!car.brand && !!car.model && car.year != null,
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
   });
