@@ -127,32 +127,13 @@ const Dashboard = () => {
     return () => document.removeEventListener("click", close);
   }, [profileMenuOpen]);
 
-  const [garageMenuOpen, setGarageMenuOpen] = useState(false);
-  const garageMenuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (garageMenuRef.current && !garageMenuRef.current.contains(e.target as Node)) setGarageMenuOpen(false);
-    };
-    if (garageMenuOpen) document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [garageMenuOpen]);
 
-  const vehicleTypeOptions: { value: string; labelKey: keyof typeof t }[] = [
-    { value: "all", labelKey: "garage_menu_all" },
-    { value: "car", labelKey: "garage_menu_cars" },
-    { value: "truck", labelKey: "garage_menu_trucks" },
-    { value: "motorcycle", labelKey: "garage_menu_motorcycles" },
-    { value: "boat", labelKey: "garage_menu_boats" },
-    { value: "plane", labelKey: "garage_menu_planes" },
-    { value: "train", labelKey: "garage_menu_trains" },
-    { value: "hot_wheels", labelKey: "garage_menu_hot_wheels" },
-  ];
+
 
   const carsSpottedText = typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
 
   const topTiles = [
-    { title: t.dash_my_garage as string, subtitle: carsSpottedText, icon: Car, image: latestCarImage, gradient: "from-primary/20 to-primary/5", notificationCount: 0, iframe: null as string | null, isGarage: true },
-    { title: t.dash_zone_jeu as string, subtitle: t.dash_zone_jeu_sub as string, icon: Gamepad2, image: null, onClick: () => {}, gradient: "from-violet-500/20 to-violet-500/5", notificationCount: 0, iframe: "/zone-de-jeu.html", isGarage: false },
+    { title: t.dash_my_garage as string, subtitle: carsSpottedText, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0, iframe: null as string | null },
   ];
 
   const bottomTiles = [
@@ -216,64 +197,45 @@ const Dashboard = () => {
         {/* Row 1: Mon Garage + Zone de Jeu */}
         <div className="grid grid-cols-2 gap-3 mb-3">
           {topTiles.map((tile) => (
-            <div key={tile.title} className={tile.isGarage ? "relative" : ""} ref={tile.isGarage ? garageMenuRef : undefined}>
-              <button
-                onClick={tile.isGarage ? () => setGarageMenuOpen((o) => !o) : tile.onClick}
-                className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20 w-full"
-              >
-                <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
-                  {tile.iframe ? (
-                    <div className="flex-1 overflow-hidden rounded-lg relative min-h-0">
-                      <iframe
-                        src={tile.iframe}
-                        className="absolute inset-0 w-full h-full rounded-lg pointer-events-none"
-                        style={{ border: "none", objectFit: "cover", transform: "scale(1)", transformOrigin: "center center" }}
-                        loading="lazy"
-                        title={tile.title}
-                      />
-                    </div>
-                  ) : tile.image ? (
-                    <>
-                      <div className="flex-1 overflow-hidden rounded-lg mb-2 relative">
-                        <img src={tile.image} alt="Latest spot" className="h-full w-full object-cover rounded-lg" loading="lazy" />
-                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 rounded-b-lg">
-                          <h3 className="font-bold text-xs leading-tight">{tile.title}</h3>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className={`flex flex-1 items-center justify-center bg-gradient-to-br ${tile.gradient} rounded-lg`}>
-                        <tile.icon className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
-                      </div>
-                      <div className="mt-2">
-                        <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
+            <button
+              key={tile.title}
+              onClick={tile.onClick}
+              className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20 w-full"
+            >
+              <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
+                {tile.iframe ? (
+                  <div className="flex-1 overflow-hidden rounded-lg relative min-h-0">
+                    <iframe
+                      src={tile.iframe}
+                      className="absolute inset-0 w-full h-full rounded-lg pointer-events-none"
+                      style={{ border: "none", objectFit: "cover", transform: "scale(1)", transformOrigin: "center center" }}
+                      loading="lazy"
+                      title={tile.title}
+                    />
+                  </div>
+                ) : tile.image ? (
+                  <>
+                    <div className="flex-1 overflow-hidden rounded-lg mb-2 relative">
+                      <img src={tile.image} alt="Latest spot" className="h-full w-full object-cover rounded-lg" loading="lazy" />
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2.5 rounded-b-lg">
+                        <h3 className="font-bold text-xs leading-tight">{tile.title}</h3>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
                       </div>
-                    </>
-                  )}
-                </div>
-              </button>
-              {tile.isGarage && garageMenuOpen && (
-                <div className="absolute left-0 right-0 top-full mt-1 py-1 rounded-xl border border-border bg-card shadow-lg z-50 max-h-[70vh] overflow-y-auto">
-                  {vehicleTypeOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 first:rounded-t-xl last:rounded-b-xl"
-                      onClick={() => {
-                        setGarageMenuOpen(false);
-                        navigate(opt.value === "all" ? "/garage" : `/garage?type=${opt.value}`);
-                      }}
-                    >
-                      <Car className="h-4 w-4 text-muted-foreground" />
-                      {t[opt.labelKey] as string}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={`flex flex-1 items-center justify-center bg-gradient-to-br ${tile.gradient} rounded-lg`}>
+                      <tile.icon className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+                    </div>
+                    <div className="mt-2">
+                      <h3 className="font-bold text-sm leading-tight">{tile.title}</h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{tile.subtitle}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </button>
           ))}
         </div>
 
