@@ -327,7 +327,7 @@ const CarDetails = () => {
       onTouchEnd={(e) => e.changedTouches.length === 1 && onSwipeEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
       onMouseDown={(e) => e.button === 0 && onSwipeStart(e.clientX, e.clientY, false)}
     >
-      {!hasLinkedCar && <BlackGoldBg />}
+      <BlackGoldBg />
       <header className={`sticky top-0 z-20 flex items-center gap-2 px-4 py-4 border-b backdrop-blur ${hasLinkedCar ? "linked-car-header" : "border-border/50 bg-background/95 supports-[backdrop-filter]:bg-background/80"}`}>
         <Button variant="ghost" size="icon" onClick={() => (returnTo ? navigate(returnTo) : navigate(-1))}>
           <ArrowLeft className="h-5 w-5" />
