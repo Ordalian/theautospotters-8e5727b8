@@ -64,7 +64,7 @@ const MyGarage = () => {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const brandFilter = searchParams.get("brand") ?? null;
   const groupFilter = searchParams.get("group") ?? null;
-  const typeFilter = searchParams.get("type") ?? "car";
+  const typeFilter = searchParams.get("type") ?? null;
 
   const handleDelete = async (e: React.MouseEvent, carId: string) => {
     e.stopPropagation();
@@ -89,7 +89,8 @@ const MyGarage = () => {
         .from("cars")
         .select("id, brand, model, year, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id")
         .eq("user_id", user!.id) as any;
-      const { data } = await q.eq("vehicle_type", typeFilter).order("created_at", { ascending: false });
+      const q2 = typeFilter ? q.eq("vehicle_type", typeFilter) : q;
+      const { data } = await q2.order("created_at", { ascending: false });
       return (data as SpottedCar[]) || [];
     },
     enabled: !!user,
@@ -247,7 +248,7 @@ const MyGarage = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold truncate flex-1">
-          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? (t.garage_no_group as string) : "Groupe")) : (searchParams.get("type") && garageTitleByType[typeFilter] ? (t[garageTitleByType[typeFilter]] as string) : (t.garage_title as string))}
+          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? (t.garage_no_group as string) : "Groupe")) : (!typeFilter ? (t.garage_menu_all as string) : garageTitleByType[typeFilter] ? (t[garageTitleByType[typeFilter]] as string) : (t.garage_title as string))}
         </h1>
         <div className="flex items-center gap-2">
           <GarageSortSelect value={sortOption} onChange={setSortOption} />
@@ -425,7 +426,7 @@ const MyGarage = () => {
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-30">
         <Button onClick={() => navigate(typeFilter ? `/add-car?vehicle_type=${typeFilter}` : "/add-car")} className="w-full h-12 text-base font-bold rounded-xl gap-2">
-          <Plus className="h-5 w-5" /> {garageAddLabelByType[typeFilter] ? (t[garageAddLabelByType[typeFilter]] as string) : (t.garage_add_vehicle as string)}
+          <Plus className="h-5 w-5" /> {typeFilter && garageAddLabelByType[typeFilter] ? (t[garageAddLabelByType[typeFilter]] as string) : (t.garage_add_vehicle as string)}
         </Button>
       </div>
     </div>

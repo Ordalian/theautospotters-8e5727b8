@@ -34,7 +34,7 @@ const VehicleTypeMenu = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  const { data: typesData = { counts: {}, images: {} } } = useQuery({
+  const { data: typesData = { counts: {}, images: {}, latestAllImage: null } } = useQuery({
     queryKey: ["vehicle-type-counts", user?.id],
     queryFn: async () => {
       const { data } = await supabase
@@ -44,14 +44,18 @@ const VehicleTypeMenu = () => {
         .order("created_at", { ascending: false });
       const counts: Record<string, number> = {};
       const images: Record<string, string> = {};
+      let latestAllImage: string | null = null;
       for (const row of data || []) {
         const vt = (row as any).vehicle_type || "car";
         counts[vt] = (counts[vt] || 0) + 1;
         if (!images[vt] && (row as any).image_url) {
           images[vt] = (row as any).image_url;
         }
+        if (!latestAllImage && (row as any).image_url) {
+          latestAllImage = (row as any).image_url;
+        }
       }
-      return { counts, images };
+      return { counts, images, latestAllImage };
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
@@ -59,6 +63,7 @@ const VehicleTypeMenu = () => {
 
   const counts = typesData.counts;
   const images = typesData.images;
+  const latestAllImage = typesData.latestAllImage ?? null;
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
@@ -75,7 +80,42 @@ const VehicleTypeMenu = () => {
       <main className="flex-1 flex flex-col min-h-0 p-4 max-w-lg mx-auto w-full">
         {/* Grille 2 colonnes, 4 rangées, répartition égale de l’écran */}
         <div className="grid grid-cols-2 grid-rows-4 gap-3 flex-1 min-h-0">
-          {VEHICLE_TYPES.filter((v) => v.key !== "hot_wheels").map(({ key, icon: Icon, gradient }) => {
+          {/* Tuile Tous */}
+          <button
+            onClick={() => navigate("/garage")}
+            className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] min-h-0 shadow-lg shadow-black/20"
+          >
+            {latestAllImage ? (
+              <>
+                <img
+                  src={latestAllImage}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent rounded-2xl" />
+                <div className="relative flex h-full w-full flex-col justify-end p-4">
+                  <h3 className="font-bold text-sm leading-tight text-white drop-shadow-md">{t.garage_menu_all as string}</h3>
+                  <p className="text-[10px] text-white/70 mt-0.5">
+                    {total} spot{total !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-4">
+                <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg">
+                  <Car className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                </div>
+                <div className="mt-3">
+                  <h3 className="font-bold text-sm leading-tight">{t.garage_menu_all as string}</h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {total} spot{total !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
+            )}
+          </button>
+
+          {VEHICLE_TYPES.map(({ key, icon: Icon, gradient }) => {
             const count = counts[key] || 0;
             const img = images[key];
             return (
@@ -115,28 +155,6 @@ const VehicleTypeMenu = () => {
               </button>
             );
           })}
-
-          {/* Hot Wheels : largeur 2 colonnes, hauteur réduite (pas de scroll) */}
-          <button
-            onClick={() => navigate("/garage?type=hot_wheels")}
-            className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] col-span-2 h-full min-h-0 shadow-lg shadow-black/20"
-          >
-            <div className="flex h-full w-full flex-row items-center gap-3 rounded-xl bg-card/90 p-3 bg-gradient-to-r from-rose-500/20 to-rose-500/5">
-              {images.hot_wheels ? (
-                <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden">
-                  <img src={images.hot_wheels} alt="" className="w-full h-full object-cover" loading="lazy" />
-                </div>
-              ) : (
-                <div className="w-12 h-12 shrink-0 rounded-lg bg-rose-500/20 flex items-center justify-center">
-                  <Sparkles className="h-6 w-6 text-muted-foreground/50" />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-sm leading-tight">{t.garage_menu_hot_wheels as string}</h3>
-                <p className="text-[10px] text-muted-foreground">{counts.hot_wheels || 0} spot{(counts.hot_wheels || 0) !== 1 ? "s" : ""}</p>
-              </div>
-            </div>
-          </button>
         </div>
       </main>
     </div>
