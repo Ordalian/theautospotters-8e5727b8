@@ -2,10 +2,9 @@ import { useTheme } from "@/hooks/useTheme";
 
 const THEME_GRADIENTS: Record<string, string> = {
   "noir-or": `
-    linear-gradient(145deg, #080808 0%, #111111 40%, #0a0a0a 100%),
-    radial-gradient(ellipse 90% 60% at 30% -10%, rgba(180, 150, 60, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 30% at 80% 90%, rgba(160, 130, 50, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 60% 50%, rgba(255, 255, 255, 0.012) 0%, transparent 40%)
+    linear-gradient(145deg, #070707 0%, #0e0e0e 40%, #090909 100%),
+    radial-gradient(ellipse 90% 60% at 25% -10%, rgba(160, 135, 50, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 85% 95%, rgba(140, 115, 40, 0.025) 0%, transparent 50%)
   `,
   "bleu-alpine": `
     linear-gradient(145deg, #050a18 0%, #0d1a3a 50%, #060e20 100%),
@@ -34,15 +33,45 @@ const THEME_GRADIENTS: Record<string, string> = {
   `,
 };
 
+/* Inline SVG marble veining pattern — very subtle, organic lines */
+const MARBLE_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800' viewBox='0 0 800 800'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='4' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='800' height='800' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E")`;
+
+const MARBLE_GOLD_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cdefs%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.003' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.6 0 0 0 0 0.5 0 0 0 0 0.2 0 0 0 1 0'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='600' height='600' filter='url(%23v)' opacity='0.025'/%3E%3C/svg%3E")`;
+
 const BlackGoldBg = () => {
   const { theme } = useTheme();
   const gradient = THEME_GRADIENTS[theme] || THEME_GRADIENTS["noir-or"];
+  const isNoirOr = !theme || theme === "noir-or";
 
   return (
-    <div
-      className="pointer-events-none fixed inset-0 z-0"
-      style={{ backgroundImage: gradient }}
-    />
+    <>
+      {/* Base gradient layer */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{ backgroundImage: gradient }}
+      />
+      {/* Marble noise texture — only on noir-or theme */}
+      {isNoirOr && (
+        <>
+          <div
+            className="pointer-events-none fixed inset-0 z-0"
+            style={{
+              backgroundImage: MARBLE_SVG,
+              backgroundSize: "800px 800px",
+              mixBlendMode: "screen",
+            }}
+          />
+          <div
+            className="pointer-events-none fixed inset-0 z-0"
+            style={{
+              backgroundImage: MARBLE_GOLD_SVG,
+              backgroundSize: "600px 600px",
+              mixBlendMode: "screen",
+            }}
+          />
+        </>
+      )}
+    </>
   );
 };
 

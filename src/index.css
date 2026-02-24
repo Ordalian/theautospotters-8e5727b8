@@ -17,35 +17,35 @@
     --popover: 0 0% 7%;
     --popover-foreground: 40 6% 90%;
 
-    --primary: 43 55% 45%;
+    --primary: 43 40% 40%;
     --primary-foreground: 0 0% 4%;
 
-    --secondary: 0 0% 11%;
-    --secondary-foreground: 40 6% 82%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 40 4% 78%;
 
-    --muted: 0 0% 13%;
-    --muted-foreground: 40 4% 48%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 40 3% 44%;
 
-    --accent: 40 40% 38%;
+    --accent: 40 30% 34%;
     --accent-foreground: 0 0% 4%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 4% 15%;
-    --input: 40 4% 15%;
-    --ring: 43 45% 42%;
+    --border: 40 3% 14%;
+    --input: 40 3% 14%;
+    --ring: 43 35% 38%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 6%;
-    --sidebar-foreground: 0 0% 88%;
-    --sidebar-primary: 43 50% 44%;
-    --sidebar-primary-foreground: 0 0% 6%;
-    --sidebar-accent: 0 0% 13%;
-    --sidebar-accent-foreground: 0 0% 88%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 43 50% 44%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 43 38% 40%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 43 38% 40%;
   }
 
   [data-theme="bleu-alpine"] {
