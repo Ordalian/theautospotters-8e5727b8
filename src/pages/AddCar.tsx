@@ -95,18 +95,24 @@ const AddCar = () => {
   const validVehicleTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
   const vehicleTypeParam = searchParams.get("vehicle_type") || "car";
   const vehicleType = validVehicleTypes.includes(vehicleTypeParam) ? vehicleTypeParam : "car";
-  const brandsForType = getBrandsForVehicleType(vehicleType);
+  const isMiniature = vehicleType === "hot_wheels";
+  // Miniatures: "marque" = car brands (Renault, Peugeot…); fabricant (Hot Wheels, etc.) stored in miniature_maker
+  const brandsForType = isMiniature ? getBrandsForVehicleType("car") : getBrandsForVehicleType(vehicleType);
+
+  const MINIATURE_MAKERS = ["Hot Wheels", "Majorette", "Matchbox"] as const;
+  const [fabricant, setFabricant] = useState("");
 
   const filteredBrands = brandsForType.filter((b) =>
     b.name.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
-  const models = getModelsForBrand(brand, vehicleType);
+  const brandModelType = isMiniature ? "car" : vehicleType;
+  const models = getModelsForBrand(brand, brandModelType);
   const filteredModels = models.filter((m) =>
     m.name.toLowerCase().includes(modelSearch.toLowerCase())
   );
 
-  const years = getYearsForModel(brand, model, vehicleType);
+  const years = getYearsForModel(brand, model, brandModelType);
 
   // Reset model/year when brand changes
   useEffect(() => {
@@ -168,13 +174,25 @@ const AddCar = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user || !brand || !model || !year) {
-      toast.error(t.add_car_fill_required as string);
-      return;
-    }
-    if (isDeliveryMode && !imageFile && !imagePreview) {
-      toast.error(t.add_car_photo_required as string);
-      return;
+    if (!user) return;
+    if (isMiniature) {
+      if (!fabricant || !brand || !model || !year) {
+        toast.error(t.add_miniature_fill_required as string);
+        return;
+      }
+      if (!imageFile && !imagePreview) {
+        toast.error(t.add_miniature_photo_required_validation as string);
+        return;
+      }
+    } else {
+      if (!brand || !model || !year) {
+        toast.error(t.add_car_fill_required as string);
+        return;
+      }
+      if (isDeliveryMode && !imageFile && !imagePreview) {
+        toast.error(t.add_car_photo_required as string);
+        return;
+      }
     }
     setLoading(true);
     try {
@@ -182,8 +200,8 @@ const AddCar = () => {
       let extractedPlateFromPhoto: string | null = searchParams.get("extracted_plate") || null;
       let mainImageFileToUpload: File | null = null;
 
-      if (imageFile) {
-        // Fresh file upload (not from AutoSpotter) → extract plate + blur
+      if (imageFile && !isMiniature) {
+        // Fresh file upload (not from AutoSpotter) → extract plate + blur (skip for miniatures)
         try {
           const base64 = await resizeImage(imageFile, 800, 0.7);
           const r = await callCarApi<{ license_plate: string | null; plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [base64] });
@@ -198,8 +216,10 @@ const AddCar = () => {
         } catch {
           mainImageFileToUpload = imageFile;
         }
-      } else if (imagePreview?.startsWith("data:")) {
-        // Data URL (not from AutoSpotter) → extract plate + blur
+      } else if (imageFile && isMiniature) {
+        mainImageFileToUpload = imageFile;
+      } else if (imagePreview?.startsWith("data:") && !isMiniature) {
+        // Data URL (not from AutoSpotter) → extract plate + blur (skip for miniatures)
         try {
           const r = await callCarApi<{ license_plate: string | null; plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [imagePreview] });
           const plate = r?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
@@ -240,7 +260,7 @@ const AddCar = () => {
       for (let i = 0; i < additionalPhotoFiles.length; i++) {
         const { file, preview } = additionalPhotoFiles[i];
         let fileToUpload: File = file;
-        if (preview.startsWith("data:")) {
+        if (preview.startsWith("data:") && !isMiniature) {
           try {
             const r = await callCarApi<{ plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [preview] });
             if (r?.plate_bbox) {
@@ -281,24 +301,25 @@ const AddCar = () => {
         year: parseInt(year),
         edition: edition || null,
         finitions: finitions.trim() || null,
-        seen_on_road: seenOnRoad,
-        parked,
+        seen_on_road: isMiniature ? seenOnRoad : seenOnRoad, // for miniature: true = sous blister oui
+        parked: isMiniature ? false : parked,
         stock,
         modified,
         modified_comment: modified ? (modifiedComment.trim().slice(0, 500) || null) : null,
-        car_meet: carMeet,
+        car_meet: isMiniature ? false : carMeet,
         image_url: allPhotoUrls[0] ?? imageUrl ?? null,
-        engine: engine || null,
-        latitude: coords?.lat || null,
-        longitude: coords?.lng || null,
-        location_name: locationName || null,
-        location_precision: locationMode === "text" ? "general" : "precise",
+        engine: isMiniature ? null : (engine || null),
+        latitude: isMiniature ? null : (coords?.lat || null),
+        longitude: isMiniature ? null : (coords?.lng || null),
+        location_name: isMiniature ? null : (locationName || null),
+        location_precision: isMiniature ? null : (locationMode === "text" ? "general" : "precise"),
         car_condition: carCondition,
         photo_source: photoSource,
         quality_rating: qualityRating.level,
         rarity_rating: rarityRating.level,
-        license_plate: extractedPlateFromPhoto,
+        license_plate: isMiniature ? null : extractedPlateFromPhoto,
         vehicle_type: vehicleType,
+        ...(isMiniature ? { miniature_maker: fabricant } : {}),
       };
 
       // --- Check if plate matches an owned vehicle for bonus ---
@@ -322,8 +343,8 @@ const AddCar = () => {
         }
       }
 
-      // Gallery photo with custom spot date → override created_at
-      if (photoSourceType === "gallery" && spotDate) {
+      // Gallery photo with custom spot date → override created_at (not for miniatures)
+      if (!isMiniature && photoSourceType === "gallery" && spotDate) {
         insertPayload.created_at = new Date(spotDate).toISOString();
       }
 
@@ -371,7 +392,7 @@ const AddCar = () => {
         await insertCar();
         const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(brand, model) : `${brand} ${model}`;
         toast.success(successMsg);
-        navigate("/garage");
+        navigate(isMiniature ? "/garage?type=hot_wheels" : "/garage");
       }
     } catch (err: any) {
       const msg =
@@ -438,13 +459,32 @@ const AddCar = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(isDeliveryMode ? "/friends" : "/garage-menu")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">{t.add_car_title as string}</h1>
+        <h1 className="text-xl font-bold">{isMiniature ? (t.add_miniature_title as string) : (t.add_car_title as string)}</h1>
       </header>
 
       <div className="p-4 space-y-6 max-w-lg mx-auto pb-32">
-        {/* Brand */}
+        {/* Fabricant (miniatures only) */}
+        {isMiniature && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_miniature_fabricant as string}</Label>
+            <div className="flex flex-wrap gap-2">
+              {MINIATURE_MAKERS.map((m) => (
+                <ToggleChip
+                  key={m}
+                  label={m}
+                  checked={fabricant === m}
+                  onChange={(v) => setFabricant(v ? m : "")}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Brand (Marque for miniatures) */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_car_brand as string}</Label>
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            {isMiniature ? (t.add_miniature_brand as string) : (t.add_car_brand as string)}
+          </Label>
           <div className="relative">
             <Input
               placeholder={t.add_car_search_brand as string}
@@ -621,48 +661,68 @@ const AddCar = () => {
           </div>
         </div>
 
-        {/* Finitions (optionnel) */}
+        {/* Finitions / Livrée */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {t.add_car_finitions as string}
+            {isMiniature ? (t.add_miniature_livree as string) : (t.add_car_finitions as string)}
           </Label>
           <Input
-            placeholder={t.add_car_finitions_placeholder as string}
+            placeholder={isMiniature ? (t.add_miniature_livree_placeholder as string) : (t.add_car_finitions_placeholder as string)}
             value={finitions}
             onChange={(e) => setFinitions(e.target.value)}
             className="bg-secondary/30"
           />
         </div>
 
-        {/* Spotting Context */}
-        <div className="space-y-3">
-          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {t.add_car_spotting_context as string}
-          </Label>
-          <div className="flex flex-wrap gap-2">
-            <ToggleChip
-              label={t.add_car_seen_road as string}
-              checked={seenOnRoad}
-              onChange={(v) => {
-                setSeenOnRoad(v);
-                if (v) setParked(false);
-              }}
-            />
-            <ToggleChip
-              label={t.add_car_parked_label as string}
-              checked={parked}
-              onChange={(v) => {
-                setParked(v);
-                if (v) setSeenOnRoad(false);
-              }}
-            />
+        {/* Spotting Context (or Sous blister for miniatures) */}
+        {isMiniature ? (
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {t.add_miniature_sous_blister as string}
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              <ToggleChip
+                label={t.add_miniature_sous_blister_yes as string}
+                checked={seenOnRoad}
+                onChange={(v) => { setSeenOnRoad(v); if (v) setParked(false); }}
+              />
+              <ToggleChip
+                label={t.add_miniature_sous_blister_no as string}
+                checked={!seenOnRoad}
+                onChange={(v) => { if (v) setSeenOnRoad(false); }}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {t.add_car_spotting_context as string}
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              <ToggleChip
+                label={t.add_car_seen_road as string}
+                checked={seenOnRoad}
+                onChange={(v) => {
+                  setSeenOnRoad(v);
+                  if (v) setParked(false);
+                }}
+              />
+              <ToggleChip
+                label={t.add_car_parked_label as string}
+                checked={parked}
+                onChange={(v) => {
+                  setParked(v);
+                  if (v) setSeenOnRoad(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Condition */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {t.add_car_condition_label as string}
+            {isMiniature ? (t.add_miniature_condition as string) : (t.add_car_condition_label as string)}
           </Label>
           <div className="flex flex-wrap gap-2">
             <ToggleChip
@@ -698,17 +758,19 @@ const AddCar = () => {
           )}
         </div>
 
-        {/* Car Meet */}
-        <div className="space-y-3">
-          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {t.add_car_event as string}
-          </Label>
-          <div className="flex flex-wrap gap-2">
-            <ToggleChip label={t.add_car_car_meet as string} checked={carMeet} onChange={setCarMeet} />
-          </div>
-        </div>
+        {!isMiniature && (
+          <>
+            {/* Car Meet */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                {t.add_car_event as string}
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                <ToggleChip label={t.add_car_car_meet as string} checked={carMeet} onChange={setCarMeet} />
+              </div>
+            </div>
 
-        {/* Engine */}
+            {/* Engine */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             {t.add_car_engine as string}
@@ -778,8 +840,11 @@ const AddCar = () => {
             )}
           </div>
         </div>
+          </>
+        )}
 
-        {/* Location */}
+        {/* Location (hidden for miniatures) */}
+        {!isMiniature && (
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             {t.add_car_location as string}
@@ -925,19 +990,24 @@ const AddCar = () => {
             }}
           />
         </div>
+        )}
 
         {/* Car Condition */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {t.add_car_car_condition as string}
+            {isMiniature ? (t.add_miniature_condition as string) : (t.add_car_car_condition as string)}
           </Label>
           <CarConditionSelector value={carCondition} onChange={setCarCondition} />
         </div>
 
-        {/* Photo (optional, required for delivery) — la plaque est extraite automatiquement de la photo si visible, jamais affichée */}
+        {/* Photo (optional, required for delivery or miniature) */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {isDeliveryMode ? (t.add_car_photo_required_delivery as string) : (t.add_car_photo_optional as string)}
+            {isMiniature
+              ? (t.add_miniature_photo_required as string)
+              : isDeliveryMode
+                ? (t.add_car_photo_required_delivery as string)
+                : (t.add_car_photo_optional as string)}
           </Label>
           {imagePreview ? (
             <PhotoPreview
@@ -986,8 +1056,8 @@ const AddCar = () => {
               <Plus className="h-4 w-4" /> {t.add_car_add_photo as string}
             </button>
           )}
-          {/* Spot date for gallery photos */}
-          {photoSourceType === "gallery" && imagePreview && (
+          {/* Spot date for gallery photos (not for miniatures) */}
+          {!isMiniature && photoSourceType === "gallery" && imagePreview && (
             <div className="space-y-1.5 mt-3">
               <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 {t.add_car_spot_date as string}
@@ -1012,7 +1082,12 @@ const AddCar = () => {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
         <Button
           onClick={handleSubmit}
-          disabled={!brand || !model || !year || loading}
+          disabled={
+            loading ||
+            (isMiniature
+              ? !fabricant || !brand || !model || !year || (!imagePreview && !imageFile)
+              : !brand || !model || !year)
+          }
           className="w-full h-12 text-base font-bold rounded-xl"
         >
           {loading ? (t.loading as string) : (t.add_car_submit as string)}

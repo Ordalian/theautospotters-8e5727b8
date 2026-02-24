@@ -195,6 +195,21 @@ const fr: Translations = {
   add_car_spot_date: "Date du spot",
   add_car_spot_date_desc: "Quand cette photo a-t-elle été prise ?",
 
+  // Add miniature (hot_wheels)
+  add_miniature_title: "Ajouter une miniature",
+  add_miniature_fabricant: "Fabricant",
+  add_miniature_fabricant_placeholder: "Hot Wheels, Majorette, Matchbox",
+  add_miniature_brand: "Marque",
+  add_miniature_livree: "Livrée",
+  add_miniature_livree_placeholder: "ex. livrée rouge, série 2024...",
+  add_miniature_sous_blister: "Sous blister ?",
+  add_miniature_sous_blister_yes: "Oui",
+  add_miniature_sous_blister_no: "Non",
+  add_miniature_condition: "État de la miniature / blister",
+  add_miniature_photo_required: "Photo (obligatoire)",
+  add_miniature_fill_required: "Remplis fabricant, marque, modèle et année",
+  add_miniature_photo_required_validation: "La photo est obligatoire pour une miniature",
+
   // AutoSpotter
   autospotter_title: "AutoSpotter",
   autospotter_my_vehicle: "Mon véhicule",
