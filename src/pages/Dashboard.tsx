@@ -94,6 +94,35 @@ const Dashboard = () => {
     staleTime: 2 * 60 * 1000,
   });
 
+  const latestCarImage = data?.latestCarImage ?? null;
+  const carCount = data?.carCount ?? 0;
+  const mapSpots = data?.mapSpots ?? [];
+  const mapCenter = data?.mapCenter ?? null;
+  const displayName = data?.username?.trim() || user?.email?.split("@")[0] || "Spotter";
+  const friendNotificationCount = data?.friendNotificationCount ?? 0;
+  const friendSpots = data?.friendSpots ?? [];
+
+  const [friendsTileIndex, setFriendsTileIndex] = useState(0);
+  useEffect(() => {
+    if (friendSpots.length <= 1) return;
+    const timer = setInterval(() => {
+      setFriendsTileIndex((i) => (i + 1) % friendSpots.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [friendSpots.length]);
+
+  const currentFriendSpot = friendSpots[friendsTileIndex] ?? null;
+
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) setProfileMenuOpen(false);
+    };
+    if (profileMenuOpen) document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [profileMenuOpen]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -110,41 +139,10 @@ const Dashboard = () => {
     );
   }
 
-  const latestCarImage = data?.latestCarImage ?? null;
-  const carCount = data?.carCount ?? 0;
-  const mapSpots = data?.mapSpots ?? [];
-  const mapCenter = data?.mapCenter ?? null;
-  const displayName = data?.username?.trim() || user?.email?.split("@")[0] || "Spotter";
-  const friendNotificationCount = data?.friendNotificationCount ?? 0;
-  const friendSpots = data?.friendSpots ?? [];
-
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
   };
-
-  const [friendsTileIndex, setFriendsTileIndex] = useState(0);
-  useEffect(() => {
-    if (friendSpots.length <= 1) return;
-    const t = setInterval(() => {
-      setFriendsTileIndex((i) => (i + 1) % friendSpots.length);
-    }, 5000);
-    return () => clearInterval(t);
-  }, [friendSpots.length]);
-
-  const currentFriendSpot = friendSpots[friendsTileIndex] ?? null;
-
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) setProfileMenuOpen(false);
-    };
-    if (profileMenuOpen) document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [profileMenuOpen]);
-
-
 
 
   const carsSpottedText = typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
