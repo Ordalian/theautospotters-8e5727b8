@@ -435,7 +435,7 @@ const AddCar = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50">
-        <Button variant="ghost" size="icon" onClick={() => navigate(isDeliveryMode ? "/friends" : "/garage")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(isDeliveryMode ? "/friends" : "/garage-menu")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold">{t.add_car_title as string}</h1>
