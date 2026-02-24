@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useLanguage } from "@/i18n/LanguageContext";
+
+// Fix Leaflet default marker icon (broken in bundled environments)
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 const DEFAULT_CENTER: [number, number] = [50.45, 3.43];
 const DEFAULT_ZOOM = 10;
@@ -27,47 +39,69 @@ export function LocationMapPicker({
   onSelect,
 }: LocationMapPickerProps) {
   const { t } = useLanguage();
-  const mapRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(null);
 
-  useEffect(() => {
-    if (!open || !mapRef.current) return;
+  // Use a callback ref so we know when the DOM element is actually mounted
+  const initMap = useCallback((node: HTMLDivElement | null) => {
+    // Clean up previous map if any
+    if (mapInstance.current) {
+      markerRef.current?.remove();
+      markerRef.current = null;
+      mapInstance.current.remove();
+      mapInstance.current = null;
+    }
+
+    if (!node || !open) return;
+
+    mapContainerRef.current = node;
 
     const [lat, lng] = initialCenter
       ? [initialCenter.lat, initialCenter.lng]
       : DEFAULT_CENTER;
-    const map = L.map(mapRef.current, { center: [lat, lng], zoom: DEFAULT_ZOOM });
+
+    const map = L.map(node, {
+      center: [lat, lng],
+      zoom: DEFAULT_ZOOM,
+    });
+
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       attribution: "© CARTO",
     }).addTo(map);
 
     map.on("click", (e: L.LeafletMouseEvent) => {
-      const { lat, lng } = e.latlng;
+      const { lat: clickLat, lng: clickLng } = e.latlng;
       markerRef.current?.remove();
-      markerRef.current = L.marker([lat, lng]).addTo(map);
-      setSelected({ lat, lng });
+      markerRef.current = L.marker([clickLat, clickLng]).addTo(map);
+      setSelected({ lat: clickLat, lng: clickLng });
     });
 
     mapInstance.current = map;
-    setSelected(initialCenter ?? null);
+
     if (initialCenter) {
-      markerRef.current?.remove();
+      setSelected(initialCenter);
       markerRef.current = L.marker([initialCenter.lat, initialCenter.lng]).addTo(map);
+    } else {
+      setSelected(null);
     }
 
-    // Leaflet needs a size recalc after the dialog finishes rendering
-    setTimeout(() => map.invalidateSize(), 150);
+    // Leaflet needs size recalc after the dialog finishes its animation
+    setTimeout(() => map.invalidateSize(), 50);
+    setTimeout(() => map.invalidateSize(), 300);
+  }, [open, initialCenter?.lat, initialCenter?.lng]);
 
-    return () => {
+  // Cleanup on unmount or close
+  useEffect(() => {
+    if (!open && mapInstance.current) {
       markerRef.current?.remove();
       markerRef.current = null;
-      map.remove();
+      mapInstance.current.remove();
       mapInstance.current = null;
       setSelected(null);
-    };
-  }, [open, initialCenter?.lat, initialCenter?.lng]);
+    }
+  }, [open]);
 
   const handleValidate = () => {
     if (selected) {
@@ -78,11 +112,21 @@ export function LocationMapPicker({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+      <DialogContent
+        className="sm:max-w-lg p-0 gap-0 overflow-hidden"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader className="p-4 pb-0">
           <DialogTitle>{t.location_choose_title as string}</DialogTitle>
         </DialogHeader>
-        <div ref={mapRef} className="w-full h-[320px] rounded-b-lg" />
+        {open && (
+          <div
+            ref={initMap}
+            className="w-full h-[320px] rounded-b-lg"
+            style={{ position: "relative", zIndex: 10 }}
+          />
+        )}
         <div className="p-4 flex justify-between items-center border-t">
           <span className="text-sm text-muted-foreground">
             {selected
