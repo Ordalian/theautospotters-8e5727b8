@@ -52,7 +52,7 @@ const fr: Translations = {
   dash_friends_sub: "Voir tes amis",
   dash_shop: "Magasin",
   dash_shop_sub: "Boutique",
-  dash_autospotter: "The AutoSpotter",
+  dash_autospotter: "AutoSpotter",
   dash_autospotter_sub: "Reconnaissance IA",
   dash_leaderboard: "Leaderboard",
   dash_leaderboard_sub: "Top spotters",
@@ -167,7 +167,7 @@ const fr: Translations = {
   add_car_select_brand_model_year: "Sélectionne marque, modèle et année d'abord",
 
   // AutoSpotter
-  autospotter_title: "The AutoSpotter",
+  autospotter_title: "AutoSpotter",
   autospotter_my_vehicle: "Mon véhicule",
   autospotter_info: "Ajoutez jusqu'à 4 photos : l'IA identifiera la voiture (marque, modèle, année).",
   autospotter_add_photo: "Ajouter une photo",
@@ -327,7 +327,7 @@ const fr: Translations = {
   // Deliver
   deliver_title: "Livrer une voiture",
   deliver_desc: "Choisis comment ajouter la voiture à livrer. La photo (caméra ou galerie) est obligatoire.",
-  deliver_autospotter: "The AutoSpotter",
+  deliver_autospotter: "AutoSpotter",
   deliver_autospotter_desc: "Photo → l'IA identifie la voiture",
   deliver_manual: "Ajout manuel",
   deliver_manual_desc: "Saisir marque, modèle, année, photo",
