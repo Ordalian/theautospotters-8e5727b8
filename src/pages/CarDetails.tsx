@@ -54,17 +54,8 @@ const CarDetails = () => {
   const queryClient = useQueryClient();
   const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
 
-  const navState = location.state as { carIds?: string[]; returnTo?: string } | null;
-  const carIds = navState?.carIds ?? null;
+  const navState = location.state as { returnTo?: string } | null;
   const returnTo = navState?.returnTo ?? null;
-  const currentIndex = carIds && id ? carIds.indexOf(id) : -1;
-  const prevId = carIds && carIds.length > 1 && id
-    ? carIds[currentIndex <= 0 ? carIds.length - 1 : currentIndex - 1]
-    : null;
-  const nextId = carIds && carIds.length > 1 && id
-    ? carIds[currentIndex < 0 || currentIndex >= carIds.length - 1 ? 0 : currentIndex + 1]
-    : null;
-  const navStateForSibling = returnTo != null ? { carIds, returnTo } : { carIds };
   const [photoIndex, setPhotoIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
 
@@ -186,30 +177,6 @@ const CarDetails = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
-      {carIds && carIds.length > 1 && (
-        <>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="fixed left-0 top-1/2 -translate-y-1/2 z-30 h-10 w-10 rounded-r-full rounded-l-none bg-background/80 backdrop-blur border border-l-0 border-border/60 shadow-md hover:bg-primary/15 hover:border-primary/30 pl-1"
-            onClick={() => prevId && navigate(`/car/${prevId}`, { state: navStateForSibling })}
-            aria-label={t.car_detail_prev as string}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="fixed right-0 top-1/2 -translate-y-1/2 z-30 h-10 w-10 rounded-l-full rounded-r-none bg-background/80 backdrop-blur border border-r-0 border-border/60 shadow-md hover:bg-primary/15 hover:border-primary/30 pr-1"
-            onClick={() => nextId && navigate(`/car/${nextId}`, { state: navStateForSibling })}
-            aria-label={t.car_detail_next as string}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </>
-      )}
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button variant="ghost" size="icon" onClick={() => (returnTo ? navigate(returnTo) : navigate(-1))}>
           <ArrowLeft className="h-5 w-5" />
@@ -231,7 +198,7 @@ const CarDetails = () => {
         )}
       </header>
 
-      <div className="relative z-10 max-w-2xl mx-auto px-12 sm:px-14">
+      <div className="relative z-10 max-w-2xl mx-auto">
         {car.image_url || allPhotoUrls.length > 0 ? (
           <button
             type="button"
