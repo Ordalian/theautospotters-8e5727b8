@@ -57,6 +57,9 @@ export function LocationMapPicker({
       markerRef.current = L.marker([initialCenter.lat, initialCenter.lng]).addTo(map);
     }
 
+    // Leaflet needs a size recalc after the dialog finishes rendering
+    setTimeout(() => map.invalidateSize(), 150);
+
     return () => {
       markerRef.current?.remove();
       markerRef.current = null;
