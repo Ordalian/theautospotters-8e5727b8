@@ -64,6 +64,7 @@ const MyGarage = () => {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const brandFilter = searchParams.get("brand") ?? null;
   const groupFilter = searchParams.get("group") ?? null;
+  const typeFilter = searchParams.get("type") ?? "car";
 
   const handleDelete = async (e: React.MouseEvent, carId: string) => {
     e.stopPropagation();
@@ -82,13 +83,13 @@ const MyGarage = () => {
   };
 
   const { data: cars = [], isLoading: loading } = useQuery({
-    queryKey: ["my-cars", user?.id],
+    queryKey: ["my-cars", user?.id, typeFilter],
     queryFn: async () => {
-      const { data } = await supabase
+      const q = supabase
         .from("cars")
         .select("id, brand, model, year, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
+        .eq("user_id", user!.id) as any;
+      const { data } = await q.eq("vehicle_type", typeFilter).order("created_at", { ascending: false });
       return (data as SpottedCar[]) || [];
     },
     enabled: !!user,
@@ -215,7 +216,7 @@ const MyGarage = () => {
     <div className="flex min-h-screen flex-col bg-background relative">
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <Button variant="ghost" size="icon" onClick={() => (brandFilter || groupFilter) ? setSearchParams({}) : navigate("/")}>
+        <Button variant="ghost" size="icon" onClick={() => (brandFilter || groupFilter) ? setSearchParams({ type: typeFilter }) : navigate("/garage-menu")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold truncate flex-1">
