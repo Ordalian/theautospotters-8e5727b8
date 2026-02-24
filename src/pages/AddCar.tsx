@@ -464,8 +464,7 @@ const AddCar = () => {
               if (score >= 8 && (!best || score > best.score)) best = { id: s.id, score };
             }
             if (best) {
-              await supabase.from("cars").update({ linked_car_id: best.id }).eq("id", inserted.id).eq("user_id", user.id);
-              await supabase.from("cars").update({ linked_car_id: inserted.id }).eq("id", best.id).eq("user_id", user.id);
+              // linked_car_id feature not yet in schema – skip auto-link
             }
           } catch {
             /* ignore auto-link errors */
