@@ -165,6 +165,8 @@ const fr: Translations = {
   add_car_editions_error: "Impossible de charger les éditions",
   add_car_engine_no_results: "Aucun moteur trouvé pour ce modèle",
   add_car_select_brand_model_year: "Sélectionne marque, modèle et année d'abord",
+  add_car_spot_date: "Date du spot",
+  add_car_spot_date_desc: "Quand cette photo a-t-elle été prise ?",
 
   // AutoSpotter
   autospotter_title: "AutoSpotter",

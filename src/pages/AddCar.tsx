@@ -76,6 +76,7 @@ const AddCar = () => {
   const [isPhotoBlurry, setIsPhotoBlurry] = useState(false);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const [showExtraPhotoDialog, setShowExtraPhotoDialog] = useState(false);
+  const [spotDate, setSpotDate] = useState("");
 
   // Initialiser la source de la photo si elle vient d'AutoSpotter
   useEffect(() => {
@@ -132,6 +133,9 @@ const AddCar = () => {
     reader.readAsDataURL(file);
     setPhotoSourceType(source);
     setIsPhotoBlurry(false);
+    if (source === "camera") {
+      setSpotDate("");
+    }
   };
 
   const handleRemovePhoto = () => {
@@ -139,6 +143,7 @@ const AddCar = () => {
     setImagePreview(null);
     setPhotoSourceType(null);
     setIsPhotoBlurry(false);
+    setSpotDate("");
   };
 
   const handleAddExtraPhoto = (file: File) => {
@@ -235,7 +240,7 @@ const AddCar = () => {
       const qualityRating = calculateQualityRating(photoSource, carCondition);
       const rarityRating = calculateRarityRating(brand, model);
 
-      const insertPayload = {
+      const insertPayload: Record<string, any> = {
         user_id: user.id,
         brand,
         model,
@@ -261,10 +266,15 @@ const AddCar = () => {
         license_plate: extractedPlateFromPhoto,
       };
 
+      // Gallery photo with custom spot date → override created_at
+      if (photoSourceType === "gallery" && spotDate) {
+        insertPayload.created_at = new Date(spotDate).toISOString();
+      }
+
       const insertCar = async () => {
         const { data: inserted, error } = await supabase
           .from("cars")
-          .insert(insertPayload)
+          .insert(insertPayload as any)
           .select("id")
           .single();
         if (error) {
@@ -910,6 +920,22 @@ const AddCar = () => {
             <button type="button" onClick={() => setShowExtraPhotoDialog(true)} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1">
               <Plus className="h-4 w-4" /> {t.add_car_add_photo as string}
             </button>
+          )}
+          {/* Spot date for gallery photos */}
+          {photoSourceType === "gallery" && imagePreview && (
+            <div className="space-y-1.5 mt-3">
+              <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                {t.add_car_spot_date as string}
+              </Label>
+              <p className="text-xs text-muted-foreground">{t.add_car_spot_date_desc as string}</p>
+              <Input
+                type="date"
+                value={spotDate}
+                onChange={(e) => setSpotDate(e.target.value)}
+                max={new Date().toISOString().split("T")[0]}
+                className="bg-secondary/30 w-full"
+              />
+            </div>
           )}
         </div>
         
