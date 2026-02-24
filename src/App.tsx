@@ -22,6 +22,7 @@ const FriendsGarages = lazy(() => import("./pages/FriendsGarages"));
 const DeliverCarChoice = lazy(() => import("./pages/DeliverCarChoice"));
 const DeliverSelectFriend = lazy(() => import("./pages/DeliverSelectFriend"));
 const CarDetails = lazy(() => import("./pages/CarDetails"));
+const VehicleTypeMenu = lazy(() => import("./pages/VehicleTypeMenu"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -68,6 +69,7 @@ const App = () => (
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
                 <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/garage" element={<ProtectedRoute><MyGarage /></ProtectedRoute>} />
+                <Route path="/garage-menu" element={<ProtectedRoute><VehicleTypeMenu /></ProtectedRoute>} />
                 <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
                 <Route path="/autospotter" element={<ProtectedRoute><AutoSpotter /></ProtectedRoute>} />
                 <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />

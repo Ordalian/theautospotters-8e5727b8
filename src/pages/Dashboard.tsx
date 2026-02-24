@@ -133,7 +133,7 @@ const Dashboard = () => {
   const carsSpottedText = typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
 
   const topTiles = [
-    { title: t.dash_my_garage as string, subtitle: carsSpottedText, icon: Car, image: latestCarImage, onClick: () => navigate("/garage"), gradient: "from-primary/20 to-primary/5", notificationCount: 0, iframe: null as string | null },
+    { title: t.dash_my_garage as string, subtitle: carsSpottedText, icon: Car, image: latestCarImage, onClick: () => navigate("/garage-menu"), gradient: "from-primary/20 to-primary/5", notificationCount: 0, iframe: null as string | null },
   ];
 
   const bottomTiles = [
