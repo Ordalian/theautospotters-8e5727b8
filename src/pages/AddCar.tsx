@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
-import { resizeImage } from "@/lib/imageUtils";
+import { resizeImage, blurPlateInImage, dataUrlToFile } from "@/lib/imageUtils";
 import { carBrands, getModelsForBrand, getYearsForModel } from "@/data/carData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -175,20 +175,31 @@ const AddCar = () => {
     setLoading(true);
     try {
       let extractedPlateFromPhoto: string | null = null;
+      let mainImageFileToUpload: File | null = null;
       if (imageFile) {
         try {
           const base64 = await resizeImage(imageFile, 800, 0.7);
-          const r = await callCarApi<{ license_plate: string | null }>({ action: "extract_plate", images: [base64] });
+          const r = await callCarApi<{ license_plate: string | null; plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [base64] });
           const plate = r?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
           if (plate && plate.length >= 2) extractedPlateFromPhoto = plate;
+          if (r?.plate_bbox) {
+            const blurredDataUrl = await blurPlateInImage(base64, r.plate_bbox);
+            mainImageFileToUpload = dataUrlToFile(blurredDataUrl, imageFile.name.replace(/\.[^.]+$/i, ".jpg") || "photo.jpg");
+          } else {
+            mainImageFileToUpload = imageFile;
+          }
         } catch {
-          /* ignore extraction errors */
+          mainImageFileToUpload = imageFile;
         }
       } else if (imagePreview?.startsWith("data:")) {
         try {
-          const r = await callCarApi<{ license_plate: string | null }>({ action: "extract_plate", images: [imagePreview] });
+          const r = await callCarApi<{ license_plate: string | null; plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [imagePreview] });
           const plate = r?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
           if (plate && plate.length >= 2) extractedPlateFromPhoto = plate;
+          if (r?.plate_bbox) {
+            const blurredDataUrl = await blurPlateInImage(imagePreview, r.plate_bbox);
+            mainImageFileToUpload = dataUrlToFile(blurredDataUrl, "photo.jpg");
+          }
         } catch {
           /* ignore */
         }
@@ -196,12 +207,13 @@ const AddCar = () => {
 
       let imageUrl: string | null = imagePreview && !imageFile ? imagePreview : null;
 
-      if (imageFile) {
-        const ext = imageFile.name.split(".").pop();
+      if (imageFile || mainImageFileToUpload) {
+        const fileToUpload = mainImageFileToUpload ?? imageFile!;
+        const ext = fileToUpload.name.split(".").pop();
         const path = `${user.id}/${Date.now()}.${ext}`;
         const { error: uploadErr } = await supabase.storage
           .from("car-photos")
-          .upload(path, imageFile);
+          .upload(path, fileToUpload);
         if (uploadErr) {
           const storageMsg = uploadErr.message || "Upload failed";
           throw new Error(`Photo: ${storageMsg}`);
@@ -216,10 +228,23 @@ const AddCar = () => {
       for (const u of additionalPhotoUrls) {
         if (u && !allPhotoUrls.includes(u)) allPhotoUrls.push(u);
       }
-      for (const { file } of additionalPhotoFiles) {
-        const ext = file.name.split(".").pop();
+      for (let i = 0; i < additionalPhotoFiles.length; i++) {
+        const { file, preview } = additionalPhotoFiles[i];
+        let fileToUpload: File = file;
+        if (preview.startsWith("data:")) {
+          try {
+            const r = await callCarApi<{ plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [preview] });
+            if (r?.plate_bbox) {
+              const blurredDataUrl = await blurPlateInImage(preview, r.plate_bbox);
+              fileToUpload = dataUrlToFile(blurredDataUrl, file.name.replace(/\.[^.]+$/i, ".jpg") || "photo.jpg");
+            }
+          } catch {
+            /* keep original */
+          }
+        }
+        const ext = fileToUpload.name.split(".").pop();
         const path = `${user.id}/${Date.now()}-${allPhotoUrls.length}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("car-photos").upload(path, file);
+        const { error: uploadErr } = await supabase.storage.from("car-photos").upload(path, fileToUpload);
         if (!uploadErr) {
           const { data: urlData } = supabase.storage.from("car-photos").getPublicUrl(path);
           allPhotoUrls.push(urlData.publicUrl);

@@ -196,7 +196,7 @@ The confidence should be a number between 0 and 1. If you cannot identify the ca
     // —— action: extract_plate (extract license plate from car image, never shown to user) ——
     if (body.action === "extract_plate") {
       const images = body.images;
-      if (!images?.length) return jsonResponse({ license_plate: null });
+      if (!images?.length) return jsonResponse({ license_plate: null, plate_bbox: null });
 
       const contentParts: object[] = [];
       for (const img of images.slice(0, 2)) {
@@ -205,16 +205,34 @@ The confidence should be a number between 0 and 1. If you cannot identify the ca
       }
       contentParts.push({
         type: "text",
-        text: `You are an expert at reading license plates. Look at the vehicle image(s). If a license plate is visible, extract ONLY the plate characters (letters and numbers). Use uppercase. Remove spaces, dashes, and dots. Return only the raw alphanumeric string, e.g. AB123CD or XX99YY. If no plate is visible or readable, respond with exactly: null`,
+        text: `You are an expert at reading license plates. Look at the vehicle image(s). If a license plate is visible:
+1. Extract ONLY the plate characters (letters and numbers). Use uppercase. Remove spaces, dashes, and dots. Put in "plate".
+2. Give the approximate position of the license plate in the image as normalized coordinates (0 to 1). "plate_bbox" must be: {"x": number, "y": number, "width": number, "height": number} where x,y is the top-left corner (0=left, 0=top), width and height are the rectangle size. Example: {"x": 0.2, "y": 0.78, "width": 0.3, "height": 0.06}.
+
+If no plate is visible or readable, respond with: {"plate": null, "plate_bbox": null}
+Otherwise respond ONLY with a JSON object: {"plate": "AB123CD", "plate_bbox": {"x": ..., "y": ..., "width": ..., "height": ...}}. No markdown.`,
       });
 
       const text = await callAI(API_KEY, [{ role: "user", content: contentParts }]);
       let license_plate: string | null = null;
-      const trimmed = (text || "").trim();
-      if (trimmed && trimmed.toLowerCase() !== "null" && /^[A-Z0-9]{2,12}$/i.test(trimmed.replace(/\s/g, ""))) {
-        license_plate = trimmed.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
-      }
-      return jsonResponse({ license_plate });
+      let plate_bbox: { x: number; y: number; width: number; height: number } | null = null;
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+        const p = (parsed.plate ?? parsed.license_plate ?? "").toString().trim();
+        if (p && p.toLowerCase() !== "null" && /^[A-Z0-9]{2,12}$/i.test(p.replace(/\s/g, ""))) {
+          license_plate = p.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+        }
+        const b = parsed.plate_bbox;
+        if (b && typeof b.x === "number" && typeof b.y === "number" && typeof b.width === "number" && typeof b.height === "number") {
+          const x = Math.max(0, Math.min(1, b.x));
+          const y = Math.max(0, Math.min(1, b.y));
+          const w = Math.max(0.02, Math.min(1, b.width));
+          const h = Math.max(0.02, Math.min(1, b.height));
+          plate_bbox = { x, y, width: w, height: h };
+        }
+      } catch { /* keep nulls */ }
+      return jsonResponse({ license_plate, plate_bbox });
     }
 
     // —— action: identify_and_extract_plate (car + plate in one call for "owned vehicle" flow) ——
@@ -232,14 +250,15 @@ The confidence should be a number between 0 and 1. If you cannot identify the ca
         text: `You are an expert car identifier and license plate reader. From the image(s):
 
 1. Identify the car: brand, model, year. Reply with JSON: {"brand": "...", "model": "...", "year": "YYYY", "confidence": 0.9}
-2. If a license plate is visible, extract ONLY the plate characters (uppercase, no spaces/dashes). If not visible, use "plate": null.
+2. If a license plate is visible, extract ONLY the plate characters (uppercase, no spaces/dashes). Put in "plate". Also give its position: "plate_bbox": {"x": number, "y": number, "width": number, "height": number} in normalized 0-1 coordinates (x,y = top-left corner). If not visible, use "plate": null, "plate_bbox": null.
 
-Respond with a single JSON object: {"brand": "...", "model": "...", "year": "...", "confidence": 0.9, "plate": "XX123YY" or null}. No markdown.`,
+Respond with a single JSON object: {"brand": "...", "model": "...", "year": "...", "confidence": 0.9, "plate": "XX123YY" or null, "plate_bbox": {...} or null}. No markdown.`,
       });
 
       const text = await callAI(API_KEY, [{ role: "user", content: contentParts }]);
       let carResult = { brand: "Unknown", model: "Unknown", year: "2024", confidence: 0.3 };
       let plate: string | null = null;
+      let plate_bbox: { x: number; y: number; width: number; height: number } | null = null;
       try {
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
@@ -247,8 +266,16 @@ Respond with a single JSON object: {"brand": "...", "model": "...", "year": "...
         if (parsed.plate && /^[A-Z0-9]{2,12}$/i.test(String(parsed.plate).replace(/\s/g, ""))) {
           plate = String(parsed.plate).replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
         }
+        const b = parsed.plate_bbox;
+        if (b && typeof b.x === "number" && typeof b.y === "number" && typeof b.width === "number" && typeof b.height === "number") {
+          const x = Math.max(0, Math.min(1, b.x));
+          const y = Math.max(0, Math.min(1, b.y));
+          const w = Math.max(0.02, Math.min(1, b.width));
+          const h = Math.max(0.02, Math.min(1, b.height));
+          plate_bbox = { x, y, width: w, height: h };
+        }
       } catch { /* keep defaults */ }
-      return jsonResponse({ ...carResult, license_plate: plate });
+      return jsonResponse({ ...carResult, license_plate: plate, plate_bbox });
     }
 
     // —— action: editions ——

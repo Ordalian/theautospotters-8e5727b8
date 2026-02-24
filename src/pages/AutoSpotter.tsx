@@ -6,7 +6,7 @@ import { ArrowLeft, Camera, Brain, Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
-import { resizeImage } from "@/lib/imageUtils";
+import { resizeImage, blurPlateInImage, dataUrlToFile } from "@/lib/imageUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { PhotoUploadDialog, type PhotoSourceType } from "@/components/PhotoUpload";
@@ -20,6 +20,7 @@ interface CarResult {
 
 interface IdentifyAndPlateResult extends CarResult {
   license_plate: string | null;
+  plate_bbox?: { x: number; y: number; width: number; height: number } | null;
 }
 
 const AutoSpotter = () => {
@@ -33,6 +34,7 @@ const AutoSpotter = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<CarResult | null>(null);
   const [extractedPlate, setExtractedPlate] = useState<string | null>(null);
+  const [plateBbox, setPlateBbox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [showCorrect, setShowCorrect] = useState(false);
   const [correctBrand, setCorrectBrand] = useState("");
   const [correctModel, setCorrectModel] = useState("");
@@ -70,6 +72,7 @@ const AutoSpotter = () => {
     setAnalyzing(true);
     setResult(null);
     setExtractedPlate(null);
+    setPlateBbox(null);
     try {
       const base64Images = await Promise.all(
         images.map((img) => resizeImage(img.file, 800, 0.7))
@@ -80,9 +83,13 @@ const AutoSpotter = () => {
         setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
         const plate = data.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
         if (plate && plate.length >= 2) setExtractedPlate(plate);
+        if (data.plate_bbox) setPlateBbox(data.plate_bbox);
+        else setPlateBbox(null);
       } else {
-        const data = await callCarApi<CarResult>({ action: "identify", images: base64Images });
-        setResult(data);
+        const data = await callCarApi<IdentifyAndPlateResult>({ action: "identify_and_extract_plate", images: base64Images });
+        setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
+        if (data.plate_bbox) setPlateBbox(data.plate_bbox);
+        else setPlateBbox(null);
       }
     } catch (err: any) {
       const msg = err?.message || "Reconnaissance impossible.";
@@ -99,10 +106,18 @@ const AutoSpotter = () => {
       const base = `${user.id}/${Date.now()}`;
       for (let i = 0; i < images.length; i++) {
         try {
-          const file = images[i].file;
-          const ext = file.name.split(".").pop() || "jpg";
+          let fileToUpload = images[i].file;
+          if (i === 0 && plateBbox && images[0].preview.startsWith("data:")) {
+            try {
+              const blurredDataUrl = await blurPlateInImage(images[0].preview, plateBbox);
+              fileToUpload = dataUrlToFile(blurredDataUrl, fileToUpload.name.replace(/\.[^.]+$/i, ".jpg") || "photo.jpg");
+            } catch {
+              /* keep original */
+            }
+          }
+          const ext = fileToUpload.name.split(".").pop() || "jpg";
           const path = i === 0 ? `${base}.${ext}` : `${base}-${i}.${ext}`;
-          await supabase.storage.from("car-photos").upload(path, file);
+          await supabase.storage.from("car-photos").upload(path, fileToUpload);
           const { data } = supabase.storage.from("car-photos").getPublicUrl(path);
           uploadedUrls.push(data.publicUrl);
         } catch {
