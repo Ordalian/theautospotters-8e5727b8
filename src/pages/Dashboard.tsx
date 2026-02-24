@@ -67,6 +67,7 @@ const Dashboard = () => {
           .from("cars")
           .select("id, brand, model, year, image_url, user_id, created_at")
           .in("user_id", friendIds)
+          .neq("vehicle_type", "hot_wheels")
           .order("created_at", { ascending: false })
           .limit(10);
         friendSpots = (friendCars || []).map((c) => ({

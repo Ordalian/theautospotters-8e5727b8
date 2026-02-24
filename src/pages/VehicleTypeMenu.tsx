@@ -51,7 +51,8 @@ const VehicleTypeMenu = () => {
         if (!images[vt] && (row as any).image_url) {
           images[vt] = (row as any).image_url;
         }
-        if (!latestAllImage && (row as any).image_url) {
+        // "Tous les véhicules" excludes miniatures (hot_wheels)
+        if (vt !== "hot_wheels" && !latestAllImage && (row as any).image_url) {
           latestAllImage = (row as any).image_url;
         }
       }
@@ -64,7 +65,8 @@ const VehicleTypeMenu = () => {
   const counts = typesData.counts;
   const images = typesData.images;
   const latestAllImage = typesData.latestAllImage ?? null;
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  // "Tous les véhicules" = all except miniatures (hot_wheels)
+  const total = Object.entries(counts).reduce((sum, [k, v]) => sum + (k === "hot_wheels" ? 0 : v), 0);
 
   return (
     <div className="flex min-h-screen flex-col bg-background relative">

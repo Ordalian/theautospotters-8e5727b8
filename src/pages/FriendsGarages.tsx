@@ -240,6 +240,7 @@ const FriendsGarages = () => {
         .from("cars")
         .select("id, brand, model, year, engine, image_url, created_at, user_id, garage_group_id")
         .in("user_id", friendUserIds)
+        .neq("vehicle_type", "hot_wheels")
         .gte("created_at", sevenDaysAgo)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -304,6 +305,7 @@ const FriendsGarages = () => {
         .from("cars")
         .select("id, brand, model, year, engine, image_url, created_at, user_id, garage_group_id")
         .eq("user_id", friend.user_id)
+        .neq("vehicle_type", "hot_wheels")
         .order("created_at", { ascending: false }),
       supabase
         .from("garage_groups")
