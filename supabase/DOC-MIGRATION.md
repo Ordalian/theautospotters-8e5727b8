@@ -6,7 +6,7 @@ Ce document liste les migrations SQL à exécuter sur la base Supabase pour que 
 
 ## Migration : `vehicle_type` sur la table `cars`
 
-**Fichier :** `supabase/migrations/20260224120000_add_vehicle_type.sql`
+**Fichier :** `supabase/migrations/20260224175804_727f3005-ac8a-48ca-bc67-eb02f93707e1.sql`
 
 ### Objectif
 
@@ -44,7 +44,7 @@ npx supabase migration up
 
 1. Ouvrir le projet sur [app.supabase.com](https://app.supabase.com).
 2. Aller dans **SQL Editor**.
-3. Copier-coller le contenu de `supabase/migrations/20260224120000_add_vehicle_type.sql`.
+3. Copier-coller le contenu de `supabase/migrations/20260224175804_727f3005-ac8a-48ca-bc67-eb02f93707e1.sql`.
 4. Exécuter la requête.
 
 **Option 3 – Une seule fois, script brut**

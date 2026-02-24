@@ -1,3 +1,5 @@
+-- Add vehicle_type to cars: car | truck | motorcycle | boat | plane | train | hot_wheels
+-- Existing rows default to 'car'.
 ALTER TABLE public.cars
   ADD COLUMN IF NOT EXISTS vehicle_type TEXT NOT NULL DEFAULT 'car';
 
