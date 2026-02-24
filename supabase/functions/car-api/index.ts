@@ -176,8 +176,13 @@ serve(async (req) => {
 1. Identify the vehicle: brand/manufacturer, model name, approximate year.
 2. Classify the type in "vehicle_type" with exactly one of: car, truck, motorcycle, boat, plane, train, hot_wheels.
 
-Respond ONLY with a JSON object (no markdown): {"brand": "Brand Name", "model": "Model Name", "year": "2024", "confidence": 0.85, "vehicle_type": "car"}
-Use vehicle_type: "car" for cars/sedans/SUVs; "truck" for trucks/lorries; "motorcycle" for motorbikes; "boat" for boats/ships; "plane" for aircraft; "train" for trains/rail; "hot_wheels" for toy cars/die-cast models (e.g. Hot Wheels, Matchbox).`,
+IMPORTANT – distinguish cars from trucks:
+- Use "car" ONLY for passenger vehicles: sedans, hatchbacks, station wagons, coupes, convertibles, SUVs, crossovers, minivans/MPVs. These are for carrying people first.
+- Use "truck" for: pickup trucks (e.g. Ford F-150, Ram), lorries, semi-trucks, heavy goods vehicles, box trucks, flatbeds, any vehicle with an open cargo bed or designed primarily for cargo. Pickups are trucks, not cars.
+
+Other types: "motorcycle" for motorbikes; "boat" for boats/ships; "plane" for aircraft; "train" for trains/rail; "hot_wheels" for toy/die-cast models (e.g. Hot Wheels, Matchbox).
+
+Respond ONLY with a JSON object (no markdown): {"brand": "Brand Name", "model": "Model Name", "year": "2024", "confidence": 0.85, "vehicle_type": "car"}`,
       });
 
       const text = await callAI(API_KEY, [{ role: "user", content: contentParts }]);
@@ -256,9 +261,16 @@ Otherwise respond ONLY with a JSON object: {"plate": "AB123CD", "plate_bbox": {"
         type: "text",
         text: `You are an expert vehicle identifier and license plate reader. From the image(s):
 
-1. Classify the type in "vehicle_type" with exactly one of: car, truck, motorcycle, boat, plane, train, hot_wheels. Use "hot_wheels" for toy/die-cast models.
-2. Identify the vehicle: brand, model, year. Reply with JSON: {"brand": "...", "model": "...", "year": "YYYY", "confidence": 0.9}
-3. If a license plate is visible (on real vehicles only), extract ONLY the plate characters (uppercase, no spaces/dashes). Put in "plate". Also give its position: "plate_bbox": {"x": number, "y": number, "width": number, "height": number} in normalized 0-1 coordinates. If not visible, use "plate": null, "plate_bbox": null.
+1. Classify the type in "vehicle_type" with exactly one of: car, truck, motorcycle, boat, plane, train, hot_wheels.
+
+IMPORTANT – distinguish cars from trucks:
+- Use "car" ONLY for passenger vehicles: sedans, hatchbacks, station wagons, coupes, convertibles, SUVs, crossovers, minivans/MPVs (people first).
+- Use "truck" for pickup trucks (e.g. F-150, Silverado, Ram), lorries, semi-trucks, heavy goods vehicles, box trucks, flatbeds, any vehicle with an open cargo bed or designed mainly for cargo. Pickups are always "truck".
+
+Other: "motorcycle" for motorbikes; "boat" for boats/ships; "plane" for aircraft; "train" for trains/rail; "hot_wheels" for toy/die-cast models.
+
+2. Identify the vehicle: brand, model, year.
+3. If a license plate is visible (real vehicles only), extract ONLY the plate characters (uppercase, no spaces/dashes) in "plate", and "plate_bbox": {"x", "y", "width", "height"} in 0-1 coordinates. If not visible: "plate": null, "plate_bbox": null.
 
 Respond with a single JSON object: {"vehicle_type": "car"|"truck"|"motorcycle"|"boat"|"plane"|"train"|"hot_wheels", "brand": "...", "model": "...", "year": "...", "confidence": 0.9, "plate": "XX123YY" or null, "plate_bbox": {...} or null}. No markdown.`,
       });

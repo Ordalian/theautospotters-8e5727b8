@@ -51,6 +51,7 @@ const AutoSpotter = () => {
   const [correctBrand, setCorrectBrand] = useState("");
   const [correctModel, setCorrectModel] = useState("");
   const [correctYear, setCorrectYear] = useState("");
+  const [correctVehicleType, setCorrectVehicleType] = useState<string>("car");
   const [primaryPhotoSourceType, setPrimaryPhotoSourceType] = useState<PhotoSourceType | null>(null);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const [savingOwned, setSavingOwned] = useState(false);
@@ -110,7 +111,7 @@ const AutoSpotter = () => {
     }
   };
 
-  const uploadAllImagesAndNavigate = async (brand: string, model: string, year: string) => {
+  const uploadAllImagesAndNavigate = async (brand: string, model: string, year: string, vehicleTypeOverride?: string) => {
     const uploadedUrls: string[] = [];
     if (images.length > 0 && user) {
       const base = `${user.id}/${Date.now()}`;
@@ -147,7 +148,7 @@ const AutoSpotter = () => {
     if (primaryPhotoSourceType) params.set("photo_source_type", primaryPhotoSourceType);
     if (isDeliveryMode) params.set("delivery", "1");
     if (extractedPlate) params.set("extracted_plate", extractedPlate);
-    params.set("vehicle_type", vehicleType);
+    params.set("vehicle_type", vehicleTypeOverride ?? vehicleType);
     navigate(`/add-car?${params.toString()}`);
   };
 
@@ -158,7 +159,15 @@ const AutoSpotter = () => {
   };
 
   const handleCorrectSubmit = () => {
-    uploadAllImagesAndNavigate(correctBrand, correctModel, correctYear);
+    uploadAllImagesAndNavigate(correctBrand, correctModel, correctYear, correctVehicleType);
+  };
+
+  const openCorrectForm = () => {
+    setCorrectVehicleType(vehicleType);
+    setCorrectBrand(result?.brand ?? "");
+    setCorrectModel(result?.model ?? "");
+    setCorrectYear(result?.year ?? "");
+    setShowCorrect(true);
   };
 
   const handleSaveAsOwnedVehicle = async () => {
@@ -287,7 +296,7 @@ const AutoSpotter = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => setShowCorrect(true)}
+                    onClick={openCorrectForm}
                     className="flex-1 h-11 font-bold rounded-xl"
                   >
                     {t.autospotter_correct as string}
@@ -324,6 +333,22 @@ const AutoSpotter = () => {
                   onKeyDown={(e) => e.key === "Enter" && handleCorrectSubmit()}
                   className="bg-secondary/30"
                 />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {t.autospotter_vehicle_type as string}
+                  </label>
+                  <select
+                    value={correctVehicleType}
+                    onChange={(e) => setCorrectVehicleType(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    {(["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"] as const).map((key) => (
+                      <option key={key} value={key}>
+                        {t[VEHICLE_TYPE_LABEL_KEYS[key]] as string}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <Button onClick={handleCorrectSubmit} className="w-full font-bold rounded-xl">
                   {t.autospotter_done as string}
                 </Button>
