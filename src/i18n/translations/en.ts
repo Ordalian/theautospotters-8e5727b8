@@ -50,7 +50,7 @@ const en: Translations = {
   dash_friends_sub: "See your friends",
   dash_shop: "Shop",
   dash_shop_sub: "Store",
-  dash_autospotter: "The AutoSpotter",
+  dash_autospotter: "AutoSpotter",
   dash_autospotter_sub: "AI car recognition",
   dash_leaderboard: "Leaderboard",
   dash_leaderboard_sub: "Top spotters",
@@ -165,7 +165,7 @@ const en: Translations = {
   add_car_select_brand_model_year: "Select brand, model and year first",
 
   // AutoSpotter
-  autospotter_title: "The AutoSpotter",
+  autospotter_title: "AutoSpotter",
   autospotter_my_vehicle: "My Vehicle",
   autospotter_info: "Add up to 4 photos: the AI will identify the car (brand, model, year).",
   autospotter_add_photo: "Add photo",
@@ -325,7 +325,7 @@ const en: Translations = {
   // Deliver
   deliver_title: "Deliver a car",
   deliver_desc: "Choose how to add the car to deliver. Photo (camera or gallery) is required.",
-  deliver_autospotter: "The AutoSpotter",
+  deliver_autospotter: "AutoSpotter",
   deliver_autospotter_desc: "Photo → AI identifies the car",
   deliver_manual: "Manual entry",
   deliver_manual_desc: "Enter brand, model, year, photo",
