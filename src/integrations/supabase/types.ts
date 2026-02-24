@@ -74,7 +74,6 @@ export type Database = {
           seen_on_road: boolean
           stock: boolean
           user_id: string
-          vehicle_type: string
           year: number
         }
         Insert: {
@@ -104,7 +103,6 @@ export type Database = {
           seen_on_road?: boolean
           stock?: boolean
           user_id: string
-          vehicle_type?: string
           year: number
         }
         Update: {
@@ -134,7 +132,6 @@ export type Database = {
           seen_on_road?: boolean
           stock?: boolean
           user_id?: string
-          vehicle_type?: string
           year?: number
         }
         Relationships: [
