@@ -291,10 +291,38 @@ const AddCar = () => {
         license_plate: extractedPlateFromPhoto,
       };
 
+      // --- Check if plate matches an owned vehicle for bonus ---
+      if (extractedPlateFromPhoto) {
+        try {
+          const { data: match } = await supabase
+            .from("owned_vehicles")
+            .select("id, user_id")
+            .eq("license_plate", extractedPlateFromPhoto)
+            .maybeSingle();
+          if (match) {
+            // Link the car to the owned vehicle
+            await supabase
+              .from("owned_vehicles")
+              .update({ car_id: null }) // will be updated after insert
+              .eq("id", match.id);
+            // Store match info for after insert
+            (insertPayload as any).__owned_vehicle_id = match.id;
+            (insertPayload as any).__owned_vehicle_user_id = match.user_id;
+          }
+        } catch {
+          /* ignore matching errors */
+        }
+      }
+
       // Gallery photo with custom spot date → override created_at
       if (photoSourceType === "gallery" && spotDate) {
         insertPayload.created_at = new Date(spotDate).toISOString();
       }
+
+      // Remove internal tracking fields before insert
+      const ownedVehicleId = (insertPayload as any).__owned_vehicle_id;
+      delete (insertPayload as any).__owned_vehicle_id;
+      delete (insertPayload as any).__owned_vehicle_user_id;
 
       const insertCar = async () => {
         const { data: inserted, error } = await supabase
@@ -316,6 +344,13 @@ const AddCar = () => {
               position,
             }))
           );
+        }
+        // Link owned vehicle to this car
+        if (ownedVehicleId) {
+          await supabase
+            .from("owned_vehicles")
+            .update({ car_id: inserted.id })
+            .eq("id", ownedVehicleId);
         }
         return inserted;
       };
