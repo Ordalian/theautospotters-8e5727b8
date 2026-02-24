@@ -80,6 +80,7 @@ const AutoSpotter = () => {
 
       if (isOwnedMode) {
         const data = await callCarApi<IdentifyAndPlateResult>({ action: "identify_and_extract_plate", images: base64Images });
+        console.log("[AutoSpotter] API response (owned):", JSON.stringify(data));
         setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
         const plate = data.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
         if (plate && plate.length >= 2) setExtractedPlate(plate);
@@ -87,6 +88,7 @@ const AutoSpotter = () => {
         else setPlateBbox(null);
       } else {
         const data = await callCarApi<IdentifyAndPlateResult>({ action: "identify_and_extract_plate", images: base64Images });
+        console.log("[AutoSpotter] API response:", JSON.stringify(data));
         setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
         if (data.plate_bbox) setPlateBbox(data.plate_bbox);
         else setPlateBbox(null);
@@ -109,11 +111,17 @@ const AutoSpotter = () => {
           let fileToUpload = images[i].file;
           if (i === 0 && plateBbox && images[0].preview.startsWith("data:")) {
             try {
+              console.log("[AutoSpotter] Blurring plate with bbox:", JSON.stringify(plateBbox));
+              console.log("[AutoSpotter] Preview starts with:", images[0].preview.substring(0, 30));
               const blurredDataUrl = await blurPlateInImage(images[0].preview, plateBbox);
+              console.log("[AutoSpotter] Blur success, blurred URL starts with:", blurredDataUrl.substring(0, 30));
               fileToUpload = dataUrlToFile(blurredDataUrl, fileToUpload.name.replace(/\.[^.]+$/i, ".jpg") || "photo.jpg");
-            } catch {
-              /* keep original */
+              console.log("[AutoSpotter] File to upload size:", fileToUpload.size);
+            } catch (blurErr) {
+              console.error("[AutoSpotter] Blur FAILED:", blurErr);
             }
+          } else if (i === 0) {
+            console.log("[AutoSpotter] Skipping blur - plateBbox:", plateBbox, "isDataUrl:", images[0]?.preview?.startsWith("data:"));
           }
           const ext = fileToUpload.name.split(".").pop() || "jpg";
           const path = i === 0 ? `${base}.${ext}` : `${base}-${i}.${ext}`;

@@ -176,6 +176,7 @@ const AddCar = () => {
     try {
       // Use plate passed from AutoSpotter if available, otherwise extract from photo
       let extractedPlateFromPhoto: string | null = searchParams.get("extracted_plate") || null;
+      console.log("[AddCar] extracted_plate from URL:", extractedPlateFromPhoto);
       let mainImageFileToUpload: File | null = null;
 
       if (imageFile) {
@@ -298,24 +299,24 @@ const AddCar = () => {
 
       // --- Check if plate matches an owned vehicle for bonus ---
       if (extractedPlateFromPhoto) {
+        console.log("[AddCar] Checking owned_vehicles for plate:", extractedPlateFromPhoto);
         try {
-          const { data: match } = await supabase
+          const { data: match, error: matchErr } = await supabase
             .from("owned_vehicles")
             .select("id, user_id")
             .eq("license_plate", extractedPlateFromPhoto)
             .maybeSingle();
+          console.log("[AddCar] owned_vehicles match:", match, "error:", matchErr);
           if (match) {
-            // Link the car to the owned vehicle
             await supabase
               .from("owned_vehicles")
-              .update({ car_id: null }) // will be updated after insert
+              .update({ car_id: null })
               .eq("id", match.id);
-            // Store match info for after insert
             (insertPayload as any).__owned_vehicle_id = match.id;
             (insertPayload as any).__owned_vehicle_user_id = match.user_id;
           }
-        } catch {
-          /* ignore matching errors */
+        } catch (e) {
+          console.error("[AddCar] Matching error:", e);
         }
       }
 
