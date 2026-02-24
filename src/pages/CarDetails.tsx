@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -54,10 +54,57 @@ const CarDetails = () => {
   const queryClient = useQueryClient();
   const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
 
-  const navState = location.state as { returnTo?: string } | null;
+  const navState = location.state as { carIds?: string[]; returnTo?: string } | null;
+  const carIds = navState?.carIds ?? null;
   const returnTo = navState?.returnTo ?? null;
+  const currentIndex = carIds && id ? carIds.indexOf(id) : -1;
+  const prevId = carIds && carIds.length > 1 && id
+    ? carIds[currentIndex <= 0 ? carIds.length - 1 : currentIndex - 1]
+    : null;
+  const nextId = carIds && carIds.length > 1 && id
+    ? carIds[currentIndex < 0 || currentIndex >= carIds.length - 1 ? 0 : currentIndex + 1]
+    : null;
+  const swipeState = useRef<{ startX: number; startY: number; isTouch: boolean } | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
+
+  const navigateToSibling = (targetId: string) => {
+    navigate(`/car/${targetId}`, { state: { carIds, returnTo } });
+  };
+
+  const onSwipeStart = (clientX: number, clientY: number, isTouch: boolean) => {
+    if (!carIds || carIds.length < 2) return;
+    swipeState.current = { startX: clientX, startY: clientY, isTouch };
+    if (!isTouch) {
+      window.addEventListener("mouseup", (e: MouseEvent) => {
+        if (swipeState.current?.isTouch) return;
+        if (swipeState.current) {
+          const deltaX = e.clientX - swipeState.current.startX;
+          const deltaY = e.clientY - swipeState.current.startY;
+          const absX = Math.abs(deltaX);
+          const absY = Math.abs(deltaY);
+          if (absX >= 50 && absX >= absY * 0.6) {
+            if (deltaX > 0 && prevId) navigateToSibling(prevId);
+            else if (deltaX < 0 && nextId) navigateToSibling(nextId);
+          }
+        }
+        swipeState.current = null;
+      }, { once: true });
+    }
+  };
+  const onSwipeEnd = (clientX: number, clientY: number) => {
+    const s = swipeState.current;
+    if (!s || !s.isTouch || !carIds || carIds.length < 2) return;
+    const deltaX = clientX - s.startX;
+    const deltaY = clientY - s.startY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    if (absX >= 50 && absX >= absY * 0.6) {
+      if (deltaX > 0 && prevId) navigateToSibling(prevId);
+      else if (deltaX < 0 && nextId) navigateToSibling(nextId);
+    }
+    swipeState.current = null;
+  };
 
   const { data: car, isLoading: loading } = useQuery({
     queryKey: ["car", id],
@@ -175,7 +222,12 @@ const CarDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div
+      className="min-h-screen bg-background relative touch-pan-y"
+      onTouchStart={(e) => e.touches.length === 1 && onSwipeStart(e.touches[0].clientX, e.touches[0].clientY, true)}
+      onTouchEnd={(e) => e.changedTouches.length === 1 && onSwipeEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
+      onMouseDown={(e) => e.button === 0 && onSwipeStart(e.clientX, e.clientY, false)}
+    >
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button variant="ghost" size="icon" onClick={() => (returnTo ? navigate(returnTo) : navigate(-1))}>
