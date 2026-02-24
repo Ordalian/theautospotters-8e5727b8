@@ -52,20 +52,25 @@ const GarageSettings = () => {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: profile } = await (supabase
-        .from("profiles")
-        .select("pinned_car_id")
-        .eq("user_id", user.id)
-        .maybeSingle() as any);
-      if (profile?.pinned_car_id) setPinnedCarId(profile.pinned_car_id);
+      try {
+        const { data: profile } = await (supabase
+          .from("profiles")
+          .select("pinned_car_id")
+          .eq("user_id", user.id)
+          .maybeSingle() as any);
+        if (profile?.pinned_car_id) setPinnedCarId(profile.pinned_car_id);
 
-      const { data: carsData } = await supabase
-        .from("cars")
-        .select("id, brand, model, year, image_url, created_at, vehicle_type")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      setCars((carsData as CarOption[]) || []);
-      setLoading(false);
+        const { data: carsData } = await supabase
+          .from("cars")
+          .select("id, brand, model, year, image_url, created_at, vehicle_type")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        setCars((carsData as CarOption[]) || []);
+      } catch {
+        toast.error("Erreur lors du chargement");
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [user]);
 

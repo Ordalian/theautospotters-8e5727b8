@@ -18,6 +18,7 @@ const fr: Translations = {
   or: "ou",
   none: "Aucun",
   error: "Erreur",
+  retry: "Réessayer",
   success: "Succès",
   anonymous: "Anonyme",
   friend: "Ami",

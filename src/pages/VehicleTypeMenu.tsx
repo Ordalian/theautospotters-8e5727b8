@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Car, Truck, Bike, Ship, Plane, TrainFront, Sparkles } from "lucide-react";
+import { ArrowLeft, Car, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { useQuery } from "@tanstack/react-query";
@@ -34,7 +34,7 @@ const VehicleTypeMenu = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  const { data: typesData = { counts: {}, images: {}, latestAllImage: null } } = useQuery({
+  const { data: typesData = { counts: {}, images: {}, latestAllImage: null }, isLoading: typesLoading } = useQuery({
     queryKey: ["vehicle-type-counts", user?.id],
     queryFn: async () => {
       const { data } = await supabase
@@ -67,6 +67,14 @@ const VehicleTypeMenu = () => {
   const latestAllImage = typesData.latestAllImage ?? null;
   // "Tous les véhicules" = all except miniatures (hot_wheels)
   const total = Object.entries(counts).reduce((sum, [k, v]) => sum + (k === "hot_wheels" ? 0 : v), 0);
+
+  if (typesLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background relative">

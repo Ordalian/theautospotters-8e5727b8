@@ -16,6 +16,7 @@ const en: Translations = {
   or: "or",
   none: "None",
   error: "Error",
+  retry: "Retry",
   success: "Success",
   anonymous: "Anonymous",
   friend: "Friend",

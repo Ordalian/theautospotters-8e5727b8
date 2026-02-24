@@ -211,7 +211,7 @@ const FriendsGarages = () => {
   const fetchFriends = async () => {
     if (!user) return;
     setLoading(true);
-
+    try {
     const { data } = await supabase
       .from("friendships")
       .select("id, requester_id, addressee_id")
@@ -255,7 +255,11 @@ const FriendsGarages = () => {
       setRecentSpots([]);
     }
     fetchRequests();
+    } catch {
+      toast.error("Erreur lors du chargement");
+    } finally {
     setLoading(false);
+    }
   };
 
   const handleAddFriend = async () => {

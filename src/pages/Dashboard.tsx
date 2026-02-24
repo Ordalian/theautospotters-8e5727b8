@@ -15,7 +15,7 @@ const Dashboard = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  const { data } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["dashboard", user?.id],
     queryFn: async () => {
       const [carsRes, profileRes, friendsPendingRes, friendshipsRes] = await Promise.all([
@@ -93,6 +93,22 @@ const Dashboard = () => {
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (isError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 bg-background">
+        <p className="text-muted-foreground text-center">{t.error as string}</p>
+        <Button onClick={() => refetch()}>{t.retry as string}</Button>
+      </div>
+    );
+  }
 
   const latestCarImage = data?.latestCarImage ?? null;
   const carCount = data?.carCount ?? 0;

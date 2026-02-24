@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate as useNav } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +44,6 @@ const Profile = () => {
   const { user } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
-  const navigateTo = useNav();
   const queryClient = useQueryClient();
   const [username, setUsername] = useState("");
   const [usernameLocked, setUsernameLocked] = useState(false);
@@ -91,17 +89,22 @@ const Profile = () => {
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("username, username_locked")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (data?.username) {
-        setUsername(data.username);
-        setInitialUsername(data.username);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("username, username_locked")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data?.username) {
+          setUsername(data.username);
+          setInitialUsername(data.username);
+        }
+        setUsernameLocked(!!data?.username_locked);
+      } catch {
+        toast.error("Erreur lors du chargement");
+      } finally {
+        setLoading(false);
       }
-      setUsernameLocked(!!data?.username_locked);
-      setLoading(false);
     };
     fetchProfile();
     fetchRequests();
@@ -481,7 +484,7 @@ const Profile = () => {
               <Button
                 variant="outline"
                 className="w-full gap-2"
-                onClick={() => { setShowAddVehicle(false); navigateTo("/autospotter?owned=1"); }}
+                onClick={() => { setShowAddVehicle(false); navigate("/autospotter?owned=1"); }}
                 disabled={addingVehicle}
               >
                 {t.profile_open_autospotter as string}

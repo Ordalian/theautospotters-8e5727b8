@@ -63,6 +63,7 @@ const SpotMap = () => {
 
   useEffect(() => {
     const fetchSpots = async () => {
+      try {
       const { data: myCars } = await (supabase
         .from("cars")
         .select("id, brand, model, year, latitude, longitude, location_name, location_precision, image_url, user_id, created_at")
@@ -102,7 +103,11 @@ const SpotMap = () => {
           }))
         );
       }
+      } catch {
+        setAllSpots([]);
+      } finally {
       setLoading(false);
+      }
     };
     fetchSpots();
   }, [user?.id]);

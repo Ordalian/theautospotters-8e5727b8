@@ -31,6 +31,7 @@ const Leaderboard = () => {
   const { t } = useLanguage();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [sortBy, setSortBy] = useState<LeaderboardSortOption>("spots");
 
   const SORT_OPTIONS: { value: LeaderboardSortOption; label: string; valueLabel: string }[] = [
@@ -40,25 +41,30 @@ const Leaderboard = () => {
     { value: "car_level", label: t.leaderboard_sort_level as string, valueLabel: t.leaderboard_val_level as string },
   ];
 
+  const fetchLeaderboard = async () => {
+    setLoading(true);
+    setError(false);
+    const { data, err } = await supabase.rpc("get_leaderboard");
+    if (!err && data) {
+      const raw = (data as Record<string, unknown>[]) ?? [];
+      setEntries(
+        raw.map((e) => ({
+          user_id: e.user_id as string,
+          username: (e.username as string | null) ?? null,
+          avatar_url: (e.avatar_url as string | null) ?? null,
+          car_count: Number(e.car_count ?? 0),
+          avg_quality: Number(e.avg_quality ?? 0),
+          avg_rarity: Number(e.avg_rarity ?? 0),
+          car_level: Number(e.car_level ?? 0),
+        }))
+      );
+    } else {
+      setError(true);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      const { data, error } = await supabase.rpc("get_leaderboard");
-      if (!error && data) {
-        const raw = (data as Record<string, unknown>[]) ?? [];
-        setEntries(
-          raw.map((e) => ({
-            user_id: e.user_id as string,
-            username: (e.username as string | null) ?? null,
-            avatar_url: (e.avatar_url as string | null) ?? null,
-            car_count: Number(e.car_count ?? 0),
-            avg_quality: Number(e.avg_quality ?? 0),
-            avg_rarity: Number(e.avg_rarity ?? 0),
-            car_level: Number(e.car_level ?? 0),
-          }))
-        );
-      }
-      setLoading(false);
-    };
     fetchLeaderboard();
   }, []);
 
@@ -129,6 +135,11 @@ const Leaderboard = () => {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-pulse text-muted-foreground">Loading leaderboard...</div>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
+            <p className="text-muted-foreground">{t.error as string}</p>
+            <Button onClick={fetchLeaderboard}>{t.retry as string}</Button>
           </div>
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">

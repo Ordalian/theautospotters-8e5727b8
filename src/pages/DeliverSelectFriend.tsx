@@ -34,14 +34,14 @@ const DeliverSelectFriend = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [delivering, setDelivering] = useState(false);
 
-  useEffect(() => {
-    if (!user || !carId) {
-      if (!carId) navigate("/friends");
-      return;
-    }
-    (async () => {
+  const loadData = async () => {
+    if (!user || !carId) return;
+    setLoading(true);
+    setLoadError(false);
+    try {
       const { data: carData } = await supabase
         .from("cars")
         .select("*")
@@ -72,8 +72,19 @@ const DeliverSelectFriend = () => {
           (profiles || []).map((p) => ({ user_id: p.user_id, username: p.username }))
         );
       }
+    } catch {
+      setLoadError(true);
+    } finally {
       setLoading(false);
-    })();
+    }
+  };
+
+  useEffect(() => {
+    if (!user || !carId) {
+      if (!carId) navigate("/friends");
+      return;
+    }
+    loadData();
   }, [user, carId, navigate]);
 
   const filteredFriends = useMemo(() => {
@@ -148,10 +159,21 @@ const DeliverSelectFriend = () => {
     }
   };
 
-  if (loading || !car) {
+  if (loading && !car) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (loadError || (!loading && !car && carId)) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-4">
+        <p className="text-muted-foreground text-center">{loadError ? (t.error as string) : (t.deliver_car_not_found as string)}</p>
+        <div className="flex gap-2">
+          {loadError && <Button variant="outline" onClick={loadData}>{t.retry as string}</Button>}
+          <Button onClick={() => navigate("/friends")}>{t.back as string}</Button>
+        </div>
       </div>
     );
   }
