@@ -44,7 +44,7 @@ const Leaderboard = () => {
   const fetchLeaderboard = async () => {
     setLoading(true);
     setError(false);
-    const { data, err } = await supabase.rpc("get_leaderboard");
+    const { data, error: err } = await supabase.rpc("get_leaderboard");
     if (!err && data) {
       const raw = (data as Record<string, unknown>[]) ?? [];
       setEntries(
