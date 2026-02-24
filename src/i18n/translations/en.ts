@@ -74,6 +74,25 @@ const en: Translations = {
   garage_none_group: "No group",
   garage_vehicles: (n: number) => `${n} vehicle${n > 1 ? "s" : ""}`,
 
+  // Garage menu (vehicle types)
+  garage_menu_all: "All vehicles",
+  garage_menu_cars: "Cars",
+  garage_menu_trucks: "Trucks",
+  garage_menu_motorcycles: "Motorcycles",
+  garage_menu_boats: "Boats",
+  garage_menu_planes: "Planes",
+  garage_menu_trains: "Trains",
+  garage_menu_hot_wheels: "Hot Wheels",
+  garage_title_cars: "Cars",
+  garage_title_trucks: "Trucks",
+  garage_title_motorcycles: "Motorcycles",
+  garage_title_boats: "Boats",
+  garage_title_planes: "Planes",
+  garage_title_trains: "Trains",
+  garage_title_hot_wheels: "Hot Wheels",
+  garage_no_items: "No spots yet",
+  garage_no_items_desc: "Spot or add your first one!",
+
   // Sort options
   sort_newest: "Newest",
   sort_oldest: "Oldest",

@@ -171,24 +171,31 @@ serve(async (req) => {
       }
       contentParts.push({
         type: "text",
-        text: `You are an expert car identifier. Analyze the provided image(s) of a car and identify:
-1. The brand/manufacturer
-2. The exact model name
-3. The approximate year or year range
+        text: `You are an expert vehicle identifier. Analyze the provided image(s). The image can show: a car, a truck, a motorcycle, a boat, a plane, a train, or a Hot Wheels (or similar) toy/die-cast model.
 
-Respond ONLY with a JSON object in this exact format (no markdown, no extra text):
-{"brand": "Brand Name", "model": "Model Name", "year": "2024", "confidence": 0.85}
+1. Identify the vehicle: brand/manufacturer, model name, approximate year.
+2. Classify the type in "vehicle_type" with exactly one of: car, truck, motorcycle, boat, plane, train, hot_wheels.
 
-The confidence should be a number between 0 and 1. If you cannot identify the car, use your best guess.`,
+Respond ONLY with a JSON object (no markdown): {"brand": "Brand Name", "model": "Model Name", "year": "2024", "confidence": 0.85, "vehicle_type": "car"}
+Use vehicle_type: "car" for cars/sedans/SUVs; "truck" for trucks/lorries; "motorcycle" for motorbikes; "boat" for boats/ships; "plane" for aircraft; "train" for trains/rail; "hot_wheels" for toy cars/die-cast models (e.g. Hot Wheels, Matchbox).`,
       });
 
       const text = await callAI(API_KEY, [{ role: "user", content: contentParts }]);
-      let parsed: { brand: string; model: string; year: string; confidence: number };
+      const validTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
+      let parsed: { brand: string; model: string; year: string; confidence: number; vehicle_type: string };
       try {
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+        const raw = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+        const vt = validTypes.includes(raw?.vehicle_type) ? raw.vehicle_type : "car";
+        parsed = {
+          brand: raw.brand ?? "Unknown",
+          model: raw.model ?? "Unknown",
+          year: String(raw.year ?? "2024"),
+          confidence: Number(raw.confidence) ?? 0.3,
+          vehicle_type: vt,
+        };
       } catch {
-        parsed = { brand: "Unknown", model: "Unknown", year: "2024", confidence: 0.3 };
+        parsed = { brand: "Unknown", model: "Unknown", year: "2024", confidence: 0.3, vehicle_type: "car" };
       }
       return jsonResponse(parsed);
     }
@@ -247,22 +254,26 @@ Otherwise respond ONLY with a JSON object: {"plate": "AB123CD", "plate_bbox": {"
       }
       contentParts.push({
         type: "text",
-        text: `You are an expert car identifier and license plate reader. From the image(s):
+        text: `You are an expert vehicle identifier and license plate reader. From the image(s):
 
-1. Identify the car: brand, model, year. Reply with JSON: {"brand": "...", "model": "...", "year": "YYYY", "confidence": 0.9}
-2. If a license plate is visible, extract ONLY the plate characters (uppercase, no spaces/dashes). Put in "plate". Also give its position: "plate_bbox": {"x": number, "y": number, "width": number, "height": number} in normalized 0-1 coordinates (x,y = top-left corner). If not visible, use "plate": null, "plate_bbox": null.
+1. Classify the type in "vehicle_type" with exactly one of: car, truck, motorcycle, boat, plane, train, hot_wheels. Use "hot_wheels" for toy/die-cast models.
+2. Identify the vehicle: brand, model, year. Reply with JSON: {"brand": "...", "model": "...", "year": "YYYY", "confidence": 0.9}
+3. If a license plate is visible (on real vehicles only), extract ONLY the plate characters (uppercase, no spaces/dashes). Put in "plate". Also give its position: "plate_bbox": {"x": number, "y": number, "width": number, "height": number} in normalized 0-1 coordinates. If not visible, use "plate": null, "plate_bbox": null.
 
-Respond with a single JSON object: {"brand": "...", "model": "...", "year": "...", "confidence": 0.9, "plate": "XX123YY" or null, "plate_bbox": {...} or null}. No markdown.`,
+Respond with a single JSON object: {"vehicle_type": "car"|"truck"|"motorcycle"|"boat"|"plane"|"train"|"hot_wheels", "brand": "...", "model": "...", "year": "...", "confidence": 0.9, "plate": "XX123YY" or null, "plate_bbox": {...} or null}. No markdown.`,
       });
 
       const text = await callAI(API_KEY, [{ role: "user", content: contentParts }]);
+      const validTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
       let carResult = { brand: "Unknown", model: "Unknown", year: "2024", confidence: 0.3 };
       let plate: string | null = null;
       let plate_bbox: { x: number; y: number; width: number; height: number } | null = null;
+      let vehicle_type = "car";
       try {
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
         if (parsed.brand) carResult = { brand: parsed.brand, model: parsed.model || "Unknown", year: String(parsed.year || "2024"), confidence: Number(parsed.confidence) || 0.5 };
+        if (validTypes.includes(parsed.vehicle_type)) vehicle_type = parsed.vehicle_type;
         if (parsed.plate && /^[A-Z0-9]{2,12}$/i.test(String(parsed.plate).replace(/\s/g, ""))) {
           plate = String(parsed.plate).replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
         }
@@ -275,7 +286,7 @@ Respond with a single JSON object: {"brand": "...", "model": "...", "year": "...
           plate_bbox = { x, y, width: w, height: h };
         }
       } catch { /* keep defaults */ }
-      return jsonResponse({ ...carResult, license_plate: plate, plate_bbox });
+      return jsonResponse({ ...carResult, license_plate: plate, plate_bbox, vehicle_type });
     }
 
     // —— action: editions ——

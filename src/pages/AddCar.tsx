@@ -269,6 +269,10 @@ const AddCar = () => {
       const qualityRating = calculateQualityRating(photoSource, carCondition);
       const rarityRating = calculateRarityRating(brand, model);
 
+      const validVehicleTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
+      const vehicleTypeParam = searchParams.get("vehicle_type") || "car";
+      const vehicleType = validVehicleTypes.includes(vehicleTypeParam) ? vehicleTypeParam : "car";
+
       const insertPayload: Record<string, any> = {
         user_id: user.id,
         brand,
@@ -293,6 +297,7 @@ const AddCar = () => {
         quality_rating: qualityRating.level,
         rarity_rating: rarityRating.level,
         license_plate: extractedPlateFromPhoto,
+        vehicle_type: vehicleType,
       };
 
       // --- Check if plate matches an owned vehicle for bonus ---

@@ -43,6 +43,7 @@ interface SpottedCar {
   quality_rating: number | null;
   rarity_rating: number | null;
   garage_group_id: string | null;
+  vehicle_type: string;
 }
 
 interface GarageGroup {
@@ -64,6 +65,9 @@ const MyGarage = () => {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const brandFilter = searchParams.get("brand") ?? null;
   const groupFilter = searchParams.get("group") ?? null;
+  const typeFilter = searchParams.get("type") ?? null;
+  const validVehicleTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
+  const vehicleTypeFilter = typeFilter && validVehicleTypes.includes(typeFilter) ? typeFilter : null;
 
   const handleDelete = async (e: React.MouseEvent, carId: string) => {
     e.stopPropagation();
@@ -82,13 +86,17 @@ const MyGarage = () => {
   };
 
   const { data: cars = [], isLoading: loading } = useQuery({
-    queryKey: ["my-cars", user?.id],
+    queryKey: ["my-cars", user?.id, vehicleTypeFilter],
     queryFn: async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("cars")
-        .select("id, brand, model, year, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id")
+        .select("id, brand, model, year, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id, vehicle_type")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
+      if (vehicleTypeFilter) {
+        query = query.eq("vehicle_type", vehicleTypeFilter);
+      }
+      const { data } = await query;
       return (data as SpottedCar[]) || [];
     },
     enabled: !!user,
@@ -164,6 +172,16 @@ const MyGarage = () => {
     return result;
   }, [cars, groups]);
 
+  const garageTitleByType: Record<string, keyof typeof t> = {
+    car: "garage_title_cars",
+    truck: "garage_title_trucks",
+    motorcycle: "garage_title_motorcycles",
+    boat: "garage_title_boats",
+    plane: "garage_title_planes",
+    train: "garage_title_trains",
+    hot_wheels: "garage_title_hot_wheels",
+  };
+
   const handleCreateGroup = async () => {
     if (!newGroupName.trim() || !user) return;
     setCreatingGroup(true);
@@ -214,11 +232,11 @@ const MyGarage = () => {
     <div className="flex min-h-screen flex-col bg-background relative">
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <Button variant="ghost" size="icon" onClick={() => (brandFilter || groupFilter) ? setSearchParams({}) : navigate("/")}>
+        <Button variant="ghost" size="icon" onClick={() => (brandFilter || groupFilter || typeFilter) ? setSearchParams({}) : navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold truncate flex-1">
-          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? (t.garage_no_group as string) : "Groupe")) : (t.garage_title as string)}
+          {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? (t.garage_no_group as string) : "Groupe")) : vehicleTypeFilter && garageTitleByType[vehicleTypeFilter] ? (t[garageTitleByType[vehicleTypeFilter]] as string) : (t.garage_title as string)}
         </h1>
         <div className="flex items-center gap-2">
           <GarageSortSelect value={sortOption} onChange={setSortOption} />
@@ -238,8 +256,8 @@ const MyGarage = () => {
           ) : cars.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Car className="h-16 w-16 text-muted-foreground/30 mb-4" />
-              <h3 className="font-semibold text-lg">{t.garage_no_cars as string}</h3>
-              <p className="text-muted-foreground text-sm mt-1">{t.garage_no_cars_desc as string}</p>
+              <h3 className="font-semibold text-lg">{vehicleTypeFilter ? (t.garage_no_items as string) : (t.garage_no_cars as string)}</h3>
+              <p className="text-muted-foreground text-sm mt-1">{vehicleTypeFilter ? (t.garage_no_items_desc as string) : (t.garage_no_cars_desc as string)}</p>
             </div>
           ) : sortOption === "brand" && !brandFilter && !groupFilter ? (
             <div className="grid gap-3">
@@ -395,7 +413,7 @@ const MyGarage = () => {
       </Dialog>
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-30">
-        <Button onClick={() => navigate("/add-car")} className="w-full h-12 text-base font-bold rounded-xl gap-2">
+        <Button onClick={() => navigate(vehicleTypeFilter ? `/add-car?vehicle_type=${vehicleTypeFilter}` : "/add-car")} className="w-full h-12 text-base font-bold rounded-xl gap-2">
           <Plus className="h-5 w-5" /> {t.garage_add_car as string}
         </Button>
       </div>

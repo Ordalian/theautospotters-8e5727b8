@@ -21,6 +21,7 @@ interface CarResult {
 interface IdentifyAndPlateResult extends CarResult {
   license_plate: string | null;
   plate_bbox?: { x: number; y: number; width: number; height: number } | null;
+  vehicle_type?: string;
 }
 
 const AutoSpotter = () => {
@@ -35,6 +36,7 @@ const AutoSpotter = () => {
   const [result, setResult] = useState<CarResult | null>(null);
   const [extractedPlate, setExtractedPlate] = useState<string | null>(null);
   const [plateBbox, setPlateBbox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [vehicleType, setVehicleType] = useState<string>("car");
   const [showCorrect, setShowCorrect] = useState(false);
   const [correctBrand, setCorrectBrand] = useState("");
   const [correctModel, setCorrectModel] = useState("");
@@ -73,6 +75,7 @@ const AutoSpotter = () => {
     setResult(null);
     setExtractedPlate(null);
     setPlateBbox(null);
+    setVehicleType("car");
     try {
       const base64Images = await Promise.all(
         images.map((img) => resizeImage(img.file, 800, 0.7))
@@ -84,6 +87,9 @@ const AutoSpotter = () => {
       if (plate && plate.length >= 2) setExtractedPlate(plate);
       if (data.plate_bbox) setPlateBbox(data.plate_bbox);
       else setPlateBbox(null);
+      const validTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
+      if (data.vehicle_type && validTypes.includes(data.vehicle_type)) setVehicleType(data.vehicle_type);
+      else setVehicleType("car");
     } catch (err: any) {
       const msg = err?.message || "Reconnaissance impossible.";
       const isGeneric = /non-2xx|encountered an error/i.test(msg);
@@ -130,6 +136,7 @@ const AutoSpotter = () => {
     if (primaryPhotoSourceType) params.set("photo_source_type", primaryPhotoSourceType);
     if (isDeliveryMode) params.set("delivery", "1");
     if (extractedPlate) params.set("extracted_plate", extractedPlate);
+    if (vehicleType) params.set("vehicle_type", vehicleType);
     navigate(`/add-car?${params.toString()}`);
   };
 
