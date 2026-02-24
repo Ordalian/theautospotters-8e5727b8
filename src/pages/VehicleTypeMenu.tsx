@@ -72,9 +72,9 @@ const VehicleTypeMenu = () => {
         <span className="text-sm text-muted-foreground">{total} spots</span>
       </header>
 
-      <main className="flex-1 p-4 max-w-lg mx-auto w-full">
-        {/* Grille 3 colonnes : 6 types en tuiles carrées, dernière ligne Hot Wheels (2 cols) à hauteur réduite */}
-        <div className="grid grid-cols-3 gap-3 grid-rows-[auto_auto_5rem]">
+      <main className="flex-1 flex flex-col min-h-0 p-4 max-w-lg mx-auto w-full">
+        {/* Grille 2 colonnes, 4 rangées, répartition égale de l’écran */}
+        <div className="grid grid-cols-2 grid-rows-4 gap-3 flex-1 min-h-0">
           {VEHICLE_TYPES.filter((v) => v.key !== "hot_wheels").map(({ key, icon: Icon, gradient }) => {
             const count = counts[key] || 0;
             const img = images[key];
@@ -82,7 +82,7 @@ const VehicleTypeMenu = () => {
               <button
                 key={key}
                 onClick={() => navigate(`/garage?type=${key}`)}
-                className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20"
+                className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] min-h-0 shadow-lg shadow-black/20"
               >
                 {img ? (
                   <>
