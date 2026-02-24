@@ -232,12 +232,15 @@ const CarDetails = () => {
   const { data: carInfo, isLoading: loadingInfo } = useQuery({
     queryKey: ["car-info", carKey],
     queryFn: async () => {
+      if (!car?.brand || !car?.model || car?.year == null) {
+        return { description: "", engines: [] } as CarInfoResult;
+      }
       return callCarApi<CarInfoResult>({
         action: "car-info",
-        brand: car!.brand,
-        model: car!.model,
-        year: car!.year,
-        ...(car!.edition ? { edition: car!.edition } : {}),
+        brand: car.brand,
+        model: car.model,
+        year: car.year,
+        ...(car.edition ? { edition: car.edition } : {}),
       });
     },
     enabled: !!car && !!car.brand && !!car.model && car.year != null,
