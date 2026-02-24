@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
 import { resizeImage } from "@/lib/imageUtils";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { PhotoUploadDialog, type PhotoSourceType } from "@/components/PhotoUpload";
 
 interface CarResult {
@@ -27,6 +28,7 @@ const AutoSpotter = () => {
   const isDeliveryMode = searchParams.get("delivery") === "1";
   const isOwnedMode = searchParams.get("owned") === "1";
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<CarResult | null>(null);
@@ -41,7 +43,7 @@ const AutoSpotter = () => {
 
   const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
     if (images.length >= 4) {
-      toast.error("Maximum 4 images allowed");
+      toast.error(t.autospotter_max_photos as string);
       return;
     }
     const reader = new FileReader();
@@ -49,7 +51,7 @@ const AutoSpotter = () => {
       const dataUrl = reader.result as string;
       setImages((prev) => [...prev, { file, preview: dataUrl }]);
     };
-    reader.onerror = () => toast.error("Impossible de charger l'image");
+    reader.onerror = () => toast.error(t.error as string);
     reader.readAsDataURL(file);
     if (!primaryPhotoSourceType) {
       setPrimaryPhotoSourceType(source);
@@ -62,7 +64,7 @@ const AutoSpotter = () => {
 
   const analyzeImages = async () => {
     if (images.length === 0) {
-      toast.error("Please add at least one image");
+      toast.error(t.autospotter_add_photos as string);
       return;
     }
     setAnalyzing(true);
@@ -85,11 +87,7 @@ const AutoSpotter = () => {
     } catch (err: any) {
       const msg = err?.message || "Reconnaissance impossible.";
       const isGeneric = /non-2xx|encountered an error/i.test(msg);
-      toast.error(
-        isGeneric
-          ? "Clé API manquante ou invalide. Ajoutez GEMINI_API_KEY dans Supabase → Edge Functions → Secrets."
-          : msg
-      );
+      toast.error(isGeneric ? (t.autospotter_api_error as string) : msg);
     } finally {
       setAnalyzing(false);
     }
@@ -140,7 +138,7 @@ const AutoSpotter = () => {
     if (!user) return;
     const plate = extractedPlate;
     if (!plate || plate.length < 2) {
-      toast.error("Aucune plaque lisible sur la photo. Prenez une photo où la plaque est visible.");
+      toast.error(t.autospotter_no_plate as string);
       return;
     }
     setSavingOwned(true);
@@ -151,10 +149,10 @@ const AutoSpotter = () => {
         car_id: null,
       });
       if (error) throw error;
-      toast.success("Véhicule enregistré. Vous serez notifié s'il est spotté.");
+      toast.success(t.autospotter_registered as string);
       navigate("/profile");
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
+      toast.error(e?.message ?? (t.error as string));
     } finally {
       setSavingOwned(false);
     }
@@ -166,16 +164,14 @@ const AutoSpotter = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(isOwnedMode ? "/profile" : isDeliveryMode ? "/friends" : "/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">{isOwnedMode ? "Mon véhicule" : "The AutoSpotter"}</h1>
+        <h1 className="text-xl font-bold">{isOwnedMode ? (t.autospotter_my_vehicle as string) : (t.autospotter_title as string)}</h1>
       </header>
 
       <div className="p-4 max-w-lg mx-auto space-y-6">
         {/* Info */}
         <div className="flex items-center gap-3 rounded-xl bg-accent/10 border border-accent/20 p-4">
           <Brain className="h-8 w-8 text-accent shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            Ajoutez jusqu’à 4 photos : l’IA identifiera la voiture (marque, modèle, année).
-          </p>
+          <p className="text-sm text-muted-foreground">{t.autospotter_info as string}</p>
         </div>
 
         {/* Image Grid */}
@@ -198,7 +194,7 @@ const AutoSpotter = () => {
                 className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
               >
                 <Camera className="h-6 w-6" />
-                <span className="text-xs font-medium">Add photo</span>
+                <span className="text-xs font-medium">{t.autospotter_add_photo as string}</span>
               </button>
               <PhotoUploadDialog
                 open={showPhotoDialog}
@@ -219,12 +215,12 @@ const AutoSpotter = () => {
             {analyzing ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Analyzing...
+                {t.autospotter_analyzing as string}
               </>
             ) : (
               <>
                 <Brain className="h-5 w-5" />
-                Identify this car
+                {t.autospotter_analyze as string}
               </>
             )}
           </Button>
@@ -234,12 +230,12 @@ const AutoSpotter = () => {
         {result && (
           <div className="space-y-4">
             <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-              <p className="text-xs text-muted-foreground mb-1">AI identified:</p>
+              <p className="text-xs text-muted-foreground mb-1">{t.autospotter_ai_identified as string}</p>
               <h3 className="text-2xl font-bold">
                 {result.brand} {result.model}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Year: {result.year} • Confidence: {Math.round(result.confidence * 100)}%
+                {t.autospotter_year as string}: {result.year} • {t.autospotter_confidence as string}: {Math.round(result.confidence * 100)}%
               </p>
             </div>
 
@@ -251,55 +247,55 @@ const AutoSpotter = () => {
                   className="w-full h-11 font-bold rounded-xl gap-2"
                 >
                   {savingOwned ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  Enregistrer comme mon véhicule
+                  {t.autospotter_save_vehicle as string}
                 </Button>
               ) : (
                 <div className="flex gap-3">
                   <Button onClick={handleAddToGarage} className="flex-1 h-11 font-bold rounded-xl gap-2">
                     <Plus className="h-4 w-4" />
-                    Add to my garage
+                    {t.autospotter_add_to_garage as string}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setShowCorrect(true)}
                     className="flex-1 h-11 font-bold rounded-xl"
                   >
-                    Correct me
+                    {t.autospotter_correct as string}
                   </Button>
                 </div>
               )}
               {isOwnedMode && (
                 <Button variant="outline" onClick={() => uploadAllImagesAndNavigate(result.brand, result.model, result.year)} className="w-full h-11 font-bold rounded-xl gap-2">
                   <Plus className="h-4 w-4" />
-                  Ajouter au garage aussi
+                  {t.autospotter_add_garage_too as string}
                 </Button>
               )}
             </div>
 
             {showCorrect && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-                <p className="text-sm font-medium">What's the correct car?</p>
+                <p className="text-sm font-medium">{t.autospotter_correct_question as string}</p>
                 <Input
-                  placeholder="Brand"
+                  placeholder={t.add_car_brand as string}
                   value={correctBrand}
                   onChange={(e) => setCorrectBrand(e.target.value)}
                   className="bg-secondary/30"
                 />
                 <Input
-                  placeholder="Model"
+                  placeholder={t.add_car_model as string}
                   value={correctModel}
                   onChange={(e) => setCorrectModel(e.target.value)}
                   className="bg-secondary/30"
                 />
                 <Input
-                  placeholder="Year"
+                  placeholder={t.add_car_year as string}
                   value={correctYear}
                   onChange={(e) => setCorrectYear(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleCorrectSubmit()}
                   className="bg-secondary/30"
                 />
                 <Button onClick={handleCorrectSubmit} className="w-full font-bold rounded-xl">
-                  Done
+                  {t.autospotter_done as string}
                 </Button>
               </div>
             )}

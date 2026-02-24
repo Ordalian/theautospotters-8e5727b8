@@ -130,13 +130,13 @@ const Profile = () => {
 
   const handleAccept = async (id: string) => {
     await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
-    toast.success("Demande acceptée !");
+    toast.success(t.profile_accepted as string);
     fetchRequests();
   };
 
   const handleDecline = async (id: string) => {
     await supabase.from("friendships").delete().eq("id", id);
-    toast.success("Demande refusée");
+    toast.success(t.profile_declined as string);
     fetchRequests();
   };
 
@@ -189,7 +189,7 @@ const Profile = () => {
       });
       const plate = result?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
       if (!plate || plate.length < 2) {
-        toast.error("Aucune plaque lisible sur la photo. Prenez une photo où la plaque est visible.");
+        toast.error(t.profile_no_plate as string);
         return;
       }
       const { error } = await supabase.from("owned_vehicles").insert({
@@ -198,21 +198,23 @@ const Profile = () => {
         car_id: null,
       });
       if (error) throw error;
-      toast.success("Véhicule enregistré. Vous serez notifié s'il est spotté.");
+      toast.success(t.profile_vehicle_registered as string);
       setShowAddVehicle(false);
       queryClient.invalidateQueries({ queryKey: ["owned-vehicles", user.id] });
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur lors de l'analyse.");
+      toast.error(e?.message ?? (t.profile_analysis_error as string));
     } finally {
       setAddingVehicle(false);
     }
   };
 
   const handleRemoveOwnedVehicle = async (id: string) => {
-    if (!user || !confirm("Retirer ce véhicule de la liste ?")) return;
+    if (!user || !confirm(t.profile_remove_vehicle as string)) return;
     await supabase.from("owned_vehicles").delete().eq("id", id).eq("user_id", user.id);
     queryClient.invalidateQueries({ queryKey: ["owned-vehicles", user.id] });
-    toast.success("Véhicule retiré.");
+    toast.success(t.profile_vehicle_removed as string);
+    queryClient.invalidateQueries({ queryKey: ["owned-vehicles", user.id] });
+    };
   };
 
   const performSaveUsername = async () => {
@@ -229,7 +231,7 @@ const Profile = () => {
       setUsernameLocked(true);
       setInitialUsername(username.trim());
       setUsernameAvailability("idle");
-      toast.success("Pseudo enregistré. Il ne pourra plus être modifié.");
+      toast.success(t.profile_saved as string);
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de l'enregistrement.");
     } finally {
@@ -263,10 +265,10 @@ const Profile = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                Nom d'affichage
+                {t.profile_display_name as string}
               </Label>
               <Input
-                placeholder="Choisir un pseudo..."
+                placeholder={t.profile_placeholder as string}
                 value={username}
                 onChange={(e) => !usernameLocked && setUsername(e.target.value)}
                 className={`bg-secondary/30 text-lg h-12 ${
@@ -284,25 +286,25 @@ const Profile = () => {
                 <div className="flex items-center gap-2 min-h-[20px]">
                   {usernameAvailability === "checking" && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Vérification...
+                      <Loader2 className="h-3 w-3 animate-spin" /> {t.profile_checking as string}
                     </span>
                   )}
                   {usernameAvailability === "available" && (
                     <span className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
-                      Pseudo disponible
+                      {t.profile_available as string}
                     </span>
                   )}
                   {usernameAvailability === "taken" && (
                     <span className="text-xs text-destructive font-medium flex items-center gap-1">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-destructive" />
-                      Ce pseudo est déjà utilisé
+                      {t.profile_taken as string}
                     </span>
                   )}
                 </div>
               )}
               {usernameLocked && (
-                <p className="text-xs text-muted-foreground">Votre pseudo ne peut plus être modifié.</p>
+                <p className="text-xs text-muted-foreground">{t.profile_locked as string}</p>
               )}
             </div>
             {!usernameLocked && (
@@ -311,7 +313,7 @@ const Profile = () => {
                 disabled={saving || !username.trim() || usernameAvailability === "taken" || usernameAvailability === "checking"}
                 className="w-full h-12 text-base font-bold rounded-xl gap-2"
               >
-                {saving ? "Enregistrement..." : <><Check className="h-5 w-5" /> Sauvegarder</>}
+                {saving ? (t.profile_saving as string) : <><Check className="h-5 w-5" /> {t.save as string}</>}
               </Button>
             )}
           </div>
@@ -356,9 +358,9 @@ const Profile = () => {
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Car className="h-5 w-5 text-primary" />
-            Mes véhicules en possession
+            {t.profile_vehicles as string}
           </h2>
-          <p className="text-sm text-muted-foreground">Prenez une photo de votre véhicule pour l'enregistrer. Vous serez notifié si quelqu'un le spot.</p>
+          <p className="text-sm text-muted-foreground">{t.profile_vehicles_desc as string}</p>
           {ownedVehicles.map((ov) => (
             <div key={ov.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
               <span className="text-sm font-medium font-mono">
@@ -370,7 +372,7 @@ const Profile = () => {
             </div>
           ))}
           <Button variant="outline" className="w-full gap-2" onClick={() => setShowAddVehicle(true)}>
-            <Plus className="h-4 w-4" /> Ajouter un véhicule
+            <Plus className="h-4 w-4" /> {t.profile_add_vehicle as string}
           </Button>
         </div>
 
@@ -378,15 +380,15 @@ const Profile = () => {
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Bell className="h-5 w-5 text-primary" />
-            Notifications
+            {t.profile_notifications as string}
             {unreadCount > 0 && (
               <span className="rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5">{unreadCount}</span>
             )}
           </h2>
           {loadingNotifications ? (
-            <p className="text-sm text-muted-foreground">Chargement...</p>
+            <p className="text-sm text-muted-foreground">{t.loading as string}</p>
           ) : notifications.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucune notification.</p>
+            <p className="text-sm text-muted-foreground">{t.profile_no_notifications as string}</p>
           ) : (
             <div className="space-y-2">
               {notifications.map((n) => (
@@ -396,7 +398,7 @@ const Profile = () => {
                 >
                   {n.type === "vehicle_spotted" && (
                     <>
-                      <p className="font-medium">Votre véhicule a été spotté. Félicitations !</p>
+                      <p className="font-medium">{t.profile_vehicle_spotted as string}</p>
                       {n.data?.brand && (
                         <p className="text-sm text-muted-foreground mt-1">
                           {n.data.brand} {n.data.model} {n.data.year}
@@ -404,7 +406,7 @@ const Profile = () => {
                       )}
                       {!n.read_at && (
                         <Button size="sm" variant="ghost" className="mt-2 text-xs" onClick={() => markNotificationRead(n.id)}>
-                          Marquer comme lu
+                          {t.profile_mark_read as string}
                         </Button>
                       )}
                     </>
@@ -420,17 +422,17 @@ const Profile = () => {
           <div className="space-y-3">
             <h2 className="text-lg font-bold flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
-              Demandes d'amis
+              {t.profile_friend_requests as string}
             </h2>
             {requests.map((req) => (
               <div
                 key={req.id}
                 className="flex items-center justify-between rounded-xl border border-border bg-card p-3"
               >
-                <span className="font-medium">{req.username || "Anonyme"}</span>
+                <span className="font-medium">{req.username || (t.anonymous as string)}</span>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleAccept(req.id)} className="gap-1">
-                    <Check className="h-4 w-4" /> Accepter
+                    <Check className="h-4 w-4" /> {t.profile_accept as string}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => handleDecline(req.id)}>
                     <X className="h-4 w-4" />
@@ -444,17 +446,17 @@ const Profile = () => {
         <Dialog open={showUsernameConfirmDialog} onOpenChange={setShowUsernameConfirmDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Confirmer votre pseudo</DialogTitle>
+              <DialogTitle>{t.profile_confirm_title as string}</DialogTitle>
             </DialogHeader>
             <p className="text-sm text-muted-foreground py-2">
-              Attention, le choix de votre pseudo est définitif.
+              {t.profile_confirm_desc as string}
             </p>
             <div className="flex gap-3 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setShowUsernameConfirmDialog(false)}>
-                Annuler
+                {t.cancel as string}
               </Button>
               <Button className="flex-1" onClick={performSaveUsername} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Valider"}
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (t.confirm as string)}
               </Button>
             </div>
           </DialogContent>
@@ -463,11 +465,11 @@ const Profile = () => {
         <Dialog open={showAddVehicle} onOpenChange={setShowAddVehicle}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Ajouter un véhicule en possession</DialogTitle>
+              <DialogTitle>{t.profile_add_vehicle_title as string}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
               <p className="text-sm text-muted-foreground">
-                Prenez une photo de votre véhicule (avec la plaque visible). L'analyse est confidentielle et aucune donnée de plaque n'est affichée.
+                {t.profile_add_vehicle_desc as string}
               </p>
               <Button
                 className="w-full gap-2"
@@ -475,7 +477,7 @@ const Profile = () => {
                 disabled={addingVehicle}
               >
                 <Camera className="h-5 w-5" />
-                Prendre une photo
+                {t.profile_take_photo as string}
               </Button>
               <Button
                 variant="outline"
@@ -483,7 +485,7 @@ const Profile = () => {
                 onClick={() => { setShowAddVehicle(false); navigateTo("/autospotter?owned=1"); }}
                 disabled={addingVehicle}
               >
-                Ouvrir l'AutoSpotter (photo + identification)
+                {t.profile_open_autospotter as string}
               </Button>
             </div>
           </DialogContent>

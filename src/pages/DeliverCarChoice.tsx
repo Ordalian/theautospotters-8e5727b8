@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Brain, Pencil } from "lucide-react";
+import { useLanguage } from "@/i18n/LanguageContext";
 import BlackGoldBg from "@/components/BlackGoldBg";
 
 const DeliverCarChoice = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -13,13 +15,11 @@ const DeliverCarChoice = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate("/friends")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">Livrer une voiture</h1>
+        <h1 className="text-xl font-bold">{t.deliver_title as string}</h1>
       </header>
 
       <div className="relative z-10 p-6 max-w-md mx-auto space-y-4">
-        <p className="text-muted-foreground text-sm">
-          Choisis comment ajouter la voiture à livrer. La photo (caméra ou galerie) est obligatoire.
-        </p>
+        <p className="text-muted-foreground text-sm">{t.deliver_desc as string}</p>
         <div className="grid gap-3">
           <button
             type="button"
@@ -30,8 +30,8 @@ const DeliverCarChoice = () => {
               <Brain className="h-7 w-7 text-emerald-500" />
             </div>
             <div>
-              <p className="font-bold">The AutoSpotter</p>
-              <p className="text-sm text-muted-foreground">Photo → l'IA identifie la voiture</p>
+              <p className="font-bold">{t.deliver_autospotter as string}</p>
+              <p className="text-sm text-muted-foreground">{t.deliver_autospotter_desc as string}</p>
             </div>
           </button>
           <button
@@ -43,8 +43,8 @@ const DeliverCarChoice = () => {
               <Pencil className="h-7 w-7 text-primary" />
             </div>
             <div>
-              <p className="font-bold">Ajout manuel</p>
-              <p className="text-sm text-muted-foreground">Saisir marque, modèle, année, photo</p>
+              <p className="font-bold">{t.deliver_manual as string}</p>
+              <p className="text-sm text-muted-foreground">{t.deliver_manual_desc as string}</p>
             </div>
           </button>
         </div>

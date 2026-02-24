@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export type PhotoSourceType = "camera" | "gallery";
 
@@ -17,18 +18,15 @@ interface PhotoUploadDialogProps {
   onPhotoSelect: (file: File, source: PhotoSourceType) => void;
 }
 
-/**
- * Popup in-app : choix entre appareil photo (caméra dans l'app) ou galerie.
- * Caméra = getUserMedia dans l'app ; Galerie = sélecteur système (galerie/caméra).
- */
 export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUploadDialogProps) {
+  const { t } = useLanguage();
   const [mode, setMode] = useState<"choice" | "camera">("choice");
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current.getTracks().forEach((tr) => tr.stop());
       streamRef.current = null;
     }
   };
@@ -120,12 +118,12 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
       <DialogContent className="w-[100vw] max-w-[100vw] h-[100dvh] max-h-[100dvh] rounded-none sm:max-w-md sm:h-auto sm:max-h-[90vh] sm:rounded-lg flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {mode === "camera" ? "Prendre une photo" : "Ajouter une photo"}
+            {mode === "camera" ? (t.photo_take_title as string) : (t.photo_add_title as string)}
           </DialogTitle>
           <DialogDescription>
             {mode === "choice"
-              ? "Choisissez : caméra dans l'app ou galerie."
-              : "La caméra s'ouvre dans l'application."}
+              ? (t.photo_choice_desc as string)
+              : (t.photo_camera_desc as string)}
           </DialogDescription>
         </DialogHeader>
 
@@ -139,8 +137,8 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
             >
               <Camera className="h-8 w-8" />
               <div className="text-center">
-                <div className="font-semibold">Appareil photo</div>
-                <div className="text-xs text-muted-foreground">Caméra dans l'app (+3 qualité)</div>
+                <div className="font-semibold">{t.photo_camera_label as string}</div>
+                <div className="text-xs text-muted-foreground">{t.photo_camera_quality as string}</div>
               </div>
             </Button>
 
@@ -152,8 +150,8 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
             >
               <Image className="h-8 w-8" />
               <div className="text-center">
-                <div className="font-semibold">Galerie</div>
-                <div className="text-xs text-muted-foreground">Choisir une photo dans la galerie (+2 qualité)</div>
+                <div className="font-semibold">{t.photo_gallery_label as string}</div>
+                <div className="text-xs text-muted-foreground">{t.photo_gallery_quality as string}</div>
               </div>
             </Button>
           </div>
@@ -170,11 +168,11 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={backFromCamera} className="flex-1">
                 <X className="h-4 w-4 mr-1" />
-                Retour
+                {t.photo_back as string}
               </Button>
               <Button type="button" onClick={capturePhoto} className="flex-1">
                 <Camera className="h-4 w-4 mr-1" />
-                Capturer
+                {t.photo_capture as string}
               </Button>
             </div>
           </div>
@@ -192,6 +190,8 @@ interface PhotoPreviewProps {
 }
 
 export function PhotoPreview({ imageUrl, onRemove, isBlurry = false, onBlurryChange }: PhotoPreviewProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="relative rounded-xl overflow-hidden border border-border">
       <img src={imageUrl} alt="Preview" className="w-full h-48 object-cover" />
@@ -213,7 +213,7 @@ export function PhotoPreview({ imageUrl, onRemove, isBlurry = false, onBlurryCha
                 : "bg-background/70 backdrop-blur text-foreground hover:bg-background/90"
             }`}
           >
-            Clear (+1)
+            {t.photo_clear as string}
           </button>
           <button
             onClick={() => onBlurryChange(true)}
@@ -223,7 +223,7 @@ export function PhotoPreview({ imageUrl, onRemove, isBlurry = false, onBlurryCha
                 : "bg-background/70 backdrop-blur text-foreground hover:bg-background/90"
             }`}
           >
-            Blurry
+            {t.photo_blurry as string}
           </button>
         </div>
       )}
