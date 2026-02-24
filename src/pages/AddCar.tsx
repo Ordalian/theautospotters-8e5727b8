@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +28,6 @@ const AddCar = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const isDeliveryMode = searchParams.get("delivery") === "1";
 
   // Prefill from query params (from AutoSpotter)
@@ -176,7 +175,6 @@ const AddCar = () => {
     try {
       // Use plate passed from AutoSpotter if available, otherwise extract from photo
       let extractedPlateFromPhoto: string | null = searchParams.get("extracted_plate") || null;
-      console.log("[AddCar] extracted_plate from URL:", extractedPlateFromPhoto);
       let mainImageFileToUpload: File | null = null;
 
       if (imageFile) {
@@ -299,14 +297,12 @@ const AddCar = () => {
 
       // --- Check if plate matches an owned vehicle for bonus ---
       if (extractedPlateFromPhoto) {
-        console.log("[AddCar] Checking owned_vehicles for plate:", extractedPlateFromPhoto);
         try {
-          const { data: match, error: matchErr } = await supabase
+          const { data: match } = await supabase
             .from("owned_vehicles")
             .select("id, user_id")
             .eq("license_plate", extractedPlateFromPhoto)
             .maybeSingle();
-          console.log("[AddCar] owned_vehicles match:", match, "error:", matchErr);
           if (match) {
             await supabase
               .from("owned_vehicles")
@@ -315,8 +311,8 @@ const AddCar = () => {
             (insertPayload as any).__owned_vehicle_id = match.id;
             (insertPayload as any).__owned_vehicle_user_id = match.user_id;
           }
-        } catch (e) {
-          console.error("[AddCar] Matching error:", e);
+        } catch {
+          /* ignore matching errors */
         }
       }
 
@@ -380,7 +376,6 @@ const AddCar = () => {
         ?? "Failed to add car";
       const hint = err?.hint ? ` (${err.hint})` : "";
       toast.error(`${msg}${hint}`);
-      console.error("Add car error:", err);
     } finally {
       setLoading(false);
     }
@@ -572,7 +567,6 @@ const AddCar = () => {
                     });
                     setEditions(data.editions ?? []);
                   } catch (err: any) {
-                    console.error("car-api editions error:", err);
                     toast.error(err?.message || "Impossible de charger les éditions");
                     setEditions([]);
                   } finally {
@@ -731,7 +725,6 @@ const AddCar = () => {
                     setEngines(list);
                     if (list.length === 0) toast.info(t.add_car_engine_no_results as string);
                   } catch (err: any) {
-                    console.error("car-api error:", err);
                     toast.error(err?.message || (t.add_car_engine_error as string));
                   } finally {
                     setLoadingEngines(false);

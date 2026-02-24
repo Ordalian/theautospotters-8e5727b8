@@ -78,32 +78,12 @@ const AutoSpotter = () => {
         images.map((img) => resizeImage(img.file, 800, 0.7))
       );
 
-      if (isOwnedMode) {
-        const data = await callCarApi<IdentifyAndPlateResult>({ action: "identify_and_extract_plate", images: base64Images });
-        console.log("[AutoSpotter] API response (owned):", JSON.stringify(data));
-        setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
-        const plate = data.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
-        if (plate && plate.length >= 2) setExtractedPlate(plate);
-        if (data.plate_bbox) setPlateBbox(data.plate_bbox);
-        else setPlateBbox(null);
-      } else {
-        const data = await callCarApi<IdentifyAndPlateResult>({ action: "identify_and_extract_plate", images: base64Images });
-        console.log("[AutoSpotter] API response:", JSON.stringify(data));
-        setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
-        // Also extract plate + bbox in non-owned mode (for blur & bonus matching)
-        const plate = data.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
-        if (plate && plate.length >= 2) {
-          setExtractedPlate(plate);
-          console.log("[AutoSpotter] Extracted plate (non-owned):", plate);
-        }
-        if (data.plate_bbox) {
-          setPlateBbox(data.plate_bbox);
-          console.log("[AutoSpotter] plate_bbox:", JSON.stringify(data.plate_bbox));
-        } else {
-          setPlateBbox(null);
-          console.log("[AutoSpotter] No plate_bbox returned by API — blur will be skipped");
-        }
-      }
+      const data = await callCarApi<IdentifyAndPlateResult>({ action: "identify_and_extract_plate", images: base64Images });
+      setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
+      const plate = data.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+      if (plate && plate.length >= 2) setExtractedPlate(plate);
+      if (data.plate_bbox) setPlateBbox(data.plate_bbox);
+      else setPlateBbox(null);
     } catch (err: any) {
       const msg = err?.message || "Reconnaissance impossible.";
       const isGeneric = /non-2xx|encountered an error/i.test(msg);
@@ -122,17 +102,11 @@ const AutoSpotter = () => {
           let fileToUpload = images[i].file;
           if (i === 0 && plateBbox && images[0].preview.startsWith("data:")) {
             try {
-              console.log("[AutoSpotter] Blurring plate with bbox:", JSON.stringify(plateBbox));
-              console.log("[AutoSpotter] Preview starts with:", images[0].preview.substring(0, 30));
               const blurredDataUrl = await blurPlateInImage(images[0].preview, plateBbox);
-              console.log("[AutoSpotter] Blur success, blurred URL starts with:", blurredDataUrl.substring(0, 30));
               fileToUpload = dataUrlToFile(blurredDataUrl, fileToUpload.name.replace(/\.[^.]+$/i, ".jpg") || "photo.jpg");
-              console.log("[AutoSpotter] File to upload size:", fileToUpload.size);
-            } catch (blurErr) {
-              console.error("[AutoSpotter] Blur FAILED:", blurErr);
+            } catch {
+              /* keep original on blur error */
             }
-          } else if (i === 0) {
-            console.log("[AutoSpotter] Skipping blur - plateBbox:", plateBbox, "isDataUrl:", images[0]?.preview?.startsWith("data:"));
           }
           const ext = fileToUpload.name.split(".").pop() || "jpg";
           const path = i === 0 ? `${base}.${ext}` : `${base}-${i}.${ext}`;
@@ -155,7 +129,6 @@ const AutoSpotter = () => {
     }
     if (primaryPhotoSourceType) params.set("photo_source_type", primaryPhotoSourceType);
     if (isDeliveryMode) params.set("delivery", "1");
-    // Pass extracted plate for owned_vehicles bonus matching
     if (extractedPlate) params.set("extracted_plate", extractedPlate);
     navigate(`/add-car?${params.toString()}`);
   };
