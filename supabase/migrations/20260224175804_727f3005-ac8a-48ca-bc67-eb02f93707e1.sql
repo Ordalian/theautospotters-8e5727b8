@@ -4,6 +4,8 @@ ALTER TABLE public.cars
   ADD COLUMN IF NOT EXISTS vehicle_type TEXT NOT NULL DEFAULT 'car';
 
 ALTER TABLE public.cars
+  DROP CONSTRAINT IF EXISTS cars_vehicle_type_check;
+ALTER TABLE public.cars
   ADD CONSTRAINT cars_vehicle_type_check
   CHECK (vehicle_type IN ('car', 'truck', 'motorcycle', 'boat', 'plane', 'train', 'hot_wheels'));
 
