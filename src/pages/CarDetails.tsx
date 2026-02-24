@@ -148,19 +148,30 @@ const CarDetails = () => {
   const isOwner = !!user && car?.user_id === user.id;
   const needLinkType = car ? ((car.vehicle_type || "car") === "hot_wheels" ? "spot" : "hot_wheels") : null;
   const { data: carsToLink = [] } = useQuery({
-    queryKey: ["my-cars-to-link", user?.id, needLinkType],
+    queryKey: ["my-cars-to-link", user?.id, needLinkType, car?.id],
     queryFn: async () => {
-      if (!user || !needLinkType) return [];
-      const types = needLinkType === "hot_wheels" ? ["hot_wheels"] : ["car", "truck", "motorcycle", "boat", "plane", "train"];
+      if (!user || !needLinkType || !car) return [];
+      if (needLinkType === "hot_wheels") {
+        const { data } = await supabase
+          .from("cars")
+          .select("id, brand, model, year, image_url, vehicle_type")
+          .eq("user_id", user.id)
+          .eq("vehicle_type", "hot_wheels")
+          .neq("id", car.id)
+          .is("linked_car_id", null)
+          .order("created_at", { ascending: false });
+        return (data ?? []) as { id: string; brand: string; model: string; year: number; image_url: string | null; vehicle_type: string }[];
+      }
+      // Spots: include vehicle_type in (car, truck, ...) OR vehicle_type is null (legacy rows)
       const { data } = await supabase
         .from("cars")
         .select("id, brand, model, year, image_url, vehicle_type")
         .eq("user_id", user.id)
-        .in("vehicle_type", types)
-        .neq("id", car!.id)
+        .neq("id", car.id)
         .is("linked_car_id", null)
+        .or("vehicle_type.in.(car,truck,motorcycle,boat,plane,train),vehicle_type.is.null")
         .order("created_at", { ascending: false });
-      return (data as { id: string; brand: string; model: string; year: number; image_url: string | null; vehicle_type: string }[]) ?? [];
+      return (data ?? []) as { id: string; brand: string; model: string; year: number; image_url: string | null; vehicle_type: string }[];
     },
     enabled: !!user && !!car && linkDialogOpen && !!needLinkType,
     staleTime: 60 * 1000,

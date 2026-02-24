@@ -23,6 +23,48 @@ import {
   calculateRarityRating 
 } from "@/lib/carRatings";
 
+/** Normalize for comparison: lowercase, collapse spaces, keep alphanumeric. */
+function normalizeModel(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Significant words (length >= 2) from normalized model. */
+function modelWords(normalized: string): Set<string> {
+  return new Set(normalized.split(" ").filter((w) => w.length >= 2));
+}
+
+/**
+ * Score how well a spot matches a miniature (brand + model "close enough").
+ * Returns 0 if brand differs; else score >= 1 if at least one significant word overlaps or one model contains the other.
+ */
+function spotMatchScore(
+  spot: { brand: string; model: string },
+  miniBrand: string,
+  miniModel: string
+): number {
+  if (!spot.brand || !spot.model || !miniBrand || !miniModel) return 0;
+  if (spot.brand.toLowerCase().trim() !== miniBrand.toLowerCase().trim()) return 0;
+  const a = normalizeModel(spot.model);
+  const b = normalizeModel(miniModel);
+  if (a === b) return 10;
+  if (a.includes(b) || b.includes(a)) return 8;
+  const wordsA = modelWords(a);
+  const wordsB = modelWords(b);
+  let overlap = 0;
+  for (const w of wordsB) {
+    if (wordsA.has(w)) overlap++;
+  }
+  if (overlap >= 2) return 5;
+  if (overlap >= 1) return 2;
+  return 0;
+}
+
 const AddCar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -405,7 +447,30 @@ const AddCar = () => {
         toast.success(t.add_car_delivery_added as string);
         navigate(`/deliver-car/select-friend?carId=${inserted.id}`);
       } else {
-        await runInsert();
+        const inserted = await runInsert();
+        if (isMiniature && inserted?.id) {
+          try {
+            const { data: spots } = await supabase
+              .from("cars")
+              .select("id, brand, model")
+              .eq("user_id", user.id)
+              .neq("id", inserted.id)
+              .is("linked_car_id", null)
+              .or("vehicle_type.in.(car,truck,motorcycle,boat,plane,train),vehicle_type.is.null");
+            const list = (spots ?? []) as { id: string; brand: string; model: string }[];
+            let best: { id: string; score: number } | null = null;
+            for (const s of list) {
+              const score = spotMatchScore(s, brand, model);
+              if (score >= 8 && (!best || score > best.score)) best = { id: s.id, score };
+            }
+            if (best) {
+              await supabase.from("cars").update({ linked_car_id: best.id }).eq("id", inserted.id).eq("user_id", user.id);
+              await supabase.from("cars").update({ linked_car_id: inserted.id }).eq("id", best.id).eq("user_id", user.id);
+            }
+          } catch {
+            /* ignore auto-link errors */
+          }
+        }
         const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(brand, model) : `${brand} ${model}`;
         toast.success(successMsg);
         navigate(isMiniature ? "/garage?type=hot_wheels" : "/garage");
