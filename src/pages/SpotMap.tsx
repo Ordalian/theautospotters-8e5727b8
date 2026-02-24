@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { ArrowLeft, ChevronRight, ChevronLeft, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ const SpotMap = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const mapCenterFromState = (location.state as { mapCenter?: { lat: number; lng: number } | null })?.mapCenter ?? null;
 
   const [allSpots, setAllSpots] = useState<MapSpot[]>([]);
@@ -174,9 +176,9 @@ const SpotMap = () => {
 
     const isFriend = (uid: string) => friendIds.has(uid);
     const getColor = (spot: MapSpot) => {
-      if (spot.user_id === user?.id) return "#dc2626"; // red — mes spots
-      if (isFriend(spot.user_id)) return "#16a34a"; // green — amis
-      return "#2563eb"; // blue — non amis
+      if (spot.user_id === user?.id) return "#dc2626";
+      if (isFriend(spot.user_id)) return "#16a34a";
+      return "#2563eb";
     };
 
     displaySpots.forEach((spot) => {
@@ -191,7 +193,7 @@ const SpotMap = () => {
       popupEl.appendChild(document.createElement("br"));
       const details = document.createElement("span");
       details.style.color = "#888";
-      details.textContent = `${spot.username || "Anonymous"} • ${spot.location_name || "Unknown location"}`;
+      details.textContent = `${spot.username || (t.map_anonymous as string)} • ${spot.location_name || (t.map_unknown_location as string)}`;
       popupEl.appendChild(details);
       if (spot.image_url?.startsWith("https://")) {
         popupEl.appendChild(document.createElement("br"));
@@ -260,7 +262,7 @@ const SpotMap = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">Spot Map</h1>
+        <h1 className="text-xl font-bold">{t.map_title as string}</h1>
         <span className="ml-auto text-sm text-muted-foreground">{displaySpots.length} spots</span>
       </header>
 
@@ -269,7 +271,7 @@ const SpotMap = () => {
           <div className="flex gap-2">
             <div className="relative flex-1 flex items-center">
               <Input
-                placeholder="Rechercher (ex: Clio V)..."
+                placeholder={t.map_search_placeholder as string}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -280,13 +282,13 @@ const SpotMap = () => {
             </div>
             {searchLower && filteredSpots.length > 0 && (
             <div className="flex items-center gap-0.5 shrink-0">
-              <Button variant="outline" size="icon" className="h-10 w-10" onClick={goPrev} title="Point précédent">
+              <Button variant="outline" size="icon" className="h-10 w-10" onClick={goPrev} title={t.map_previous as string}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-xs text-muted-foreground px-1 min-w-[3ch] text-center">
                 {focusIndex < 0 ? "-" : `${focusIndex + 1}/${filteredSpots.length}`}
               </span>
-              <Button variant="outline" size="icon" className="h-10 w-10" onClick={goNext} title="Point suivant">
+              <Button variant="outline" size="icon" className="h-10 w-10" onClick={goNext} title={t.map_next as string}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -319,40 +321,40 @@ const SpotMap = () => {
                   variant="secondary"
                   size="icon"
                   className="h-9 w-9 rounded-full shadow-lg shadow-primary/50 ring-2 ring-primary/30 hover:ring-primary/50 hover:shadow-primary/60 transition-all"
-                  aria-label="Légende"
+                  aria-label={t.map_legend as string}
                 >
                   <Info className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
-                  <DialogTitle>Légende de la carte</DialogTitle>
+                  <DialogTitle>{t.map_legend_title as string}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 text-sm">
-                  <p className="font-medium text-muted-foreground">Couleurs</p>
+                  <p className="font-medium text-muted-foreground">{t.map_colors as string}</p>
                   <ul className="space-y-1.5">
                     <li className="flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full bg-[#dc2626] shrink-0" />
-                      <span>Mes spots</span>
+                      <span>{t.map_my_spots as string}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full bg-[#16a34a] shrink-0" />
-                      <span>Spots des amis</span>
+                      <span>{t.map_friend_spots as string}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full bg-[#2563eb] shrink-0" />
-                      <span>Spots de la communauté</span>
+                      <span>{t.map_community_spots as string}</span>
                     </li>
                   </ul>
-                  <p className="font-medium text-muted-foreground pt-2">Formes</p>
+                  <p className="font-medium text-muted-foreground pt-2">{t.map_shapes as string}</p>
                   <ul className="space-y-1.5">
                     <li className="flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full border-2 border-muted-foreground shrink-0" />
-                      <span>Position précise (Ma position GPS, Choisir un lieu)</span>
+                      <span>{t.map_precise as string}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="h-3 w-3 border-2 border-muted-foreground shrink-0 rounded-none" style={{ width: 12, height: 12 }} />
-                      <span>Spots non GPS</span>
+                      <span>{t.map_non_gps as string}</span>
                     </li>
                   </ul>
                 </div>
@@ -360,7 +362,7 @@ const SpotMap = () => {
             </Dialog>
           </div>
           {searchLower && (
-            <p className="text-xs text-muted-foreground">Rayon : 50 km</p>
+            <p className="text-xs text-muted-foreground">{t.map_radius as string}</p>
           )}
         </div>
       )}
@@ -368,7 +370,7 @@ const SpotMap = () => {
       <div className="flex-1 min-h-0 relative" style={{ minHeight: "calc(100vh - 120px)" }}>
         {loading ? (
           <div className="flex items-center justify-center h-full py-20">
-            <div className="animate-pulse text-muted-foreground">Chargement de la carte...</div>
+            <div className="animate-pulse text-muted-foreground">{t.map_loading as string}</div>
           </div>
         ) : (
           <div ref={mapRef} className="z-0 absolute inset-0" />

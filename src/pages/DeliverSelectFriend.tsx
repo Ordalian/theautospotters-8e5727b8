@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const DeliverSelectFriend = () => {
   const [searchParams] = useSearchParams();
   const carId = searchParams.get("carId");
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [car, setCar] = useState<CarToDeliver | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,7 +49,7 @@ const DeliverSelectFriend = () => {
         .eq("user_id", user.id)
         .maybeSingle();
       if (!carData) {
-        toast.error("Voiture introuvable");
+        toast.error(t.deliver_car_not_found as string);
         navigate("/friends");
         return;
       }
@@ -134,10 +136,13 @@ const DeliverSelectFriend = () => {
         .update({ last_delivery_at: new Date().toISOString() })
         .eq("user_id", user.id);
 
-      toast.success(`Voiture livrée à ${selectedFriend.username || "ami"} !`);
+      const successMsg = typeof t.deliver_success === "function"
+        ? t.deliver_success(selectedFriend.username || (t.friend as string))
+        : (t.deliver_success as string);
+      toast.success(successMsg);
       navigate("/friends");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erreur lors de la livraison");
+      toast.error(err instanceof Error ? err.message : (t.deliver_error as string));
     } finally {
       setDelivering(false);
     }
@@ -158,7 +163,7 @@ const DeliverSelectFriend = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate("/friends")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">Livrer à un ami</h1>
+        <h1 className="text-xl font-bold">{t.deliver_select_friend_title as string}</h1>
       </header>
 
       <div className="relative z-10 p-6 max-w-md mx-auto space-y-6">
@@ -181,9 +186,9 @@ const DeliverSelectFriend = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold">Choisir l'ami</label>
+          <label className="text-sm font-semibold">{t.deliver_select_friend as string}</label>
           <Input
-            placeholder="Rechercher un ami..."
+            placeholder={t.deliver_search_friend as string}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="bg-secondary/30"
@@ -192,7 +197,7 @@ const DeliverSelectFriend = () => {
 
         <div className="space-y-2 max-h-60 overflow-y-auto">
           {filteredFriends.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucun ami trouvé</p>
+            <p className="text-sm text-muted-foreground">{t.deliver_no_friends as string}</p>
           ) : (
             filteredFriends.map((friend) => (
               <button
@@ -210,7 +215,7 @@ const DeliverSelectFriend = () => {
                     {(friend.username || "?")[0].toUpperCase()}
                   </span>
                 </div>
-                <span className="font-medium">{friend.username || "Anonyme"}</span>
+                <span className="font-medium">{friend.username || (t.anonymous as string)}</span>
               </button>
             ))
           )}
@@ -224,7 +229,7 @@ const DeliverSelectFriend = () => {
           {delivering ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            "Livrer"
+            t.deliver_button as string
           )}
         </Button>
       </div>

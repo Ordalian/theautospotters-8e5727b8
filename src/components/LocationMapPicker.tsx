@@ -8,8 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-const DEFAULT_CENTER: [number, number] = [50.45, 3.43]; // Nord France
+const DEFAULT_CENTER: [number, number] = [50.45, 3.43];
 const DEFAULT_ZOOM = 10;
 
 interface LocationMapPickerProps {
@@ -25,6 +26,7 @@ export function LocationMapPicker({
   initialCenter,
   onSelect,
 }: LocationMapPickerProps) {
+  const { t } = useLanguage();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -75,17 +77,17 @@ export function LocationMapPicker({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-4 pb-0">
-          <DialogTitle>Choisir un lieu sur la carte</DialogTitle>
+          <DialogTitle>{t.location_choose_title as string}</DialogTitle>
         </DialogHeader>
         <div ref={mapRef} className="w-full h-[320px] rounded-b-lg" />
         <div className="p-4 flex justify-between items-center border-t">
           <span className="text-sm text-muted-foreground">
             {selected
               ? `${selected.lat.toFixed(4)}, ${selected.lng.toFixed(4)}`
-              : "Cliquez sur la carte pour placer le point"}
+              : (t.location_click_instruction as string)}
           </span>
           <Button onClick={handleValidate} disabled={!selected}>
-            Valider
+            {t.location_validate as string}
           </Button>
         </div>
       </DialogContent>

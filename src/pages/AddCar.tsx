@@ -15,6 +15,7 @@ import { PhotoUploadDialog, PhotoPreview, type PhotoSourceType } from "@/compone
 import { CarConditionSelector } from "@/components/CarConditionSelector";
 import { LocationMapPicker } from "@/components/LocationMapPicker";
 import { searchPlaceOrMidpoint, reverseGeocode } from "@/lib/geocode";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { 
   type CarCondition, 
   type PhotoSource,
@@ -25,6 +26,7 @@ import {
 const AddCar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isDeliveryMode = searchParams.get("delivery") === "1";
@@ -126,7 +128,7 @@ const AddCar = () => {
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
-    reader.onerror = () => toast.error("Impossible de charger l'image");
+    reader.onerror = () => toast.error(t.error as string);
     reader.readAsDataURL(file);
     setPhotoSourceType(source);
     setIsPhotoBlurry(false);
@@ -158,11 +160,11 @@ const AddCar = () => {
 
   const handleSubmit = async () => {
     if (!user || !brand || !model || !year) {
-      toast.error("Please fill in brand, model, and year");
+      toast.error(t.add_car_fill_required as string);
       return;
     }
     if (isDeliveryMode && !imageFile && !imagePreview) {
-      toast.error("La photo est obligatoire pour une livraison (caméra ou galerie)");
+      toast.error(t.add_car_photo_required as string);
       return;
     }
     setLoading(true);
@@ -285,11 +287,12 @@ const AddCar = () => {
 
       if (isDeliveryMode) {
         const inserted = await insertCar();
-        toast.success("Voiture ajoutée. Choisis l'ami à qui la livrer.");
+        toast.success(t.add_car_delivery_added as string);
         navigate(`/deliver-car/select-friend?carId=${inserted.id}`);
       } else {
         await insertCar();
-        toast.success(`${brand} ${model} added to your garage!`);
+        const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(brand, model) : `${brand} ${model}`;
+        toast.success(successMsg);
         navigate("/garage");
       }
     } catch (err: any) {
@@ -358,16 +361,16 @@ const AddCar = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(isDeliveryMode ? "/friends" : "/garage")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">Add a Car</h1>
+        <h1 className="text-xl font-bold">{t.add_car_title as string}</h1>
       </header>
 
       <div className="p-4 space-y-6 max-w-lg mx-auto pb-32">
         {/* Brand */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Brand</Label>
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_car_brand as string}</Label>
           <div className="relative">
             <Input
-              placeholder="Search brand..."
+              placeholder={t.add_car_search_brand as string}
               value={brandSearch}
               onChange={(e) => {
                 setBrandSearch(e.target.value);
@@ -393,7 +396,7 @@ const AddCar = () => {
                   </button>
                 ))}
                 {filteredBrands.length === 0 && (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">No brands found</div>
+                  <div className="px-4 py-3 text-sm text-muted-foreground">{t.add_car_no_brands as string}</div>
                 )}
               </div>
             )}
@@ -402,10 +405,10 @@ const AddCar = () => {
 
         {/* Model */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Model</Label>
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_car_model as string}</Label>
           <div className="relative">
             <Input
-              placeholder={brand ? "Search model..." : "Select a brand first"}
+              placeholder={brand ? (t.add_car_search_model as string) : (t.add_car_select_brand as string)}
               value={modelSearch}
               onChange={(e) => {
                 setModelSearch(e.target.value);
@@ -433,7 +436,7 @@ const AddCar = () => {
                   </button>
                 ))}
                 {filteredModels.length === 0 && (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">No models found</div>
+                  <div className="px-4 py-3 text-sm text-muted-foreground">{t.add_car_no_models as string}</div>
                 )}
               </div>
             )}
@@ -442,7 +445,7 @@ const AddCar = () => {
 
         {/* Year */}
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Year</Label>
+          <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_car_year as string}</Label>
           <div className="relative">
             <button
               type="button"
@@ -454,7 +457,7 @@ const AddCar = () => {
                 !year && "text-muted-foreground"
               )}
             >
-              {year || (model ? "Select year" : "Select a model first")}
+              {year || (model ? (t.add_car_select_year as string) : (t.add_car_select_model as string))}
             </button>
             {showYears && (
               <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
@@ -478,7 +481,7 @@ const AddCar = () => {
         {/* Edition / Série limitée */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Édition / Série limitée (optionnel)
+            {t.add_car_edition as string}
           </Label>
           <div className="relative">
             <button
@@ -509,7 +512,7 @@ const AddCar = () => {
                 !edition && "text-muted-foreground"
               )}
             >
-              {loadingEditions ? "Chargement..." : edition || (year ? "Choisir ou ignorer" : "Sélectionnez l'année d'abord")}
+              {loadingEditions ? (t.add_car_edition_loading as string) : edition || (year ? (t.add_car_edition_choose as string) : (t.add_car_edition_select_year as string))}
             </button>
             {showEditions && (
               <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
@@ -520,7 +523,7 @@ const AddCar = () => {
                   }}
                   className="w-full px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary/50 transition-colors border-b border-border/50"
                 >
-                  Ignorer / Non connu
+                  {t.add_car_edition_skip as string}
                 </button>
                 {editions.map((ed) => (
                   <button
@@ -535,7 +538,7 @@ const AddCar = () => {
                   </button>
                 ))}
                 {editions.length === 0 && !loadingEditions && (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">Aucune édition trouvée</div>
+                  <div className="px-4 py-3 text-sm text-muted-foreground">{t.add_car_edition_none as string}</div>
                 )}
               </div>
             )}
@@ -545,10 +548,10 @@ const AddCar = () => {
         {/* Finitions (optionnel) */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Finitions (optionnel)
+            {t.add_car_finitions as string}
           </Label>
           <Input
-            placeholder="ex. GT Line, Sport Pack, Business..."
+            placeholder={t.add_car_finitions_placeholder as string}
             value={finitions}
             onChange={(e) => setFinitions(e.target.value)}
             className="bg-secondary/30"
@@ -558,11 +561,11 @@ const AddCar = () => {
         {/* Spotting Context */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Spotting Context
+            {t.add_car_spotting_context as string}
           </Label>
           <div className="flex flex-wrap gap-2">
             <ToggleChip
-              label="🛣️ Seen on the road"
+              label={t.add_car_seen_road as string}
               checked={seenOnRoad}
               onChange={(v) => {
                 setSeenOnRoad(v);
@@ -570,7 +573,7 @@ const AddCar = () => {
               }}
             />
             <ToggleChip
-              label="🅿️ Parked!"
+              label={t.add_car_parked_label as string}
               checked={parked}
               onChange={(v) => {
                 setParked(v);
@@ -583,7 +586,7 @@ const AddCar = () => {
         {/* Condition */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Condition
+            {t.add_car_condition_label as string}
           </Label>
           <div className="flex flex-wrap gap-2">
             <ToggleChip
@@ -595,7 +598,7 @@ const AddCar = () => {
               }}
             />
             <ToggleChip
-              label="🔧 Modifié"
+              label={t.add_car_modified_label as string}
               checked={modified}
               onChange={(v) => {
                 setModified(v);
@@ -605,11 +608,11 @@ const AddCar = () => {
           </div>
           {modified && (
             <div className="pt-1">
-              <Label className="text-xs text-muted-foreground">Commentaire (optionnel, 500 car. max)</Label>
+              <Label className="text-xs text-muted-foreground">{t.add_car_modified_comment as string}</Label>
               <textarea
                 value={modifiedComment}
                 onChange={(e) => setModifiedComment(e.target.value.slice(0, 500))}
-                placeholder="Décrivez les modifications..."
+                placeholder={t.add_car_modified_placeholder as string}
                 maxLength={500}
                 className="mt-1 w-full rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm min-h-[80px] resize-y"
                 rows={3}
@@ -622,24 +625,24 @@ const AddCar = () => {
         {/* Car Meet */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Event
+            {t.add_car_event as string}
           </Label>
           <div className="flex flex-wrap gap-2">
-            <ToggleChip label="🏁 Car Meet" checked={carMeet} onChange={setCarMeet} />
+            <ToggleChip label={t.add_car_car_meet as string} checked={carMeet} onChange={setCarMeet} />
           </div>
         </div>
 
         {/* Engine */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Engine (optional)
+            {t.add_car_engine as string}
           </Label>
           <div className="relative">
             <button
               type="button"
               onClick={async () => {
                 if (!brand || !model || !year) {
-                  toast.error("Select brand, model and year first");
+                  toast.error(t.add_car_select_brand_model_year as string);
                   return;
                 }
                 if (engines.length === 0 && !loadingEngines) {
@@ -650,10 +653,10 @@ const AddCar = () => {
                     });
                     const list = data.engines ?? [];
                     setEngines(list);
-                    if (list.length === 0) toast.info("Aucun moteur trouvé pour ce modèle");
+                    if (list.length === 0) toast.info(t.add_car_engine_no_results as string);
                   } catch (err: any) {
                     console.error("car-api error:", err);
-                    toast.error(err?.message || "Impossible de charger les moteurs");
+                    toast.error(err?.message || (t.add_car_engine_error as string));
                   } finally {
                     setLoadingEngines(false);
                   }
@@ -667,7 +670,7 @@ const AddCar = () => {
                 !engine && "text-muted-foreground"
               )}
             >
-              {loadingEngines ? "Loading engines..." : engine || (year ? "Select engine (optional)" : "Select year first")}
+              {loadingEngines ? (t.add_car_engine_loading as string) : engine || (year ? (t.add_car_engine_select as string) : (t.add_car_engine_select_year as string))}
             </button>
             {showEngines && (
               <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
@@ -678,7 +681,7 @@ const AddCar = () => {
                   }}
                   className="w-full px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-secondary/50 transition-colors"
                 >
-                  Skip / Unknown
+                  {t.add_car_engine_skip as string}
                 </button>
                 {engines.map((eng, i) => (
                   <button
@@ -694,7 +697,7 @@ const AddCar = () => {
                   </button>
                 ))}
                 {engines.length === 0 && !loadingEngines && (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">No engines found</div>
+                  <div className="px-4 py-3 text-sm text-muted-foreground">{t.add_car_engine_none as string}</div>
                 )}
               </div>
             )}
@@ -704,7 +707,7 @@ const AddCar = () => {
         {/* Location */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Localisation
+            {t.add_car_location as string}
           </Label>
           <div className="flex gap-2 flex-wrap">
             <button
@@ -718,7 +721,7 @@ const AddCar = () => {
               )}
             >
               <MapPin className="h-4 w-4" />
-              Ma position GPS
+              {t.add_car_gps_label as string}
             </button>
             <button
               type="button"
@@ -731,7 +734,7 @@ const AddCar = () => {
               )}
             >
               <Map className="h-4 w-4" />
-              Choisir sur la carte
+              {t.add_car_map_label as string}
             </button>
             <button
               type="button"
@@ -744,7 +747,7 @@ const AddCar = () => {
               )}
             >
               <Pencil className="h-4 w-4" />
-              Écrire un lieu
+              {t.add_car_text_label as string}
             </button>
           </div>
 
@@ -765,17 +768,17 @@ const AddCar = () => {
                       setGettingLocation(false);
                       const name = await reverseGeocode(lat, lng);
                       if (name) setLocationName(name);
-                      toast.success("Position enregistrée");
+                      toast.success(t.add_car_position_saved as string);
                     },
                     () => {
                       setGettingLocation(false);
-                      toast.error("Impossible d'obtenir la position");
+                      toast.error(t.add_car_position_error as string);
                     }
                   );
                 }}
               >
                 {gettingLocation ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <MapPin className="h-4 w-4 mr-2" />}
-                Utiliser ma position
+                {t.add_car_use_position as string}
               </Button>
               {coords && (
                 <p className="text-xs text-muted-foreground">
@@ -795,7 +798,7 @@ const AddCar = () => {
                 onClick={() => setShowMapPicker(true)}
               >
                 <Map className="h-4 w-4 mr-2" />
-                Ouvrir la carte et choisir un point
+                {t.add_car_open_map as string}
               </Button>
               {coords && (
                 <p className="text-xs text-muted-foreground">
@@ -809,11 +812,11 @@ const AddCar = () => {
           {locationMode === "text" && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
-                Ex : Paris / New York… · ou « entre Paris et Versailles / près de… » (point médian)
+                {t.add_car_text_example as string}
               </p>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Paris / New York… ou « entre Paris et Versailles »..."
+                  placeholder={t.add_car_text_placeholder as string}
                   value={locationSearchQuery}
                   onChange={(e) => setLocationSearchQuery(e.target.value)}
                   className="bg-secondary/30 flex-1"
@@ -843,7 +846,7 @@ const AddCar = () => {
               setCoords({ lat, lng });
               const name = await reverseGeocode(lat, lng);
               if (name) setLocationName(name);
-              toast.success("Lieu enregistré");
+              toast.success(t.add_car_location_saved as string);
             }}
           />
         </div>
@@ -851,7 +854,7 @@ const AddCar = () => {
         {/* Car Condition */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Car Condition
+            {t.add_car_car_condition as string}
           </Label>
           <CarConditionSelector value={carCondition} onChange={setCarCondition} />
         </div>
@@ -859,7 +862,7 @@ const AddCar = () => {
         {/* Photo (optional, required for delivery) — la plaque est extraite automatiquement de la photo si visible, jamais affichée */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Photo {isDeliveryMode ? "(obligatoire pour la livraison)" : "(optional)"}
+            {isDeliveryMode ? (t.add_car_photo_required_delivery as string) : (t.add_car_photo_optional as string)}
           </Label>
           {imagePreview ? (
             <PhotoPreview
@@ -875,7 +878,7 @@ const AddCar = () => {
               className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-8 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
             >
               <Camera className="h-5 w-5" />
-              <span className="text-sm font-medium">Add a photo</span>
+              <span className="text-sm font-medium">{t.add_car_add_photo as string}</span>
             </button>
           )}
           {(additionalPhotoUrls.length > 0 || additionalPhotoFiles.length > 0) && (
@@ -905,7 +908,7 @@ const AddCar = () => {
           )}
           {imagePreview && additionalPhotoUrls.length + additionalPhotoFiles.length < 4 && (
             <button type="button" onClick={() => setShowExtraPhotoDialog(true)} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1">
-              <Plus className="h-4 w-4" /> Ajouter une photo
+              <Plus className="h-4 w-4" /> {t.add_car_add_photo as string}
             </button>
           )}
         </div>
@@ -921,7 +924,7 @@ const AddCar = () => {
           disabled={!brand || !model || !year || loading}
           className="w-full h-12 text-base font-bold rounded-xl"
         >
-          {loading ? "Adding..." : "Done"}
+          {loading ? (t.loading as string) : (t.add_car_submit as string)}
         </Button>
       </div>
     </div>

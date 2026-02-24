@@ -9,10 +9,7 @@ import {
 import { RarityBadge } from "@/components/RarityBadge";
 import { QualityBadge } from "@/components/QualityBadge";
 import { cn } from "@/lib/utils";
-
-const RARITY_EXPLANATION = `Rareté (1-10) : évalue la rareté du modèle selon les volumes de production et le marché. 1 = très courant, 10 = légendaire / série très limitée.`;
-
-const QUALITY_EXPLANATION = `Qualité (1-8) : évalue la qualité du spot (photo et état perçu du véhicule). Elle combine la netteté de la photo et l'état de la voiture (abîmée à impeccable).`;
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface RatingExplainerProps {
   rarityLevel: number;
@@ -22,6 +19,8 @@ interface RatingExplainerProps {
 }
 
 export function RatingExplainer({ rarityLevel, qualityLevel, size = "sm", className }: RatingExplainerProps) {
+  const { t } = useLanguage();
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -44,11 +43,11 @@ export function RatingExplainer({ rarityLevel, qualityLevel, size = "sm", classN
         onPointerDownOutside={(e) => e.stopPropagation()}
       >
         <DialogHeader>
-          <DialogTitle className="text-base">Système de classement</DialogTitle>
+          <DialogTitle className="text-base">{t.rating_system_title as string}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 text-sm text-muted-foreground">
-          <p>{RARITY_EXPLANATION}</p>
-          <p>{QUALITY_EXPLANATION}</p>
+          <p>{t.rating_rarity_explanation as string}</p>
+          <p>{t.rating_quality_explanation as string}</p>
         </div>
       </DialogContent>
     </Dialog>

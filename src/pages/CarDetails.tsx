@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
 import { ArrowLeft, Car, Loader2, X, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -47,6 +48,7 @@ interface CarInfoResult {
 const CarDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
@@ -104,7 +106,6 @@ const CarDetails = () => {
 
   const carKey = car ? `${car.brand}-${car.model}-${car.year}-${car.edition || ""}` : "";
 
-  // Single combined call for description + engines
   const { data: carInfo, isLoading: loadingInfo } = useQuery({
     queryKey: ["car-info", carKey],
     queryFn: async () => {
@@ -136,16 +137,16 @@ const CarDetails = () => {
 
   const handleDelete = async () => {
     if (!car || !user || car.user_id !== user.id) return;
-    if (!confirm("Supprimer ce spot ?")) return;
+    if (!confirm(t.car_detail_delete_confirm as string)) return;
     setDeleting(true);
     try {
       const { error } = await supabase.from("cars").delete().eq("id", car.id).eq("user_id", user.id);
       if (error) throw error;
-      toast.success("Spot supprimé");
+      toast.success(t.car_detail_deleted as string);
       queryClient.invalidateQueries({ queryKey: ["my-cars", user.id] });
       navigate("/garage");
     } catch (err: any) {
-      toast.error(err?.message || "Erreur lors de la suppression");
+      toast.error(err?.message || (t.car_detail_delete_error as string));
     } finally {
       setDeleting(false);
     }
@@ -163,8 +164,8 @@ const CarDetails = () => {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background gap-4">
         <Car className="h-16 w-16 text-muted-foreground/30" />
-        <p className="text-muted-foreground">Car not found</p>
-        <Button variant="outline" onClick={() => navigate(-1)}>Go back</Button>
+        <p className="text-muted-foreground">{t.car_detail_not_found as string}</p>
+        <Button variant="outline" onClick={() => navigate(-1)}>{t.car_detail_go_back as string}</Button>
       </div>
     );
   }
@@ -186,7 +187,7 @@ const CarDetails = () => {
             className="text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={handleDelete}
             disabled={deleting}
-            aria-label="Supprimer le spot"
+            aria-label={t.car_detail_delete as string}
           >
             {deleting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 className="h-5 w-5" />}
           </Button>
@@ -210,7 +211,7 @@ const CarDetails = () => {
               <span className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1.5 text-xs font-medium text-white backdrop-blur">
                 <ChevronLeft className="h-4 w-4" />
                 <ChevronRight className="h-4 w-4" />
-                <span>{allPhotoUrls.length} photos</span>
+                <span>{allPhotoUrls.length} {t.car_detail_photos as string}</span>
               </span>
             )}
           </button>
@@ -226,17 +227,17 @@ const CarDetails = () => {
             <p className="text-muted-foreground">{car.year}</p>
             {car.edition?.trim() && (
               <p className="text-sm text-muted-foreground mt-0.5">
-                Série : <span className="font-medium text-foreground">{car.edition}</span>
+                {t.car_detail_series as string} : <span className="font-medium text-foreground">{car.edition}</span>
               </p>
             )}
             {car.finitions?.trim() && (
               <p className="text-sm text-muted-foreground mt-0.5">
-                Finitions : <span className="font-medium text-foreground">{car.finitions}</span>
+                {t.car_detail_finitions as string} : <span className="font-medium text-foreground">{car.finitions}</span>
               </p>
             )}
             {car.delivered_by_user_id && (
               <p className="text-sm text-primary mt-1.5 font-medium">
-                Voiture spottée et livrée par {deliveredByProfile ?? "un ami"}
+                {t.car_detail_delivered_text as string} {deliveredByProfile ?? (t.car_detail_a_friend as string)}
               </p>
             )}
             <div className="flex items-center gap-2 mt-1.5">
@@ -246,14 +247,14 @@ const CarDetails = () => {
 
           {car.modified && car.modified_comment?.trim() && (
             <div className="rounded-xl border border-border/50 bg-card p-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Modifications</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t.car_detail_modifications as string}</p>
               <p className="text-sm leading-relaxed">{car.modified_comment}</p>
             </div>
           )}
 
           {car.engine && (
             <div className="rounded-xl border border-border/50 bg-card p-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Engine</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t.car_detail_engine as string}</p>
               <p className="font-medium">{car.engine}</p>
             </div>
           )}
@@ -265,18 +266,17 @@ const CarDetails = () => {
           </div>
 
           {car.location_name && <p className="text-sm text-muted-foreground">📍 {car.location_name}</p>}
-          <p className="text-sm text-muted-foreground">Spotted on {new Date(car.created_at).toLocaleDateString()}</p>
+          <p className="text-sm text-muted-foreground">{t.car_detail_spotted_on as string} {new Date(car.created_at).toLocaleDateString()}</p>
 
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">À propos de ce modèle</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.car_detail_about_model as string}</p>
             {loadingInfo ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
+                <Loader2 className="h-4 w-4 animate-spin" /> {t.car_detail_loading as string}
               </div>
             ) : description ? (
               <div className="text-sm leading-[1.85] text-pretty space-y-4">
                 {(() => {
-                  // Split into paragraphs: first by newlines, then group sentences (~2-3 per paragraph)
                   const rawParagraphs = description.split(/\n+/).filter((p: string) => p.trim());
                   const result: string[] = [];
                   for (const para of rawParagraphs) {
@@ -289,27 +289,27 @@ const CarDetails = () => {
                 })()}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Impossible de charger la description.</p>
+              <p className="text-sm text-muted-foreground">{t.car_detail_no_desc as string}</p>
             )}
           </div>
 
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Moteurs (ce modèle)</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.car_detail_engines_title as string}</p>
             {loadingInfo ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
+                <Loader2 className="h-4 w-4 animate-spin" /> {t.car_detail_loading as string}
               </div>
             ) : engines.length > 0 ? (
               <ul className="space-y-2">
                 {engines.map((eng, i) => (
                   <li key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/30 last:border-0">
                     <span className="font-medium">{eng.name}</span>
-                    <span className="text-muted-foreground">{eng.hp} ch • {eng.fuel}</span>
+                    <span className="text-muted-foreground">{eng.hp} hp • {eng.fuel}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">Aucun moteur trouvé pour ce modèle.</p>
+              <p className="text-sm text-muted-foreground">{t.car_detail_no_engines as string}</p>
             )}
           </div>
         </div>
@@ -324,13 +324,13 @@ const CarDetails = () => {
       >
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto p-0 overflow-hidden bg-black/95 border-0">
           <DialogHeader className="sr-only">
-            <DialogTitle>{car.brand} {car.model} – photo {photoIndex + 1}/{allPhotoUrls.length}</DialogTitle>
+            <DialogTitle>{car.brand} {car.model} – {photoIndex + 1}/{allPhotoUrls.length}</DialogTitle>
           </DialogHeader>
           <button
             type="button"
             onClick={() => setPhotoPopupOpen(false)}
             className="absolute right-2 top-2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-            aria-label="Fermer"
+            aria-label={t.close as string}
           >
             <X className="h-5 w-5" />
           </button>
@@ -342,7 +342,6 @@ const CarDetails = () => {
                 size="icon"
                 className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                 onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => (i === 0 ? allPhotoUrls.length - 1 : i - 1)); }}
-                aria-label="Photo précédente"
               >
                 <ChevronLeft className="h-6 w-6" />
               </Button>
@@ -352,7 +351,6 @@ const CarDetails = () => {
                 size="icon"
                 className="absolute right-12 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                 onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => (i === allPhotoUrls.length - 1 ? 0 : i + 1)); }}
-                aria-label="Photo suivante"
               >
                 <ChevronRight className="h-6 w-6" />
               </Button>
