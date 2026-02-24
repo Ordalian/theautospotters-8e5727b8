@@ -64,7 +64,6 @@ export type Database = {
           location_name: string | null
           location_precision: string | null
           longitude: number | null
-          miniature_maker: string | null
           model: string
           modified: boolean
           modified_comment: string | null
@@ -95,7 +94,6 @@ export type Database = {
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
-          miniature_maker?: string | null
           model: string
           modified?: boolean
           modified_comment?: string | null
@@ -126,7 +124,6 @@ export type Database = {
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
-          miniature_maker?: string | null
           model?: string
           modified?: boolean
           modified_comment?: string | null
