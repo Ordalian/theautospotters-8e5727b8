@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,8 +54,10 @@ interface GarageGroup {
 const MyGarage = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const returnTo = `${location.pathname}${location.search || ""}`;
   const queryClient = useQueryClient();
   const [sortOption, setSortOption] = useState<GarageSortOption>("newest");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -363,7 +365,7 @@ const MyGarage = () => {
                     {deletingId === car.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </Button>
                 </div>
-                <div onClick={() => navigate(`/car/${car.id}`, { state: { carIds: sortedCars.map((c) => c.id) } })} className="cursor-pointer">
+                <div onClick={() => navigate(`/car/${car.id}`, { state: { carIds: sortedCars.map((c) => c.id), returnTo } })} className="cursor-pointer">
                   {car.image_url ? (
                     <div className="h-44 overflow-hidden">
                       <img

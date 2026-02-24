@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight } from "lucide-react";
@@ -62,7 +62,9 @@ interface DeliveryNotification {
 }
 
 const FriendsGarages = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const returnTo = `${location.pathname}${location.search || ""}`;
   const { user } = useAuth();
   const [searchUsername, setSearchUsername] = useState("");
   const [sending, setSending] = useState(false);
@@ -656,7 +658,7 @@ const FriendsGarages = () => {
                 return (
                 <div
                   key={car.id}
-                  onClick={() => navigate(`/car/${car.id}`, { state: { carIds: listForNav.map((c) => c.id) } })}
+                  onClick={() => navigate(`/car/${car.id}`, { state: { carIds: listForNav.map((c) => c.id), returnTo } })}
                   className="rounded-xl border border-border bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors"
                 >
                   {car.image_url ? (
