@@ -394,7 +394,7 @@ const MyGarage = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent z-30">
         <Button onClick={() => navigate("/add-car")} className="w-full h-12 text-base font-bold rounded-xl gap-2">
           <Plus className="h-5 w-5" /> {t.garage_add_car as string}
         </Button>
