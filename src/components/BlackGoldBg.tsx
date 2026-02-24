@@ -2,9 +2,10 @@ import { useTheme } from "@/hooks/useTheme";
 
 const THEME_GRADIENTS: Record<string, string> = {
   "noir-or": `
-    linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 50%, #0d0d0d 100%),
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212, 175, 55, 0.10) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(212, 175, 55, 0.06) 0%, transparent 50%)
+    linear-gradient(145deg, #080808 0%, #111111 40%, #0a0a0a 100%),
+    radial-gradient(ellipse 90% 60% at 30% -10%, rgba(180, 150, 60, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 80% 90%, rgba(160, 130, 50, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 60% 50%, rgba(255, 255, 255, 0.012) 0%, transparent 40%)
   `,
   "bleu-alpine": `
     linear-gradient(145deg, #050a18 0%, #0d1a3a 50%, #060e20 100%),
