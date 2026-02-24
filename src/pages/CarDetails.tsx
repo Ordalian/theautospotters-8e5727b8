@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
-import { ArrowLeft, Car, Loader2, X, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Car, Loader2, X, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { RatingExplainer } from "@/components/RatingExplainer";
@@ -38,6 +38,8 @@ interface CarDetail {
   quality_rating: number | null;
   rarity_rating: number | null;
   delivered_by_user_id: string | null;
+  vehicle_type: string;
+  linked_car_id: string | null;
 }
 
 interface CarInfoResult {
@@ -67,6 +69,8 @@ const CarDetails = () => {
   const swipeState = useRef<{ startX: number; startY: number; isTouch: boolean } | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linking, setLinking] = useState(false);
 
   const navigateToSibling = (targetId: string) => {
     navigate(`/car/${targetId}`, { state: { carIds, returnTo } });
@@ -111,12 +115,48 @@ const CarDetails = () => {
     queryFn: async () => {
       const { data } = await (supabase
         .from("cars")
-        .select("id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id")
+        .select("id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type, linked_car_id")
         .eq("id", id!)
         .maybeSingle() as any);
       return data as CarDetail | null;
     },
     enabled: !!user && !!id,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const isOwner = !!user && car?.user_id === user.id;
+  const needLinkType = car ? ((car.vehicle_type || "car") === "hot_wheels" ? "spot" : "hot_wheels") : null;
+  const { data: carsToLink = [] } = useQuery({
+    queryKey: ["my-cars-to-link", user?.id, needLinkType],
+    queryFn: async () => {
+      if (!user || !needLinkType) return [];
+      const types = needLinkType === "hot_wheels" ? ["hot_wheels"] : ["car", "truck", "motorcycle", "boat", "plane", "train"];
+      const { data } = await supabase
+        .from("cars")
+        .select("id, brand, model, year, image_url, vehicle_type")
+        .eq("user_id", user.id)
+        .in("vehicle_type", types)
+        .neq("id", car!.id)
+        .is("linked_car_id", null)
+        .order("created_at", { ascending: false });
+      return (data as { id: string; brand: string; model: string; year: number; image_url: string | null; vehicle_type: string }[]) ?? [];
+    },
+    enabled: !!user && !!car && linkDialogOpen && !!needLinkType,
+    staleTime: 60 * 1000,
+  });
+
+  const { data: linkedCar } = useQuery({
+    queryKey: ["car", car?.linked_car_id],
+    queryFn: async () => {
+      if (!car?.linked_car_id) return null;
+      const { data } = await supabase
+        .from("cars")
+        .select("id, brand, model, vehicle_type")
+        .eq("id", car.linked_car_id)
+        .maybeSingle();
+      return data as { id: string; brand: string; model: string; vehicle_type: string } | null;
+    },
+    enabled: !!car?.linked_car_id,
     staleTime: 10 * 60 * 1000,
   });
 
@@ -186,6 +226,25 @@ const CarDetails = () => {
     return badges;
   };
 
+  const handleLinkTo = async (targetId: string) => {
+    if (!user || !car || car.user_id !== user.id) return;
+    setLinking(true);
+    try {
+      const { error: e1 } = await supabase.from("cars").update({ linked_car_id: targetId }).eq("id", car.id).eq("user_id", user.id);
+      if (e1) throw e1;
+      const { error: e2 } = await supabase.from("cars").update({ linked_car_id: car.id }).eq("id", targetId).eq("user_id", user.id);
+      if (e2) throw e2;
+      toast.success(t.car_detail_linked as string);
+      setLinkDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["car", car.id] });
+      queryClient.invalidateQueries({ queryKey: ["car", targetId] });
+    } catch (err: any) {
+      toast.error(err?.message ?? (t.error as string));
+    } finally {
+      setLinking(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!car || !user || car.user_id !== user.id) return;
     if (!confirm(t.car_detail_delete_confirm as string)) return;
@@ -221,21 +280,37 @@ const CarDetails = () => {
     );
   }
 
+  const hasLinkedCar = !!car.linked_car_id && !!linkedCar;
+  const isCurrentHotWheels = (car.vehicle_type || "car") === "hot_wheels";
+
   return (
     <div
-      className="min-h-screen bg-background relative touch-pan-y"
+      className={`min-h-screen relative touch-pan-y ${hasLinkedCar ? "bg-gradient-to-b from-amber-500/10 via-background to-amber-500/5" : "bg-background"}`}
       onTouchStart={(e) => e.touches.length === 1 && onSwipeStart(e.touches[0].clientX, e.touches[0].clientY, true)}
       onTouchEnd={(e) => e.changedTouches.length === 1 && onSwipeEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
       onMouseDown={(e) => e.button === 0 && onSwipeStart(e.clientX, e.clientY, false)}
     >
       <BlackGoldBg />
-      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <header className={`sticky top-0 z-20 flex items-center gap-2 px-4 py-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 ${hasLinkedCar ? "border-amber-500/40" : "border-border/50"}`}>
         <Button variant="ghost" size="icon" onClick={() => (returnTo ? navigate(returnTo) : navigate(-1))}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold truncate flex-1">
+        <h1 className="text-xl font-bold truncate flex-1 min-w-0">
           {car.brand} {car.model}
         </h1>
+        {hasLinkedCar && linkedCar && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0 gap-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/40 rounded-lg px-2.5"
+            onClick={() => navigate(`/car/${car.linked_car_id}`, { state: location.state })}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline text-xs font-medium whitespace-nowrap">
+              {isCurrentHotWheels ? (t.car_detail_view_spot as string) : (t.car_detail_view_hot_wheels as string)}
+            </span>
+          </Button>
+        )}
         {user && car.user_id === user.id && (
           <Button
             variant="ghost"
@@ -255,7 +330,7 @@ const CarDetails = () => {
           <button
             type="button"
             onClick={() => { setPhotoIndex(0); setPhotoPopupOpen(true); }}
-            className="w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative"
+            className={`w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative ${hasLinkedCar ? "ring-2 ring-amber-500/40 ring-offset-2 ring-offset-background" : ""}`}
           >
             <img
               src={allPhotoUrls[0] ?? car.image_url ?? ""}
@@ -324,6 +399,18 @@ const CarDetails = () => {
           {car.location_name && <p className="text-sm text-muted-foreground">📍 {car.location_name}</p>}
           <p className="text-sm text-muted-foreground">{t.car_detail_spotted_on as string} {new Date(car.created_at).toLocaleDateString()}</p>
 
+          {isOwner && !car.linked_car_id && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+              <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-2">
+                {isCurrentHotWheels ? (t.car_detail_link_spot_desc as string) : (t.car_detail_link_hot_wheels_desc as string)}
+              </p>
+              <Button variant="outline" size="sm" className="gap-1.5 border-amber-500/40 text-amber-700 dark:text-amber-400" onClick={() => setLinkDialogOpen(true)}>
+                <Sparkles className="h-4 w-4" />
+                {isCurrentHotWheels ? (t.car_detail_link_spot as string) : (t.car_detail_link_hot_wheels as string)}
+              </Button>
+            </div>
+          )}
+
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.car_detail_about_model as string}</p>
             {loadingInfo ? (
@@ -370,6 +457,43 @@ const CarDetails = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {needLinkType === "hot_wheels" ? (t.car_detail_link_hot_wheels as string) : (t.car_detail_link_spot as string)}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+            {carsToLink.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">{t.car_detail_link_none as string}</p>
+            ) : (
+              carsToLink.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  disabled={linking}
+                  onClick={() => handleLinkTo(c.id)}
+                  className="w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 text-left hover:border-amber-500/40 transition-colors"
+                >
+                  {c.image_url ? (
+                    <img src={c.image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
+                      <Car className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{c.brand} {c.model}</p>
+                    <p className="text-xs text-muted-foreground">{c.year}</p>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={photoPopupOpen}

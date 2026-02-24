@@ -76,6 +76,7 @@ export type Database = {
           user_id: string
           vehicle_type: string
           year: number
+          linked_car_id: string | null
         }
         Insert: {
           brand: string
@@ -106,6 +107,7 @@ export type Database = {
           user_id: string
           vehicle_type?: string
           year: number
+          linked_car_id?: string | null
         }
         Update: {
           brand?: string
@@ -136,6 +138,7 @@ export type Database = {
           user_id?: string
           vehicle_type?: string
           year?: number
+          linked_car_id?: string | null
         }
         Relationships: [
           {
@@ -143,6 +146,13 @@ export type Database = {
             columns: ["garage_group_id"]
             isOneToOne: false
             referencedRelation: "garage_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cars_linked_car_id_fkey"
+            columns: ["linked_car_id"]
+            isOneToOne: true
+            referencedRelation: "cars"
             referencedColumns: ["id"]
           },
         ]
