@@ -322,24 +322,24 @@ const CarDetails = () => {
 
   return (
     <div
-      className={`min-h-screen relative touch-pan-y ${hasLinkedCar ? "bg-gradient-to-b from-amber-600/15 via-amber-500/8 to-amber-600/12" : "bg-background"}`}
+      className={`min-h-screen relative touch-pan-y ${hasLinkedCar ? "bg-amber-950" : "bg-background"}`}
       onTouchStart={(e) => e.touches.length === 1 && onSwipeStart(e.touches[0].clientX, e.touches[0].clientY, true)}
       onTouchEnd={(e) => e.changedTouches.length === 1 && onSwipeEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
       onMouseDown={(e) => e.button === 0 && onSwipeStart(e.clientX, e.clientY, false)}
     >
-      <BlackGoldBg />
-      <header className={`sticky top-0 z-20 flex items-center gap-2 px-4 py-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 ${hasLinkedCar ? "border-amber-500/60 bg-amber-950/20" : "border-border/50"}`}>
-        <Button variant="ghost" size="icon" onClick={() => (returnTo ? navigate(returnTo) : navigate(-1))}>
+      {!hasLinkedCar && <BlackGoldBg />}
+      <header className={`sticky top-0 z-20 flex items-center gap-2 px-4 py-4 border-b backdrop-blur ${hasLinkedCar ? "border-amber-400 bg-amber-900 text-amber-50" : "border-border/50 bg-background/95 supports-[backdrop-filter]:bg-background/80"}`}>
+        <Button variant="ghost" size="icon" onClick={() => (returnTo ? navigate(returnTo) : navigate(-1))} className={hasLinkedCar ? "text-amber-100 hover:bg-amber-700/50 hover:text-amber-50" : ""}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold truncate flex-1 min-w-0">
+        <h1 className={`text-xl font-bold truncate flex-1 min-w-0 ${hasLinkedCar ? "text-amber-50" : ""}`}>
           {car.brand} {car.model}
         </h1>
         {hasLinkedCar && linkedCar && (
           <Button
             variant="ghost"
             size="sm"
-            className="shrink-0 gap-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/40 rounded-lg px-2.5"
+            className="shrink-0 gap-1.5 bg-amber-500 hover:bg-amber-400 text-amber-950 font-semibold border-0 rounded-lg px-3 shadow-lg shadow-amber-950/50"
             onClick={() => navigate(`/car/${car.linked_car_id}`, { state: location.state })}
           >
             <Sparkles className="h-4 w-4" />
@@ -352,7 +352,7 @@ const CarDetails = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            className={hasLinkedCar ? "text-amber-200 hover:bg-amber-700/50 hover:text-amber-50" : "text-destructive hover:text-destructive hover:bg-destructive/10"}
             onClick={handleDelete}
             disabled={deleting}
             aria-label={t.car_detail_delete as string}
@@ -367,7 +367,7 @@ const CarDetails = () => {
           <button
             type="button"
             onClick={() => { setPhotoIndex(0); setPhotoPopupOpen(true); }}
-            className={`w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative ${hasLinkedCar ? "ring-2 ring-amber-500/60 ring-offset-2 ring-offset-background shadow-lg shadow-amber-900/20" : ""}`}
+            className={`w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative ${hasLinkedCar ? "ring-4 ring-amber-400 ring-offset-4 ring-offset-amber-900 shadow-2xl shadow-amber-950/80" : ""}`}
           >
             <img
               src={allPhotoUrls[0] ?? car.image_url ?? ""}
@@ -384,57 +384,57 @@ const CarDetails = () => {
             )}
           </button>
         ) : (
-          <div className="w-full h-64 flex items-center justify-center bg-secondary/20">
-            <Car className="h-20 w-20 text-muted-foreground/20" />
+          <div className={`w-full h-64 flex items-center justify-center ${hasLinkedCar ? "bg-amber-800/40" : "bg-secondary/20"}`}>
+            <Car className={`h-20 w-20 ${hasLinkedCar ? "text-amber-600/50" : "text-muted-foreground/20"}`} />
           </div>
         )}
 
-        <div className={`p-4 space-y-5 ${hasLinkedCar ? "rounded-xl border-2 border-amber-500/40 bg-amber-950/25 shadow-inner shadow-amber-900/10 mx-2 mb-4" : ""}`}>
+        <div className={`p-4 space-y-5 ${hasLinkedCar ? "rounded-xl border-2 border-amber-400 bg-amber-900/90 shadow-2xl shadow-black/40 mx-2 mb-4" : ""}`}>
           <div>
-            <h2 className={`text-2xl font-bold ${hasLinkedCar ? "text-amber-200" : ""}`}>{car.brand} {car.model}</h2>
-            <p className={hasLinkedCar ? "text-amber-200/80" : "text-muted-foreground"}>{car.year}</p>
+            <h2 className={`text-2xl font-bold ${hasLinkedCar ? "text-amber-50" : ""}`}>{car.brand} {car.model}</h2>
+            <p className={hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}>{car.year}</p>
             {car.edition?.trim() && (
-              <p className={`text-sm mt-0.5 ${hasLinkedCar ? "text-amber-200/80" : "text-muted-foreground"}`}>
+              <p className={`text-sm mt-0.5 ${hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}`}>
                 {t.car_detail_series as string} : <span className={`font-medium ${hasLinkedCar ? "text-amber-100" : "text-foreground"}`}>{car.edition}</span>
               </p>
             )}
             {car.finitions?.trim() && (
-              <p className={`text-sm mt-0.5 ${hasLinkedCar ? "text-amber-200/80" : "text-muted-foreground"}`}>
+              <p className={`text-sm mt-0.5 ${hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}`}>
                 {t.car_detail_finitions as string} : <span className={`font-medium ${hasLinkedCar ? "text-amber-100" : "text-foreground"}`}>{car.finitions}</span>
               </p>
             )}
             {car.delivered_by_user_id && (
-              <p className="text-sm text-primary mt-1.5 font-medium">
+              <p className={`text-sm mt-1.5 font-medium ${hasLinkedCar ? "text-amber-300" : "text-primary"}`}>
                 {t.car_detail_delivered_text as string} {deliveredByProfile ?? (t.car_detail_a_friend as string)}
               </p>
             )}
-            <div className="flex items-center gap-2 mt-1.5">
+            <div className={`flex items-center gap-2 mt-1.5 ${hasLinkedCar ? "[--tw-ring-color:rgba(251,191,36,0.4)]" : ""}`}>
               <RatingExplainer rarityLevel={car.rarity_rating ?? 5} qualityLevel={car.quality_rating ?? 3} size="md" />
             </div>
           </div>
 
           {car.modified && car.modified_comment?.trim() && (
-            <div className="rounded-xl border border-border/50 bg-card p-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t.car_detail_modifications as string}</p>
-              <p className="text-sm leading-relaxed">{car.modified_comment}</p>
+            <div className={`rounded-xl border p-3 ${hasLinkedCar ? "border-amber-500/70 bg-amber-800/80" : "border-border/50 bg-card"}`}>
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${hasLinkedCar ? "text-amber-300" : "text-muted-foreground"}`}>{t.car_detail_modifications as string}</p>
+              <p className={`text-sm leading-relaxed ${hasLinkedCar ? "text-amber-100" : ""}`}>{car.modified_comment}</p>
             </div>
           )}
 
           {car.engine && (
-            <div className="rounded-xl border border-border/50 bg-card p-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t.car_detail_engine as string}</p>
-              <p className="font-medium">{car.engine}</p>
+            <div className={`rounded-xl border p-3 ${hasLinkedCar ? "border-amber-500/70 bg-amber-800/80" : "border-border/50 bg-card"}`}>
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${hasLinkedCar ? "text-amber-300" : "text-muted-foreground"}`}>{t.car_detail_engine as string}</p>
+              <p className={`font-medium ${hasLinkedCar ? "text-amber-100" : ""}`}>{car.engine}</p>
             </div>
           )}
 
           <div className="flex flex-wrap gap-1.5">
             {getBadges(car).map((badge) => (
-              <span key={badge} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">{badge}</span>
+              <span key={badge} className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${hasLinkedCar ? "bg-amber-600/80 text-amber-950" : "bg-secondary text-secondary-foreground"}`}>{badge}</span>
             ))}
           </div>
 
-          {car.location_name && <p className="text-sm text-muted-foreground">📍 {car.location_name}</p>}
-          <p className="text-sm text-muted-foreground">{t.car_detail_spotted_on as string} {new Date(car.created_at).toLocaleDateString()}</p>
+          {car.location_name && <p className={`text-sm ${hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}`}>📍 {car.location_name}</p>}
+          <p className={`text-sm ${hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}`}>{t.car_detail_spotted_on as string} {new Date(car.created_at).toLocaleDateString()}</p>
 
           {isOwner && !hasLinkedCar && (
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
@@ -448,14 +448,14 @@ const CarDetails = () => {
             </div>
           )}
 
-          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.car_detail_about_model as string}</p>
+          <div className={`rounded-xl border p-4 space-y-3 ${hasLinkedCar ? "border-amber-500/70 bg-amber-800/80" : "border-border/50 bg-card"}`}>
+            <p className={`text-xs font-semibold uppercase tracking-wider ${hasLinkedCar ? "text-amber-300" : "text-muted-foreground"}`}>{t.car_detail_about_model as string}</p>
             {loadingInfo ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className={`flex items-center gap-2 text-sm ${hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}`}>
                 <Loader2 className="h-4 w-4 animate-spin" /> {t.car_detail_loading as string}
               </div>
             ) : description ? (
-              <div className="text-sm leading-[1.85] text-pretty space-y-4">
+              <div className={`text-sm leading-[1.85] text-pretty space-y-4 ${hasLinkedCar ? "text-amber-100" : ""}`}>
                 {(() => {
                   const rawParagraphs = description.split(/\n+/).filter((p: string) => p.trim());
                   const result: string[] = [];
@@ -469,27 +469,27 @@ const CarDetails = () => {
                 })()}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">{t.car_detail_no_desc as string}</p>
+              <p className={`text-sm ${hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}`}>{t.car_detail_no_desc as string}</p>
             )}
           </div>
 
-          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.car_detail_engines_title as string}</p>
+          <div className={`rounded-xl border p-4 space-y-3 ${hasLinkedCar ? "border-amber-500/70 bg-amber-800/80" : "border-border/50 bg-card"}`}>
+            <p className={`text-xs font-semibold uppercase tracking-wider ${hasLinkedCar ? "text-amber-300" : "text-muted-foreground"}`}>{t.car_detail_engines_title as string}</p>
             {loadingInfo ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className={`flex items-center gap-2 text-sm ${hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}`}>
                 <Loader2 className="h-4 w-4 animate-spin" /> {t.car_detail_loading as string}
               </div>
             ) : engines.length > 0 ? (
               <ul className="space-y-2">
                 {engines.map((eng, i) => (
-                  <li key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/30 last:border-0">
+                  <li key={i} className={`flex items-center justify-between text-sm py-1.5 border-b last:border-0 ${hasLinkedCar ? "border-amber-600/40 text-amber-100" : "border-border/30"}`}>
                     <span className="font-medium">{eng.name}</span>
-                    <span className="text-muted-foreground">{eng.hp} hp • {eng.fuel}</span>
+                    <span className={hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}>{eng.hp} hp • {eng.fuel}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">{t.car_detail_no_engines as string}</p>
+              <p className={`text-sm ${hasLinkedCar ? "text-amber-200" : "text-muted-foreground"}`}>{t.car_detail_no_engines as string}</p>
             )}
           </div>
         </div>
