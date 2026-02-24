@@ -235,7 +235,15 @@ const MyGarage = () => {
     <div className="flex min-h-screen flex-col bg-background relative">
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <Button variant="ghost" size="icon" onClick={() => (brandFilter || groupFilter || searchParams.get("type")) ? setSearchParams({}) : navigate("/garage-menu")}>
+        <Button variant="ghost" size="icon" onClick={() => {
+          if (searchParams.get("type")) {
+            navigate("/garage-menu");
+          } else if (brandFilter || groupFilter) {
+            setSearchParams({});
+          } else {
+            navigate("/garage-menu");
+          }
+        }}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold truncate flex-1">
