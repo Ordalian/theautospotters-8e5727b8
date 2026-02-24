@@ -178,7 +178,7 @@ const CarDetails = () => {
   });
 
   const { data: linkedCar } = useQuery({
-    queryKey: ["car", car?.linked_car_id],
+    queryKey: ["linked-car-summary", car?.linked_car_id],
     queryFn: async () => {
       if (!car?.linked_car_id) return null;
       const { data } = await supabase
