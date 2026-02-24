@@ -59,7 +59,7 @@ export const carBrands: CarBrand[] = [
       { name: "Q7", years: [2005, 2026] },
       { name: "Q8", years: [2018, 2026] },
       { name: "e-tron GT", years: [2021, 2026] },
-      { name: "R8", years: [2006, 2024] },
+      { name: "R8", years: [2006, 2026] },
       { name: "RS3", years: [2011, 2026] },
       { name: "RS5", years: [2010, 2026] },
       { name: "RS6", years: [2002, 2026] },
@@ -135,10 +135,10 @@ export const carBrands: CarBrand[] = [
   {
     name: "Bugatti",
     models: [
-      { name: "Chiron", years: [2016, 2024] },
+      { name: "Chiron", years: [2016, 2026] },
       { name: "Veyron", years: [2005, 2015] },
       { name: "Divo", years: [2019, 2021] },
-      { name: "Centodieci", years: [2022, 2024] },
+      { name: "Centodieci", years: [2022, 2026] },
       { name: "Bolide", years: [2024, 2026] },
       { name: "Tourbillon", years: [2026, 2026] },
     ],
@@ -157,7 +157,7 @@ export const carBrands: CarBrand[] = [
     name: "Chevrolet",
     models: [
       { name: "Corvette", years: [1953, 2026] },
-      { name: "Camaro", years: [1967, 2024] },
+      { name: "Camaro", years: [1967, 2026] },
       { name: "Silverado", years: [1999, 2026] },
       { name: "Tahoe", years: [1995, 2026] },
       { name: "Blazer", years: [2019, 2026] },
@@ -167,7 +167,7 @@ export const carBrands: CarBrand[] = [
   {
     name: "Dodge",
     models: [
-      { name: "Challenger", years: [2008, 2024] },
+      { name: "Challenger", years: [2008, 2026] },
       { name: "Charger", years: [2006, 2026] },
       { name: "Durango", years: [1998, 2026] },
       { name: "Viper", years: [1991, 2017] },
@@ -271,10 +271,10 @@ export const carBrands: CarBrand[] = [
   {
     name: "Jaguar",
     models: [
-      { name: "F-Type", years: [2013, 2024] },
+      { name: "F-Type", years: [2013, 2026] },
       { name: "F-Pace", years: [2016, 2026] },
-      { name: "XE", years: [2015, 2024] },
-      { name: "XF", years: [2007, 2024] },
+      { name: "XE", years: [2015, 2026] },
+      { name: "XF", years: [2007, 2026] },
       { name: "E-Type", years: [1961, 1975] },
       { name: "XJ220", years: [1992, 1994] },
     ],
@@ -293,7 +293,7 @@ export const carBrands: CarBrand[] = [
   {
     name: "Lamborghini",
     models: [
-      { name: "Huracán", years: [2014, 2024] },
+      { name: "Huracán", years: [2014, 2026] },
       { name: "Revuelto", years: [2024, 2026] },
       { name: "Urus", years: [2018, 2026] },
       { name: "Aventador", years: [2011, 2023] },
@@ -341,9 +341,9 @@ export const carBrands: CarBrand[] = [
       { name: "MC20", years: [2021, 2026] },
       { name: "GranTurismo", years: [2007, 2026] },
       { name: "Grecale", years: [2022, 2026] },
-      { name: "Ghibli", years: [2013, 2024] },
-      { name: "Levante", years: [2016, 2024] },
-      { name: "Quattroporte", years: [2003, 2024] },
+      { name: "Ghibli", years: [2013, 2026] },
+      { name: "Levante", years: [2016, 2026] },
+      { name: "Quattroporte", years: [2003, 2026] },
     ],
   },
   {
@@ -360,7 +360,7 @@ export const carBrands: CarBrand[] = [
   {
     name: "McLaren",
     models: [
-      { name: "720S", years: [2017, 2024] },
+      { name: "720S", years: [2017, 2026] },
       { name: "750S", years: [2023, 2026] },
       { name: "Artura", years: [2022, 2026] },
       { name: "P1", years: [2013, 2015] },
@@ -379,7 +379,7 @@ export const carBrands: CarBrand[] = [
       { name: "E-Class", years: [1993, 2026] },
       { name: "S-Class", years: [1972, 2026] },
       { name: "CLA", years: [2013, 2026] },
-      { name: "CLS", years: [2004, 2024] },
+      { name: "CLS", years: [2004, 2026] },
       { name: "GLA", years: [2014, 2026] },
       { name: "GLC", years: [2015, 2026] },
       { name: "GLE", years: [2015, 2026] },
@@ -388,7 +388,7 @@ export const carBrands: CarBrand[] = [
       { name: "AMG GT", years: [2015, 2026] },
       { name: "SL", years: [1954, 2026] },
       { name: "EQS", years: [2021, 2026] },
-      { name: "AMG One", years: [2022, 2024] },
+      { name: "AMG One", years: [2022, 2026] },
       { name: "CLK GTR", years: [1998, 1999] },
       { name: "SLR McLaren", years: [2003, 2010] },
       { name: "B-Class", years: [2005, 2022] },
@@ -514,7 +514,7 @@ export const carBrands: CarBrand[] = [
   {
     name: "Renault",
     models: [
-      { name: "Mégane RS", years: [2004, 2024] },
+      { name: "Mégane RS", years: [2004, 2026] },
       { name: "Clio", years: [1990, 2026] },
       { name: "Alpine A110", years: [2018, 2026] },
       { name: "Captur", years: [2013, 2026] },
@@ -525,7 +525,7 @@ export const carBrands: CarBrand[] = [
       { name: "Kadjar", years: [2015, 2022] },
       { name: "Austral", years: [2022, 2026] },
       { name: "Megane", years: [1995, 2026] },
-      { name: "Zoe", years: [2012, 2024] },
+      { name: "Zoe", years: [2012, 2026] },
       { name: "R5", years: [1972, 1996] },
       { name: "R5 Turbo", years: [1980, 1986] },
       { name: "R8 Gordini", years: [1964, 1970] },
@@ -538,10 +538,10 @@ export const carBrands: CarBrand[] = [
     models: [
       { name: "Phantom", years: [2003, 2026] },
       { name: "Ghost", years: [2010, 2026] },
-      { name: "Wraith", years: [2013, 2024] },
+      { name: "Wraith", years: [2013, 2026] },
       { name: "Cullinan", years: [2018, 2026] },
       { name: "Spectre", years: [2023, 2026] },
-      { name: "Dawn", years: [2015, 2024] },
+      { name: "Dawn", years: [2015, 2026] },
     ],
   },
   {
@@ -654,7 +654,7 @@ export const carBrands: CarBrand[] = [
       { name: "Leon", years: [2020, 2026] },
       { name: "Born", years: [2021, 2026] },
       { name: "Tavascan", years: [2024, 2026] },
-      { name: "Ateca", years: [2020, 2024] },
+      { name: "Ateca", years: [2020, 2026] },
     ],
   },
   {
@@ -699,7 +699,7 @@ export const carBrands: CarBrand[] = [
     name: "Infiniti",
     models: [
       { name: "Q50", years: [2014, 2026] },
-      { name: "Q60", years: [2017, 2024] },
+      { name: "Q60", years: [2017, 2026] },
       { name: "QX50", years: [2019, 2026] },
       { name: "QX80", years: [2011, 2026] },
     ],
@@ -707,7 +707,7 @@ export const carBrands: CarBrand[] = [
   {
     name: "Kia",
     models: [
-      { name: "Stinger", years: [2018, 2024] },
+      { name: "Stinger", years: [2018, 2026] },
       { name: "EV6", years: [2022, 2026] },
       { name: "Sportage", years: [1993, 2026] },
       { name: "Sorento", years: [2002, 2026] },
@@ -755,7 +755,7 @@ export const carBrands: CarBrand[] = [
       { name: "Astra", years: [1991, 2026] },
       { name: "Mokka", years: [2012, 2026] },
       { name: "Grandland", years: [2017, 2026] },
-      { name: "Insignia", years: [2008, 2024] },
+      { name: "Insignia", years: [2008, 2026] },
     ],
   },
   {
@@ -805,8 +805,8 @@ export const carBrands: CarBrand[] = [
   {
     name: "Smart",
     models: [
-      { name: "ForTwo", years: [1998, 2024] },
-      { name: "ForFour", years: [2004, 2024] },
+      { name: "ForTwo", years: [1998, 2026] },
+      { name: "ForFour", years: [2004, 2026] },
       { name: "#1", years: [2023, 2026] },
       { name: "#3", years: [2024, 2026] },
     ],
@@ -856,7 +856,7 @@ export const carBrands: CarBrand[] = [
   { name: "DeLorean", models: [{ name: "DMC-12", years: [1981, 1983] }, { name: "Alpha5", years: [2024, 2026] }] },
   { name: "Excalibur", models: [{ name: "Series IV", years: [1984, 1990] }, { name: "Series V", years: [1985, 1997] }] },
   { name: "Ginetta", models: [{ name: "G40", years: [2010, 2026] }, { name: "G55", years: [2011, 2026] }, { name: "G56", years: [2012, 2026] }, { name: "G58", years: [2015, 2026] }, { name: "Akula", years: [2019, 2026] }] },
-  { name: "Gordon Murray", models: [{ name: "T.50", years: [2022, 2024] }, { name: "T.33", years: [2024, 2026] }] },
+  { name: "Gordon Murray", models: [{ name: "T.50", years: [2022, 2026] }, { name: "T.33", years: [2024, 2026] }] },
   { name: "Gumpert", models: [{ name: "Apollo", years: [2005, 2016] }, { name: "Apollo Intensa Emozione", years: [2018, 2020] }] },
   { name: "Hennessey", models: [{ name: "Venom GT", years: [2011, 2017] }, { name: "Venom F5", years: [2022, 2026] }, { name: "Mammoth", years: [2020, 2026] }] },
   { name: "Hispano-Suiza", models: [{ name: "Carmen", years: [2019, 2026] }, { name: "Maguari", years: [2024, 2026] }] },
@@ -911,7 +911,7 @@ export const truckBrands: CarBrand[] = [
 // Motos
 export const motorcycleBrands: CarBrand[] = [
   { name: "Honda", models: [{ name: "CBR600RR", years: [2003, 2026] }, { name: "CBR1000RR", years: [2004, 2026] }, { name: "Africa Twin", years: [2016, 2026] }, { name: "Gold Wing", years: [1975, 2026] }, { name: "CB650R", years: [2019, 2026] }, { name: "PCX", years: [2010, 2026] }] },
-  { name: "Yamaha", models: [{ name: "YZF-R1", years: [1998, 2026] }, { name: "MT-09", years: [2014, 2026] }, { name: "Tracer 9", years: [2021, 2026] }, { name: "XSR900", years: [2016, 2026] }, { name: "Niken", years: [2018, 2024] }] },
+  { name: "Yamaha", models: [{ name: "YZF-R1", years: [1998, 2026] }, { name: "MT-09", years: [2014, 2026] }, { name: "Tracer 9", years: [2021, 2026] }, { name: "XSR900", years: [2016, 2026] }, { name: "Niken", years: [2018, 2026] }] },
   { name: "Kawasaki", models: [{ name: "Ninja ZX-10R", years: [2004, 2026] }, { name: "Z900", years: [2017, 2026] }, { name: "Versys 1000", years: [2012, 2026] }, { name: "H2", years: [2015, 2026] }] },
   { name: "Suzuki", models: [{ name: "GSX-R1000", years: [2001, 2026] }, { name: "Hayabusa", years: [1999, 2026] }, { name: "V-Strom 1050", years: [2020, 2026] }, { name: "Burgman", years: [1998, 2026] }] },
   { name: "Ducati", models: [{ name: "Panigale V4", years: [2018, 2026] }, { name: "Monster", years: [1993, 2026] }, { name: "Multistrada", years: [2003, 2026] }, { name: "Scrambler", years: [2015, 2026] }] },

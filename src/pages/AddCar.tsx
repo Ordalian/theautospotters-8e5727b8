@@ -353,10 +353,10 @@ const AddCar = () => {
       delete (insertPayload as any).__owned_vehicle_id;
       delete (insertPayload as any).__owned_vehicle_user_id;
 
-      const insertCar = async () => {
+      const insertCar = async (payload: Record<string, any> = insertPayload) => {
         const { data: inserted, error } = await supabase
           .from("cars")
-          .insert(insertPayload as any)
+          .insert(payload as any)
           .select("id")
           .single();
         if (error) {
@@ -384,12 +384,28 @@ const AddCar = () => {
         return inserted;
       };
 
+      const runInsert = async () => {
+        try {
+          return await insertCar();
+        } catch (e: any) {
+          if (isMiniature && (e?.message?.includes("miniature_maker") || e?.message?.includes("schema cache"))) {
+            const fallback = { ...insertPayload };
+            delete fallback.miniature_maker;
+            fallback.finitions = fallback.finitions
+              ? `Fabricant: ${fabricant} · ${fallback.finitions}`
+              : `Fabricant: ${fabricant}`;
+            return await insertCar(fallback);
+          }
+          throw e;
+        }
+      };
+
       if (isDeliveryMode) {
-        const inserted = await insertCar();
+        const inserted = await runInsert();
         toast.success(t.add_car_delivery_added as string);
         navigate(`/deliver-car/select-friend?carId=${inserted.id}`);
       } else {
-        await insertCar();
+        await runInsert();
         const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(brand, model) : `${brand} ${model}`;
         toast.success(successMsg);
         navigate(isMiniature ? "/garage?type=hot_wheels" : "/garage");
