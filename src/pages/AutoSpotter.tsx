@@ -24,6 +24,16 @@ interface IdentifyAndPlateResult extends CarResult {
   vehicle_type?: string;
 }
 
+const VEHICLE_TYPE_LABEL_KEYS: Record<string, string> = {
+  car: "garage_menu_cars",
+  truck: "garage_menu_trucks",
+  motorcycle: "garage_menu_motorcycles",
+  boat: "garage_menu_boats",
+  plane: "garage_menu_planes",
+  train: "garage_menu_trains",
+  hot_wheels: "garage_menu_hot_wheels",
+};
+
 const AutoSpotter = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -88,7 +98,8 @@ const AutoSpotter = () => {
       if (data.plate_bbox) setPlateBbox(data.plate_bbox);
       else setPlateBbox(null);
       const validTypes = ["car", "truck", "motorcycle", "boat", "plane", "train", "hot_wheels"];
-      if (data.vehicle_type && validTypes.includes(data.vehicle_type)) setVehicleType(data.vehicle_type);
+      const rawType = typeof data.vehicle_type === "string" ? data.vehicle_type.trim().toLowerCase() : "";
+      if (rawType && validTypes.includes(rawType)) setVehicleType(rawType);
       else setVehicleType("car");
     } catch (err: any) {
       const msg = err?.message || "Reconnaissance impossible.";
@@ -136,7 +147,7 @@ const AutoSpotter = () => {
     if (primaryPhotoSourceType) params.set("photo_source_type", primaryPhotoSourceType);
     if (isDeliveryMode) params.set("delivery", "1");
     if (extractedPlate) params.set("extracted_plate", extractedPlate);
-    if (vehicleType) params.set("vehicle_type", vehicleType);
+    params.set("vehicle_type", vehicleType);
     navigate(`/add-car?${params.toString()}`);
   };
 
@@ -252,6 +263,9 @@ const AutoSpotter = () => {
               </h3>
               <p className="text-sm text-muted-foreground">
                 {t.autospotter_year as string}: {result.year} • {t.autospotter_confidence as string}: {Math.round(result.confidence * 100)}%
+                {VEHICLE_TYPE_LABEL_KEYS[vehicleType] && (
+                  <> • {t.autospotter_vehicle_type as string}: {t[VEHICLE_TYPE_LABEL_KEYS[vehicleType]] as string}</>
+                )}
               </p>
             </div>
 

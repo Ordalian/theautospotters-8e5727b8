@@ -205,6 +205,7 @@ const en: Translations = {
   autospotter_ai_identified: "AI identified:",
   autospotter_year: "Year",
   autospotter_confidence: "Confidence",
+  autospotter_vehicle_type: "Type",
   autospotter_save_vehicle: "Save as my vehicle",
   autospotter_add_to_garage: "Add to my garage",
   autospotter_correct: "Correct me",
