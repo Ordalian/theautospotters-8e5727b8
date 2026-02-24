@@ -90,8 +90,19 @@ const AutoSpotter = () => {
         const data = await callCarApi<IdentifyAndPlateResult>({ action: "identify_and_extract_plate", images: base64Images });
         console.log("[AutoSpotter] API response:", JSON.stringify(data));
         setResult({ brand: data.brand, model: data.model, year: data.year, confidence: data.confidence });
-        if (data.plate_bbox) setPlateBbox(data.plate_bbox);
-        else setPlateBbox(null);
+        // Also extract plate + bbox in non-owned mode (for blur & bonus matching)
+        const plate = data.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+        if (plate && plate.length >= 2) {
+          setExtractedPlate(plate);
+          console.log("[AutoSpotter] Extracted plate (non-owned):", plate);
+        }
+        if (data.plate_bbox) {
+          setPlateBbox(data.plate_bbox);
+          console.log("[AutoSpotter] plate_bbox:", JSON.stringify(data.plate_bbox));
+        } else {
+          setPlateBbox(null);
+          console.log("[AutoSpotter] No plate_bbox returned by API — blur will be skipped");
+        }
       }
     } catch (err: any) {
       const msg = err?.message || "Reconnaissance impossible.";
