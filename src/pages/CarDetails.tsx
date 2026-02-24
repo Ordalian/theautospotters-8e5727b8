@@ -270,6 +270,8 @@ const CarDetails = () => {
       setLinkDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["car", car.id] });
       queryClient.invalidateQueries({ queryKey: ["car", targetId] });
+      queryClient.invalidateQueries({ queryKey: ["car-linked-id", car.id] });
+      queryClient.invalidateQueries({ queryKey: ["car-linked-id", targetId] });
     } catch (err: any) {
       toast.error(err?.message ?? (t.error as string));
     } finally {
@@ -317,13 +319,13 @@ const CarDetails = () => {
 
   return (
     <div
-      className={`min-h-screen relative touch-pan-y ${hasLinkedCar ? "bg-gradient-to-b from-amber-500/10 via-background to-amber-500/5" : "bg-background"}`}
+      className={`min-h-screen relative touch-pan-y ${hasLinkedCar ? "bg-gradient-to-b from-amber-600/15 via-amber-500/8 to-amber-600/12" : "bg-background"}`}
       onTouchStart={(e) => e.touches.length === 1 && onSwipeStart(e.touches[0].clientX, e.touches[0].clientY, true)}
       onTouchEnd={(e) => e.changedTouches.length === 1 && onSwipeEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
       onMouseDown={(e) => e.button === 0 && onSwipeStart(e.clientX, e.clientY, false)}
     >
       <BlackGoldBg />
-      <header className={`sticky top-0 z-20 flex items-center gap-2 px-4 py-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 ${hasLinkedCar ? "border-amber-500/40" : "border-border/50"}`}>
+      <header className={`sticky top-0 z-20 flex items-center gap-2 px-4 py-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 ${hasLinkedCar ? "border-amber-500/60 bg-amber-950/20" : "border-border/50"}`}>
         <Button variant="ghost" size="icon" onClick={() => (returnTo ? navigate(returnTo) : navigate(-1))}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -362,7 +364,7 @@ const CarDetails = () => {
           <button
             type="button"
             onClick={() => { setPhotoIndex(0); setPhotoPopupOpen(true); }}
-            className={`w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative ${hasLinkedCar ? "ring-2 ring-amber-500/40 ring-offset-2 ring-offset-background" : ""}`}
+            className={`w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative ${hasLinkedCar ? "ring-2 ring-amber-500/60 ring-offset-2 ring-offset-background shadow-lg shadow-amber-900/20" : ""}`}
           >
             <img
               src={allPhotoUrls[0] ?? car.image_url ?? ""}
@@ -384,18 +386,18 @@ const CarDetails = () => {
           </div>
         )}
 
-        <div className="p-4 space-y-5">
+        <div className={`p-4 space-y-5 ${hasLinkedCar ? "rounded-xl border-2 border-amber-500/40 bg-amber-950/25 shadow-inner shadow-amber-900/10 mx-2 mb-4" : ""}`}>
           <div>
-            <h2 className="text-2xl font-bold">{car.brand} {car.model}</h2>
-            <p className="text-muted-foreground">{car.year}</p>
+            <h2 className={`text-2xl font-bold ${hasLinkedCar ? "text-amber-200" : ""}`}>{car.brand} {car.model}</h2>
+            <p className={hasLinkedCar ? "text-amber-200/80" : "text-muted-foreground"}>{car.year}</p>
             {car.edition?.trim() && (
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {t.car_detail_series as string} : <span className="font-medium text-foreground">{car.edition}</span>
+              <p className={`text-sm mt-0.5 ${hasLinkedCar ? "text-amber-200/80" : "text-muted-foreground"}`}>
+                {t.car_detail_series as string} : <span className={`font-medium ${hasLinkedCar ? "text-amber-100" : "text-foreground"}`}>{car.edition}</span>
               </p>
             )}
             {car.finitions?.trim() && (
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {t.car_detail_finitions as string} : <span className="font-medium text-foreground">{car.finitions}</span>
+              <p className={`text-sm mt-0.5 ${hasLinkedCar ? "text-amber-200/80" : "text-muted-foreground"}`}>
+                {t.car_detail_finitions as string} : <span className={`font-medium ${hasLinkedCar ? "text-amber-100" : "text-foreground"}`}>{car.finitions}</span>
               </p>
             )}
             {car.delivered_by_user_id && (
@@ -431,7 +433,7 @@ const CarDetails = () => {
           {car.location_name && <p className="text-sm text-muted-foreground">📍 {car.location_name}</p>}
           <p className="text-sm text-muted-foreground">{t.car_detail_spotted_on as string} {new Date(car.created_at).toLocaleDateString()}</p>
 
-          {isOwner && !car.linked_car_id && (
+          {isOwner && !hasLinkedCar && (
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
               <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-2">
                 {isCurrentHotWheels ? (t.car_detail_link_spot_desc as string) : (t.car_detail_link_hot_wheels_desc as string)}
