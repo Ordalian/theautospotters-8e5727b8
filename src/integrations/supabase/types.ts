@@ -61,6 +61,7 @@ export type Database = {
           image_url: string | null
           latitude: number | null
           license_plate: string | null
+          linked_car_id: string | null
           location_name: string | null
           location_precision: string | null
           longitude: number | null
@@ -91,6 +92,7 @@ export type Database = {
           image_url?: string | null
           latitude?: number | null
           license_plate?: string | null
+          linked_car_id?: string | null
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
@@ -121,6 +123,7 @@ export type Database = {
           image_url?: string | null
           latitude?: number | null
           license_plate?: string | null
+          linked_car_id?: string | null
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
@@ -143,6 +146,13 @@ export type Database = {
             columns: ["garage_group_id"]
             isOneToOne: false
             referencedRelation: "garage_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cars_linked_car_id_fkey"
+            columns: ["linked_car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
             referencedColumns: ["id"]
           },
         ]
