@@ -170,7 +170,7 @@ const Dashboard = () => {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 ring-1 ring-primary/20">
             <Car className="h-4.5 w-4.5 text-primary" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">AutoSpot</h1>
+          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{t.app_name as string}</h1>
         </div>
         <div className="flex items-center gap-0.5 relative" ref={profileMenuRef}>
           <Button

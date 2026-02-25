@@ -21,8 +21,11 @@ const en: Translations = {
   anonymous: "Anonymous",
   friend: "Friend",
 
+  // App
+  app_name: "The Machinery",
+
   // Auth
-  auth_title: "AutoSpot",
+  auth_title: "The Machinery",
   auth_subtitle: "Spot. Collect. Compete.",
   auth_create_account: "Create Account",
   auth_welcome_back: "Welcome Back",
@@ -51,7 +54,7 @@ const en: Translations = {
   dash_friends_sub: "See your friends",
   dash_shop: "Shop",
   dash_shop_sub: "Store",
-  dash_autospotter: "AutoSpotter",
+  dash_autospotter: "Spirit of the Machine",
   dash_autospotter_sub: "AI car recognition",
   dash_leaderboard: "Leaderboard",
   dash_leaderboard_sub: "Top spotters",
@@ -209,8 +212,8 @@ const en: Translations = {
   add_miniature_fill_required: "Fill in manufacturer, brand, model and year",
   add_miniature_photo_required_validation: "Photo is required for a miniature",
 
-  // AutoSpotter
-  autospotter_title: "AutoSpotter",
+  // Spirit of the Machine (ex AutoSpotter)
+  autospotter_title: "Spirit of the Machine",
   autospotter_my_vehicle: "My Vehicle",
   autospotter_info: "Add up to 4 photos: the AI will identify the car (brand, model, year).",
   autospotter_add_photo: "Add photo",
@@ -320,7 +323,7 @@ const en: Translations = {
   profile_add_vehicle_title: "Add an owned vehicle",
   profile_add_vehicle_desc: "Take a photo of your vehicle (with the license plate visible). The analysis is confidential and no plate data is displayed.",
   profile_take_photo: "Take a photo",
-  profile_open_autospotter: "Open AutoSpotter (photo + identification)",
+  profile_open_autospotter: "Open Spirit of the Machine (photo + identification)",
   profile_vehicle_registered: "Vehicle registered. You'll be notified if it's spotted.",
   profile_no_plate: "No readable plate on the photo. Take a photo where the plate is visible.",
   profile_remove_vehicle: "Remove this vehicle from the list?",
@@ -414,7 +417,7 @@ const en: Translations = {
   // Deliver
   deliver_title: "Deliver a vehicle",
   deliver_desc: "Choose how to add the vehicle to deliver. Photo (camera or gallery) is required.",
-  deliver_autospotter: "AutoSpotter",
+  deliver_autospotter: "Spirit of the Machine",
   deliver_autospotter_desc: "Photo → AI identifies the vehicle",
   deliver_manual: "Manual entry",
   deliver_manual_desc: "Enter brand, model, year, photo",
