@@ -536,7 +536,7 @@ const AddCar = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50">
+      <header className="sticky top-0 z-10 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button variant="ghost" size="icon" onClick={() => navigate(isDeliveryMode ? "/friends" : "/garage-menu")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
