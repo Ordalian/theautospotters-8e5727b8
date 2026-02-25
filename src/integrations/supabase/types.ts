@@ -357,6 +357,7 @@ export type Database = {
           avg_rarity: number
           car_count: number
           car_level: number
+          total_estimated_price: number
           user_id: string
           username: string
         }[]

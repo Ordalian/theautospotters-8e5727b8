@@ -200,7 +200,7 @@ const ProfileStats = () => {
         .from("cars")
         .select(cols)
         .eq("user_id", targetUserId!);
-      return (data as CarRow[]) ?? [];
+      return (data as unknown as CarRow[]) ?? [];
     },
     enabled: !!targetUserId && (!isFriendView || isFriend),
     staleTime: 2 * 60 * 1000,
