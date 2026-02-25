@@ -442,10 +442,7 @@ const CarDetails = () => {
 
           {isOwner && !hasLinkedCar && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-              <p className="text-xs font-medium text-primary mb-2">
-                {isCurrentHotWheels ? (t.car_detail_link_spot_desc as string) : (t.car_detail_link_hot_wheels_desc as string)}
-              </p>
-              <Button variant="outline" size="sm" className="gap-1.5 border-primary/30 text-primary" onClick={() => setLinkDialogOpen(true)}>
+              <Button variant="outline" size="sm" className="gap-1.5 border-primary/30 text-primary w-full sm:w-auto" onClick={() => setLinkDialogOpen(true)}>
                 <Sparkles className="h-4 w-4" />
                 {isCurrentHotWheels ? (t.car_detail_link_spot as string) : (t.car_detail_link_hot_wheels as string)}
               </Button>
