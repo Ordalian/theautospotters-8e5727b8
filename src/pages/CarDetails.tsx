@@ -113,8 +113,8 @@ const CarDetails = () => {
   const { data: carRaw, isLoading: loading } = useQuery({
     queryKey: ["car", id],
     queryFn: async () => {
-      const colsWithType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type";
-      const colsWithoutType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id";
+      const colsWithType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type, linked_car_id";
+      const colsWithoutType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, linked_car_id";
       const { data, error } = await supabase.from("cars").select(colsWithType).eq("id", id!).maybeSingle();
       if (!error && data) return data as (Omit<CarDetail, "linked_car_id"> & { linked_car_id?: string | null }) | null;
       const { data: fallback, error: err2 } = await supabase.from("cars").select(colsWithoutType).eq("id", id!).maybeSingle();
@@ -142,7 +142,8 @@ const CarDetails = () => {
 
   const car = useMemo((): CarDetail | null => {
     if (!carRaw) return null;
-    return { ...carRaw, vehicle_type: carRaw.vehicle_type ?? "car", linked_car_id: linkedCarId } as CarDetail;
+    const rawLinked = (carRaw as any)?.linked_car_id ?? null;
+    return { ...carRaw, vehicle_type: carRaw.vehicle_type ?? "car", linked_car_id: rawLinked || linkedCarId } as CarDetail;
   }, [carRaw, linkedCarId]);
 
   const isOwner = !!user && car?.user_id === user.id;
