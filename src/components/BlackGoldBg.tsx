@@ -33,25 +33,26 @@ const THEME_GRADIENTS: Record<string, string> = {
   `,
 };
 
-/* Inline SVG marble veining pattern — very subtle, organic lines */
 const MARBLE_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800' viewBox='0 0 800 800'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='4' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='800' height='800' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E")`;
 
 const MARBLE_GOLD_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cdefs%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.003' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.6 0 0 0 0 0.5 0 0 0 0 0.2 0 0 0 1 0'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='600' height='600' filter='url(%23v)' opacity='0.025'/%3E%3C/svg%3E")`;
 
-const BlackGoldBg = () => {
+interface BlackGoldBgProps {
+  showMarble?: boolean;
+}
+
+const BlackGoldBg = ({ showMarble = false }: BlackGoldBgProps) => {
   const { theme } = useTheme();
   const gradient = THEME_GRADIENTS[theme] || THEME_GRADIENTS["noir-or"];
   const isNoirOr = !theme || theme === "noir-or";
 
   return (
     <>
-      {/* Base gradient layer */}
       <div
         className="pointer-events-none fixed inset-0 z-0"
         style={{ backgroundImage: gradient }}
       />
-      {/* Marble noise texture — only on noir-or theme */}
-      {isNoirOr && (
+      {showMarble && isNoirOr && (
         <>
           <div
             className="pointer-events-none fixed inset-0 z-0"
