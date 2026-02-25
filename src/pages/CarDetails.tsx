@@ -41,11 +41,22 @@ interface CarDetail {
   delivered_by_user_id: string | null;
   vehicle_type: string;
   linked_car_id: string | null;
+  car_condition: string | null;
+  estimated_price: number | null;
+  estimated_price_at: string | null;
+  units_produced: number | null;
 }
 
 interface CarInfoResult {
   description: string;
   engines: { name: string; displacement: string; fuel: string; hp: number }[];
+}
+
+interface PriceAndUnitsResult {
+  price_eur: number | null;
+  price_display: string;
+  units_produced: number | null;
+  condition_label: string;
 }
 
 const CarDetails = () => {
@@ -114,8 +125,8 @@ const CarDetails = () => {
   const { data: carRaw, isLoading: loading } = useQuery({
     queryKey: ["car", id],
     queryFn: async () => {
-      const colsWithType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type, linked_car_id";
-      const colsWithoutType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, linked_car_id";
+      const colsWithType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type, linked_car_id, estimated_price, estimated_price_at, units_produced";
+      const colsWithoutType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, linked_car_id, estimated_price, estimated_price_at, units_produced";
       const { data, error } = await supabase.from("cars").select(colsWithType).eq("id", id!).maybeSingle();
       if (!error && data) return data as (Omit<CarDetail, "linked_car_id"> & { linked_car_id?: string | null }) | null;
       const { data: fallback, error: err2 } = await supabase.from("cars").select(colsWithoutType).eq("id", id!).maybeSingle();
@@ -253,6 +264,45 @@ const CarDetails = () => {
 
   const description = carInfo?.description;
   const engines = carInfo?.engines ?? [];
+
+  const { data: priceAndUnits, isLoading: loadingPrice } = useQuery({
+    queryKey: ["car-price", id, car?.brand, car?.model, car?.year, car?.car_condition, language],
+    queryFn: async () => {
+      if (!car?.brand || !car?.model || car?.year == null) return null;
+      const res = await callCarApi<PriceAndUnitsResult>({
+        action: "get_price_and_units",
+        brand: car.brand,
+        model: car.model,
+        year: car.year,
+        condition: car.car_condition || "good",
+        lang: language,
+        vehicle_type: car.vehicle_type || "car",
+        ...(car.edition ? { edition: car.edition } : {}),
+      });
+      if (res?.price_eur != null && user && car.user_id === user.id) {
+        await supabase
+          .from("cars")
+          .update({
+            estimated_price: res.price_eur,
+            estimated_price_at: new Date().toISOString(),
+            units_produced: res.units_produced ?? null,
+          })
+          .eq("id", car.id)
+          .eq("user_id", user.id);
+        queryClient.invalidateQueries({ queryKey: ["car", id] });
+        queryClient.invalidateQueries({ queryKey: ["profile-stats-cars", user.id] });
+      }
+      return res;
+    },
+    enabled: !!car && !!car.brand && !!car.model && car.year != null,
+    staleTime: 24 * 60 * 60 * 1000,
+    retry: 1,
+  });
+
+  const priceDisplay = priceAndUnits?.price_display || (car?.estimated_price != null ? `${Number(car.estimated_price).toLocaleString("fr-FR")} €` : null);
+  const unitsDisplay = priceAndUnits?.units_produced ?? car?.units_produced ?? null;
+  const conditionLabel = priceAndUnits?.condition_label ?? (car?.car_condition ? (t[`condition_${car.car_condition}` as keyof typeof t] as string) : null);
+  const priceDate = new Date().toLocaleDateString(language === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
 
   const getBadges = (c: CarDetail) => {
     const badges: string[] = [];
@@ -430,6 +480,40 @@ const CarDetails = () => {
               <p className="font-medium">{car.engine}</p>
             </div>
           )}
+
+          <div className={`rounded-xl border p-3 ${hasLinkedCar ? "linked-car-section" : "border-border/50 bg-card"}`}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1 text-muted-foreground">{t.car_detail_price as string}</p>
+            {loadingPrice ? (
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.car_detail_price_loading as string}
+              </p>
+            ) : priceDisplay && conditionLabel ? (
+              <p className="text-sm">
+                <span className="font-medium">{priceDisplay}</span>
+                <br />
+                <span className="text-muted-foreground">
+                  {(t.car_detail_price_line as (date: string, condition: string) => string)(priceDate, conditionLabel)}
+                </span>
+              </p>
+            ) : priceDisplay ? (
+              <p className="text-sm font-medium">{priceDisplay}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t.car_detail_price_error as string}</p>
+            )}
+          </div>
+
+          <div className={`rounded-xl border p-3 ${hasLinkedCar ? "linked-car-section" : "border-border/50 bg-card"}`}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1 text-muted-foreground">{t.car_detail_units_produced as string}</p>
+            {loadingPrice ? (
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.car_detail_price_loading as string}
+              </p>
+            ) : unitsDisplay != null ? (
+              <p className="text-sm font-medium">{unitsDisplay.toLocaleString("fr-FR")}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">—</p>
+            )}
+          </div>
 
           <div className="flex flex-wrap gap-1.5">
             {getBadges(car).map((badge) => (

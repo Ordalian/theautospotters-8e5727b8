@@ -483,7 +483,73 @@ Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. N
       return jsonResponse({ description, engines });
     }
 
-    return errResponse("action required: 'identify', 'extract_plate', 'identify_and_extract_plate', 'engines', 'editions' or 'description'.", 400);
+    // —— action: get_price_and_units (estimated market price by condition + production units) ——
+    if (body.action === "get_price_and_units") {
+      const { brand, model, year, condition, edition, vehicle_type, lang } = body;
+      if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
+      const cond = ["wreck", "bad", "good", "well_kept", "pristine"].includes(condition) ? condition : "good";
+      const isMiniature = vehicle_type === "hot_wheels";
+      const wantEn = lang === "en";
+      const editionHint = edition ? (wantEn ? ` (edition: ${edition})` : ` (édition: ${edition})`) : "";
+
+      const conditionContext = cond === "wreck" || cond === "bad"
+        ? (wantEn ? "in poor or average condition (damaged, high mileage, needs work)" : "en mauvais ou moyen état (endommagé, kilométrage élevé, à retaper)")
+        : cond === "good" || cond === "well_kept"
+          ? (wantEn ? "in good condition (well maintained, normal wear)" : "en bon état (bien entretenu, usure normale)")
+          : (wantEn ? "in perfect / pristine condition (excellent state, low mileage, collector grade)" : "en parfait état (excellent état, faible kilométrage, état collection)");
+
+      let prompt: string;
+      if (isMiniature) {
+        prompt = wantEn
+          ? `You are a collectible vehicles expert. For the ${year} ${brand} ${model}${editionHint} (die-cast / miniature, e.g. Hot Wheels, Matchbox):
+1. Estimate the current market value in EUR for a specimen in ${cond} condition (box/blister state). Reply with "price_eur": number (integer, no decimals).
+2. If you know the production run or number of units produced for this model/variant, reply with "units_produced": number. Otherwise use "units_produced": null.
+Reply ONLY with a JSON object: {"price_eur": number, "units_produced": number|null, "price_display": "X XXX €", "condition_label": "..."}. No markdown. Use French condition_label only if lang is fr.`
+          : `Tu es expert en miniatures et véhicules de collection. Pour la ${year} ${brand} ${model}${editionHint} (miniature type Hot Wheels, Majorette, etc.) :
+1. Estime la valeur marchande actuelle en euros pour un exemplaire en état ${cond} (état blister/boîte). Réponds avec "price_eur" : nombre entier.
+2. Si tu connais le tirage ou le nombre d'unités produites pour ce modèle/variant, réponds avec "units_produced" : nombre. Sinon "units_produced" : null.
+Réponds UNIQUEMENT avec un objet JSON : {"price_eur": number, "units_produced": number|null, "price_display": "X XXX €", "condition_label": "..."}. Pas de markdown. condition_label en français.`;
+      } else {
+        prompt = wantEn
+          ? `You are a used vehicle market expert. For the ${year} ${brand} ${model}${editionHint}:
+1. Estimate the current market price in EUR for a vehicle ${conditionContext}. Today's date applies. Reply with "price_eur": number (integer).
+2. If you know the total production volume (units produced) for this model/generation, reply with "units_produced": number. Otherwise "units_produced": null.
+Reply ONLY with a JSON object: {"price_eur": number, "units_produced": number|null, "price_display": "X XXX €", "condition_label": "short label for the condition"}. No markdown. condition_label in English.`
+          : `Tu es expert du marché de l'occasion. Pour la ${year} ${brand} ${model}${editionHint} :
+1. Estime le prix de marché actuel en euros pour un véhicule ${conditionContext}. Date du jour à prendre en compte. Réponds avec "price_eur" : nombre entier.
+2. Si tu connais le volume de production total (nombre d'unités produites) pour ce modèle/génération, réponds avec "units_produced" : nombre. Sinon "units_produced" : null.
+Réponds UNIQUEMENT avec un objet JSON : {"price_eur": number, "units_produced": number|null, "price_display": "X XXX €", "condition_label": "libellé court de l'état"}. Pas de markdown. condition_label en français.`;
+      }
+
+      const text = await callAI(API_KEY, [
+        { role: "system", content: "You are an expert. Return only the requested JSON, no preamble or markdown." },
+        { role: "user", content: prompt },
+      ]);
+
+      let price_eur: number | null = null;
+      let price_display = "";
+      let units_produced: number | null = null;
+      let condition_label = cond;
+      try {
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+        if (typeof parsed.price_eur === "number" && parsed.price_eur >= 0) {
+          price_eur = Math.round(parsed.price_eur);
+          price_display = typeof parsed.price_display === "string" && parsed.price_display.trim()
+            ? parsed.price_display.trim()
+            : `${price_eur.toLocaleString("fr-FR")} €`;
+        }
+        if (typeof parsed.units_produced === "number" && parsed.units_produced >= 0) {
+          units_produced = Math.round(parsed.units_produced);
+        }
+        if (typeof parsed.condition_label === "string" && parsed.condition_label.trim()) {
+          condition_label = parsed.condition_label.trim();
+        }
+      } catch { /* keep nulls */ }
+      return jsonResponse({ price_eur, price_display, units_produced, condition_label });
+    }
+
+    return errResponse("action required: 'identify', 'extract_plate', 'identify_and_extract_plate', 'engines', 'editions', 'description', 'car-info' or 'get_price_and_units'.", 400);
   } catch (e) {
     console.error("car-api error:", e);
     return errResponse(e instanceof Error ? e.message : "Unknown error", 500);

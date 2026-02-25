@@ -54,6 +54,8 @@ export type Database = {
           created_at: string
           delivered_by_user_id: string | null
           edition: string | null
+          estimated_price: number | null
+          estimated_price_at: string | null
           engine: string | null
           finitions: string | null
           garage_group_id: string | null
@@ -75,6 +77,7 @@ export type Database = {
           seen_on_road: boolean
           stock: boolean
           user_id: string
+          units_produced: number | null
           vehicle_type: string
           year: number
         }
@@ -85,6 +88,8 @@ export type Database = {
           created_at?: string
           delivered_by_user_id?: string | null
           edition?: string | null
+          estimated_price?: number | null
+          estimated_price_at?: string | null
           engine?: string | null
           finitions?: string | null
           garage_group_id?: string | null
@@ -106,6 +111,7 @@ export type Database = {
           seen_on_road?: boolean
           stock?: boolean
           user_id: string
+          units_produced?: number | null
           vehicle_type?: string
           year: number
         }
@@ -116,6 +122,8 @@ export type Database = {
           created_at?: string
           delivered_by_user_id?: string | null
           edition?: string | null
+          estimated_price?: number | null
+          estimated_price_at?: string | null
           engine?: string | null
           finitions?: string | null
           garage_group_id?: string | null
@@ -137,6 +145,7 @@ export type Database = {
           seen_on_road?: boolean
           stock?: boolean
           user_id?: string
+          units_produced?: number | null
           vehicle_type?: string
           year?: number
         }

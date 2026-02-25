@@ -96,6 +96,7 @@ interface CarRow {
   vehicle_type: string;
   quality_rating: number | null;
   rarity_rating: number | null;
+  estimated_price: number | null;
 }
 
 const ProfileStats = () => {
@@ -109,7 +110,7 @@ const ProfileStats = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("cars")
-        .select("id, vehicle_type, quality_rating, rarity_rating")
+        .select("id, vehicle_type, quality_rating, rarity_rating, estimated_price")
         .eq("user_id", user!.id);
       return (data as CarRow[]) ?? [];
     },
@@ -138,7 +139,7 @@ const ProfileStats = () => {
       sumQuality += q;
       sumRarity += r;
       countWithRatings++;
-      const val = q * r;
+      const val = c.estimated_price != null && c.estimated_price > 0 ? Number(c.estimated_price) : q * r;
       valueTotal += val;
       valueByType[vt] = (valueByType[vt] || 0) + val;
     }
@@ -164,6 +165,7 @@ const ProfileStats = () => {
       }));
 
     const maxVal = Math.max(valueTotal, ...Object.values(valueByType), 1);
+    const hasAnyPrice = cars.some((c) => c.estimated_price != null && c.estimated_price > 0);
 
     return {
       totalSpots,
@@ -176,6 +178,7 @@ const ProfileStats = () => {
       valueTotal,
       valueByType,
       maxVal,
+      hasAnyPrice,
     };
   }, [cars]);
 
@@ -286,7 +289,9 @@ const ProfileStats = () => {
                 >
                   <div className="flex justify-between text-sm">
                     <span className="font-medium">{t.profile_stats_value_total as string}</span>
-                    <span className="tabular-nums text-muted-foreground">{stats.valueTotal}</span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {stats.hasAnyPrice ? `${Math.round(stats.valueTotal).toLocaleString("fr-FR")} €` : stats.valueTotal}
+                    </span>
                   </div>
                   <div className="h-3 rounded-full bg-muted overflow-hidden">
                     <div
@@ -310,7 +315,9 @@ const ProfileStats = () => {
                       <span className="font-medium">
                         {t[TYPE_LABEL_KEYS[k] as keyof typeof t] as string}
                       </span>
-                      <span className="tabular-nums text-muted-foreground">{stats.valueByType[k] ?? 0}</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {stats.hasAnyPrice ? `${Math.round(stats.valueByType[k] ?? 0).toLocaleString("fr-FR")} €` : (stats.valueByType[k] ?? 0)}
+                      </span>
                     </div>
                     <div className="h-3 rounded-full bg-muted overflow-hidden">
                       <div
