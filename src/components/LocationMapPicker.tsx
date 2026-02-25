@@ -65,6 +65,7 @@ export function LocationMapPicker({
     const map = L.map(node, {
       center: [lat, lng],
       zoom: DEFAULT_ZOOM,
+      tap: false, // allow click/tap to select place instead of being consumed by Leaflet's tap-zoom
     });
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
@@ -123,8 +124,8 @@ export function LocationMapPicker({
         {open && (
           <div
             ref={initMap}
-            className="w-full h-[320px] rounded-b-lg"
-            style={{ position: "relative", zIndex: 10 }}
+            className="w-full h-[320px] rounded-b-lg relative z-[60]"
+            style={{ pointerEvents: "auto" }}
           />
         )}
         <div className="p-4 flex justify-between items-center border-t">
