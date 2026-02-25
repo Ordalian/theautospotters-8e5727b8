@@ -289,6 +289,11 @@ const fr: Translations = {
 
   // Profile
   profile_title: "Mon Profil",
+  profile_tile_settings: "Paramètres",
+  profile_tile_settings_desc: "Pseudo, langue, véhicules, notifications",
+  profile_tile_stats: "Statistiques",
+  profile_tile_stats_desc: "Graphiques, rareté, qualité, valeur",
+  profile_settings_title: "Paramètres",
   profile_display_name: "Nom d'affichage",
   profile_placeholder: "Choisir un pseudo...",
   profile_checking: "Vérification...",
@@ -322,6 +327,20 @@ const fr: Translations = {
   profile_anonymous: "Anonyme",
   profile_language: "Langue",
   profile_language_desc: "Change la langue de l'application",
+
+  // Profile Stats
+  profile_stats_title: "Statistiques",
+  profile_stats_by_type: "Spots par type de véhicule",
+  profile_stats_by_rarity: "Spots par rareté",
+  profile_stats_spots: "Spots",
+  profile_stats_avg_quality: "Qualité moy.",
+  profile_stats_avg_rarity: "Rareté moy.",
+  profile_stats_car_level: "Car level",
+  profile_stats_value: "Valeur",
+  profile_stats_value_estimated: "Valeur estimée (qualité × rareté)",
+  profile_stats_value_total: "Total garage",
+  profile_stats_no_data: "Aucun spot pour afficher les statistiques.",
+  profile_stats_rarity_level: (n: number) => `Rareté ${n}`,
 
   // Garage Settings
   settings_title: "Mon garage",
