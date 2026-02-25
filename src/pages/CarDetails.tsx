@@ -52,7 +52,7 @@ const CarDetails = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
@@ -232,7 +232,7 @@ const CarDetails = () => {
   const carKey = car ? `${car.brand}-${car.model}-${car.year}-${car.edition || ""}` : "";
 
   const { data: carInfo, isLoading: loadingInfo } = useQuery({
-    queryKey: ["car-info", carKey],
+    queryKey: ["car-info", carKey, language],
     queryFn: async () => {
       if (!car?.brand || !car?.model || car?.year == null) {
         return { description: "", engines: [] } as CarInfoResult;
@@ -242,6 +242,7 @@ const CarDetails = () => {
         brand: car.brand,
         model: car.model,
         year: car.year,
+        lang: language,
         ...(car.edition ? { edition: car.edition } : {}),
       });
     },

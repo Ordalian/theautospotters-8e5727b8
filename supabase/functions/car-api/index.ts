@@ -399,15 +399,31 @@ Structure: one or two short paragraphs covering origin of the model, main techni
 
     // —— action: car-info (combined description + engines) ——
     if (body.action === "car-info") {
-      const { brand, model, year, edition } = body;
+      const { brand, model, year, edition, lang } = body;
       if (!brand || !model || year == null) return errResponse("brand, model and year required.", 400);
+      const wantEn = lang === "en";
 
       const wiki = await fetchWikipediaContent(brand, model);
-      const editionHint = edition ? ` (version/édition: ${edition})` : "";
+      const editionHint = edition ? (wantEn ? ` (version/edition: ${edition})` : ` (version/édition: ${edition})`) : "";
 
       let prompt: string;
       if (wiki) {
-        prompt = `Voici le contenu de l'article Wikipedia (${wiki.lang}) pour la ${brand} ${model} :
+        if (wantEn) {
+          prompt = `Here is the Wikipedia article content (${wiki.lang}) for the ${brand} ${model}:
+
+---
+${wiki.text}
+---
+
+From this text, provide TWO things for the ${year} ${brand} ${model}${editionHint} in a single JSON response:
+
+1. "description": A short encyclopedic description in English (Wikipedia style, factual, neutral, no emojis, no bullet symbols, no section titles, no asterisks). Cover origin, technical characteristics, production context, notable facts. Max 1200 characters.
+
+2. "engines": A JSON array of engine options. Each object: "name" (e.g. "2.0 TFSI"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). Include LPG/autogas if mentioned. Up to 15 engines. If the text lacks engine info, complete from your knowledge.
+
+Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. No markdown, no extra text.`;
+        } else {
+          prompt = `Voici le contenu de l'article Wikipedia (${wiki.lang}) pour la ${brand} ${model} :
 
 ---
 ${wiki.text}
@@ -420,14 +436,25 @@ ${wiki.text}
 2. "engines": Un tableau JSON des motorisations. Chaque objet : "name" (ex: "2.0 TFSI"), "displacement" (ex: "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (nombre). Inclus GPL/LPG si mentionné. Jusqu'à 15 moteurs. Si le texte ne contient pas assez d'infos sur les moteurs, complète avec tes connaissances.
 
 Réponds UNIQUEMENT avec un objet JSON valide : {"description": "...", "engines": [...]}. Pas de markdown, pas d'autre texte.`;
+        }
       } else {
-        prompt = `For the ${year} ${brand} ${model}${editionHint}, provide TWO things in a single JSON response:
+        if (wantEn) {
+          prompt = `For the ${year} ${brand} ${model}${editionHint}, provide TWO things in a single JSON response:
+
+1. "description": A short encyclopedic description in English (style Wikipedia, factual, neutral, no emojis, no bullet symbols, no section titles, no asterisks). Cover origin, technical characteristics, production context, notable facts. Max 1200 characters.
+
+2. "engines": A JSON array of engine options. Each object has: "name" (e.g. "2.0 TFSI"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). Include LPG/autogas and dual-fuel where applicable. Up to 15 engines.
+
+Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. No markdown, no extra text.`;
+        } else {
+          prompt = `For the ${year} ${brand} ${model}${editionHint}, provide TWO things in a single JSON response:
 
 1. "description": A short encyclopedic description in French (style Wikipedia, factual, neutral, no emojis, no bullet symbols, no section titles, no asterisks). Cover origin, technical characteristics, production context, notable facts. Max 1200 characters.
 
 2. "engines": A JSON array of engine options. Each object has: "name" (e.g. "2.0 TFSI"), "displacement" (e.g. "2.0L"), "fuel" ("Petrol"|"Diesel"|"Electric"|"Hybrid"|"LPG"), "hp" (number). Include LPG/autogas and dual-fuel where applicable. Up to 15 engines.
 
 Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. No markdown, no extra text.`;
+        }
       }
 
       const text = await callAI(API_KEY, [
@@ -435,7 +462,9 @@ Reply ONLY with a valid JSON object: {"description": "...", "engines": [...]}. N
         { role: "user", content: prompt },
       ]);
 
-      let description = `Aucune description pour la ${year} ${brand} ${model}.`;
+      let description = wantEn
+        ? `No description available for the ${year} ${brand} ${model}.`
+        : `Aucune description pour la ${year} ${brand} ${model}.`;
       let engines: { name: string; displacement: string; fuel: string; hp: number }[] = [];
 
       try {
