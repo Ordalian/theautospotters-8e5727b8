@@ -21,6 +21,7 @@ const ProfileStats = lazy(() => import("./pages/ProfileStats"));
 const GarageSettings = lazy(() => import("./pages/GarageSettings"));
 const SpotMap = lazy(() => import("./pages/SpotMap"));
 const FriendsGarages = lazy(() => import("./pages/FriendsGarages"));
+const FriendGarage = lazy(() => import("./pages/FriendGarage"));
 const DeliverCarChoice = lazy(() => import("./pages/DeliverCarChoice"));
 const DeliverSelectFriend = lazy(() => import("./pages/DeliverSelectFriend"));
 const CarDetails = lazy(() => import("./pages/CarDetails"));
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/garage-settings" element={<ProtectedRoute><GarageSettings /></ProtectedRoute>} />
                 <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
                 <Route path="/friends/:friendId/stats" element={<ProtectedRoute><ProfileStats /></ProtectedRoute>} />
+                <Route path="/friends/:friendId/garage" element={<ProtectedRoute><FriendGarage /></ProtectedRoute>} />
                 <Route path="/deliver-car" element={<ProtectedRoute><DeliverCarChoice /></ProtectedRoute>} />
                 <Route path="/deliver-car/select-friend" element={<ProtectedRoute><DeliverSelectFriend /></ProtectedRoute>} />
                 <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />

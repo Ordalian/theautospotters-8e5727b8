@@ -63,6 +63,7 @@ function PieChart({
   innerRatio?: number;
 }) {
   const total = data.reduce((s, d) => s + d.value, 0);
+  if (total <= 0) return <svg width={size} height={size} className="overflow-visible" />;
   const cx = size / 2;
   const cy = size / 2;
   const R = size / 2;
@@ -77,16 +78,38 @@ function PieChart({
       return { ...d, start, end };
     });
 
+  const fullCircle = 2 * Math.PI;
   return (
     <svg width={size} height={size} className="overflow-visible">
-      {segments.map((seg, i) => (
-        <path
-          key={i}
-          d={getPiePath(cx, cy, R, seg.start, seg.end, r)}
-          fill={seg.color}
-          className="transition-opacity hover:opacity-90"
-        />
-      ))}
+      {segments.map((seg, i) => {
+        const span = seg.end - seg.start;
+        const isFullCircle = span >= fullCircle - 1e-6;
+        if (isFullCircle) {
+          const mid = seg.start + Math.PI;
+          return (
+            <g key={i}>
+              <path
+                d={getPiePath(cx, cy, R, seg.start, mid, r)}
+                fill={seg.color}
+                className="transition-opacity hover:opacity-90"
+              />
+              <path
+                d={getPiePath(cx, cy, R, mid, seg.start + fullCircle, r)}
+                fill={seg.color}
+                className="transition-opacity hover:opacity-90"
+              />
+            </g>
+          );
+        }
+        return (
+          <path
+            key={i}
+            d={getPiePath(cx, cy, R, seg.start, seg.end, r)}
+            fill={seg.color}
+            className="transition-opacity hover:opacity-90"
+          />
+        );
+      })}
     </svg>
   );
 }
@@ -112,13 +135,34 @@ const ProfileStats = () => {
   const isFriendView = !!friendId && friendId !== user?.id;
 
   const { data: friendProfile } = useQuery({
-    queryKey: ["profile-username", friendId],
+    queryKey: ["profile-username-pinned", friendId],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("username").eq("user_id", friendId!).maybeSingle();
-      return data?.username ?? null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("username, pinned_car_id")
+        .eq("user_id", friendId!)
+        .maybeSingle();
+      return data ? { username: data.username ?? null, pinned_car_id: (data as { pinned_car_id?: string | null }).pinned_car_id ?? null } : null;
     },
     enabled: isFriendView && !!friendId,
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: friendPinnedCar } = useQuery({
+    queryKey: ["friend-pinned-car", friendId, friendProfile?.pinned_car_id],
+    queryFn: async () => {
+      const pid = friendProfile?.pinned_car_id;
+      if (!pid || !friendId) return null;
+      const { data } = await supabase
+        .from("cars")
+        .select("id, brand, model, year, image_url")
+        .eq("id", pid)
+        .eq("user_id", friendId)
+        .maybeSingle();
+      return data as { id: string; brand: string; model: string; year: number; image_url: string | null } | null;
+    },
+    enabled: isFriendView && !!friendId && !!friendProfile?.pinned_car_id,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: isFriend = false, isLoading: loadingFriend } = useQuery({
@@ -238,7 +282,7 @@ const ProfileStats = () => {
 
   const hasData = stats.totalSpots > 0;
 
-  const displayName = isFriendView ? (friendProfile || (t.friends_this_friend as string)) : null;
+  const displayName = isFriendView ? (friendProfile?.username ?? (t.friends_this_friend as string)) : null;
 
   return (
     <div className="min-h-screen bg-background relative pb-8">
@@ -254,33 +298,44 @@ const ProfileStats = () => {
       </header>
 
       <div className="p-4 max-w-md mx-auto space-y-6">
-        {isFriendView && cars.length > 0 && (
-          <div className="rounded-xl border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              {(t.friends_garage_of as (name: string) => string)(displayName || "")}
-            </h2>
-            <div className="flex gap-3 overflow-x-auto pb-1 -mx-1">
-              {cars.slice(0, 20).map((car) => (
-                <button
-                  key={car.id}
-                  type="button"
-                  onClick={() => navigate(`/car/${car.id}`, { state: { returnTo: "/friends" } })}
-                  className="shrink-0 w-24 rounded-lg border border-border overflow-hidden bg-secondary/20 hover:border-primary/30 transition-colors text-left"
-                >
-                  {car.image_url ? (
-                    <img src={car.image_url} alt="" className="h-16 w-full object-cover" />
-                  ) : (
-                    <div className="h-16 flex items-center justify-center">
-                      <Car className="h-6 w-6 text-muted-foreground/40" />
-                    </div>
-                  )}
-                  <div className="p-1.5">
-                    <p className="text-xs font-medium truncate">{car.brand} {car.model}</p>
-                    <p className="text-[10px] text-muted-foreground">{car.year}</p>
+        {isFriendView && (
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <button
+              type="button"
+              onClick={() => navigate(`/friends/${friendId}/garage`)}
+              className="w-full text-left block"
+            >
+              <div className="relative aspect-[2/1] min-h-[100px] bg-muted/30">
+                {(friendPinnedCar ?? cars[0])?.image_url ? (
+                  <>
+                    <img
+                      src={(friendPinnedCar ?? cars[0])!.image_url!}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Car className="h-12 w-12 text-muted-foreground/40" />
                   </div>
-                </button>
-              ))}
-            </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h2 className="text-base font-bold text-white drop-shadow-md">
+                    {(t.friends_garage_of as (name: string) => string)(displayName || "")}
+                  </h2>
+                  <p className="text-xs text-white/80 mt-0.5">
+                    {(friendPinnedCar ?? cars[0])
+                      ? `${(friendPinnedCar ?? cars[0])!.brand} ${(friendPinnedCar ?? cars[0])!.model} · ${(friendPinnedCar ?? cars[0])!.year}`
+                      : (t.profile_stats_spots as string) + ` ${cars.length}`}
+                  </p>
+                </div>
+              </div>
+              <div className="p-3 border-t border-border flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">{t.friends_view_garage as string}</span>
+                <span className="text-primary text-sm font-medium">→</span>
+              </div>
+            </button>
           </div>
         )}
 
