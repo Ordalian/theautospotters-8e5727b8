@@ -4,7 +4,7 @@ export type CarCondition = "wreck" | "bad" | "good" | "well_kept" | "pristine";
 // Photo source types
 export type PhotoSource = "none" | "gallery_blurry" | "gallery_clear" | "camera_blurry" | "camera_clear";
 
-// Rarity rating (1-10 wheels)
+// Rarity rating (1-10)
 export interface RarityRating {
   level: number; // 1-10
   label: string;
@@ -15,6 +15,56 @@ export interface QualityRating {
   level: number; // 1-8
   photoPoints: number; // 0-3
   conditionPoints: number; // 0-5
+}
+
+/**
+ * Rarity scale 1–10 based on units produced.
+ * 10 = mythique (≤100), 9 = légendaire (101–1000), … 1 = ordinaire (≥1 000 001).
+ */
+export const RARITY_THRESHOLDS_UNITS: { maxUnits: number; level: number }[] = [
+  { maxUnits: 100, level: 10 },
+  { maxUnits: 1_000, level: 9 },
+  { maxUnits: 5_000, level: 8 },
+  { maxUnits: 10_000, level: 7 },
+  { maxUnits: 25_000, level: 6 },
+  { maxUnits: 50_000, level: 5 },
+  { maxUnits: 100_000, level: 4 },
+  { maxUnits: 500_000, level: 3 },
+  { maxUnits: 1_000_000, level: 2 },
+  { maxUnits: Infinity, level: 1 },
+];
+
+/**
+ * Compute rarity level (1–10) from total units produced.
+ * 10 = mythique (≤100), 1 = ordinaire (≥1 000 001).
+ */
+export function getRarityFromUnits(units: number): number {
+  const row = RARITY_THRESHOLDS_UNITS.find((t) => units <= t.maxUnits);
+  return row ? row.level : 1;
+}
+
+/**
+ * Default rarity labels (EN). Prefer i18n keys rarity_label_1..10 in UI.
+ */
+export const RARITY_LABELS: Record<number, string> = {
+  1: "Ordinary",
+  2: "Common",
+  3: "Uncommon",
+  4: "Uncommon",
+  5: "Rare",
+  6: "Superb",
+  7: "Magnificent",
+  8: "Incredible",
+  9: "Legendary",
+  10: "Mythic",
+};
+
+/**
+ * Get rarity label by level (1–10). Use for non-i18n contexts (e.g. AddCar).
+ */
+export function getRarityLabel(level: number): string {
+  const clamped = Math.max(1, Math.min(10, Math.round(level)));
+  return RARITY_LABELS[clamped] ?? "Unknown";
 }
 
 /**
@@ -91,22 +141,21 @@ export function getConditionLabel(condition: CarCondition): string {
 
 /**
  * Database of car production numbers (approximate)
- * This is a simplified version - in production, this would be fetched from an API
+ * Used when API/units_produced is not available.
  */
 interface CarProductionData {
   [brand: string]: {
     [model: string]: {
-      productionNumbers?: number; // Total units produced
-      yearlyProduction?: number; // Average per year
+      productionNumbers?: number;
+      yearlyProduction?: number;
       rarity?: number; // Manual override (1-10)
     };
   };
 }
 
-// Simplified rarity data - can be expanded
 const carProductionData: CarProductionData = {
   Ferrari: {
-    "*": { rarity: 9 }, // Default for Ferrari
+    "*": { rarity: 9 },
     "250 GTO": { productionNumbers: 39, rarity: 10 },
     F40: { productionNumbers: 1315, rarity: 9 },
     LaFerrari: { productionNumbers: 710, rarity: 10 },
@@ -145,90 +194,52 @@ const carProductionData: CarProductionData = {
     Veyron: { productionNumbers: 450, rarity: 10 },
     Chiron: { productionNumbers: 500, rarity: 10 },
   },
-  // Add more as needed...
 };
 
 /**
- * Calculate rarity rating based on brand and model
+ * Calculate rarity from total production (used by static data)
+ */
+function rarityLevelFromProduction(total: number): number {
+  return getRarityFromUnits(total);
+}
+
+/**
+ * Calculate rarity from yearly production (approximate: treat as total for scale)
+ */
+function rarityLevelFromYearlyProduction(yearly: number): number {
+  // Approximate: assume ~10 years production for "total"
+  const approxTotal = yearly * 10;
+  return getRarityFromUnits(approxTotal);
+}
+
+/**
+ * Calculate rarity rating based on brand and model (fallback when no units_produced)
  */
 export function calculateRarityRating(brand: string, model: string): RarityRating {
   const brandData = carProductionData[brand];
-  
+
   if (!brandData) {
-    // Unknown brand - use medium rarity
-    return { level: 5, label: "Uncommon" };
+    return { level: 5, label: getRarityLabel(5) };
   }
 
   const modelData = brandData[model] || brandData["*"];
-  
-  if (modelData.rarity) {
+
+  if (modelData.rarity != null) {
     return {
-      level: modelData.rarity,
+      level: Math.max(1, Math.min(10, modelData.rarity)),
       label: getRarityLabel(modelData.rarity),
     };
   }
 
-  // Calculate based on production numbers
-  if (modelData.productionNumbers) {
-    const level = calculateRarityFromProduction(modelData.productionNumbers);
+  if (modelData.productionNumbers != null) {
+    const level = rarityLevelFromProduction(modelData.productionNumbers);
     return { level, label: getRarityLabel(level) };
   }
 
-  if (modelData.yearlyProduction) {
-    const level = calculateRarityFromYearlyProduction(modelData.yearlyProduction);
+  if (modelData.yearlyProduction != null) {
+    const level = rarityLevelFromYearlyProduction(modelData.yearlyProduction);
     return { level, label: getRarityLabel(level) };
   }
 
-  // Default to medium rarity
-  return { level: 5, label: "Uncommon" };
-}
-
-/**
- * Calculate rarity from total production numbers
- */
-function calculateRarityFromProduction(total: number): number {
-  if (total < 100) return 10;
-  if (total < 500) return 9;
-  if (total < 1000) return 8;
-  if (total < 5000) return 7;
-  if (total < 10000) return 6;
-  if (total < 50000) return 5;
-  if (total < 100000) return 4;
-  if (total < 500000) return 3;
-  if (total < 1000000) return 2;
-  return 1;
-}
-
-/**
- * Calculate rarity from yearly production
- */
-function calculateRarityFromYearlyProduction(yearly: number): number {
-  if (yearly < 1000) return 9;
-  if (yearly < 5000) return 8;
-  if (yearly < 10000) return 7;
-  if (yearly < 25000) return 6;
-  if (yearly < 50000) return 5;
-  if (yearly < 100000) return 4;
-  if (yearly < 250000) return 3;
-  if (yearly < 500000) return 2;
-  return 1;
-}
-
-/**
- * Get rarity label
- */
-function getRarityLabel(level: number): string {
-  const labels: Record<number, string> = {
-    1: "Common",
-    2: "Common",
-    3: "Fairly Common",
-    4: "Uncommon",
-    5: "Uncommon",
-    6: "Rare",
-    7: "Very Rare",
-    8: "Super Rare",
-    9: "Ultra Rare",
-    10: "Legendary",
-  };
-  return labels[level] || "Unknown";
+  return { level: 5, label: getRarityLabel(5) };
 }

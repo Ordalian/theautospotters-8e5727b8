@@ -451,7 +451,17 @@ const en: Translations = {
 
   // Rating system
   rating_system_title: "Rating System",
-  rating_rarity_explanation: "Rarity (1-10): evaluates model rarity based on production volumes and market. 1 = very common, 10 = legendary / very limited series.",
+  rating_rarity_explanation: "Rarity (1-10): based on units produced. 10 = mythic (≤100), 9 = legendary (101–1000), … 1 = ordinary (≥1,000,001).",
+  rarity_label_1: "Ordinary",
+  rarity_label_2: "Common",
+  rarity_label_3: "Uncommon",
+  rarity_label_4: "Uncommon",
+  rarity_label_5: "Rare",
+  rarity_label_6: "Superb",
+  rarity_label_7: "Magnificent",
+  rarity_label_8: "Incredible",
+  rarity_label_9: "Legendary",
+  rarity_label_10: "Mythic",
   rating_quality_explanation: "Quality (1-8): evaluates spot quality (photo and perceived vehicle condition). It combines photo sharpness and car condition (damaged to pristine).",
 
   // Car Condition

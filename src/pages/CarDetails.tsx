@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
+import { getRarityFromUnits } from "@/lib/carRatings";
 import { ArrowLeft, Car, Loader2, X, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
@@ -279,13 +280,18 @@ const CarDetails = () => {
         vehicle_type: car.vehicle_type || "car",
         ...(car.edition ? { edition: car.edition } : {}),
       });
-      if (res?.price_eur != null && user && car.user_id === user.id) {
+      if ((res?.price_eur != null || res?.units_produced != null) && user && car.user_id === user.id) {
+        const units = res?.units_produced ?? null;
+        const rarityFromUnits = units != null ? getRarityFromUnits(units) : null;
         await supabase
           .from("cars")
           .update({
-            estimated_price: res.price_eur,
-            estimated_price_at: new Date().toISOString(),
-            units_produced: res.units_produced ?? null,
+            ...(res?.price_eur != null && {
+              estimated_price: res.price_eur,
+              estimated_price_at: new Date().toISOString(),
+            }),
+            units_produced: units ?? undefined,
+            ...(rarityFromUnits != null && { rarity_rating: rarityFromUnits }),
           })
           .eq("id", car.id)
           .eq("user_id", user.id);

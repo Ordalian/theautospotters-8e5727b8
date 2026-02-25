@@ -28,15 +28,18 @@ const TYPE_COLORS: Record<string, string> = {
   hot_wheels: "hsl(330 81% 60%)",
 };
 
+// Rarity 1–10 (1 = very common, 10 = mythic)
 const RARITY_COLORS: string[] = [
-  "hsl(0 84% 60%)",
-  "hsl(25 95% 53%)",
-  "hsl(45 93% 47%)",
-  "hsl(95 55% 45%)",
-  "hsl(142 71% 45%)",
-  "hsl(189 94% 43%)",
-  "hsl(258 90% 66%)",
-  "hsl(280 67% 58%)",
+  "hsl(0 0% 55%)",      // 1
+  "hsl(0 0% 65%)",      // 2
+  "hsl(215 16% 55%)",   // 3
+  "hsl(142 45% 42%)",   // 4
+  "hsl(160 55% 45%)",   // 5
+  "hsl(189 60% 45%)",   // 6
+  "hsl(217 91% 60%)",   // 7
+  "hsl(258 90% 66%)",   // 8
+  "hsl(38 92% 50%)",    // 9
+  "hsl(48 96% 53%)",    // 10 mythic
 ];
 
 function getPiePath(cx: number, cy: number, r: number, startAngle: number, endAngle: number, innerR = 0): string {
@@ -247,7 +250,7 @@ const ProfileStats = () => {
       color: TYPE_COLORS[k] || "hsl(var(--muted-foreground))",
     }));
 
-    const rarityData = [1, 2, 3, 4, 5, 6, 7, 8]
+    const rarityData = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       .filter((n) => (byRarity[n] || 0) > 0)
       .map((n) => ({
         label: String(n),
@@ -382,7 +385,7 @@ const ProfileStats = () => {
                             className="inline-block w-2 h-2 rounded-full shrink-0"
                             style={{ backgroundColor: d.color }}
                           />
-                          {(t.profile_stats_rarity_level as (n: number) => string)(Number(d.label))} {d.value}
+                          {(t[`rarity_label_${d.label}` as keyof typeof t] as string) ?? d.label} {d.value}
                         </span>
                       ))}
                     </div>

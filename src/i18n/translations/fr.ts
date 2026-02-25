@@ -453,7 +453,17 @@ const fr: Translations = {
 
   // Rating system
   rating_system_title: "Système de classement",
-  rating_rarity_explanation: "Rareté (1-10) : évalue la rareté du modèle selon les volumes de production et le marché. 1 = très courant, 10 = légendaire / série très limitée.",
+  rating_rarity_explanation: "Rareté (1-10) : basée sur le nombre d'unités produites. 10 = mythique (≤100), 9 = légendaire (101–1000), … 1 = ordinaire (≥1 000 001).",
+  rarity_label_1: "Ordinaire",
+  rarity_label_2: "Courant",
+  rarity_label_3: "Commune",
+  rarity_label_4: "Peu commune",
+  rarity_label_5: "Rare",
+  rarity_label_6: "Superbe",
+  rarity_label_7: "Magnifique",
+  rarity_label_8: "Incroyable",
+  rarity_label_9: "Légendaire",
+  rarity_label_10: "Mythique",
   rating_quality_explanation: "Qualité (1-8) : évalue la qualité du spot (photo et état perçu du véhicule). Elle combine la netteté de la photo et l'état de la voiture (abîmée à impeccable).",
 
   // Car Condition
