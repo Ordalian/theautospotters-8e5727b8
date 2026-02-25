@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const PARTICLE_COUNT = 18;
+const PARTICLE_COUNT = 54;
 const GOLD_COLORS = [
   "rgba(212, 175, 55, 0.6)",
   "rgba(200, 160, 50, 0.45)",
