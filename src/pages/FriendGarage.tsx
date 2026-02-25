@@ -152,7 +152,7 @@ const FriendGarage = () => {
             {(t.friends_garage_of as (name: string) => string)(displayName)} · {listTitle}
           </h1>
         </header>
-        <main className="flex-1 min-h-0 flex flex-col p-4 max-w-lg mx-auto w-full">
+        <main className="flex-1 min-h-0 flex flex-col p-4 max-w-lg mx-auto w-full relative z-10">
           {carsLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -209,7 +209,7 @@ const FriendGarage = () => {
         <span className="text-sm text-muted-foreground">{total} spots</span>
       </header>
 
-      <main className="flex-1 flex flex-col min-h-0 p-4 max-w-lg mx-auto w-full">
+      <main className="flex-1 flex flex-col min-h-0 p-4 max-w-lg mx-auto w-full relative z-10">
         <div className="grid grid-cols-2 grid-rows-4 gap-3 flex-1 min-h-0">
           <button
             onClick={() => navigate(`/friends/${friendId}/garage?type=all`)}
