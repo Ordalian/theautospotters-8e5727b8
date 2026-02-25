@@ -256,16 +256,51 @@
 
 /* Linked-car (Hot Wheels pairing) — gold-accented marble style */
 .linked-car-bg { background-color: hsl(var(--secondary)); }
-.linked-car-header { background-color: hsl(var(--card)); border-color: hsl(var(--primary) / 0.5); color: hsl(var(--foreground)); }
-.linked-car-card { background-color: hsl(var(--card) / 0.95); border-color: hsl(var(--primary) / 0.45); position: relative; overflow: hidden; }
-.linked-car-section { background-color: hsl(var(--card) / 0.9); border-color: hsl(var(--primary) / 0.35); position: relative; overflow: hidden; }
+.linked-car-header { background-color: hsl(var(--card)); border-color: hsl(43 40% 40% / 0.5); color: hsl(var(--foreground)); }
+.linked-car-card {
+  background-color: hsl(var(--card) / 0.95);
+  border-color: hsl(43 40% 45% / 0.5);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 0 12px 1px hsl(43 50% 45% / 0.12),
+    0 0 30px 2px hsl(43 50% 45% / 0.06),
+    inset 0 0 8px 0 hsl(43 50% 45% / 0.04);
+  animation: linked-border-glow 3s ease-in-out infinite alternate;
+}
+.linked-car-section {
+  background-color: hsl(var(--card) / 0.9);
+  border-color: hsl(43 40% 45% / 0.4);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 0 8px 0 hsl(43 50% 45% / 0.08),
+    inset 0 0 6px 0 hsl(43 50% 45% / 0.03);
+}
 .linked-car-text { color: hsl(var(--foreground)); }
 .linked-car-muted { color: hsl(var(--muted-foreground)); }
-.linked-car-accent { color: hsl(var(--primary)); }
-.linked-car-badge { background-color: hsl(var(--primary) / 0.2); color: hsl(var(--primary)); }
-.linked-car-ring { --tw-ring-color: hsl(var(--primary) / 0.5); }
-.linked-car-btn { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
-.linked-car-btn:hover { background-color: hsl(var(--primary) / 0.85); }
+.linked-car-accent { color: hsl(43 40% 55%); }
+.linked-car-badge { background-color: hsl(43 40% 45% / 0.2); color: hsl(43 40% 65%); }
+.linked-car-ring { --tw-ring-color: hsl(43 40% 50% / 0.5); }
+.linked-car-btn { background-color: hsl(43 40% 40%); color: hsl(0 0% 4%); }
+.linked-car-btn:hover { background-color: hsl(43 40% 45%); }
+
+@keyframes linked-border-glow {
+  0% {
+    box-shadow:
+      0 0 10px 1px hsl(43 50% 45% / 0.10),
+      0 0 24px 2px hsl(43 50% 45% / 0.05),
+      inset 0 0 6px 0 hsl(43 50% 45% / 0.03);
+    border-color: hsl(43 40% 45% / 0.45);
+  }
+  100% {
+    box-shadow:
+      0 0 16px 2px hsl(43 50% 50% / 0.18),
+      0 0 40px 4px hsl(43 50% 50% / 0.08),
+      inset 0 0 10px 0 hsl(43 50% 50% / 0.06);
+    border-color: hsl(43 40% 55% / 0.6);
+  }
+}
 
 /* Marble veining texture on linked-car cards & sections */
 .linked-car-card::before,

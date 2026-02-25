@@ -7,6 +7,7 @@ import { callCarApi } from "@/lib/carApi";
 import { ArrowLeft, Car, Loader2, X, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
+import GoldParticles from "@/components/GoldParticles";
 import { RatingExplainer } from "@/components/RatingExplainer";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -329,6 +330,7 @@ const CarDetails = () => {
       onMouseDown={(e) => e.button === 0 && onSwipeStart(e.clientX, e.clientY, false)}
     >
       <BlackGoldBg showMarble={hasLinkedCar} />
+      {hasLinkedCar && <GoldParticles />}
       <header className={`sticky top-0 z-20 flex items-center gap-2 px-4 py-4 border-b backdrop-blur ${hasLinkedCar ? "linked-car-header" : "border-border/50 bg-background/95 supports-[backdrop-filter]:bg-background/80"}`}>
         <Button variant="ghost" size="icon" onClick={() => (returnTo ? navigate(returnTo) : navigate(-1))}>
           <ArrowLeft className="h-5 w-5" />
