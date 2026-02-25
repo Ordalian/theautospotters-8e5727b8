@@ -317,7 +317,7 @@ const CarDetails = () => {
     );
   }
 
-  const hasLinkedCar = !!car.linked_car_id && !!linkedCar;
+  const hasLinkedCar = !!car.linked_car_id;
   const isCurrentHotWheels = (car.vehicle_type || "car") === "hot_wheels";
 
   return (
