@@ -119,6 +119,7 @@ const ProfileStats = () => {
   });
 
   const stats = useMemo(() => {
+    const carsExclMini = cars.filter((c) => (c.vehicle_type || "car") !== "hot_wheels");
     const byType: Record<string, number> = {};
     const byRarity: Record<number, number> = {};
     let sumQuality = 0;
@@ -129,13 +130,16 @@ const ProfileStats = () => {
 
     for (const c of cars) {
       const vt = c.vehicle_type || "car";
-      const q = c.quality_rating ?? 3;
       const r = c.rarity_rating ?? 5;
-
       if (vt !== "hot_wheels") {
         byType[vt] = (byType[vt] || 0) + 1;
       }
       byRarity[r] = (byRarity[r] || 0) + 1;
+    }
+    for (const c of carsExclMini) {
+      const vt = c.vehicle_type || "car";
+      const q = c.quality_rating ?? 3;
+      const r = c.rarity_rating ?? 5;
       sumQuality += q;
       sumRarity += r;
       countWithRatings++;
@@ -144,8 +148,7 @@ const ProfileStats = () => {
       valueByType[vt] = (valueByType[vt] || 0) + val;
     }
 
-    const totalSpots = cars.length;
-    const spotsExclMini = cars.filter((c) => (c.vehicle_type || "car") !== "hot_wheels").length;
+    const totalSpots = carsExclMini.length;
     const avgQuality = countWithRatings ? Math.round((sumQuality / countWithRatings) * 10) / 10 : 0;
     const avgRarity = countWithRatings ? Math.round((sumRarity / countWithRatings) * 10) / 10 : 0;
     const carLevel = countWithRatings ? Math.round(((sumQuality + sumRarity) / 2 / countWithRatings) * 10) / 10 : 0;
@@ -165,11 +168,10 @@ const ProfileStats = () => {
       }));
 
     const maxVal = Math.max(valueTotal, ...Object.values(valueByType), 1);
-    const hasAnyPrice = cars.some((c) => c.estimated_price != null && c.estimated_price > 0);
+    const hasAnyPrice = carsExclMini.some((c) => c.estimated_price != null && c.estimated_price > 0);
 
     return {
       totalSpots,
-      spotsExclMini,
       avgQuality,
       avgRarity,
       carLevel,
@@ -304,7 +306,7 @@ const ProfileStats = () => {
                   </div>
                 </div>
 
-                {([...VEHICLE_TYPES_ORDER, "hot_wheels"] as const).filter((k) => (stats.valueByType[k] || 0) > 0).map((k) => (
+                {VEHICLE_TYPES_ORDER.filter((k) => (stats.valueByType[k] || 0) > 0).map((k) => (
                   <div
                     key={k}
                     className="space-y-1"
