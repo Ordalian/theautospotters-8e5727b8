@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useTheme, THEMES, type ThemeId } from "@/hooks/useTheme";
@@ -39,6 +40,7 @@ const PIN_VEHICLE_TYPES = [
 const GarageSettings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const [pinnedCarId, setPinnedCarId] = useState<string | null>(null);
@@ -87,6 +89,9 @@ const GarageSettings = () => {
       setChoiceDialogOpen(false);
       setPinDialogTypeFilter(null);
       setSpotSearchQuery("");
+      await queryClient.invalidateQueries({ queryKey: ["profile-pinned-self", user.id] });
+      await queryClient.invalidateQueries({ queryKey: ["my-pinned-car"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success(carId ? (t.settings_pinned_updated as string) : (t.settings_pinned_removed as string));
     } catch (err: any) {
       toast.error(err?.message || "Erreur");

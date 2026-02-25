@@ -151,6 +151,47 @@ const ProfileStats = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: myProfile } = useQuery({
+    queryKey: ["profile-pinned-self", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("pinned_car_id")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data ? { pinned_car_id: (data as { pinned_car_id?: string | null }).pinned_car_id ?? null } : null;
+    },
+    enabled: !isFriendView && !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: myPinnedCar } = useQuery({
+    queryKey: ["my-pinned-car", user?.id, myProfile?.pinned_car_id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const pid = myProfile?.pinned_car_id;
+      if (pid) {
+        const { data } = await supabase
+          .from("cars")
+          .select("id, brand, model, year, image_url")
+          .eq("id", pid)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        return data as { id: string; brand: string; model: string; year: number; image_url: string | null } | null;
+      }
+      const { data } = await supabase
+        .from("cars")
+        .select("id, brand, model, year, image_url")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data as { id: string; brand: string; model: string; year: number; image_url: string | null } | null;
+    },
+    enabled: !isFriendView && !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+
   const { data: friendPinnedCar } = useQuery({
     queryKey: ["friend-pinned-car", friendId, friendProfile?.pinned_car_id],
     queryFn: async () => {
@@ -301,7 +342,7 @@ const ProfileStats = () => {
       </header>
 
       <div className="p-4 max-w-md mx-auto space-y-6">
-        {isFriendView && (
+        {isFriendView ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <button
               type="button"
@@ -330,6 +371,45 @@ const ProfileStats = () => {
                   <p className="text-xs text-white/80 mt-0.5">
                     {(friendPinnedCar ?? cars[0])
                       ? `${(friendPinnedCar ?? cars[0])!.brand} ${(friendPinnedCar ?? cars[0])!.model} · ${(friendPinnedCar ?? cars[0])!.year}`
+                      : (t.profile_stats_spots as string) + ` ${cars.length}`}
+                  </p>
+                </div>
+              </div>
+              <div className="p-3 border-t border-border flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">{t.friends_view_garage as string}</span>
+                <span className="text-primary text-sm font-medium">→</span>
+              </div>
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <button
+              type="button"
+              onClick={() => navigate("/garage-menu")}
+              className="w-full text-left block"
+            >
+              <div className="relative aspect-[2/1] min-h-[100px] bg-muted/30">
+                {myPinnedCar?.image_url ? (
+                  <>
+                    <img
+                      src={myPinnedCar.image_url}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Car className="h-12 w-12 text-muted-foreground/40" />
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h2 className="text-base font-bold text-white drop-shadow-md">
+                    {t.garage_title as string}
+                  </h2>
+                  <p className="text-xs text-white/80 mt-0.5">
+                    {myPinnedCar
+                      ? `${myPinnedCar.brand} ${myPinnedCar.model} · ${myPinnedCar.year}`
                       : (t.profile_stats_spots as string) + ` ${cars.length}`}
                   </p>
                 </div>
