@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { ArrowLeft, User, Settings, BarChart3 } from "lucide-react";
+import { ArrowLeft, User, Settings, BarChart3, Trophy, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Profile = () => {
@@ -51,6 +51,34 @@ const Profile = () => {
           <div className="min-w-0 flex-1">
             <p className="font-bold text-base">{t.profile_tile_stats as string}</p>
             <p className="text-sm text-muted-foreground truncate">{t.profile_tile_stats_desc as string}</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/profile/achievements")}
+          className="w-full flex items-center gap-4 p-4 text-left rounded-xl border-2 border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-colors"
+        >
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Trophy className="h-6 w-6 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-base">{t.profile_tile_achievements as string}</p>
+            <p className="text-sm text-muted-foreground truncate">{t.profile_tile_achievements_desc as string}</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/profile/news")}
+          className="w-full flex items-center gap-4 p-4 text-left rounded-xl border-2 border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-colors"
+        >
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Newspaper className="h-6 w-6 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-base">{t.profile_tile_news as string}</p>
+            <p className="text-sm text-muted-foreground truncate">{t.profile_tile_news_desc as string}</p>
           </div>
         </button>
       </div>

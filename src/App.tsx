@@ -18,6 +18,8 @@ const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Profile = lazy(() => import("./pages/Profile"));
 const ProfileSettings = lazy(() => import("./pages/ProfileSettings"));
 const ProfileStats = lazy(() => import("./pages/ProfileStats"));
+const ProfileAchievements = lazy(() => import("./pages/ProfileAchievements"));
+const ProfileNews = lazy(() => import("./pages/ProfileNews"));
 const GarageSettings = lazy(() => import("./pages/GarageSettings"));
 const SpotMap = lazy(() => import("./pages/SpotMap"));
 const FriendsGarages = lazy(() => import("./pages/FriendsGarages"));
@@ -79,6 +81,8 @@ const App = () => (
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/profile/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
                 <Route path="/profile/stats" element={<ProtectedRoute><ProfileStats /></ProtectedRoute>} />
+                <Route path="/profile/achievements" element={<ProtectedRoute><ProfileAchievements /></ProtectedRoute>} />
+                <Route path="/profile/news" element={<ProtectedRoute><ProfileNews /></ProtectedRoute>} />
                 <Route path="/garage-settings" element={<ProtectedRoute><GarageSettings /></ProtectedRoute>} />
                 <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
                 <Route path="/friends/:friendId/stats" element={<ProtectedRoute><ProfileStats /></ProtectedRoute>} />
