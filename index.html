@@ -1,6 +1,14 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      // Auto-reload on stale chunk errors
+      window.addEventListener('error', e => {
+        if (e.message && e.message.includes('Failed to fetch dynamically imported module')) {
+          window.location.reload();
+        }
+      });
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- TODO: Set the document title to the name of your application -->
