@@ -44,7 +44,6 @@ interface BlackGoldBgProps {
 const BlackGoldBg = ({ showMarble = false }: BlackGoldBgProps) => {
   const { theme } = useTheme();
   const gradient = THEME_GRADIENTS[theme] || THEME_GRADIENTS["noir-or"];
-  const isNoirOr = !theme || theme === "noir-or";
 
   return (
     <>
@@ -52,7 +51,7 @@ const BlackGoldBg = ({ showMarble = false }: BlackGoldBgProps) => {
         className="pointer-events-none fixed inset-0 z-0"
         style={{ backgroundImage: gradient }}
       />
-      {showMarble && isNoirOr && (
+      {showMarble && (
         <>
           <div
             className="pointer-events-none fixed inset-0 z-0"
