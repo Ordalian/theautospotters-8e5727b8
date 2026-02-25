@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export type LeaderboardSortOption = "spots" | "avg_quality" | "avg_rarity" | "car_level";
+export type LeaderboardSortOption = "spots" | "avg_quality" | "avg_rarity" | "car_level" | "garage_price";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -23,6 +23,7 @@ interface LeaderboardEntry {
   avg_quality: number;
   avg_rarity: number;
   car_level: number;
+  total_estimated_price: number;
 }
 
 const Leaderboard = () => {
@@ -39,6 +40,7 @@ const Leaderboard = () => {
     { value: "avg_quality", label: t.leaderboard_sort_quality as string, valueLabel: t.leaderboard_val_quality as string },
     { value: "avg_rarity", label: t.leaderboard_sort_rarity as string, valueLabel: t.leaderboard_val_rarity as string },
     { value: "car_level", label: t.leaderboard_sort_level as string, valueLabel: t.leaderboard_val_level as string },
+    { value: "garage_price", label: t.leaderboard_sort_garage_price as string, valueLabel: t.leaderboard_val_garage_price as string },
   ];
 
   const fetchLeaderboard = async () => {
@@ -56,6 +58,7 @@ const Leaderboard = () => {
           avg_quality: Number(e.avg_quality ?? 0),
           avg_rarity: Number(e.avg_rarity ?? 0),
           car_level: Number(e.car_level ?? 0),
+          total_estimated_price: Number(e.total_estimated_price ?? 0),
         }))
       );
     } else {
@@ -79,6 +82,8 @@ const Leaderboard = () => {
         return list.sort((a, b) => (b.avg_rarity ?? 0) - (a.avg_rarity ?? 0));
       case "car_level":
         return list.sort((a, b) => (b.car_level ?? 0) - (a.car_level ?? 0));
+      case "garage_price":
+        return list.sort((a, b) => (b.total_estimated_price ?? 0) - (a.total_estimated_price ?? 0));
       default:
         return list;
     }
@@ -94,6 +99,10 @@ const Leaderboard = () => {
         return (entry.avg_rarity ?? 0).toFixed(1);
       case "car_level":
         return (entry.car_level ?? 0).toFixed(1);
+      case "garage_price":
+        return (entry.total_estimated_price ?? 0) >= 0
+          ? `${Math.round(entry.total_estimated_price ?? 0).toLocaleString("fr-FR")} €`
+          : "—";
       default:
         return String(entry.car_count);
     }

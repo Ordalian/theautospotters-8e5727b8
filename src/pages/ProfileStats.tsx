@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 
@@ -97,24 +97,68 @@ interface CarRow {
   quality_rating: number | null;
   rarity_rating: number | null;
   estimated_price: number | null;
+  brand?: string;
+  model?: string;
+  year?: number;
+  image_url?: string | null;
 }
 
 const ProfileStats = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { friendId } = useParams<{ friendId?: string }>();
   const [hoverBar, setHoverBar] = useState<string | null>(null);
+  const isFriendView = !!friendId && friendId !== user?.id;
+
+  const { data: friendProfile } = useQuery({
+    queryKey: ["profile-username", friendId],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("username").eq("user_id", friendId!).maybeSingle();
+      return data?.username ?? null;
+    },
+    enabled: isFriendView && !!friendId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: isFriend = false, isLoading: loadingFriend } = useQuery({
+    queryKey: ["is-friend", user?.id, friendId],
+    queryFn: async () => {
+      if (!user?.id || !friendId) return false;
+      const { data } = await supabase
+        .from("friendships")
+        .select("id")
+        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${friendId}),and(requester_id.eq.${friendId},addressee_id.eq.${user.id})`)
+        .eq("status", "accepted")
+        .limit(1)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: isFriendView && !!user?.id && !!friendId,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (isFriendView && !loadingFriend && !isFriend) {
+      navigate("/friends", { replace: true });
+    }
+  }, [isFriendView, loadingFriend, isFriend, navigate]);
+
+  const targetUserId = isFriendView ? friendId! : user?.id ?? null;
 
   const { data: cars = [], isLoading } = useQuery({
-    queryKey: ["profile-stats-cars", user?.id],
+    queryKey: ["profile-stats-cars", targetUserId, isFriendView],
     queryFn: async () => {
+      const cols = isFriendView
+        ? "id, vehicle_type, quality_rating, rarity_rating, estimated_price, brand, model, year, image_url"
+        : "id, vehicle_type, quality_rating, rarity_rating, estimated_price";
       const { data } = await supabase
         .from("cars")
-        .select("id, vehicle_type, quality_rating, rarity_rating, estimated_price")
-        .eq("user_id", user!.id);
+        .select(cols)
+        .eq("user_id", targetUserId!);
       return (data as CarRow[]) ?? [];
     },
-    enabled: !!user,
+    enabled: !!targetUserId && (!isFriendView || isFriend),
     staleTime: 2 * 60 * 1000,
   });
 
@@ -143,7 +187,7 @@ const ProfileStats = () => {
       sumQuality += q;
       sumRarity += r;
       countWithRatings++;
-      const val = c.estimated_price != null && c.estimated_price > 0 ? Number(c.estimated_price) : q * r;
+      const val = c.estimated_price != null && c.estimated_price > 0 ? Number(c.estimated_price) : 0;
       valueTotal += val;
       valueByType[vt] = (valueByType[vt] || 0) + val;
     }
@@ -194,16 +238,52 @@ const ProfileStats = () => {
 
   const hasData = stats.totalSpots > 0;
 
+  const displayName = isFriendView ? (friendProfile || (t.friends_this_friend as string)) : null;
+
   return (
     <div className="min-h-screen bg-background relative pb-8">
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 sticky top-0 z-10 bg-background">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(isFriendView ? "/friends" : "/profile")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-xl font-bold">{t.profile_stats_title as string}</h1>
+        <h1 className="text-xl font-bold">
+          {isFriendView
+            ? ((t.profile_stats_title as string) + (displayName ? ` · ${displayName}` : ""))
+            : (t.profile_stats_title as string)}
+        </h1>
       </header>
 
       <div className="p-4 max-w-md mx-auto space-y-6">
+        {isFriendView && cars.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              {(t.friends_garage_of as (name: string) => string)(displayName || "")}
+            </h2>
+            <div className="flex gap-3 overflow-x-auto pb-1 -mx-1">
+              {cars.slice(0, 20).map((car) => (
+                <button
+                  key={car.id}
+                  type="button"
+                  onClick={() => navigate(`/car/${car.id}`, { state: { returnTo: "/friends" } })}
+                  className="shrink-0 w-24 rounded-lg border border-border overflow-hidden bg-secondary/20 hover:border-primary/30 transition-colors text-left"
+                >
+                  {car.image_url ? (
+                    <img src={car.image_url} alt="" className="h-16 w-full object-cover" />
+                  ) : (
+                    <div className="h-16 flex items-center justify-center">
+                      <Car className="h-6 w-6 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <div className="p-1.5">
+                    <p className="text-xs font-medium truncate">{car.brand} {car.model}</p>
+                    <p className="text-[10px] text-muted-foreground">{car.year}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {!hasData ? (
           <p className="text-muted-foreground text-center py-8">{t.profile_stats_no_data as string}</p>
         ) : (
