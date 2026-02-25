@@ -408,7 +408,7 @@ const FriendsGarages = () => {
                   </div>
                   <div>
                     <p className="font-bold text-lg">Livraison</p>
-                    <p className="text-sm text-muted-foreground">Envoyer une voiture à un ami (1 fois / 24h)</p>
+                    <p className="text-sm text-muted-foreground">Envoyer un véhicule à un ami (1 fois / 24h)</p>
                   </div>
                 </button>
               )}
@@ -418,7 +418,7 @@ const FriendsGarages = () => {
               <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                   <DialogTitle>Livraison</DialogTitle>
-                  <DialogDescription>Voulez-vous livrer une voiture à un ami ?</DialogDescription>
+                  <DialogDescription>Voulez-vous livrer un véhicule à un ami ?</DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-0">
                   <Button variant="outline" onClick={() => setDeliveryPopupOpen(false)} className="gap-1">
