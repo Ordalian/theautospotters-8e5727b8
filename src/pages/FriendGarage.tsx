@@ -102,16 +102,17 @@ const FriendGarage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: friendCars = [], isLoading: carsLoading } = useQuery({
+  const { data: friendCars = [], isLoading: carsLoading, error: friendCarsError } = useQuery({
     queryKey: ["friend-cars", friendId, typeFilter],
     queryFn: async () => {
       const q = supabase
         .from("cars")
         .select("id, brand, model, year, image_url, vehicle_type, created_at")
-        .eq("user_id", friendId!);
-      const q2 = typeFilter && typeFilter !== "all" ? (q as any).eq("vehicle_type", typeFilter) : (q as any).neq("vehicle_type", "hot_wheels");
-      const { data } = await q2.order("created_at", { ascending: false });
-      return (data as FriendCarRow[]) ?? [];
+        .eq("user_id", friendId!) as any;
+      const q2 = typeFilter && typeFilter !== "all" ? q.eq("vehicle_type", typeFilter) : q.neq("vehicle_type", "hot_wheels");
+      const { data, error } = await q2.order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data as FriendCarRow[] | null) ?? [];
     },
     enabled: !!friendId && isFriend && !!typeFilter,
     staleTime: 2 * 60 * 1000,
@@ -151,15 +152,18 @@ const FriendGarage = () => {
             {(t.friends_garage_of as (name: string) => string)(displayName)} · {listTitle}
           </h1>
         </header>
-        <main className="flex-1 p-4 max-w-lg mx-auto w-full space-y-3">
+        <main className="flex-1 min-h-0 flex flex-col p-4 max-w-lg mx-auto w-full">
           {carsLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
+          ) : friendCarsError ? (
+            <p className="text-destructive text-sm text-center py-8">{t.friends_garage_load_error as string}</p>
           ) : friendCars.length === 0 ? (
-            <p className="text-muted-foreground text-sm text-center py-8">Aucun véhicule dans cette catégorie.</p>
+            <p className="text-muted-foreground text-sm text-center py-8">{t.friends_garage_no_vehicle_in_category as string}</p>
           ) : (
-            friendCars.map((car) => (
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
+            {friendCars.map((car) => (
               <button
                 key={car.id}
                 type="button"
@@ -178,7 +182,8 @@ const FriendGarage = () => {
                   <p className="text-sm text-muted-foreground">{car.year}</p>
                 </div>
               </button>
-            ))
+            ))}
+            </div>
           )}
         </main>
       </div>

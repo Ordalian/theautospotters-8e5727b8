@@ -404,6 +404,8 @@ const fr: Translations = {
   friends_send_error: "Erreur lors de l'envoi",
   friends_back_groups: "Retour aux groupes",
   friends_garage_empty: "Ce garage est vide pour l'instant.",
+  friends_garage_load_error: "Impossible de charger les véhicules.",
+  friends_garage_no_vehicle_in_category: "Aucun véhicule dans cette catégorie.",
   friends_this_friend: "cet ami",
 
   // Deliver

@@ -402,6 +402,8 @@ const en: Translations = {
   friends_send_error: "Error sending request",
   friends_back_groups: "Back to groups",
   friends_garage_empty: "This garage is empty for now.",
+  friends_garage_load_error: "Unable to load vehicles.",
+  friends_garage_no_vehicle_in_category: "No vehicles in this category.",
   friends_this_friend: "this friend",
 
   // Deliver
