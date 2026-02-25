@@ -361,7 +361,6 @@ const ProfileStats = () => {
             {/* Value section */}
             <div className="rounded-xl border border-border bg-card p-4 space-y-3">
               <h2 className="text-base font-bold">{t.profile_stats_value as string}</h2>
-              <p className="text-xs text-muted-foreground">{t.profile_stats_value_estimated as string}</p>
 
               <div className="space-y-3">
                 <div
