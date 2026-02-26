@@ -65,7 +65,8 @@ export function LocationMapPicker({
     const map = L.map(node, {
       center: [lat, lng],
       zoom: DEFAULT_ZOOM,
-      tap: false, // allow click/tap to select place instead of being consumed by Leaflet's tap-zoom
+      // @ts-ignore - tap option exists in Leaflet but not in types
+      tap: false,
     });
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {

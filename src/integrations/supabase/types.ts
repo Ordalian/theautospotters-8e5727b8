@@ -366,6 +366,18 @@ export type Database = {
         }[]
       }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
+      recompute_user_total_xp: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      xp_for_car: {
+        Args: {
+          p_photo_source: string
+          p_rarity_rating: number
+          p_vehicle_type: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
