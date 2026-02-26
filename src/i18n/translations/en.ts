@@ -310,6 +310,7 @@ const en: Translations = {
   stats_emblems_choose: "Choose the 3 emblems shown on your stats",
   stats_emblems_pick: "Pick an achievement",
   achievement_slot_empty: "None",
+  achievement_emblem_preview: "View all 10 emblems",
   profile_tile_news: "News",
   profile_tile_news_desc: "App updates and what's new",
   profile_coming_soon: "Coming soon.",

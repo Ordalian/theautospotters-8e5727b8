@@ -179,6 +179,14 @@ const ProfileAchievements = () => {
             })}
           </div>
         </section>
+
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => navigate("/emblem-preview")}
+        >
+          {t.achievement_emblem_preview as string}
+        </Button>
       </div>
 
       <Dialog open={pickSlot != null} onOpenChange={(open) => !open && setPickSlot(null)}>

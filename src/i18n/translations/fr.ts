@@ -312,6 +312,7 @@ const fr: Translations = {
   stats_emblems_choose: "Choisir les 3 blasons affichés sur tes stats",
   stats_emblems_pick: "Choisir un succès",
   achievement_slot_empty: "Aucun",
+  achievement_emblem_preview: "Voir les 10 blasons",
   profile_tile_news: "News",
   profile_tile_news_desc: "Actus et nouveautés de l'app",
   profile_coming_soon: "Bientôt disponible.",

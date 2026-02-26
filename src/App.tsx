@@ -28,6 +28,7 @@ const DeliverCarChoice = lazy(() => import("./pages/DeliverCarChoice"));
 const DeliverSelectFriend = lazy(() => import("./pages/DeliverSelectFriend"));
 const CarDetails = lazy(() => import("./pages/CarDetails"));
 const VehicleTypeMenu = lazy(() => import("./pages/VehicleTypeMenu"));
+const EmblemPreview = lazy(() => import("./pages/EmblemPreview"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="/profile/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
                 <Route path="/profile/stats" element={<ProtectedRoute><ProfileStats /></ProtectedRoute>} />
                 <Route path="/profile/achievements" element={<ProtectedRoute><ProfileAchievements /></ProtectedRoute>} />
+                <Route path="/emblem-preview" element={<ProtectedRoute><EmblemPreview /></ProtectedRoute>} />
                 <Route path="/profile/news" element={<ProtectedRoute><ProfileNews /></ProtectedRoute>} />
                 <Route path="/garage-settings" element={<ProtectedRoute><GarageSettings /></ProtectedRoute>} />
                 <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
