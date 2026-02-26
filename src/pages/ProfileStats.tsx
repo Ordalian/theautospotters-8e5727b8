@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getLevelProgress } from "@/lib/leveling";
+import { ACHIEVEMENTS, getAchievementLevel, getAchievementValue, type AchievementId } from "@/lib/achievements";
+import { Emblem } from "@/components/Emblem";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -139,11 +141,11 @@ const ProfileStats = () => {
   const isFriendView = !!friendId && friendId !== user?.id;
 
   const { data: friendProfile } = useQuery({
-    queryKey: ["profile-username-pinned-xp", friendId],
+    queryKey: ["profile-username-pinned-xp-emblem", friendId],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("username, pinned_car_id, total_xp")
+        .select("username, pinned_car_id, total_xp, emblem_slot_1, emblem_slot_2, emblem_slot_3")
         .eq("user_id", friendId!)
         .maybeSingle();
       return data
@@ -151,6 +153,9 @@ const ProfileStats = () => {
             username: data.username ?? null,
             pinned_car_id: (data as { pinned_car_id?: string | null }).pinned_car_id ?? null,
             total_xp: Number((data as { total_xp?: number }).total_xp ?? 0),
+            emblem_slot_1: (data as { emblem_slot_1?: string | null }).emblem_slot_1 ?? null,
+            emblem_slot_2: (data as { emblem_slot_2?: string | null }).emblem_slot_2 ?? null,
+            emblem_slot_3: (data as { emblem_slot_3?: string | null }).emblem_slot_3 ?? null,
           }
         : null;
     },
@@ -159,11 +164,11 @@ const ProfileStats = () => {
   });
 
   const { data: myProfile } = useQuery({
-    queryKey: ["profile-pinned-self-xp", user?.id],
+    queryKey: ["profile-pinned-self-xp-emblem", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("pinned_car_id, username, total_xp")
+        .select("pinned_car_id, username, total_xp, emblem_slot_1, emblem_slot_2, emblem_slot_3")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data
@@ -171,6 +176,9 @@ const ProfileStats = () => {
             pinned_car_id: (data as { pinned_car_id?: string | null }).pinned_car_id ?? null,
             username: (data as { username?: string | null }).username ?? null,
             total_xp: Number((data as { total_xp?: number }).total_xp ?? 0),
+            emblem_slot_1: (data as { emblem_slot_1?: string | null }).emblem_slot_1 ?? null,
+            emblem_slot_2: (data as { emblem_slot_2?: string | null }).emblem_slot_2 ?? null,
+            emblem_slot_3: (data as { emblem_slot_3?: string | null }).emblem_slot_3 ?? null,
           }
         : null;
     },
@@ -475,6 +483,40 @@ const ProfileStats = () => {
           <p className="text-muted-foreground text-center py-8">{t.profile_stats_no_data as string}</p>
         ) : (
           <>
+            {/* Emblems tile (3 chosen blasons) */}
+            <section
+              className="rounded-xl border border-border bg-card p-4"
+              role={!isFriendView ? "button" : undefined}
+              tabIndex={!isFriendView ? 0 : undefined}
+              onClick={!isFriendView ? () => navigate("/profile/achievements") : undefined}
+              onKeyDown={!isFriendView ? (e) => e.key === "Enter" && navigate("/profile/achievements") : undefined}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-bold text-base">{t.stats_emblems_title as string}</h2>
+                {!isFriendView && (
+                  <span className="text-xs text-primary font-medium">{t.stats_emblems_choose as string}</span>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  profileForLevel?.emblem_slot_1 ?? null,
+                  profileForLevel?.emblem_slot_2 ?? null,
+                  profileForLevel?.emblem_slot_3 ?? null,
+                ].map((aid, i) => {
+                  const level = aid
+                    ? getAchievementLevel(aid as AchievementId, getAchievementValue(aid as AchievementId, { spotCount: stats.totalSpots }))
+                    : 0;
+                  const label = aid ? (t[ACHIEVEMENTS[aid as AchievementId].labelKey as keyof typeof t] as string) : "—";
+                  return (
+                    <div key={i} className="flex flex-col items-center gap-2">
+                      <Emblem level={level} size={56} />
+                      <span className="text-xs text-muted-foreground text-center truncate w-full">{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
             {/* Pie charts */}
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl border border-border bg-card p-4 flex flex-col items-center gap-2">

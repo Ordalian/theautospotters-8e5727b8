@@ -309,6 +309,9 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          emblem_slot_1: string | null
+          emblem_slot_2: string | null
+          emblem_slot_3: string | null
           id: string
           language: string
           last_delivery_at: string | null
@@ -322,6 +325,9 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          emblem_slot_1?: string | null
+          emblem_slot_2?: string | null
+          emblem_slot_3?: string | null
           id?: string
           language?: string
           last_delivery_at?: string | null
@@ -335,6 +341,9 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          emblem_slot_1?: string | null
+          emblem_slot_2?: string | null
+          emblem_slot_3?: string | null
           id?: string
           language?: string
           last_delivery_at?: string | null
