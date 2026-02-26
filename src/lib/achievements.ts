@@ -1,10 +1,16 @@
 /**
  * Achievements: 10 levels each, thresholds per level.
  * Level 1 = first threshold reached, level 10 = last.
+ * Each level grants XP when reached (cumulative in total).
  */
 
 export const ACHIEVEMENT_IDS = ["spotter"] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
+
+/** XP granted when reaching each level (1→100, 2→200, …, 10→5000). */
+export const ACHIEVEMENT_XP_REWARDS: [number, number, number, number, number, number, number, number, number, number] = [
+  100, 200, 400, 800, 1500, 2000, 2500, 3000, 3500, 5000,
+];
 
 export interface AchievementDef {
   id: AchievementId;
@@ -62,4 +68,25 @@ export function getAchievementValue(achievementId: AchievementId, stats: { spotC
     default:
       return 0;
   }
+}
+
+/** Total XP earned from an achievement up to the given level (sum of rewards for levels 1..level). */
+export function getAchievementXpForLevel(level: number): number {
+  if (level <= 0) return 0;
+  let sum = 0;
+  for (let i = 0; i < Math.min(level, 10); i++) {
+    sum += ACHIEVEMENT_XP_REWARDS[i];
+  }
+  return sum;
+}
+
+/** Total XP from all achievements given current stats. */
+export function getTotalAchievementXp(stats: { spotCount: number }): number {
+  let total = 0;
+  for (const id of ACHIEVEMENT_IDS) {
+    const value = getAchievementValue(id, stats);
+    const level = getAchievementLevel(id, value);
+    total += getAchievementXpForLevel(level);
+  }
+  return total;
 }
