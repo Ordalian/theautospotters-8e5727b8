@@ -314,6 +314,7 @@ export type Database = {
           last_delivery_at: string | null
           pinned_car_id: string | null
           theme: string | null
+          total_xp: number
           user_id: string
           username: string | null
           username_locked: boolean
@@ -326,6 +327,7 @@ export type Database = {
           last_delivery_at?: string | null
           pinned_car_id?: string | null
           theme?: string | null
+          total_xp?: number
           user_id: string
           username?: string | null
           username_locked?: boolean
@@ -338,6 +340,7 @@ export type Database = {
           last_delivery_at?: string | null
           pinned_car_id?: string | null
           theme?: string | null
+          total_xp?: number
           user_id?: string
           username?: string | null
           username_locked?: boolean

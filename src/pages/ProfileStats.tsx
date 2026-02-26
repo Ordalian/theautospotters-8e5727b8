@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { getLevelProgress } from "@/lib/leveling";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -138,28 +139,40 @@ const ProfileStats = () => {
   const isFriendView = !!friendId && friendId !== user?.id;
 
   const { data: friendProfile } = useQuery({
-    queryKey: ["profile-username-pinned", friendId],
+    queryKey: ["profile-username-pinned-xp", friendId],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("username, pinned_car_id")
+        .select("username, pinned_car_id, total_xp")
         .eq("user_id", friendId!)
         .maybeSingle();
-      return data ? { username: data.username ?? null, pinned_car_id: (data as { pinned_car_id?: string | null }).pinned_car_id ?? null } : null;
+      return data
+        ? {
+            username: data.username ?? null,
+            pinned_car_id: (data as { pinned_car_id?: string | null }).pinned_car_id ?? null,
+            total_xp: Number((data as { total_xp?: number }).total_xp ?? 0),
+          }
+        : null;
     },
     enabled: isFriendView && !!friendId,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: myProfile } = useQuery({
-    queryKey: ["profile-pinned-self", user?.id],
+    queryKey: ["profile-pinned-self-xp", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("pinned_car_id")
+        .select("pinned_car_id, username, total_xp")
         .eq("user_id", user!.id)
         .maybeSingle();
-      return data ? { pinned_car_id: (data as { pinned_car_id?: string | null }).pinned_car_id ?? null } : null;
+      return data
+        ? {
+            pinned_car_id: (data as { pinned_car_id?: string | null }).pinned_car_id ?? null,
+            username: (data as { username?: string | null }).username ?? null,
+            total_xp: Number((data as { total_xp?: number }).total_xp ?? 0),
+          }
+        : null;
     },
     enabled: !isFriendView && !!user?.id,
     staleTime: 5 * 60 * 1000,
@@ -326,7 +339,10 @@ const ProfileStats = () => {
 
   const hasData = stats.totalSpots > 0;
 
-  const displayName = isFriendView ? (friendProfile?.username ?? (t.friends_this_friend as string)) : null;
+  const displayName = isFriendView ? (friendProfile?.username ?? (t.friends_this_friend as string)) : (myProfile?.username ?? user?.email ?? null);
+  const profileForLevel = isFriendView ? friendProfile : myProfile;
+  const totalXp = profileForLevel?.total_xp ?? 0;
+  const levelProgress = getLevelProgress(totalXp);
 
   return (
     <div className="min-h-screen bg-background relative pb-8">
@@ -342,6 +358,39 @@ const ProfileStats = () => {
       </header>
 
       <div className="p-4 max-w-md mx-auto space-y-6">
+        {/* Level bar under user name */}
+        <section className="rounded-xl border border-border bg-card p-4">
+          {displayName && (
+            <p className="text-sm font-medium text-muted-foreground mb-2">{displayName}</p>
+          )}
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs">
+              <span className="font-semibold">
+                {(t.level_label as string)} {levelProgress.level}
+                {levelProgress.level >= 100 ? ` (${t.level_max as string})` : ""}
+              </span>
+              {levelProgress.level < 100 && (
+                <span className="text-muted-foreground tabular-nums">
+                  {levelProgress.xpInCurrentLevel.toLocaleString()} / {(levelProgress.xpRequiredForCurrentLevel).toLocaleString()} XP
+                </span>
+              )}
+            </div>
+            <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: `${levelProgress.progressFraction * 100}%` }}
+              />
+            </div>
+            {levelProgress.level < 100 ? (
+              <p className="text-xs text-muted-foreground">
+                {(t.level_xp_earned as string)}: {levelProgress.xpInCurrentLevel.toLocaleString()} · {(t.level_xp_to_next as string)}: {levelProgress.xpToNextLevel.toLocaleString()} XP
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">{(t.level_xp_earned as string)}: {levelProgress.xpInCurrentLevel.toLocaleString()}</p>
+            )}
+          </div>
+        </section>
+
         {isFriendView ? (
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <button

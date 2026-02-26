@@ -15,6 +15,7 @@ import { PhotoUploadDialog, PhotoPreview, type PhotoSourceType } from "@/compone
 import { CarConditionSelector } from "@/components/CarConditionSelector";
 import { LocationMapPicker } from "@/components/LocationMapPicker";
 import { searchPlaceOrMidpoint, reverseGeocode } from "@/lib/geocode";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { 
   type CarCondition, 
@@ -68,6 +69,7 @@ function spotMatchScore(
 const AddCar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const isDeliveryMode = searchParams.get("delivery") === "1";
@@ -473,6 +475,8 @@ const AddCar = () => {
         }
         const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(brand, model) : `${brand} ${model}`;
         toast.success(successMsg);
+        queryClient.invalidateQueries({ queryKey: ["profile-pinned-self-xp", user?.id] });
+        queryClient.invalidateQueries({ queryKey: ["profile-stats-cars", user?.id] });
         navigate(isMiniature ? "/garage?type=hot_wheels" : "/garage");
       }
     } catch (err: any) {

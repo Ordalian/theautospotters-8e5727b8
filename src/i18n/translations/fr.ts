@@ -356,6 +356,10 @@ const fr: Translations = {
   profile_stats_value_total: "Total garage",
   profile_stats_no_data: "Aucun spot pour afficher les statistiques.",
   profile_stats_rarity_level: (n: number) => `Rareté ${n}`,
+  level_label: "Niveau",
+  level_xp_earned: "XP gagnés",
+  level_xp_to_next: "XP pour le prochain",
+  level_max: "Niveau max",
 
   // Garage Settings
   settings_title: "Mon garage",
