@@ -389,13 +389,6 @@ const ProfileStats = () => {
                 style={{ width: `${levelProgress.progressFraction * 100}%` }}
               />
             </div>
-            {levelProgress.level < 100 ? (
-              <p className="text-xs text-muted-foreground">
-                {(t.level_xp_earned as string)}: {levelProgress.xpInCurrentLevel.toLocaleString()} · {(t.level_xp_to_next as string)}: {levelProgress.xpToNextLevel.toLocaleString()} XP
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">{(t.level_xp_earned as string)}: {levelProgress.xpInCurrentLevel.toLocaleString()}</p>
-            )}
           </div>
         </section>
 
