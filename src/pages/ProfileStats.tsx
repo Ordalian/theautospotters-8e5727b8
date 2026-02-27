@@ -486,9 +486,6 @@ const ProfileStats = () => {
             >
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-bold text-base">{t.stats_emblems_title as string}</h2>
-                {!isFriendView && (
-                  <span className="text-xs text-primary font-medium">{t.stats_emblems_choose as string}</span>
-                )}
               </div>
               <div className="grid grid-cols-3 gap-4">
                 {[
