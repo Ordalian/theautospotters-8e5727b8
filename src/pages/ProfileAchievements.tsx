@@ -6,11 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ACHIEVEMENT_IDS,
   ACHIEVEMENTS,
+  ACHIEVEMENT_SHAPES,
   getAchievementLevel,
   getAchievementProgressInLevel,
   getAchievementValue,
   getNextThreshold,
   type AchievementId,
+  type AchievementStats,
 } from "@/lib/achievements";
 import { Emblem } from "@/components/Emblem";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,7 @@ const ProfileAchievements = () => {
   const queryClient = useQueryClient();
   const [pickSlot, setPickSlot] = useState<1 | 2 | 3 | null>(null);
 
+  // Fetch all achievement stats in parallel
   const { data: spotCount = 0 } = useQuery({
     queryKey: ["achievement-spot-count", user?.id],
     queryFn: async () => {
@@ -40,6 +43,54 @@ const ProfileAchievements = () => {
         .eq("user_id", user!.id)
         .neq("vehicle_type", "hot_wheels");
       return count ?? 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: distinctLocations = 0 } = useQuery({
+    queryKey: ["achievement-distinct-locations", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cars")
+        .select("location_name")
+        .eq("user_id", user!.id)
+        .neq("vehicle_type", "hot_wheels")
+        .not("location_name", "is", null);
+      if (!data) return 0;
+      const unique = new Set(data.map((r) => r.location_name?.toLowerCase().trim()).filter(Boolean));
+      return unique.size;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: rareCarsCount = 0 } = useQuery({
+    queryKey: ["achievement-rare-cars", user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("cars")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .neq("vehicle_type", "hot_wheels")
+        .gte("rarity_rating", 4);
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: distinctBrands = 0 } = useQuery({
+    queryKey: ["achievement-distinct-brands", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cars")
+        .select("brand")
+        .eq("user_id", user!.id)
+        .neq("vehicle_type", "hot_wheels");
+      if (!data) return 0;
+      const unique = new Set(data.map((r) => r.brand?.toLowerCase().trim()).filter(Boolean));
+      return unique.size;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
@@ -59,7 +110,7 @@ const ProfileAchievements = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const stats = { spotCount };
+  const stats: AchievementStats = { spotCount, distinctLocations, rareCarsCount, distinctBrands };
   const emblemSlots: (AchievementId | null)[] = [
     (profile?.emblem_slot_1 as AchievementId) ?? null,
     (profile?.emblem_slot_2 as AchievementId) ?? null,
@@ -95,6 +146,7 @@ const ProfileAchievements = () => {
         {/* Achievement list */}
         {ACHIEVEMENT_IDS.map((id) => {
           const def = ACHIEVEMENTS[id];
+          const shape = ACHIEVEMENT_SHAPES[id];
           const value = getAchievementValue(id, stats);
           const level = getAchievementLevel(id, value);
           const progress = getAchievementProgressInLevel(id, value);
@@ -107,7 +159,7 @@ const ProfileAchievements = () => {
               key={id}
               className="rounded-xl border border-border bg-card p-4 flex gap-4 items-start"
             >
-              <Emblem level={level} size={56} className="shrink-0" />
+              <Emblem level={level} shape={shape} size={56} className="shrink-0" />
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="font-bold text-base">{label}</h2>
@@ -163,6 +215,7 @@ const ProfileAchievements = () => {
             {([1, 2, 3] as const).map((slot) => {
               const aid = emblemSlots[slot - 1];
               const level = aid ? getAchievementLevel(aid, getAchievementValue(aid, stats)) : 0;
+              const shape = aid ? ACHIEVEMENT_SHAPES[aid] : "shield";
               return (
                 <button
                   key={slot}
@@ -170,7 +223,7 @@ const ProfileAchievements = () => {
                   onClick={() => setPickSlot(slot)}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
                 >
-                  <Emblem level={level} size={48} />
+                  <Emblem level={level} shape={shape} size={48} />
                   <span className="text-xs text-muted-foreground">
                     {aid ? (t[ACHIEVEMENTS[aid].labelKey as keyof typeof t] as string) : "—"}
                   </span>
@@ -202,7 +255,7 @@ const ProfileAchievements = () => {
                 onClick={() => pickSlot && setEmblemSlot(pickSlot, aid)}
                 className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 text-left"
               >
-                <Emblem level={getAchievementLevel(aid, getAchievementValue(aid, stats))} size={40} />
+                <Emblem level={getAchievementLevel(aid, getAchievementValue(aid, stats))} shape={ACHIEVEMENT_SHAPES[aid]} size={40} />
                 <span className="font-medium">{t[ACHIEVEMENTS[aid].labelKey as keyof typeof t] as string}</span>
               </button>
             ))}

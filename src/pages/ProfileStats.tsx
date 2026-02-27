@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getLevelProgress } from "@/lib/leveling";
-import { ACHIEVEMENTS, getAchievementLevel, getAchievementValue, type AchievementId } from "@/lib/achievements";
+import { ACHIEVEMENTS, ACHIEVEMENT_SHAPES, getAchievementLevel, getAchievementValue, type AchievementId } from "@/lib/achievements";
 import { Emblem } from "@/components/Emblem";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Car } from "lucide-react";
@@ -494,12 +494,13 @@ const ProfileStats = () => {
                   profileForLevel?.emblem_slot_3 ?? null,
                 ].map((aid, i) => {
                   const level = aid
-                    ? getAchievementLevel(aid as AchievementId, getAchievementValue(aid as AchievementId, { spotCount: stats.totalSpots }))
+                    ? getAchievementLevel(aid as AchievementId, getAchievementValue(aid as AchievementId, { spotCount: stats.totalSpots, distinctLocations: 0, rareCarsCount: 0, distinctBrands: 0 }))
                     : 0;
                   const label = aid ? (t[ACHIEVEMENTS[aid as AchievementId].labelKey as keyof typeof t] as string) : "—";
+                  const shape = aid ? ACHIEVEMENT_SHAPES[aid as AchievementId] : "shield" as const;
                   return (
                     <div key={i} className="flex flex-col items-center gap-2">
-                      <Emblem level={level} size={56} />
+                      <Emblem level={level} shape={shape} size={56} />
                       <span className="text-xs text-muted-foreground text-center truncate w-full">{label}</span>
                     </div>
                   );
