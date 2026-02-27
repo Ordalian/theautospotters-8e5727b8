@@ -323,12 +323,12 @@ const ProfileStats = () => {
     const maxVal = Math.max(valueTotal, ...Object.values(valueByType), 1);
     const hasAnyPrice = carsExclMini.some((c) => c.estimated_price != null && c.estimated_price > 0);
 
-    const rarityCountMin5 = [5, 6, 7, 8, 9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
-    const rarityCountMin6 = [6, 7, 8, 9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
-    const rarityCountMin7 = [7, 8, 9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
-    const rarityCountMin8 = [8, 9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
-    const rarityCountMin9 = [9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
-    const rarityCountMin10 = byRarity[10] || 0;
+    const rarityCountExact5 = byRarity[5] || 0;
+    const rarityCountExact6 = byRarity[6] || 0;
+    const rarityCountExact7 = byRarity[7] || 0;
+    const rarityCountExact8 = byRarity[8] || 0;
+    const rarityCountExact9 = byRarity[9] || 0;
+    const rarityCountExact10 = byRarity[10] || 0;
 
     return {
       totalSpots,
@@ -341,12 +341,12 @@ const ProfileStats = () => {
       valueByType,
       maxVal,
       hasAnyPrice,
-      rarityCountMin5,
-      rarityCountMin6,
-      rarityCountMin7,
-      rarityCountMin8,
-      rarityCountMin9,
-      rarityCountMin10,
+      rarityCountExact5,
+      rarityCountExact6,
+      rarityCountExact7,
+      rarityCountExact8,
+      rarityCountExact9,
+      rarityCountExact10,
     };
   }, [cars]);
 
@@ -511,12 +511,12 @@ const ProfileStats = () => {
                     ? getAchievementLevel(resolvedAid, getAchievementValue(resolvedAid, {
                       spotCount: stats.totalSpots,
                       distinctLocations: 0,
-                      rarityCountMin5: stats.rarityCountMin5,
-                      rarityCountMin6: stats.rarityCountMin6,
-                      rarityCountMin7: stats.rarityCountMin7,
-                      rarityCountMin8: stats.rarityCountMin8,
-                      rarityCountMin9: stats.rarityCountMin9,
-                      rarityCountMin10: stats.rarityCountMin10,
+                      rarityCountExact5: stats.rarityCountExact5,
+                      rarityCountExact6: stats.rarityCountExact6,
+                      rarityCountExact7: stats.rarityCountExact7,
+                      rarityCountExact8: stats.rarityCountExact8,
+                      rarityCountExact9: stats.rarityCountExact9,
+                      rarityCountExact10: stats.rarityCountExact10,
                       distinctBrands: 0,
                     }))
                     : 0;

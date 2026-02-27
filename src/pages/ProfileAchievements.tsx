@@ -7,6 +7,7 @@ import {
   ACHIEVEMENT_IDS,
   ACHIEVEMENTS,
   ACHIEVEMENT_SHAPES,
+  RARITY_HUNTER_IDS,
   getAchievementLevel,
   getAchievementProgressInLevel,
   getAchievementValue,
@@ -23,7 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfileAchievements = () => {
@@ -32,6 +33,7 @@ const ProfileAchievements = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [pickSlot, setPickSlot] = useState<1 | 2 | 3 | null>(null);
+  const [chasseurOpen, setChasseurOpen] = useState(false);
 
   // Fetch all achievement stats in parallel
   const { data: spotCount = 0 } = useQuery({
@@ -65,55 +67,55 @@ const ProfileAchievements = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: rarityCountMin5 = 0 } = useQuery({
-    queryKey: ["achievement-rarity-count", user?.id, 5],
+  const { data: rarityCountExact5 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-exact", user?.id, 5],
     queryFn: async () => {
-      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 5);
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").eq("rarity_rating", 5);
       return count ?? 0;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
   });
-  const { data: rarityCountMin6 = 0 } = useQuery({
-    queryKey: ["achievement-rarity-count", user?.id, 6],
+  const { data: rarityCountExact6 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-exact", user?.id, 6],
     queryFn: async () => {
-      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 6);
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").eq("rarity_rating", 6);
       return count ?? 0;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
   });
-  const { data: rarityCountMin7 = 0 } = useQuery({
-    queryKey: ["achievement-rarity-count", user?.id, 7],
+  const { data: rarityCountExact7 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-exact", user?.id, 7],
     queryFn: async () => {
-      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 7);
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").eq("rarity_rating", 7);
       return count ?? 0;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
   });
-  const { data: rarityCountMin8 = 0 } = useQuery({
-    queryKey: ["achievement-rarity-count", user?.id, 8],
+  const { data: rarityCountExact8 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-exact", user?.id, 8],
     queryFn: async () => {
-      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 8);
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").eq("rarity_rating", 8);
       return count ?? 0;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
   });
-  const { data: rarityCountMin9 = 0 } = useQuery({
-    queryKey: ["achievement-rarity-count", user?.id, 9],
+  const { data: rarityCountExact9 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-exact", user?.id, 9],
     queryFn: async () => {
-      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 9);
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").eq("rarity_rating", 9);
       return count ?? 0;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
   });
-  const { data: rarityCountMin10 = 0 } = useQuery({
-    queryKey: ["achievement-rarity-count", user?.id, 10],
+  const { data: rarityCountExact10 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-exact", user?.id, 10],
     queryFn: async () => {
-      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 10);
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").eq("rarity_rating", 10);
       return count ?? 0;
     },
     enabled: !!user?.id,
@@ -153,12 +155,12 @@ const ProfileAchievements = () => {
   const stats: AchievementStats = {
     spotCount,
     distinctLocations,
-    rarityCountMin5,
-    rarityCountMin6,
-    rarityCountMin7,
-    rarityCountMin8,
-    rarityCountMin9,
-    rarityCountMin10,
+    rarityCountExact5,
+    rarityCountExact6,
+    rarityCountExact7,
+    rarityCountExact8,
+    rarityCountExact9,
+    rarityCountExact10,
     distinctBrands,
   };
   const emblemSlots: (AchievementId | null)[] = [
@@ -194,68 +196,98 @@ const ProfileAchievements = () => {
 
       <div className="p-4 max-w-md mx-auto space-y-6">
         {/* Achievement list */}
-        {ACHIEVEMENT_IDS.map((id) => {
-          const def = ACHIEVEMENTS[id];
-          const shape = ACHIEVEMENT_SHAPES[id];
-          const value = getAchievementValue(id, stats);
-          const level = getAchievementLevel(id, value);
-          const progress = getAchievementProgressInLevel(id, value);
-          const nextThreshold = getNextThreshold(id, value);
-          const label = t[def.labelKey as keyof typeof t] as string;
-          const desc = t[`${def.labelKey}_desc` as keyof typeof t] as string | undefined;
-
-          return (
-            <div
-              key={id}
-              className="rounded-xl border border-border bg-card p-4 flex gap-4 items-start"
-            >
-              <Emblem level={level} shape={shape} size={56} className="shrink-0" />
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="font-bold text-base">{label}</h2>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {(t.achievement_level as (n: number) => string)(level)}/10
-                  </span>
-                </div>
-                {desc && <p className="text-xs text-muted-foreground">{desc}</p>}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {value.toLocaleString()}
-                      {nextThreshold != null ? ` / ${nextThreshold.toLocaleString()}` : " (max)"}
+        {(() => {
+          const renderCard = (id: AchievementId) => {
+            const def = ACHIEVEMENTS[id];
+            const shape = ACHIEVEMENT_SHAPES[id];
+            const value = getAchievementValue(id, stats);
+            const level = getAchievementLevel(id, value);
+            const progress = getAchievementProgressInLevel(id, value);
+            const nextThreshold = getNextThreshold(id, value);
+            const label = t[def.labelKey as keyof typeof t] as string;
+            const desc = t[`${def.labelKey}_desc` as keyof typeof t] as string | undefined;
+            return (
+              <div
+                key={id}
+                className="rounded-xl border border-border bg-card p-4 flex gap-4 items-start"
+              >
+                <Emblem level={level} shape={shape} size={56} className="shrink-0" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="font-bold text-base">{label}</h2>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {(t.achievement_level as (n: number) => string)(level)}/10
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden flex">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((seg) => {
-                      const filled = level >= seg || (level === seg - 1 && progress > 0);
-                      const partial = level === seg - 1 && progress > 0 && progress < 1;
-                      return (
-                        <div
-                          key={seg}
-                          className="flex-1 h-full first:rounded-l-full last:rounded-r-full overflow-hidden"
-                          style={{
-                            backgroundColor: filled
-                              ? "hsl(var(--primary))"
-                              : partial
-                                ? "hsl(var(--primary) / 0.5)"
-                                : "hsl(var(--muted))",
-                          }}
-                        >
-                          {partial && (
-                            <div
-                              className="h-full bg-primary rounded-r-full"
-                              style={{ width: `${progress * 100}%` }}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
+                  {desc && <p className="text-xs text-muted-foreground">{desc}</p>}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        {value.toLocaleString()}
+                        {nextThreshold != null ? ` / ${nextThreshold.toLocaleString()}` : " (max)"}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((seg) => {
+                        const filled = level >= seg || (level === seg - 1 && progress > 0);
+                        const partial = level === seg - 1 && progress > 0 && progress < 1;
+                        return (
+                          <div
+                            key={seg}
+                            className="flex-1 h-full first:rounded-l-full last:rounded-r-full overflow-hidden"
+                            style={{
+                              backgroundColor: filled
+                                ? "hsl(var(--primary))"
+                                : partial
+                                  ? "hsl(var(--primary) / 0.5)"
+                                  : "hsl(var(--muted))",
+                            }}
+                          >
+                            {partial && (
+                              <div
+                                className="h-full bg-primary rounded-r-full"
+                                style={{ width: `${progress * 100}%` }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            );
+          };
+
+          return (
+            <>
+              {renderCard("spotter")}
+              {renderCard("globe_trotter")}
+              {/* Chasseur: collapsible group */}
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setChasseurOpen((o) => !o)}
+                  className="w-full p-4 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors"
+                >
+                  <span className="font-bold text-base">{t.achievement_chasseur_group as string}</span>
+                  {chasseurOpen ? (
+                    <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  )}
+                </button>
+                {chasseurOpen && (
+                  <div className="border-t border-border p-3 space-y-3">
+                    {RARITY_HUNTER_IDS.map((id) => renderCard(id))}
+                  </div>
+                )}
+              </div>
+              {renderCard("big_game")}
+              {renderCard("brand_collector")}
+            </>
           );
-        })}
+        })()}
 
         {/* Emblem slots for stats */}
         <section className="rounded-xl border border-border bg-card p-4 space-y-3">

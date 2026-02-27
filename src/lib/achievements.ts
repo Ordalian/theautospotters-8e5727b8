@@ -4,8 +4,8 @@
  * Each level grants XP when reached (cumulative in total).
  */
 
-const RARITY_HUNTER_IDS = ["rarity_hunter_5", "rarity_hunter_6", "rarity_hunter_7", "rarity_hunter_8", "rarity_hunter_9", "rarity_hunter_10"] as const;
-export const ACHIEVEMENT_IDS = ["spotter", "globe_trotter", ...RARITY_HUNTER_IDS, "brand_collector"] as const;
+export const RARITY_HUNTER_IDS = ["rarity_hunter_5", "rarity_hunter_6", "rarity_hunter_7", "rarity_hunter_8", "rarity_hunter_9", "rarity_hunter_10"] as const;
+export const ACHIEVEMENT_IDS = ["spotter", "globe_trotter", ...RARITY_HUNTER_IDS, "big_game", "brand_collector"] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 
 /** Shape of the emblem for each achievement type */
@@ -24,6 +24,7 @@ export const ACHIEVEMENT_SHAPES: Record<AchievementId, EmblemShape> = {
   rarity_hunter_8: "diamond",
   rarity_hunter_9: "diamond",
   rarity_hunter_10: "diamond",
+  big_game: "shield",
   brand_collector: "hexagon",
 };
 
@@ -81,6 +82,11 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDef> = {
     labelKey: "achievement_rarity_hunter_10",
     thresholds: RARITY_THRESHOLDS,
   },
+  big_game: {
+    id: "big_game",
+    labelKey: "achievement_big_game",
+    thresholds: [1, 2, 5, 10, 15, 25, 35, 45, 55, 60],
+  },
   brand_collector: {
     id: "brand_collector",
     labelKey: "achievement_brand_collector",
@@ -91,13 +97,13 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDef> = {
 export interface AchievementStats {
   spotCount: number;
   distinctLocations: number;
-  /** Count of cars with rarity_rating >= 5 (rares) */
-  rarityCountMin5: number;
-  rarityCountMin6: number;
-  rarityCountMin7: number;
-  rarityCountMin8: number;
-  rarityCountMin9: number;
-  rarityCountMin10: number;
+  /** Count of cars with rarity_rating === 5, 6, … 10 (exact rarity only) */
+  rarityCountExact5: number;
+  rarityCountExact6: number;
+  rarityCountExact7: number;
+  rarityCountExact8: number;
+  rarityCountExact9: number;
+  rarityCountExact10: number;
   distinctBrands: number;
 }
 
@@ -125,6 +131,16 @@ export function getAchievementProgressInLevel(achievementId: AchievementId, valu
   return Math.min(1, (value - prevThreshold) / span);
 }
 
+/** Sum of levels (1–10) across all 6 rarity hunter achievements. Max 60. */
+function getBigGameValue(stats: AchievementStats): number {
+  let sum = 0;
+  for (const id of RARITY_HUNTER_IDS) {
+    const value = getAchievementValue(id, stats);
+    sum += getAchievementLevel(id, value);
+  }
+  return sum;
+}
+
 /** Next threshold to reach (for display). */
 export function getNextThreshold(achievementId: AchievementId, value: number): number | null {
   const def = ACHIEVEMENTS[achievementId];
@@ -141,17 +157,19 @@ export function getAchievementValue(achievementId: AchievementId, stats: Achieve
     case "globe_trotter":
       return stats.distinctLocations;
     case "rarity_hunter_5":
-      return stats.rarityCountMin5;
+      return stats.rarityCountExact5;
     case "rarity_hunter_6":
-      return stats.rarityCountMin6;
+      return stats.rarityCountExact6;
     case "rarity_hunter_7":
-      return stats.rarityCountMin7;
+      return stats.rarityCountExact7;
     case "rarity_hunter_8":
-      return stats.rarityCountMin8;
+      return stats.rarityCountExact8;
     case "rarity_hunter_9":
-      return stats.rarityCountMin9;
+      return stats.rarityCountExact9;
     case "rarity_hunter_10":
-      return stats.rarityCountMin10;
+      return stats.rarityCountExact10;
+    case "big_game":
+      return getBigGameValue(stats);
     case "brand_collector":
       return stats.distinctBrands;
     default:
