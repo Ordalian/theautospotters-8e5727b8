@@ -7,6 +7,7 @@ import {
   ACHIEVEMENT_IDS,
   ACHIEVEMENTS,
   ACHIEVEMENT_SHAPES,
+  MUSE_ACHIEVEMENT_IDS,
   RARITY_HUNTER_IDS,
   getAchievementLevel,
   getAchievementProgressInLevel,
@@ -34,6 +35,7 @@ const ProfileAchievements = () => {
   const queryClient = useQueryClient();
   const [pickSlot, setPickSlot] = useState<1 | 2 | 3 | null>(null);
   const [chasseurOpen, setChasseurOpen] = useState(false);
+  const [museOpen, setMuseOpen] = useState(false);
 
   // Fetch all achievement stats in parallel
   const { data: spotCount = 0 } = useQuery({
@@ -138,6 +140,30 @@ const ProfileAchievements = () => {
     staleTime: 2 * 60 * 1000,
   });
 
+  const CLIO_GENS = ["I", "II", "III", "IV", "V", "VI"];
+  const { data: clioGenerationsSpotted = 0 } = useQuery({
+    queryKey: ["achievement-clio-generations", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cars")
+        .select("generation")
+        .eq("user_id", user!.id)
+        .eq("brand", "Renault")
+        .eq("model", "Clio")
+        .neq("vehicle_type", "hot_wheels")
+        .not("generation", "is", null);
+      if (!data) return 0;
+      const normalized = new Set(
+        data
+          .map((r) => (r.generation ?? "").trim().toUpperCase())
+          .filter((g) => CLIO_GENS.includes(g))
+      );
+      return normalized.size;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+
   const { data: profile } = useQuery({
     queryKey: ["profile-emblem-slots", user?.id],
     queryFn: async () => {
@@ -162,6 +188,7 @@ const ProfileAchievements = () => {
     rarityCountExact9,
     rarityCountExact10,
     distinctBrands,
+    clioGenerationsSpotted,
   };
   const emblemSlots: (AchievementId | null)[] = [
     (profile?.emblem_slot_1 as AchievementId) ?? null,
@@ -284,6 +311,26 @@ const ProfileAchievements = () => {
                 )}
               </div>
               {renderCard("big_game")}
+              {/* Muse of History: collapsible group */}
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setMuseOpen((o) => !o)}
+                  className="w-full p-4 flex items-center justify-between gap-3 text-left hover:bg-muted/30 transition-colors"
+                >
+                  <span className="font-bold text-base">{t.achievement_muse_group as string}</span>
+                  {museOpen ? (
+                    <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  )}
+                </button>
+                {museOpen && (
+                  <div className="border-t border-border p-3 space-y-3">
+                    {MUSE_ACHIEVEMENT_IDS.map((id) => renderCard(id))}
+                  </div>
+                )}
+              </div>
               {renderCard("brand_collector")}
             </>
           );

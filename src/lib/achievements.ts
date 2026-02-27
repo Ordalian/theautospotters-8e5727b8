@@ -5,7 +5,8 @@
  */
 
 export const RARITY_HUNTER_IDS = ["rarity_hunter_5", "rarity_hunter_6", "rarity_hunter_7", "rarity_hunter_8", "rarity_hunter_9", "rarity_hunter_10"] as const;
-export const ACHIEVEMENT_IDS = ["spotter", "globe_trotter", ...RARITY_HUNTER_IDS, "big_game", "brand_collector"] as const;
+export const MUSE_ACHIEVEMENT_IDS = ["muse_of_history"] as const;
+export const ACHIEVEMENT_IDS = ["spotter", "globe_trotter", ...RARITY_HUNTER_IDS, "big_game", ...MUSE_ACHIEVEMENT_IDS, "brand_collector"] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 
 /** Shape of the emblem for each achievement type */
@@ -25,6 +26,7 @@ export const ACHIEVEMENT_SHAPES: Record<AchievementId, EmblemShape> = {
   rarity_hunter_9: "diamond",
   rarity_hunter_10: "diamond",
   big_game: "shield",
+  muse_of_history: "globe",
   brand_collector: "hexagon",
 };
 
@@ -87,6 +89,11 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDef> = {
     labelKey: "achievement_big_game",
     thresholds: [1, 2, 5, 10, 15, 25, 35, 45, 55, 60],
   },
+  muse_of_history: {
+    id: "muse_of_history",
+    labelKey: "achievement_muse_of_history",
+    thresholds: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  },
   brand_collector: {
     id: "brand_collector",
     labelKey: "achievement_brand_collector",
@@ -105,6 +112,8 @@ export interface AchievementStats {
   rarityCountExact9: number;
   rarityCountExact10: number;
   distinctBrands: number;
+  /** Number of distinct Renault Clio generations (I–VI) spotted. Max 6. */
+  clioGenerationsSpotted: number;
 }
 
 /** Current level 0-10 for an achievement (0 = none unlocked). */
@@ -170,6 +179,8 @@ export function getAchievementValue(achievementId: AchievementId, stats: Achieve
       return stats.rarityCountExact10;
     case "big_game":
       return getBigGameValue(stats);
+    case "muse_of_history":
+      return stats.clioGenerationsSpotted;
     case "brand_collector":
       return stats.distinctBrands;
     default:

@@ -130,6 +130,7 @@ interface CarRow {
   brand?: string;
   model?: string;
   year?: number;
+  generation?: string | null;
   image_url?: string | null;
 }
 
@@ -338,6 +339,22 @@ const ProfileStats = () => {
       carsExclMini.map((c) => c.brand?.toLowerCase().trim()).filter(Boolean)
     ).size;
 
+    const CLIO_GENS = ["I", "II", "III", "IV", "V", "VI"];
+    const clioGenerationsSpotted = (() => {
+      const clioCars = carsExclMini.filter(
+        (c) =>
+          c.brand?.toLowerCase().trim() === "renault" &&
+          c.model?.toLowerCase().trim() === "clio" &&
+          c.generation?.trim()
+      );
+      const gens = new Set(
+        clioCars
+          .map((c) => (c.generation ?? "").trim().toUpperCase())
+          .filter((g) => CLIO_GENS.includes(g))
+      );
+      return gens.size;
+    })();
+
     return {
       totalSpots,
       avgQuality,
@@ -357,6 +374,7 @@ const ProfileStats = () => {
       rarityCountExact10,
       distinctLocations,
       distinctBrands,
+      clioGenerationsSpotted,
     };
   }, [cars]);
 
@@ -528,6 +546,7 @@ const ProfileStats = () => {
                       rarityCountExact9: stats.rarityCountExact9,
                       rarityCountExact10: stats.rarityCountExact10,
                       distinctBrands: stats.distinctBrands,
+                      clioGenerationsSpotted: stats.clioGenerationsSpotted,
                     }))
                     : 0;
                   const label = resolvedAid ? (t[ACHIEVEMENTS[resolvedAid].labelKey as keyof typeof t] as string) : "—";
