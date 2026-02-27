@@ -296,7 +296,7 @@ const ProfileAchievements = () => {
           <div className="grid grid-cols-3 gap-3">
             {([1, 2, 3] as const).map((slot) => {
               const aid = emblemSlots[slot - 1];
-              const resolvedAid = aid === "rarity_hunter" ? "rarity_hunter_5" : aid;
+              const resolvedAid = aid && aid in ACHIEVEMENTS ? aid : null;
               const level = resolvedAid ? getAchievementLevel(resolvedAid, getAchievementValue(resolvedAid, stats)) : 0;
               const shape = resolvedAid ? ACHIEVEMENT_SHAPES[resolvedAid] : "shield";
               return (
