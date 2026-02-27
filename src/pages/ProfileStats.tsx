@@ -126,6 +126,7 @@ interface CarRow {
   quality_rating: number | null;
   rarity_rating: number | null;
   estimated_price: number | null;
+  location_name?: string | null;
   brand?: string;
   model?: string;
   year?: number;
@@ -260,7 +261,7 @@ const ProfileStats = () => {
     queryFn: async () => {
       const cols = isFriendView
         ? "id, vehicle_type, quality_rating, rarity_rating, estimated_price, brand, model, year, image_url"
-        : "id, vehicle_type, quality_rating, rarity_rating, estimated_price";
+        : "id, vehicle_type, quality_rating, rarity_rating, estimated_price, location_name, brand";
       const { data } = await supabase
         .from("cars")
         .select(cols)
@@ -330,6 +331,13 @@ const ProfileStats = () => {
     const rarityCountExact9 = byRarity[9] || 0;
     const rarityCountExact10 = byRarity[10] || 0;
 
+    const distinctLocations = new Set(
+      carsExclMini.map((c) => c.location_name?.toLowerCase().trim()).filter(Boolean)
+    ).size;
+    const distinctBrands = new Set(
+      carsExclMini.map((c) => c.brand?.toLowerCase().trim()).filter(Boolean)
+    ).size;
+
     return {
       totalSpots,
       avgQuality,
@@ -347,6 +355,8 @@ const ProfileStats = () => {
       rarityCountExact8,
       rarityCountExact9,
       rarityCountExact10,
+      distinctLocations,
+      distinctBrands,
     };
   }, [cars]);
 
@@ -510,14 +520,14 @@ const ProfileStats = () => {
                   const level = resolvedAid
                     ? getAchievementLevel(resolvedAid, getAchievementValue(resolvedAid, {
                       spotCount: stats.totalSpots,
-                      distinctLocations: 0,
+                      distinctLocations: stats.distinctLocations,
                       rarityCountExact5: stats.rarityCountExact5,
                       rarityCountExact6: stats.rarityCountExact6,
                       rarityCountExact7: stats.rarityCountExact7,
                       rarityCountExact8: stats.rarityCountExact8,
                       rarityCountExact9: stats.rarityCountExact9,
                       rarityCountExact10: stats.rarityCountExact10,
-                      distinctBrands: 0,
+                      distinctBrands: stats.distinctBrands,
                     }))
                     : 0;
                   const label = resolvedAid ? (t[ACHIEVEMENTS[resolvedAid].labelKey as keyof typeof t] as string) : "—";
