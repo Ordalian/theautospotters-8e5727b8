@@ -4,16 +4,26 @@
  * Each level grants XP when reached (cumulative in total).
  */
 
-export const ACHIEVEMENT_IDS = ["spotter", "globe_trotter", "rarity_hunter", "brand_collector"] as const;
+const RARITY_HUNTER_IDS = ["rarity_hunter_5", "rarity_hunter_6", "rarity_hunter_7", "rarity_hunter_8", "rarity_hunter_9", "rarity_hunter_10"] as const;
+export const ACHIEVEMENT_IDS = ["spotter", "globe_trotter", ...RARITY_HUNTER_IDS, "brand_collector"] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 
 /** Shape of the emblem for each achievement type */
 export type EmblemShape = "shield" | "globe" | "diamond" | "hexagon";
 
+const RARITY_THRESHOLDS: [number, number, number, number, number, number, number, number, number, number] = [
+  1, 3, 10, 25, 50, 100, 200, 500, 1000, 2000,
+];
+
 export const ACHIEVEMENT_SHAPES: Record<AchievementId, EmblemShape> = {
   spotter: "shield",
   globe_trotter: "globe",
-  rarity_hunter: "diamond",
+  rarity_hunter_5: "diamond",
+  rarity_hunter_6: "diamond",
+  rarity_hunter_7: "diamond",
+  rarity_hunter_8: "diamond",
+  rarity_hunter_9: "diamond",
+  rarity_hunter_10: "diamond",
   brand_collector: "hexagon",
 };
 
@@ -39,12 +49,37 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDef> = {
   globe_trotter: {
     id: "globe_trotter",
     labelKey: "achievement_globe_trotter",
-    thresholds: [2, 5, 10, 20, 35, 50, 75, 100, 150, 200],
+    thresholds: [2, 5, 10, 20, 35, 50, 75, 100, 150, 180],
   },
-  rarity_hunter: {
-    id: "rarity_hunter",
-    labelKey: "achievement_rarity_hunter",
-    thresholds: [1, 3, 10, 25, 50, 100, 200, 500, 1000, 2000],
+  rarity_hunter_5: {
+    id: "rarity_hunter_5",
+    labelKey: "achievement_rarity_hunter_5",
+    thresholds: RARITY_THRESHOLDS,
+  },
+  rarity_hunter_6: {
+    id: "rarity_hunter_6",
+    labelKey: "achievement_rarity_hunter_6",
+    thresholds: RARITY_THRESHOLDS,
+  },
+  rarity_hunter_7: {
+    id: "rarity_hunter_7",
+    labelKey: "achievement_rarity_hunter_7",
+    thresholds: RARITY_THRESHOLDS,
+  },
+  rarity_hunter_8: {
+    id: "rarity_hunter_8",
+    labelKey: "achievement_rarity_hunter_8",
+    thresholds: RARITY_THRESHOLDS,
+  },
+  rarity_hunter_9: {
+    id: "rarity_hunter_9",
+    labelKey: "achievement_rarity_hunter_9",
+    thresholds: RARITY_THRESHOLDS,
+  },
+  rarity_hunter_10: {
+    id: "rarity_hunter_10",
+    labelKey: "achievement_rarity_hunter_10",
+    thresholds: RARITY_THRESHOLDS,
   },
   brand_collector: {
     id: "brand_collector",
@@ -56,7 +91,13 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDef> = {
 export interface AchievementStats {
   spotCount: number;
   distinctLocations: number;
-  rareCarsCount: number;
+  /** Count of cars with rarity_rating >= 5 (rares) */
+  rarityCountMin5: number;
+  rarityCountMin6: number;
+  rarityCountMin7: number;
+  rarityCountMin8: number;
+  rarityCountMin9: number;
+  rarityCountMin10: number;
   distinctBrands: number;
 }
 
@@ -99,8 +140,18 @@ export function getAchievementValue(achievementId: AchievementId, stats: Achieve
       return stats.spotCount;
     case "globe_trotter":
       return stats.distinctLocations;
-    case "rarity_hunter":
-      return stats.rareCarsCount;
+    case "rarity_hunter_5":
+      return stats.rarityCountMin5;
+    case "rarity_hunter_6":
+      return stats.rarityCountMin6;
+    case "rarity_hunter_7":
+      return stats.rarityCountMin7;
+    case "rarity_hunter_8":
+      return stats.rarityCountMin8;
+    case "rarity_hunter_9":
+      return stats.rarityCountMin9;
+    case "rarity_hunter_10":
+      return stats.rarityCountMin10;
     case "brand_collector":
       return stats.distinctBrands;
     default:

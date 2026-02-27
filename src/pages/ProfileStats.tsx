@@ -323,6 +323,13 @@ const ProfileStats = () => {
     const maxVal = Math.max(valueTotal, ...Object.values(valueByType), 1);
     const hasAnyPrice = carsExclMini.some((c) => c.estimated_price != null && c.estimated_price > 0);
 
+    const rarityCountMin5 = [5, 6, 7, 8, 9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
+    const rarityCountMin6 = [6, 7, 8, 9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
+    const rarityCountMin7 = [7, 8, 9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
+    const rarityCountMin8 = [8, 9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
+    const rarityCountMin9 = [9, 10].reduce((s, k) => s + (byRarity[k] || 0), 0);
+    const rarityCountMin10 = byRarity[10] || 0;
+
     return {
       totalSpots,
       avgQuality,
@@ -334,6 +341,12 @@ const ProfileStats = () => {
       valueByType,
       maxVal,
       hasAnyPrice,
+      rarityCountMin5,
+      rarityCountMin6,
+      rarityCountMin7,
+      rarityCountMin8,
+      rarityCountMin9,
+      rarityCountMin10,
     };
   }, [cars]);
 
@@ -493,11 +506,22 @@ const ProfileStats = () => {
                   profileForLevel?.emblem_slot_2 ?? null,
                   profileForLevel?.emblem_slot_3 ?? null,
                 ].map((aid, i) => {
-                  const level = aid
-                    ? getAchievementLevel(aid as AchievementId, getAchievementValue(aid as AchievementId, { spotCount: stats.totalSpots, distinctLocations: 0, rareCarsCount: 0, distinctBrands: 0 }))
+                  const resolvedAid = (aid === "rarity_hunter" ? "rarity_hunter_5" : aid) as AchievementId | null;
+                  const level = resolvedAid
+                    ? getAchievementLevel(resolvedAid, getAchievementValue(resolvedAid, {
+                      spotCount: stats.totalSpots,
+                      distinctLocations: 0,
+                      rarityCountMin5: stats.rarityCountMin5,
+                      rarityCountMin6: stats.rarityCountMin6,
+                      rarityCountMin7: stats.rarityCountMin7,
+                      rarityCountMin8: stats.rarityCountMin8,
+                      rarityCountMin9: stats.rarityCountMin9,
+                      rarityCountMin10: stats.rarityCountMin10,
+                      distinctBrands: 0,
+                    }))
                     : 0;
-                  const label = aid ? (t[ACHIEVEMENTS[aid as AchievementId].labelKey as keyof typeof t] as string) : "—";
-                  const shape = aid ? ACHIEVEMENT_SHAPES[aid as AchievementId] : "shield" as const;
+                  const label = resolvedAid ? (t[ACHIEVEMENTS[resolvedAid].labelKey as keyof typeof t] as string) : "—";
+                  const shape = resolvedAid ? ACHIEVEMENT_SHAPES[resolvedAid] : "shield" as const;
                   return (
                     <div key={i} className="flex flex-col items-center gap-2">
                       <Emblem level={level} shape={shape} size={56} />

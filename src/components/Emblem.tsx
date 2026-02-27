@@ -1,6 +1,6 @@
 /**
  * Emblem SVG with 4 unique shapes and 10 levels of detail.
- * Shapes: shield (spotter), globe (globe_trotter), diamond (rarity_hunter), hexagon (brand_collector).
+ * Shapes: shield (spotter), globe (globe_trotter), diamond (rarity_hunter_5..10), hexagon (brand_collector).
  */
 import { cn } from "@/lib/utils";
 import type { EmblemShape } from "@/lib/achievements";

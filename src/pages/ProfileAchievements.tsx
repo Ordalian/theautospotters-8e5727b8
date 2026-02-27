@@ -65,15 +65,55 @@ const ProfileAchievements = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: rareCarsCount = 0 } = useQuery({
-    queryKey: ["achievement-rare-cars", user?.id],
+  const { data: rarityCountMin5 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-count", user?.id, 5],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("cars")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id)
-        .neq("vehicle_type", "hot_wheels")
-        .gte("rarity_rating", 4);
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 5);
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+  const { data: rarityCountMin6 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-count", user?.id, 6],
+    queryFn: async () => {
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 6);
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+  const { data: rarityCountMin7 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-count", user?.id, 7],
+    queryFn: async () => {
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 7);
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+  const { data: rarityCountMin8 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-count", user?.id, 8],
+    queryFn: async () => {
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 8);
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+  const { data: rarityCountMin9 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-count", user?.id, 9],
+    queryFn: async () => {
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 9);
+      return count ?? 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+  const { data: rarityCountMin10 = 0 } = useQuery({
+    queryKey: ["achievement-rarity-count", user?.id, 10],
+    queryFn: async () => {
+      const { count } = await supabase.from("cars").select("id", { count: "exact", head: true }).eq("user_id", user!.id).neq("vehicle_type", "hot_wheels").gte("rarity_rating", 10);
       return count ?? 0;
     },
     enabled: !!user?.id,
@@ -110,7 +150,17 @@ const ProfileAchievements = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const stats: AchievementStats = { spotCount, distinctLocations, rareCarsCount, distinctBrands };
+  const stats: AchievementStats = {
+    spotCount,
+    distinctLocations,
+    rarityCountMin5,
+    rarityCountMin6,
+    rarityCountMin7,
+    rarityCountMin8,
+    rarityCountMin9,
+    rarityCountMin10,
+    distinctBrands,
+  };
   const emblemSlots: (AchievementId | null)[] = [
     (profile?.emblem_slot_1 as AchievementId) ?? null,
     (profile?.emblem_slot_2 as AchievementId) ?? null,
@@ -214,8 +264,9 @@ const ProfileAchievements = () => {
           <div className="grid grid-cols-3 gap-3">
             {([1, 2, 3] as const).map((slot) => {
               const aid = emblemSlots[slot - 1];
-              const level = aid ? getAchievementLevel(aid, getAchievementValue(aid, stats)) : 0;
-              const shape = aid ? ACHIEVEMENT_SHAPES[aid] : "shield";
+              const resolvedAid = aid === "rarity_hunter" ? "rarity_hunter_5" : aid;
+              const level = resolvedAid ? getAchievementLevel(resolvedAid, getAchievementValue(resolvedAid, stats)) : 0;
+              const shape = resolvedAid ? ACHIEVEMENT_SHAPES[resolvedAid] : "shield";
               return (
                 <button
                   key={slot}
@@ -225,7 +276,7 @@ const ProfileAchievements = () => {
                 >
                   <Emblem level={level} shape={shape} size={48} />
                   <span className="text-xs text-muted-foreground">
-                    {aid ? (t[ACHIEVEMENTS[aid].labelKey as keyof typeof t] as string) : "—"}
+                    {resolvedAid ? (t[ACHIEVEMENTS[resolvedAid].labelKey as keyof typeof t] as string) : "—"}
                   </span>
                 </button>
               );
