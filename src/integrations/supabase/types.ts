@@ -361,6 +361,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      achievement_xp_for_level: { Args: { p_level: number }; Returns: number }
       get_leaderboard: {
         Args: never
         Returns: {
@@ -378,6 +379,11 @@ export type Database = {
       recompute_user_total_xp: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      spotter_level_from_count: { Args: { p_count: number }; Returns: number }
+      total_achievement_xp_for_spotter: {
+        Args: { p_spot_count: number }
+        Returns: number
       }
       xp_for_car: {
         Args: {
