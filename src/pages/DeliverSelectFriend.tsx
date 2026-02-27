@@ -107,6 +107,7 @@ const DeliverSelectFriend = () => {
         model: car.model,
         year: car.year,
         edition: (car.edition as string) ?? null,
+        generation: (car.generation as string) ?? null,
         finitions: (car.finitions as string) ?? null,
         seen_on_road: (car.seen_on_road as boolean) ?? false,
         parked: (car.parked as boolean) ?? false,
@@ -193,7 +194,7 @@ const DeliverSelectFriend = () => {
           {car.image_url ? (
             <img
               src={car.image_url}
-              alt={`${car.brand} ${car.model}`}
+              alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
               className="h-16 w-16 rounded-lg object-cover shrink-0"
             />
           ) : (
@@ -202,7 +203,7 @@ const DeliverSelectFriend = () => {
             </div>
           )}
           <div>
-            <p className="font-bold">{car.brand} {car.model}</p>
+            <p className="font-bold">{car.brand} {car.model}{(car as { generation?: string | null }).generation ? ` ${(car as { generation?: string | null }).generation}` : ""}</p>
             <p className="text-sm text-muted-foreground">{car.year}</p>
           </div>
         </div>

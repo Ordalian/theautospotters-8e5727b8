@@ -141,6 +141,7 @@ const en: Translations = {
   add_car_success: (brand: string, model: string) => `${brand} ${model} added to your garage!`,
   add_car_fill_required: "Please fill in brand, model, and year",
   add_car_photo_required: "Photo is required for delivery (camera or gallery)",
+  add_car_generation: "Generation (optional)",
   add_car_edition: "Edition / Limited series (optional)",
   add_car_edition_loading: "Loading...",
   add_car_edition_choose: "Choose or skip",

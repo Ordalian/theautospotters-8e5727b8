@@ -198,7 +198,7 @@ const FriendsGarages = () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: spots } = await supabase
         .from("cars")
-        .select("id, brand, model, year, engine, image_url, created_at, user_id, garage_group_id")
+        .select("id, brand, model, year, generation, engine, image_url, created_at, user_id, garage_group_id")
         .in("user_id", friendUserIds)
         .neq("vehicle_type", "hot_wheels")
         .gte("created_at", sevenDaysAgo)
@@ -446,7 +446,7 @@ const FriendsGarages = () => {
                           {spot.image_url ? (
                             <img
                               src={spot.image_url}
-                              alt={`${spot.brand} ${spot.model}`}
+                              alt={(spot as { generation?: string | null }).generation ? `${spot.brand} ${spot.model} ${(spot as { generation?: string | null }).generation}` : `${spot.brand} ${spot.model}`}
                               className="h-28 w-full object-cover"
                             />
                           ) : (
@@ -455,7 +455,7 @@ const FriendsGarages = () => {
                             </div>
                           )}
                           <div className="p-2">
-                            <p className="font-bold text-sm">{spot.brand} {spot.model}</p>
+                            <p className="font-bold text-sm">{spot.brand} {spot.model}{(spot as { generation?: string | null }).generation ? ` ${(spot as { generation?: string | null }).generation}` : ""}</p>
                             <p className="text-xs text-muted-foreground">
                               {spot.username || "Ami"} • {spot.year}
                             </p>

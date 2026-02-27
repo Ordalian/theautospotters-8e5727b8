@@ -31,6 +31,7 @@ interface SpottedCar {
   brand: string;
   model: string;
   year: number;
+  generation: string | null;
   engine: string | null;
   seen_on_road: boolean;
   parked: boolean;
@@ -89,7 +90,7 @@ const MyGarage = () => {
     queryFn: async () => {
       const q = supabase
         .from("cars")
-        .select("id, brand, model, year, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id")
+        .select("id, brand, model, year, generation, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id")
         .eq("user_id", user!.id) as any;
       const q2 = typeFilter ? q.eq("vehicle_type", typeFilter) : q.neq("vehicle_type", "hot_wheels");
       const { data } = await q2.order("created_at", { ascending: false });
@@ -370,7 +371,7 @@ const MyGarage = () => {
                     <div className="h-44 overflow-hidden">
                       <img
                         src={car.image_url}
-                        alt={`${car.brand} ${car.model}`}
+                        alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
                         className="h-full w-full object-cover"
                         loading="lazy"
                       />
@@ -382,7 +383,7 @@ const MyGarage = () => {
                   )}
                   <div className="p-4">
                     <div className="flex items-baseline justify-between gap-2">
-                      <h3 className="font-bold text-lg">{car.brand} {car.model}</h3>
+                      <h3 className="font-bold text-lg">{car.brand} {car.model}{car.generation ? ` ${car.generation}` : ""}</h3>
                       <span className="text-sm text-muted-foreground shrink-0">{car.year}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">

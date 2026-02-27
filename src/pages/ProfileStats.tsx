@@ -195,7 +195,7 @@ const ProfileStats = () => {
       if (pid) {
         const { data } = await supabase
           .from("cars")
-          .select("id, brand, model, year, image_url")
+          .select("id, brand, model, year, generation, image_url")
           .eq("id", pid)
           .eq("user_id", user.id)
           .maybeSingle();
@@ -203,7 +203,7 @@ const ProfileStats = () => {
       }
       const { data } = await supabase
         .from("cars")
-        .select("id, brand, model, year, image_url")
+        .select("id, brand, model, year, generation, image_url")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -221,7 +221,7 @@ const ProfileStats = () => {
       if (!pid || !friendId) return null;
       const { data } = await supabase
         .from("cars")
-        .select("id, brand, model, year, image_url")
+        .select("id, brand, model, year, generation, image_url")
         .eq("id", pid)
         .eq("user_id", friendId)
         .maybeSingle();
@@ -260,7 +260,7 @@ const ProfileStats = () => {
     queryKey: ["profile-stats-cars", targetUserId, isFriendView],
     queryFn: async () => {
       const cols = isFriendView
-        ? "id, vehicle_type, quality_rating, rarity_rating, estimated_price, brand, model, year, image_url"
+        ? "id, vehicle_type, quality_rating, rarity_rating, estimated_price, brand, model, year, generation, image_url"
         : "id, vehicle_type, quality_rating, rarity_rating, estimated_price, location_name, brand";
       const { data } = await supabase
         .from("cars")
@@ -443,7 +443,7 @@ const ProfileStats = () => {
                   </h2>
                   <p className="text-xs text-white/80 mt-0.5">
                     {(friendPinnedCar ?? cars[0])
-                      ? `${(friendPinnedCar ?? cars[0])!.brand} ${(friendPinnedCar ?? cars[0])!.model} · ${(friendPinnedCar ?? cars[0])!.year}`
+                      ? `${(friendPinnedCar ?? cars[0])!.brand} ${(friendPinnedCar ?? cars[0])!.model}${(friendPinnedCar ?? cars[0])!.generation ? ` ${(friendPinnedCar ?? cars[0])!.generation}` : ""} · ${(friendPinnedCar ?? cars[0])!.year}`
                       : (t.profile_stats_spots as string) + ` ${cars.length}`}
                   </p>
                 </div>
@@ -482,7 +482,7 @@ const ProfileStats = () => {
                   </h2>
                   <p className="text-xs text-white/80 mt-0.5">
                     {myPinnedCar
-                      ? `${myPinnedCar.brand} ${myPinnedCar.model} · ${myPinnedCar.year}`
+                      ? `${myPinnedCar.brand} ${myPinnedCar.model}${myPinnedCar.generation ? ` ${myPinnedCar.generation}` : ""} · ${myPinnedCar.year}`
                       : (t.profile_stats_spots as string) + ` ${cars.length}`}
                   </p>
                 </div>

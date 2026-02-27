@@ -99,6 +99,7 @@ const AddCar = () => {
   const [editions, setEditions] = useState<string[]>([]);
   const [loadingEditions, setLoadingEditions] = useState(false);
   const [showEditions, setShowEditions] = useState(false);
+  const [generation, setGeneration] = useState("");
   const [finitions, setFinitions] = useState("");
   const [engine, setEngine] = useState(searchParams.get("engine") || "");
   const [engines, setEngines] = useState<{ name: string; displacement: string; fuel: string; hp: number }[]>([]);
@@ -344,6 +345,7 @@ const AddCar = () => {
         model,
         year: parseInt(year),
         edition: edition || null,
+        generation: generation.trim() || null,
         finitions: finitions.trim() || null,
         seen_on_road: isMiniature ? seenOnRoad : seenOnRoad, // for miniature: true = sous blister oui
         parked: isMiniature ? false : parked,
@@ -679,6 +681,21 @@ const AddCar = () => {
             )}
           </div>
         </div>
+
+        {/* Generation (e.g. Clio I, II, III, IV, V, VI) */}
+        {!isMiniature && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {typeof t.add_car_generation === "string" ? t.add_car_generation : "Génération"}
+            </Label>
+            <Input
+              placeholder="I, II, III, IV, V, VI…"
+              value={generation}
+              onChange={(e) => setGeneration(e.target.value)}
+              className="bg-secondary/30"
+            />
+          </div>
+        )}
 
         {/* Edition / Série limitée */}
         <div className="space-y-2">

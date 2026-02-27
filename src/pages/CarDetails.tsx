@@ -26,6 +26,7 @@ interface CarDetail {
   model: string;
   year: number;
   edition: string | null;
+  generation: string | null;
   engine: string | null;
   finitions: string | null;
   seen_on_road: boolean;
@@ -126,8 +127,8 @@ const CarDetails = () => {
   const { data: carRaw, isLoading: loading } = useQuery({
     queryKey: ["car", id],
     queryFn: async () => {
-      const colsWithType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type, linked_car_id, estimated_price, estimated_price_at, units_produced";
-      const colsWithoutType = "id, user_id, brand, model, year, edition, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, linked_car_id, estimated_price, estimated_price_at, units_produced";
+      const colsWithType = "id, user_id, brand, model, year, edition, generation, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, vehicle_type, linked_car_id, estimated_price, estimated_price_at, units_produced";
+      const colsWithoutType = "id, user_id, brand, model, year, edition, generation, engine, finitions, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, car_condition, photo_source, latitude, longitude, location_name, delivered_by_user_id, linked_car_id, estimated_price, estimated_price_at, units_produced";
       const { data, error } = await supabase.from("cars").select(colsWithType).eq("id", id!).maybeSingle();
       if (!error && data) return data as (Omit<CarDetail, "linked_car_id"> & { linked_car_id?: string | null }) | null;
       const { data: fallback, error: err2 } = await supabase.from("cars").select(colsWithoutType).eq("id", id!).maybeSingle();
@@ -404,7 +405,7 @@ const CarDetails = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold truncate flex-1 min-w-0">
-          {car.brand} {car.model}
+          {car.brand} {car.model}{car.generation ? ` ${car.generation}` : ""}
         </h1>
         {hasLinkedCar && linkedCar && (
           <Button
@@ -442,7 +443,7 @@ const CarDetails = () => {
           >
             <img
               src={allPhotoUrls[0] ?? car.image_url ?? ""}
-              alt={`${car.brand} ${car.model}`}
+              alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
               className="h-full w-full object-cover"
               loading="lazy"
             />
@@ -462,7 +463,7 @@ const CarDetails = () => {
 
         <div className={`p-4 space-y-5 ${hasLinkedCar ? "linked-car-card rounded-xl border-2 shadow-xl mx-2 mb-4" : ""}`}>
           <div>
-            <h2 className="text-2xl font-bold">{car.brand} {car.model}</h2>
+            <h2 className="text-2xl font-bold">{car.brand} {car.model}{car.generation ? ` ${car.generation}` : ""}</h2>
             <p className="text-muted-foreground">{car.year}</p>
             {car.edition?.trim() && (
               <p className="text-sm mt-0.5 text-muted-foreground">
@@ -624,7 +625,7 @@ const CarDetails = () => {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{c.brand} {c.model}</p>
+                    <p className="font-medium truncate">{c.brand} {c.model}{(c as { generation?: string | null }).generation ? ` ${(c as { generation?: string | null }).generation}` : ""}</p>
                     <p className="text-xs text-muted-foreground">{c.year}</p>
                   </div>
                 </button>
@@ -643,7 +644,7 @@ const CarDetails = () => {
       >
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto p-0 overflow-hidden bg-black/95 border-0">
           <DialogHeader className="sr-only">
-            <DialogTitle>{car.brand} {car.model} – {photoIndex + 1}/{allPhotoUrls.length}</DialogTitle>
+            <DialogTitle>{car.brand} {car.model}{car.generation ? ` ${car.generation}` : ""} – {photoIndex + 1}/{allPhotoUrls.length}</DialogTitle>
           </DialogHeader>
           <button
             type="button"
@@ -677,7 +678,7 @@ const CarDetails = () => {
           )}
           <img
             src={allPhotoUrls[photoIndex] ?? car.image_url!}
-            alt={`${car.brand} ${car.model}`}
+            alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
             className="max-w-full max-h-[90vh] w-auto h-auto object-contain mx-auto"
             onClick={(e) => e.stopPropagation()}
           />
