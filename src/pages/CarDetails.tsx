@@ -328,12 +328,18 @@ const CarDetails = () => {
       if (e1) throw e1;
       const { error: e2 } = await supabase.from("cars").update({ linked_car_id: car.id } as any).eq("id", targetId).eq("user_id", user.id);
       if (e2) throw e2;
+      // Award XP for linking a real car and its miniature
+      await supabase
+        .from("profiles")
+        .update({ total_xp: (profileForLevel?.total_xp ?? 0) + 20 })
+        .eq("user_id", user.id);
       toast.success(t.car_detail_linked as string);
       setLinkDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["car", car.id] });
       queryClient.invalidateQueries({ queryKey: ["car", targetId] });
       queryClient.invalidateQueries({ queryKey: ["car-linked-id", car.id] });
       queryClient.invalidateQueries({ queryKey: ["car-linked-id", targetId] });
+      queryClient.invalidateQueries({ queryKey: ["profile-pinned-self-xp-emblem", user.id] });
     } catch (err: any) {
       toast.error(err?.message ?? (t.error as string));
     } finally {
