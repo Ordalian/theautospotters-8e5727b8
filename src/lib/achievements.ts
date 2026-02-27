@@ -4,8 +4,18 @@
  * Each level grants XP when reached (cumulative in total).
  */
 
-export const ACHIEVEMENT_IDS = ["spotter"] as const;
+export const ACHIEVEMENT_IDS = ["spotter", "globe_trotter", "rarity_hunter", "brand_collector"] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
+
+/** Shape of the emblem for each achievement type */
+export type EmblemShape = "shield" | "globe" | "diamond" | "hexagon";
+
+export const ACHIEVEMENT_SHAPES: Record<AchievementId, EmblemShape> = {
+  spotter: "shield",
+  globe_trotter: "globe",
+  rarity_hunter: "diamond",
+  brand_collector: "hexagon",
+};
 
 /** XP granted when reaching each level (1→100, 2→200, …, 10→5000). */
 export const ACHIEVEMENT_XP_REWARDS: [number, number, number, number, number, number, number, number, number, number] = [
@@ -26,7 +36,29 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDef> = {
     labelKey: "achievement_spotter",
     thresholds: [5, 10, 50, 100, 500, 1000, 2000, 5000, 10000, 20000],
   },
+  globe_trotter: {
+    id: "globe_trotter",
+    labelKey: "achievement_globe_trotter",
+    thresholds: [2, 5, 10, 20, 35, 50, 75, 100, 150, 200],
+  },
+  rarity_hunter: {
+    id: "rarity_hunter",
+    labelKey: "achievement_rarity_hunter",
+    thresholds: [1, 3, 10, 25, 50, 100, 200, 500, 1000, 2000],
+  },
+  brand_collector: {
+    id: "brand_collector",
+    labelKey: "achievement_brand_collector",
+    thresholds: [3, 5, 10, 15, 20, 30, 40, 50, 70, 100],
+  },
 };
+
+export interface AchievementStats {
+  spotCount: number;
+  distinctLocations: number;
+  rareCarsCount: number;
+  distinctBrands: number;
+}
 
 /** Current level 0-10 for an achievement (0 = none unlocked). */
 export function getAchievementLevel(achievementId: AchievementId, value: number): number {
@@ -61,10 +93,16 @@ export function getNextThreshold(achievementId: AchievementId, value: number): n
   return def.thresholds[level];
 }
 
-export function getAchievementValue(achievementId: AchievementId, stats: { spotCount: number }): number {
+export function getAchievementValue(achievementId: AchievementId, stats: AchievementStats): number {
   switch (achievementId) {
     case "spotter":
       return stats.spotCount;
+    case "globe_trotter":
+      return stats.distinctLocations;
+    case "rarity_hunter":
+      return stats.rareCarsCount;
+    case "brand_collector":
+      return stats.distinctBrands;
     default:
       return 0;
   }
@@ -81,7 +119,7 @@ export function getAchievementXpForLevel(level: number): number {
 }
 
 /** Total XP from all achievements given current stats. */
-export function getTotalAchievementXp(stats: { spotCount: number }): number {
+export function getTotalAchievementXp(stats: AchievementStats): number {
   let total = 0;
   for (const id of ACHIEVEMENT_IDS) {
     const value = getAchievementValue(id, stats);

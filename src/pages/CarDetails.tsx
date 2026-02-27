@@ -329,9 +329,14 @@ const CarDetails = () => {
       const { error: e2 } = await supabase.from("cars").update({ linked_car_id: car.id } as any).eq("id", targetId).eq("user_id", user.id);
       if (e2) throw e2;
       // Award XP for linking a real car and its miniature
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select("total_xp")
+        .eq("user_id", user.id)
+        .maybeSingle();
       await supabase
         .from("profiles")
-        .update({ total_xp: (profileForLevel?.total_xp ?? 0) + 20 })
+        .update({ total_xp: (currentProfile?.total_xp ?? 0) + 20 })
         .eq("user_id", user.id);
       toast.success(t.car_detail_linked as string);
       setLinkDialogOpen(false);
