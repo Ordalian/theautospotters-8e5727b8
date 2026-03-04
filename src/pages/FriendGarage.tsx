@@ -171,12 +171,19 @@ const FriendGarage = () => {
                 className="w-full rounded-xl border border-border bg-card overflow-hidden text-left hover:border-primary/30 transition-colors"
               >
                 {car.image_url ? (
-                  <img src={car.image_url} alt={`${car.brand} ${car.model}`} className="h-40 w-full object-cover" />
-                ) : (
-                  <div className="h-40 flex items-center justify-center bg-muted">
-                    <Car className="h-10 w-10 text-muted-foreground/40" />
-                  </div>
-                )}
+                  <img
+                    src={car.image_url.includes('/storage/v1/object/public/')
+                      ? car.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=600&quality=60'
+                      : car.image_url}
+                    alt={`${car.brand} ${car.model}`}
+                    className="h-40 w-full object-cover bg-muted"
+                    loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.querySelector('.img-fallback')?.classList.remove('hidden'); }}
+                  />
+                ) : null}
+                <div className={`h-40 flex items-center justify-center bg-muted img-fallback ${car.image_url ? 'hidden' : ''}`}>
+                  <Car className="h-10 w-10 text-muted-foreground/40" />
+                </div>
                 <div className="p-3">
                   <p className="font-bold">{car.brand} {car.model}</p>
                   <p className="text-sm text-muted-foreground">{car.year}</p>
@@ -217,7 +224,14 @@ const FriendGarage = () => {
           >
             {latestAllImage ? (
               <>
-                <img src={latestAllImage} alt="" className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
+                <img
+                  src={latestAllImage.includes('/storage/v1/object/public/')
+                    ? latestAllImage.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
+                    : latestAllImage}
+                  alt="" className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
+                  loading="lazy"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent rounded-2xl" />
                 <div className="relative flex h-full w-full flex-col justify-end p-4">
                   <h3 className="font-bold text-sm leading-tight text-white drop-shadow-md">{t.garage_menu_all as string}</h3>
@@ -248,7 +262,14 @@ const FriendGarage = () => {
               >
                 {img ? (
                   <>
-                    <img src={img} alt={t[LABEL_KEYS[key]] as string} className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
+                    <img
+                      src={img.includes('/storage/v1/object/public/')
+                        ? img.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
+                        : img}
+                      alt={t[LABEL_KEYS[key]] as string} className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
+                      loading="lazy"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent rounded-2xl" />
                     <div className="relative flex h-full w-full flex-col justify-end p-4">
                       <h3 className="font-bold text-sm leading-tight text-white drop-shadow-md">{t[LABEL_KEYS[key]] as string}</h3>
