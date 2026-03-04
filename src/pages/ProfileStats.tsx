@@ -200,7 +200,7 @@ const ProfileStats = () => {
           .eq("id", pid)
           .eq("user_id", user.id)
           .maybeSingle();
-        return data as { id: string; brand: string; model: string; year: number; image_url: string | null } | null;
+        return data as { id: string; brand: string; model: string; year: number; generation: string | null; image_url: string | null } | null;
       }
       const { data } = await supabase
         .from("cars")
@@ -209,7 +209,7 @@ const ProfileStats = () => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data as { id: string; brand: string; model: string; year: number; image_url: string | null } | null;
+      return data as { id: string; brand: string; model: string; year: number; generation: string | null; image_url: string | null } | null;
     },
     enabled: !isFriendView && !!user?.id,
     staleTime: 2 * 60 * 1000,
@@ -226,7 +226,7 @@ const ProfileStats = () => {
         .eq("id", pid)
         .eq("user_id", friendId)
         .maybeSingle();
-      return data as { id: string; brand: string; model: string; year: number; image_url: string | null } | null;
+      return data as { id: string; brand: string; model: string; year: number; generation: string | null; image_url: string | null } | null;
     },
     enabled: isFriendView && !!friendId && !!friendProfile?.pinned_car_id,
     staleTime: 2 * 60 * 1000,

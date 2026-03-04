@@ -58,8 +58,8 @@ export type Database = {
           estimated_price: number | null
           estimated_price_at: string | null
           finitions: string | null
-          generation: string | null
           garage_group_id: string | null
+          generation: string | null
           id: string
           image_url: string | null
           latitude: number | null
@@ -93,8 +93,8 @@ export type Database = {
           estimated_price?: number | null
           estimated_price_at?: string | null
           finitions?: string | null
-          generation?: string | null
           garage_group_id?: string | null
+          generation?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -128,8 +128,8 @@ export type Database = {
           estimated_price?: number | null
           estimated_price_at?: string | null
           finitions?: string | null
-          generation?: string | null
           garage_group_id?: string | null
+          generation?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
