@@ -57,7 +57,7 @@ const AutoSpotter = () => {
   const [savingOwned, setSavingOwned] = useState(false);
 
   const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
-    if (images.length >= 4) {
+    if (images.length >= 8) {
       toast.error(t.autospotter_max_photos as string);
       return;
     }

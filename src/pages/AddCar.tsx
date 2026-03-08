@@ -1153,7 +1153,7 @@ const AddCar = () => {
               )}
             </div>
           )}
-          {imagePreview && additionalPhotoUrls.length + additionalPhotoFiles.length < 4 && (
+          {imagePreview && additionalPhotoUrls.length + additionalPhotoFiles.length < 7 && (
             <button type="button" onClick={() => setShowExtraPhotoDialog(true)} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1">
               <Plus className="h-4 w-4" /> {t.add_car_add_photo as string}
             </button>
