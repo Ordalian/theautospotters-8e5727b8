@@ -5,7 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import BlackGoldBg from "@/components/BlackGoldBg";
+
 import { useQuery } from "@tanstack/react-query";
 
 const DashboardMap = lazy(() => import("@/components/DashboardMap"));
