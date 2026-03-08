@@ -193,7 +193,7 @@ const ProfileSettings = () => {
   };
 
   const handleAccept = async (id: string) => {
-    await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    await supabase.rpc("update_friendship_status", { p_friendship_id: id, p_new_status: "accepted" } as any);
     toast.success(t.profile_accepted as string);
     fetchRequests();
   };

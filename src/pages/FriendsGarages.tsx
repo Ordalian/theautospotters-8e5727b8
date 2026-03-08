@@ -277,13 +277,13 @@ const FriendsGarages = () => {
   };
 
   const handleAcceptRequest = async (id: string) => {
-    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    const { error } = await supabase.rpc("update_friendship_status", { p_friendship_id: id, p_new_status: "accepted" } as any);
     if (error) {
       toast.error(error.message || "Erreur");
       return;
     }
     toast.success("Demande acceptée !");
-    fetchFriends(); // rafraîchit amis + demandes
+    fetchFriends();
   };
 
   const handleDeclineRequest = async (id: string) => {

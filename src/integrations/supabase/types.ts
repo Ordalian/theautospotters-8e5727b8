@@ -552,7 +552,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          emblem_slot_1: string | null
+          emblem_slot_2: string | null
+          emblem_slot_3: string | null
+          pinned_car_id: string | null
+          total_xp: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          emblem_slot_1?: string | null
+          emblem_slot_2?: string | null
+          emblem_slot_3?: string | null
+          pinned_car_id?: string | null
+          total_xp?: number | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          emblem_slot_1?: string | null
+          emblem_slot_2?: string | null
+          emblem_slot_3?: string | null
+          pinned_car_id?: string | null
+          total_xp?: number | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       achievement_xp_for_level: { Args: { p_level: number }; Returns: number }
@@ -578,6 +613,10 @@ export type Database = {
       total_achievement_xp_for_spotter: {
         Args: { p_spot_count: number }
         Returns: number
+      }
+      update_friendship_status: {
+        Args: { p_friendship_id: string; p_new_status: string }
+        Returns: undefined
       }
       xp_for_car: {
         Args: {
