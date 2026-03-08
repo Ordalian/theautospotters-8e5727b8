@@ -24,6 +24,22 @@ const Messaging = () => {
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
 
+  // Unread topic_reply notifications
+  const { data: unreadNotifs = [] } = useQuery({
+    queryKey: ["msg_notifications", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("id, data, read_at")
+        .eq("user_id", user!.id)
+        .eq("type", "topic_reply")
+        .is("read_at", null)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   // Channels
   const { data: channels = [] } = useQuery({
     queryKey: ["channels"],
