@@ -65,6 +65,41 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Suspense fallback={<PageLoader />} key={location.pathname}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/auth" element={<AuthRoute><PageTransition><Auth /></PageTransition></AuthRoute>} />
+          <Route path="/" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
+          <Route path="/garage" element={<ProtectedRoute><PageTransition><MyGarage /></PageTransition></ProtectedRoute>} />
+          <Route path="/garage-menu" element={<ProtectedRoute><PageTransition><VehicleTypeMenu /></PageTransition></ProtectedRoute>} />
+          <Route path="/add-car" element={<ProtectedRoute><PageTransition><AddCar /></PageTransition></ProtectedRoute>} />
+          <Route path="/autospotter" element={<ProtectedRoute><PageTransition><AutoSpotter /></PageTransition></ProtectedRoute>} />
+          <Route path="/leaderboard" element={<ProtectedRoute><PageTransition><Leaderboard /></PageTransition></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
+          <Route path="/profile/settings" element={<ProtectedRoute><PageTransition><ProfileSettings /></PageTransition></ProtectedRoute>} />
+          <Route path="/profile/stats" element={<ProtectedRoute><PageTransition><ProfileStats /></PageTransition></ProtectedRoute>} />
+          <Route path="/profile/achievements" element={<ProtectedRoute><PageTransition><ProfileAchievements /></PageTransition></ProtectedRoute>} />
+          <Route path="/emblem-preview" element={<ProtectedRoute><PageTransition><EmblemPreview /></PageTransition></ProtectedRoute>} />
+          <Route path="/profile/news" element={<ProtectedRoute><PageTransition><ProfileNews /></PageTransition></ProtectedRoute>} />
+          <Route path="/garage-settings" element={<ProtectedRoute><PageTransition><GarageSettings /></PageTransition></ProtectedRoute>} />
+          <Route path="/friends" element={<ProtectedRoute><PageTransition><FriendsGarages /></PageTransition></ProtectedRoute>} />
+          <Route path="/friends/:friendId/stats" element={<ProtectedRoute><PageTransition><ProfileStats /></PageTransition></ProtectedRoute>} />
+          <Route path="/friends/:friendId/garage" element={<ProtectedRoute><PageTransition><FriendGarage /></PageTransition></ProtectedRoute>} />
+          <Route path="/deliver-car" element={<ProtectedRoute><PageTransition><DeliverCarChoice /></PageTransition></ProtectedRoute>} />
+          <Route path="/deliver-car/select-friend" element={<ProtectedRoute><PageTransition><DeliverSelectFriend /></PageTransition></ProtectedRoute>} />
+          <Route path="/map" element={<ProtectedRoute><PageTransition><SpotMap /></PageTransition></ProtectedRoute>} />
+          <Route path="/car/:id" element={<ProtectedRoute><PageTransition><CarDetails /></PageTransition></ProtectedRoute>} />
+          <Route path="/messaging" element={<ProtectedRoute><PageTransition><Messaging /></PageTransition></ProtectedRoute>} />
+          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        </Routes>
+      </Suspense>
+    </AnimatePresence>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -73,33 +108,7 @@ const App = () => (
         <AuthProvider>
           <ThemeProvider>
             <LanguageProvider>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                <Route path="/garage" element={<ProtectedRoute><MyGarage /></ProtectedRoute>} />
-                <Route path="/garage-menu" element={<ProtectedRoute><VehicleTypeMenu /></ProtectedRoute>} />
-                <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
-                <Route path="/autospotter" element={<ProtectedRoute><AutoSpotter /></ProtectedRoute>} />
-                <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/profile/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
-                <Route path="/profile/stats" element={<ProtectedRoute><ProfileStats /></ProtectedRoute>} />
-                <Route path="/profile/achievements" element={<ProtectedRoute><ProfileAchievements /></ProtectedRoute>} />
-                <Route path="/emblem-preview" element={<ProtectedRoute><EmblemPreview /></ProtectedRoute>} />
-                <Route path="/profile/news" element={<ProtectedRoute><ProfileNews /></ProtectedRoute>} />
-                <Route path="/garage-settings" element={<ProtectedRoute><GarageSettings /></ProtectedRoute>} />
-                <Route path="/friends" element={<ProtectedRoute><FriendsGarages /></ProtectedRoute>} />
-                <Route path="/friends/:friendId/stats" element={<ProtectedRoute><ProfileStats /></ProtectedRoute>} />
-                <Route path="/friends/:friendId/garage" element={<ProtectedRoute><FriendGarage /></ProtectedRoute>} />
-                <Route path="/deliver-car" element={<ProtectedRoute><DeliverCarChoice /></ProtectedRoute>} />
-                <Route path="/deliver-car/select-friend" element={<ProtectedRoute><DeliverSelectFriend /></ProtectedRoute>} />
-                <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
-                <Route path="/car/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
-                <Route path="/messaging" element={<ProtectedRoute><Messaging /></ProtectedRoute>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+              <AnimatedRoutes />
             </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>
