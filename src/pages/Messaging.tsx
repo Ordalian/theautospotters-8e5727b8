@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft } from "lucide-react";
+import { ArrowLeft, Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BlackGoldBg from "@/components/BlackGoldBg";
@@ -23,6 +23,22 @@ const Messaging = () => {
   const [newTopicTitle, setNewTopicTitle] = useState("");
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
+
+  // Unread topic_reply notifications
+  const { data: unreadNotifs = [] } = useQuery({
+    queryKey: ["msg_notifications", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("id, data, read_at")
+        .eq("user_id", user!.id)
+        .eq("type", "topic_reply")
+        .is("read_at", null)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   // Channels
   const { data: channels = [] } = useQuery({
@@ -105,6 +121,21 @@ const Messaging = () => {
       setReplyBody("");
     },
   });
+
+  // Mark notifications as read when opening a topic
+  const markTopicRead = async (topicId: string) => {
+    const toMark = unreadNotifs.filter((n) => {
+      const d = n.data as any;
+      return d?.topic_id === topicId;
+    });
+    if (toMark.length > 0) {
+      await supabase
+        .from("notifications")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", toMark.map((n) => n.id));
+      qc.invalidateQueries({ queryKey: ["msg_notifications"] });
+    }
+  };
 
   const formatDate = (d: string) => {
     const date = new Date(d);
@@ -201,10 +232,13 @@ const Messaging = () => {
             topics.map((topic) => (
               <button
                 key={topic.id}
-                onClick={() => setSelectedTopic(topic)}
-                className="w-full text-left rounded-xl border border-border/50 bg-card/80 p-4 hover:border-primary/40 transition-colors"
+                onClick={() => { markTopicRead(topic.id); setSelectedTopic(topic); }}
+                className={`w-full text-left rounded-xl border bg-card/80 p-4 hover:border-primary/40 transition-colors ${unreadNotifs.some((n) => (n.data as any)?.topic_id === topic.id) ? "border-primary/50 ring-1 ring-primary/20" : "border-border/50"}`}
               >
-                <h3 className="font-semibold text-sm">{topic.title}</h3>
+                <h3 className="font-semibold text-sm flex items-center gap-1.5">
+                  {unreadNotifs.some((n) => (n.data as any)?.topic_id === topic.id) && <span className="h-2 w-2 rounded-full bg-primary shrink-0" />}
+                  {topic.title}
+                </h3>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{topic.body}</p>
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                   <span>{topic.username || t.anonymous as string}</span>
@@ -225,7 +259,14 @@ const Messaging = () => {
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
-        <MessageSquare className="h-5 w-5 text-primary" />
+        <div className="relative">
+          <MessageSquare className="h-5 w-5 text-primary" />
+          {unreadNotifs.length > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-0.5">
+              {unreadNotifs.length > 99 ? "99+" : unreadNotifs.length}
+            </span>
+          )}
+        </div>
         <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{t.msg_title as string}</h1>
       </header>
       <div className="p-5 max-w-2xl mx-auto relative z-10 space-y-2">
