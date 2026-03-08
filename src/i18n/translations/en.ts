@@ -556,6 +556,20 @@ const en: Translations = {
   dm_placeholder: "Write a message...",
   dm_no_messages: "No messages yet. Say hello!",
   dm_no_friends: "Add friends to start chatting.",
+  dm_video_too_large: "Video exceeds 15 MB.",
+  dm_video_too_long: "Video exceeds 15 seconds.",
+
+  // Dashboard extra
+  dash_messaging: "Messaging",
+
+  // Notification settings
+  notif_settings_title: "Notification Preferences",
+  notif_channels: "Channel notifications",
+  notif_channels_desc: "Receive notifications from channels you participate in",
+  notif_dms: "Message notifications",
+  notif_dms_desc: "Receive notifications from friends' private messages",
+  notif_channel_subscribe: "Follow this channel",
+  notif_channel_unsubscribe: "Unfollow",
 };
 
 export default en;
