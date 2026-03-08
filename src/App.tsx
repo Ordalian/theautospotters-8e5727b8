@@ -74,7 +74,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-                <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/garage" element={<ProtectedRoute><MyGarage /></ProtectedRoute>} />
                 <Route path="/garage-menu" element={<ProtectedRoute><VehicleTypeMenu /></ProtectedRoute>} />
                 <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
