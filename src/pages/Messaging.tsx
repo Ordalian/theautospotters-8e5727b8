@@ -144,6 +144,15 @@ const Messaging = () => {
     return date.toLocaleDateString(undefined, { day: "numeric", month: "short" }) + " " + date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   };
 
+  // DM view
+  if (showDMs) {
+    return (
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+        <DirectMessages onBack={() => setShowDMs(false)} />
+      </Suspense>
+    );
+  }
+
   // Reply thread view
   if (selectedTopic) {
     return (
