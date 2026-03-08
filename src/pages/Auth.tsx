@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Car, Globe, Eye, EyeOff } from "lucide-react";
+import { Car, Globe, Eye, EyeOff, Check, X } from "lucide-react";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -19,8 +19,21 @@ const Auth = () => {
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
 
+  const pwdRules = [
+    { key: "pwd_min_length", test: password.length >= 8 },
+    { key: "pwd_uppercase", test: /[A-Z]/.test(password) },
+    { key: "pwd_lowercase", test: /[a-z]/.test(password) },
+    { key: "pwd_digit", test: /\d/.test(password) },
+    { key: "pwd_symbol", test: /[^A-Za-z0-9]/.test(password) },
+  ];
+  const passwordValid = pwdRules.every((r) => r.test);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSignUp && !passwordValid) {
+      toast.error(t.pwd_weak as string);
+      return;
+    }
     if (isSignUp && !signUpLanguage) {
       toast.error(t.auth_choose_language as string);
       return;
@@ -80,7 +93,7 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   className="bg-secondary/50 pr-10"
                 />
                 <button
@@ -92,6 +105,17 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+
+              {isSignUp && password.length > 0 && (
+                <ul className="space-y-1 text-xs">
+                  {pwdRules.map((r) => (
+                    <li key={r.key} className={`flex items-center gap-1.5 ${r.test ? "text-green-500" : "text-muted-foreground"}`}>
+                      {r.test ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                      {t[r.key] as string}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {isSignUp && (
                 <div className="space-y-2">
