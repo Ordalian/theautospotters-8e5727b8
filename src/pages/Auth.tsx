@@ -13,6 +13,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [signUpLanguage, setSignUpLanguage] = useState<Language | null>(null);
   const { signIn, signUp } = useAuth();
   const { t, language, setLanguage } = useLanguage();
