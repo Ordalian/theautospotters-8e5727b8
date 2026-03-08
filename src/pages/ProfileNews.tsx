@@ -29,6 +29,8 @@ const ProfileNews = () => {
   const { t, language } = useLanguage();
   const lang = language === "fr" ? "fr" : "en";
 
+  useEffect(() => { markPatchNotesRead(); }, []);
+
   const patches: PatchEntry[] = lang === "fr" ? [
     {
       icon: Shield,
