@@ -541,6 +541,15 @@ const fr: Translations = {
   location_choose_title: "Choisir un lieu sur la carte",
   location_click_instruction: "Cliquez sur la carte pour placer le point",
   location_validate: "Valider",
+
+  // Messaging
+  msg_title: "Messagerie",
+  msg_new_topic: "Nouveau",
+  msg_topic_title: "Titre du sujet",
+  msg_topic_body: "Votre message...",
+  msg_publish: "Publier",
+  msg_no_topics: "Aucun sujet pour le moment. Soyez le premier !",
+  msg_reply_placeholder: "Répondre...",
 };
 
 export default fr;

@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Home = lazy(() => import("./pages/Home"));
 const MyGarage = lazy(() => import("./pages/MyGarage"));
 const AddCar = lazy(() => import("./pages/AddCar"));
 const AutoSpotter = lazy(() => import("./pages/AutoSpotter"));
@@ -29,6 +29,7 @@ const DeliverSelectFriend = lazy(() => import("./pages/DeliverSelectFriend"));
 const CarDetails = lazy(() => import("./pages/CarDetails"));
 const VehicleTypeMenu = lazy(() => import("./pages/VehicleTypeMenu"));
 const EmblemPreview = lazy(() => import("./pages/EmblemPreview"));
+const Messaging = lazy(() => import("./pages/Messaging"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -73,7 +74,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-                <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/garage" element={<ProtectedRoute><MyGarage /></ProtectedRoute>} />
                 <Route path="/garage-menu" element={<ProtectedRoute><VehicleTypeMenu /></ProtectedRoute>} />
                 <Route path="/add-car" element={<ProtectedRoute><AddCar /></ProtectedRoute>} />
@@ -93,6 +94,7 @@ const App = () => (
                 <Route path="/deliver-car/select-friend" element={<ProtectedRoute><DeliverSelectFriend /></ProtectedRoute>} />
                 <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
                 <Route path="/car/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
+                <Route path="/messaging" element={<ProtectedRoute><Messaging /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

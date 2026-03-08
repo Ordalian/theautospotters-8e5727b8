@@ -539,6 +539,15 @@ const en: Translations = {
   location_choose_title: "Choose a location on the map",
   location_click_instruction: "Click on the map to place the marker",
   location_validate: "Confirm",
+
+  // Messaging
+  msg_title: "Messaging",
+  msg_new_topic: "New",
+  msg_topic_title: "Topic title",
+  msg_topic_body: "Your message...",
+  msg_publish: "Publish",
+  msg_no_topics: "No topics yet. Be the first!",
+  msg_reply_placeholder: "Reply...",
 };
 
 export default en;
