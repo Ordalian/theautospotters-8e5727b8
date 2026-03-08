@@ -118,10 +118,18 @@ const AutoSpotter = () => {
       for (let i = 0; i < images.length; i++) {
         try {
           let fileToUpload = images[i].file;
-          if (i === 0 && plateBbox && images[0].preview.startsWith("data:")) {
+          // Blur plate on every photo, not just the first
+          if (images[i].preview.startsWith("data:")) {
             try {
-              const blurredDataUrl = await blurPlateInImage(images[0].preview, plateBbox);
-              fileToUpload = dataUrlToFile(blurredDataUrl, fileToUpload.name.replace(/\.[^.]+$/i, ".jpg") || "photo.jpg");
+              let bbox = i === 0 ? plateBbox : null;
+              if (!bbox) {
+                const r = await callCarApi<{ plate_bbox: { x: number; y: number; width: number; height: number } | null }>({ action: "extract_plate", images: [images[i].preview] });
+                bbox = r?.plate_bbox ?? null;
+              }
+              if (bbox) {
+                const blurredDataUrl = await blurPlateInImage(images[i].preview, bbox);
+                fileToUpload = dataUrlToFile(blurredDataUrl, fileToUpload.name.replace(/\.[^.]+$/i, ".jpg") || "photo.jpg");
+              }
             } catch {
               /* keep original on blur error */
             }
