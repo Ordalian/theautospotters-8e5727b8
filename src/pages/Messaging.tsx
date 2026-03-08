@@ -233,7 +233,7 @@ const Messaging = () => {
               <button
                 key={topic.id}
                 onClick={() => { markTopicRead(topic.id); setSelectedTopic(topic); }}
-                className="w-full text-left rounded-xl border border-border/50 bg-card/80 p-4 hover:border-primary/40 transition-colors"
+                className={`w-full text-left rounded-xl border bg-card/80 p-4 hover:border-primary/40 transition-colors ${unreadNotifs.some((n) => (n.data as any)?.topic_id === topic.id) ? "border-primary/50 ring-1 ring-primary/20" : "border-border/50"}`}
               >
                 <h3 className="font-semibold text-sm">{topic.title}</h3>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{topic.body}</p>
