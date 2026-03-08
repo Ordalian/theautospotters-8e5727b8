@@ -222,9 +222,9 @@ const en: Translations = {
   // Spirit of the Machine (ex AutoSpotter)
   autospotter_title: "Spirit of the Machine",
   autospotter_my_vehicle: "My Vehicle",
-  autospotter_info: "Add up to 4 photos: the AI will identify the car (brand, model, year).",
+  autospotter_info: "Add up to 8 photos: the AI will identify the car (brand, model, year).",
   autospotter_add_photo: "Add photo",
-  autospotter_max_photos: "Maximum 4 images",
+  autospotter_max_photos: "Maximum 8 images",
   autospotter_analyze: "Identify this vehicle",
   autospotter_analyzing: "Analyzing...",
   autospotter_add_photos: "Please add at least one image",

@@ -224,9 +224,9 @@ const fr: Translations = {
   // L'esprit de la machine (ex AutoSpotter)
   autospotter_title: "L'esprit de la machine",
   autospotter_my_vehicle: "Mon véhicule",
-  autospotter_info: "Ajoutez jusqu'à 4 photos : l'IA identifiera la voiture (marque, modèle, année).",
+  autospotter_info: "Ajoutez jusqu'à 8 photos : l'IA identifiera la voiture (marque, modèle, année).",
   autospotter_add_photo: "Ajouter une photo",
-  autospotter_max_photos: "Maximum 4 images",
+  autospotter_max_photos: "Maximum 8 images",
   autospotter_analyze: "Identifier ce véhicule",
   autospotter_analyzing: "Analyse en cours...",
   autospotter_add_photos: "Ajoutez au moins une image",

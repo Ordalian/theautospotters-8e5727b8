@@ -202,7 +202,7 @@ const AddCar = () => {
   };
 
   const handleAddExtraPhoto = (file: File) => {
-    if (additionalPhotoUrls.length + additionalPhotoFiles.length >= 4) return;
+    if (additionalPhotoUrls.length + additionalPhotoFiles.length >= 7) return;
     const reader = new FileReader();
     reader.onload = () => {
       setAdditionalPhotoFiles((prev) => [...prev, { file, preview: reader.result as string }]);
@@ -1146,14 +1146,14 @@ const AddCar = () => {
                   </button>
                 </div>
               ))}
-              {additionalPhotoUrls.length + additionalPhotoFiles.length < 4 && (
+              {additionalPhotoUrls.length + additionalPhotoFiles.length < 7 && (
                 <button type="button" onClick={() => setShowExtraPhotoDialog(true)} className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:border-primary/50">
                   <Plus className="h-6 w-6" />
                 </button>
               )}
             </div>
           )}
-          {imagePreview && additionalPhotoUrls.length + additionalPhotoFiles.length < 4 && (
+          {imagePreview && additionalPhotoUrls.length + additionalPhotoFiles.length < 7 && (
             <button type="button" onClick={() => setShowExtraPhotoDialog(true)} className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1">
               <Plus className="h-4 w-4" /> {t.add_car_add_photo as string}
             </button>
