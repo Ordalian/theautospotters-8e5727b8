@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell } from "lucide-react";
+import { ArrowLeft, Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const DirectMessages = lazy(() => import("@/components/messaging/DirectMessages"));
 
 type Channel = { id: string; name: string; slug: string; description: string | null; sort_order: number };
 type Topic = { id: string; channel_id: string; user_id: string; title: string; body: string; created_at: string; username?: string; reply_count?: number };
@@ -23,6 +24,7 @@ const Messaging = () => {
   const [newTopicTitle, setNewTopicTitle] = useState("");
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
+  const [showDMs, setShowDMs] = useState(false);
 
   // Unread topic_reply notifications
   const { data: unreadNotifs = [] } = useQuery({
@@ -141,6 +143,15 @@ const Messaging = () => {
     const date = new Date(d);
     return date.toLocaleDateString(undefined, { day: "numeric", month: "short" }) + " " + date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   };
+
+  // DM view
+  if (showDMs) {
+    return (
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+        <DirectMessages onBack={() => setShowDMs(false)} />
+      </Suspense>
+    );
+  }
 
   // Reply thread view
   if (selectedTopic) {
@@ -267,6 +278,19 @@ const Messaging = () => {
         <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{t.msg_title as string}</h1>
       </header>
       <div className="p-5 max-w-2xl mx-auto relative z-10 space-y-2">
+        {/* DM Tile */}
+        <button
+          onClick={() => setShowDMs(true)}
+          className="w-full text-left rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 p-4 hover:border-primary/50 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-3 mb-3"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 shrink-0">
+            <Mail className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-sm">{t.msg_messages as string}</h3>
+            <p className="text-xs text-muted-foreground">{t.msg_messages_desc as string}</p>
+          </div>
+        </button>
         {channels.map((ch) => (
           <button
             key={ch.id}

@@ -548,6 +548,14 @@ const en: Translations = {
   msg_publish: "Publish",
   msg_no_topics: "No topics yet. Be the first!",
   msg_reply_placeholder: "Reply...",
+  msg_messages: "Messages",
+  msg_messages_desc: "Chat with your friends",
+
+  // Direct Messages
+  dm_title: "Messages",
+  dm_placeholder: "Write a message...",
+  dm_no_messages: "No messages yet. Say hello!",
+  dm_no_friends: "Add friends to start chatting.",
 };
 
 export default en;

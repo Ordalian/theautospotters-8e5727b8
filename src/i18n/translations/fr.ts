@@ -550,6 +550,14 @@ const fr: Translations = {
   msg_publish: "Publier",
   msg_no_topics: "Aucun sujet pour le moment. Soyez le premier !",
   msg_reply_placeholder: "Répondre...",
+  msg_messages: "Messages",
+  msg_messages_desc: "Discutez avec vos amis",
+
+  // Direct Messages
+  dm_title: "Messages",
+  dm_placeholder: "Écrire un message...",
+  dm_no_messages: "Aucun message. Dites bonjour !",
+  dm_no_friends: "Ajoutez des amis pour commencer à discuter.",
 };
 
 export default fr;
