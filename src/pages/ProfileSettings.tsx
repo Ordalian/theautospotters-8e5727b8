@@ -40,6 +40,67 @@ interface NotificationRow {
   created_at: string;
 }
 
+const NotificationPreferences = ({ user }: { user: any }) => {
+  const { t } = useLanguage();
+  const [notifyChannels, setNotifyChannels] = useState(true);
+  const [notifyDms, setNotifyDms] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("notify_channels, notify_dms").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      if (data) {
+        setNotifyChannels((data as any).notify_channels ?? true);
+        setNotifyDms((data as any).notify_dms ?? true);
+      }
+      setLoaded(true);
+    });
+  }, [user]);
+
+  const toggle = async (field: "notify_channels" | "notify_dms", value: boolean) => {
+    if (field === "notify_channels") setNotifyChannels(value);
+    else setNotifyDms(value);
+    await supabase.from("profiles").update({ [field]: value } as any).eq("user_id", user.id);
+  };
+
+  if (!loaded) return null;
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-lg font-bold flex items-center gap-2">
+        <Bell className="h-5 w-5 text-primary" />
+        {t.notif_settings_title as string}
+      </h2>
+      <div className="space-y-3">
+        <label className="flex items-center justify-between rounded-xl border border-border bg-card p-3 cursor-pointer">
+          <div>
+            <p className="text-sm font-medium">{t.notif_channels as string}</p>
+            <p className="text-xs text-muted-foreground">{t.notif_channels_desc as string}</p>
+          </div>
+          <input
+            type="checkbox"
+            checked={notifyChannels}
+            onChange={(e) => toggle("notify_channels", e.target.checked)}
+            className="h-5 w-5 accent-[hsl(var(--primary))] rounded"
+          />
+        </label>
+        <label className="flex items-center justify-between rounded-xl border border-border bg-card p-3 cursor-pointer">
+          <div>
+            <p className="text-sm font-medium">{t.notif_dms as string}</p>
+            <p className="text-xs text-muted-foreground">{t.notif_dms_desc as string}</p>
+          </div>
+          <input
+            type="checkbox"
+            checked={notifyDms}
+            onChange={(e) => toggle("notify_dms", e.target.checked)}
+            className="h-5 w-5 accent-[hsl(var(--primary))] rounded"
+          />
+        </label>
+      </div>
+    </div>
+  );
+};
+
 const ProfileSettings = () => {
   const { user } = useAuth();
   const { t, language, setLanguage } = useLanguage();
