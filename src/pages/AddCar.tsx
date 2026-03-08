@@ -1146,7 +1146,7 @@ const AddCar = () => {
                   </button>
                 </div>
               ))}
-              {additionalPhotoUrls.length + additionalPhotoFiles.length < 4 && (
+              {additionalPhotoUrls.length + additionalPhotoFiles.length < 7 && (
                 <button type="button" onClick={() => setShowExtraPhotoDialog(true)} className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:border-primary/50">
                   <Plus className="h-6 w-6" />
                 </button>
