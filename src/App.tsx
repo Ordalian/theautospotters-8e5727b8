@@ -94,6 +94,7 @@ const App = () => (
                 <Route path="/deliver-car/select-friend" element={<ProtectedRoute><DeliverSelectFriend /></ProtectedRoute>} />
                 <Route path="/map" element={<ProtectedRoute><SpotMap /></ProtectedRoute>} />
                 <Route path="/car/:id" element={<ProtectedRoute><CarDetails /></ProtectedRoute>} />
+                <Route path="/messaging" element={<ProtectedRoute><Messaging /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
