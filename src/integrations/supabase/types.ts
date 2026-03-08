@@ -579,6 +579,10 @@ export type Database = {
         Args: { p_spot_count: number }
         Returns: number
       }
+      update_friendship_status: {
+        Args: { p_friendship_id: string; p_new_status: string }
+        Returns: undefined
+      }
       xp_for_car: {
         Args: {
           p_photo_source: string
