@@ -232,7 +232,7 @@ const Messaging = () => {
             topics.map((topic) => (
               <button
                 key={topic.id}
-                onClick={() => setSelectedTopic(topic)}
+                onClick={() => { markTopicRead(topic.id); setSelectedTopic(topic); }}
                 className="w-full text-left rounded-xl border border-border/50 bg-card/80 p-4 hover:border-primary/40 transition-colors"
               >
                 <h3 className="font-semibold text-sm">{topic.title}</h3>
