@@ -106,6 +106,17 @@ const Auth = () => {
                 </button>
               </div>
 
+              {isSignUp && password.length > 0 && (
+                <ul className="space-y-1 text-xs">
+                  {pwdRules.map((r) => (
+                    <li key={r.key} className={`flex items-center gap-1.5 ${r.test ? "text-green-500" : "text-muted-foreground"}`}>
+                      {r.test ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                      {t[r.key] as string}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               {isSignUp && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
