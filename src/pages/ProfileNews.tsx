@@ -1,11 +1,131 @@
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { ArrowLeft, Newspaper } from "lucide-react";
+import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+interface PatchEntry {
+  icon: React.ElementType;
+  title: string;
+  details: string[];
+  tag: "security" | "feature" | "fix";
+}
+
+const tagColors: Record<string, string> = {
+  security: "bg-destructive/15 text-destructive",
+  feature: "bg-primary/15 text-primary",
+  fix: "bg-amber-500/15 text-amber-500",
+};
+
+const tagLabels: Record<string, Record<string, string>> = {
+  fr: { security: "Sécurité", feature: "Nouveauté", fix: "Correctif" },
+  en: { security: "Security", feature: "Feature", fix: "Fix" },
+};
 
 const ProfileNews = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const lang = language === "fr" ? "fr" : "en";
+
+  const patches: PatchEntry[] = lang === "fr" ? [
+    {
+      icon: Shield,
+      title: "Durcissement des politiques de sécurité (RLS)",
+      details: [
+        "Refonte complète des politiques d'accès aux données (Row-Level Security) sur toutes les tables.",
+        "Les likes, photos, groupes de garage et messages sont désormais strictement limités à leur propriétaire.",
+        "Les amitiés ne peuvent plus être manipulées côté client — acceptation via fonction sécurisée uniquement.",
+      ],
+      tag: "security",
+    },
+    {
+      icon: Lock,
+      title: "Protection contre l'escalade de privilèges",
+      details: [
+        "Remplacement des UPDATE directs sur les amitiés par une fonction SECURITY DEFINER.",
+        "Sécurisation du search_path sur 7 fonctions internes pour prévenir les injections.",
+        "Seul le destinataire d'une demande d'ami peut l'accepter ou la refuser.",
+      ],
+      tag: "security",
+    },
+    {
+      icon: Eye,
+      title: "Vue publique des profils",
+      details: [
+        "Création d'une vue profiles_public exposant uniquement les infos nécessaires (pseudo, avatar, XP, emblèmes).",
+        "Les paramètres privés (notifications, langue, thème) ne sont plus visibles par les autres joueurs.",
+      ],
+      tag: "security",
+    },
+    {
+      icon: MessageSquare,
+      title: "Correction de la messagerie",
+      details: [
+        "Correction d'un crash React (hooks appelés dans le mauvais ordre) empêchant l'affichage de la messagerie.",
+        "La messagerie est à nouveau pleinement fonctionnelle.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Navigation,
+      title: "Navigation améliorée Dashboard ↔ Messagerie",
+      details: [
+        "Nouveau header dans la messagerie : bouton « Accueil » animé à gauche, titre à droite.",
+        "Swipe vers la droite dans la messagerie pour revenir au Dashboard.",
+        "Le bouton « Messagerie » du Dashboard redirige correctement vers la page de messagerie.",
+      ],
+      tag: "feature",
+    },
+  ] : [
+    {
+      icon: Shield,
+      title: "Security policy hardening (RLS)",
+      details: [
+        "Complete overhaul of Row-Level Security policies on all tables.",
+        "Likes, photos, garage groups, and messages are now strictly limited to their owner.",
+        "Friendships can no longer be manipulated client-side — acceptance via secure function only.",
+      ],
+      tag: "security",
+    },
+    {
+      icon: Lock,
+      title: "Privilege escalation protection",
+      details: [
+        "Replaced direct UPDATEs on friendships with a SECURITY DEFINER function.",
+        "Secured search_path on 7 internal functions to prevent injection attacks.",
+        "Only the addressee of a friend request can accept or decline it.",
+      ],
+      tag: "security",
+    },
+    {
+      icon: Eye,
+      title: "Public profile view",
+      details: [
+        "Created a profiles_public view exposing only necessary info (username, avatar, XP, emblems).",
+        "Private settings (notifications, language, theme) are no longer visible to other players.",
+      ],
+      tag: "security",
+    },
+    {
+      icon: MessageSquare,
+      title: "Messaging fix",
+      details: [
+        "Fixed a React crash (hooks called in wrong order) preventing messaging from displaying.",
+        "Messaging is fully functional again.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Navigation,
+      title: "Improved Dashboard ↔ Messaging navigation",
+      details: [
+        "New messaging header: animated « Home » button on the left, title on the right.",
+        "Swipe right in messaging to return to the Dashboard.",
+        "The « Messaging » button on the Dashboard now correctly redirects to the messaging page.",
+      ],
+      tag: "feature",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -15,16 +135,49 @@ const ProfileNews = () => {
         </Button>
         <h1 className="text-xl font-bold">{t.profile_tile_news as string}</h1>
       </header>
-      <div className="p-6 max-w-md mx-auto flex flex-col items-center justify-center gap-4 min-h-[50vh]">
-        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <Newspaper className="h-8 w-8 text-primary" />
+
+      <div className="p-4 max-w-lg mx-auto space-y-5">
+        {/* Version badge */}
+        <div className="flex items-center gap-3 pt-2">
+          <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
+            <Newspaper className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">Patch Note v0.1</h2>
+            <p className="text-xs text-muted-foreground">8 {lang === "fr" ? "mars" : "March"} 2026</p>
+          </div>
         </div>
-        <p className="text-muted-foreground text-center">
-          {t.profile_tile_news_desc as string}
-        </p>
-        <p className="text-sm text-muted-foreground/80 text-center">
-          {t.profile_coming_soon as string}
-        </p>
+
+        {/* Entries */}
+        <div className="space-y-3">
+          {patches.map((entry, i) => (
+            <Card key={i} className="border-border/50 bg-card/80 overflow-hidden">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 mt-0.5">
+                    <entry.icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm leading-tight">{entry.title}</h3>
+                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${tagColors[entry.tag]}`}>
+                        {tagLabels[lang][entry.tag]}
+                      </span>
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {entry.details.map((d, j) => (
+                        <li key={j} className="text-xs text-muted-foreground leading-relaxed flex gap-2">
+                          <span className="text-primary/60 mt-1 shrink-0">•</span>
+                          <span>{d}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
