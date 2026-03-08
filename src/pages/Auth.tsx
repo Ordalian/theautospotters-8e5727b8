@@ -93,7 +93,7 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   className="bg-secondary/50 pr-10"
                 />
                 <button
