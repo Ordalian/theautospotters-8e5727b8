@@ -259,7 +259,14 @@ const Messaging = () => {
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
-        <MessageSquare className="h-5 w-5 text-primary" />
+        <div className="relative">
+          <MessageSquare className="h-5 w-5 text-primary" />
+          {unreadNotifs.length > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-0.5">
+              {unreadNotifs.length > 99 ? "99+" : unreadNotifs.length}
+            </span>
+          )}
+        </div>
         <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{t.msg_title as string}</h1>
       </header>
       <div className="p-5 max-w-2xl mx-auto relative z-10 space-y-2">
