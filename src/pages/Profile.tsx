@@ -3,11 +3,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ArrowLeft, User, Settings, BarChart3, Trophy, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { hasUnreadPatchNotes } from "@/lib/patchNotes";
 
 const Profile = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const unreadNews = hasUnreadPatchNotes();
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -71,10 +73,13 @@ const Profile = () => {
         <button
           type="button"
           onClick={() => navigate("/profile/news")}
-          className="w-full flex items-center gap-4 p-4 text-left rounded-xl border-2 border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-colors"
+          className="w-full flex items-center gap-4 p-4 text-left rounded-xl border-2 border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-colors relative"
         >
-          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 relative">
             <Newspaper className="h-6 w-6 text-primary" />
+            {unreadNews && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive ring-2 ring-card animate-pulse" />
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-bold text-base">{t.profile_tile_news as string}</p>

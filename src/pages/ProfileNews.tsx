@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { markPatchNotesRead } from "@/lib/patchNotes";
 
 interface PatchEntry {
   icon: React.ElementType;
@@ -26,6 +28,8 @@ const ProfileNews = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const lang = language === "fr" ? "fr" : "en";
+
+  useEffect(() => { markPatchNotesRead(); }, []);
 
   const patches: PatchEntry[] = lang === "fr" ? [
     {
