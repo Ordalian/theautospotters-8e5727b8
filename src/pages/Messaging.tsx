@@ -64,7 +64,6 @@ const Messaging = () => {
       const userIds = [...new Set(topicsData.map((t) => t.user_id))];
       const { data: profiles } = await supabase.from("profiles").select("user_id, username").in("user_id", userIds);
       const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
-      // Get reply counts
       const topicIds = topicsData.map((t) => t.id);
       const { data: replies } = await supabase.from("channel_replies").select("topic_id").in("topic_id", topicIds);
       const countMap = new Map<string, number>();
@@ -90,6 +89,19 @@ const Messaging = () => {
       return data.map((r) => ({ ...r, username: profileMap.get(r.user_id) || null })) as Reply[];
     },
     enabled: !!selectedTopic,
+  });
+
+  // Channel subscriptions
+  const { data: channelSubscriptions = [] } = useQuery({
+    queryKey: ["channel_subs", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("channel_subscriptions")
+        .select("channel_id")
+        .eq("user_id", user!.id);
+      return (data || []).map((s: any) => s.channel_id);
+    },
+    enabled: !!user,
   });
 
   const createTopicMut = useMutation({
@@ -121,6 +133,21 @@ const Messaging = () => {
       qc.invalidateQueries({ queryKey: ["channel_replies", selectedTopic?.id] });
       qc.invalidateQueries({ queryKey: ["channel_topics", selectedChannel?.id] });
       setReplyBody("");
+    },
+  });
+
+  const isSubscribed = selectedChannel ? channelSubscriptions.includes(selectedChannel.id) : false;
+
+  const toggleSubscription = useMutation({
+    mutationFn: async () => {
+      if (isSubscribed) {
+        await supabase.from("channel_subscriptions").delete().eq("user_id", user!.id).eq("channel_id", selectedChannel!.id);
+      } else {
+        await supabase.from("channel_subscriptions").insert({ user_id: user!.id, channel_id: selectedChannel!.id } as any);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["channel_subs", user?.id] });
     },
   });
 
@@ -167,7 +194,6 @@ const Messaging = () => {
           </div>
         </header>
         <div className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10">
-          {/* Original post */}
           <div className="rounded-xl border border-primary/20 bg-card/90 p-4">
             <p className="text-xs text-muted-foreground mb-1">{selectedTopic.username || t.anonymous as string} • {formatDate(selectedTopic.created_at)}</p>
             <p className="text-sm whitespace-pre-wrap">{selectedTopic.body}</p>
@@ -198,34 +224,6 @@ const Messaging = () => {
       </div>
     );
   }
-
-  // Channel subscription (bell)
-  const { data: channelSubscriptions = [] } = useQuery({
-    queryKey: ["channel_subs", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("channel_subscriptions")
-        .select("channel_id")
-        .eq("user_id", user!.id);
-      return (data || []).map((s: any) => s.channel_id);
-    },
-    enabled: !!user,
-  });
-
-  const isSubscribed = selectedChannel ? channelSubscriptions.includes(selectedChannel.id) : false;
-
-  const toggleSubscription = useMutation({
-    mutationFn: async () => {
-      if (isSubscribed) {
-        await supabase.from("channel_subscriptions").delete().eq("user_id", user!.id).eq("channel_id", selectedChannel!.id);
-      } else {
-        await supabase.from("channel_subscriptions").insert({ user_id: user!.id, channel_id: selectedChannel!.id } as any);
-      }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["channel_subs", user?.id] });
-    },
-  });
 
   // Topics list view (with bell)
   if (selectedChannel) {
