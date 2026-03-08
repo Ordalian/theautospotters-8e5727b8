@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Home = lazy(() => import("./pages/Home"));
 const MyGarage = lazy(() => import("./pages/MyGarage"));
 const AddCar = lazy(() => import("./pages/AddCar"));
 const AutoSpotter = lazy(() => import("./pages/AutoSpotter"));
