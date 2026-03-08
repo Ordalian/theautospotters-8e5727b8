@@ -563,6 +563,7 @@ const fr: Translations = {
 
   // Dashboard extra
   dash_messaging: "Messagerie",
+  dash_home: "Accueil",
 
   // Notification settings
   notif_settings_title: "Préférences de notifications",

@@ -1,9 +1,10 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useRef, lazy, Suspense } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail } from "lucide-react";
+import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -16,6 +17,7 @@ type Reply = { id: string; topic_id: string; user_id: string; body: string; crea
 const Messaging = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
 
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
@@ -25,6 +27,25 @@ const Messaging = () => {
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
   const [showDMs, setShowDMs] = useState(false);
+
+  // Swipe right to go back to home (only on channel list view)
+  const swipeRef = useRef({ startX: 0, startY: 0, locked: null as "h" | "v" | null, delta: 0 });
+  const onSwipeStart = (e: React.TouchEvent) => {
+    swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, locked: null, delta: 0 };
+  };
+  const onSwipeMove = (e: React.TouchEvent) => {
+    const dx = e.touches[0].clientX - swipeRef.current.startX;
+    const dy = e.touches[0].clientY - swipeRef.current.startY;
+    if (!swipeRef.current.locked && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      swipeRef.current.locked = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+    }
+    if (swipeRef.current.locked === "h") swipeRef.current.delta = dx;
+  };
+  const onSwipeEnd = () => {
+    if (!selectedChannel && !selectedTopic && !showDMs && swipeRef.current.locked === "h" && swipeRef.current.delta > 80) {
+      navigate("/");
+    }
+  };
 
   // Unread topic_reply notifications
   const { data: unreadNotifs = [] } = useQuery({
@@ -301,17 +322,31 @@ const Messaging = () => {
 
   // Channel list view
   return (
-    <div className="min-h-screen relative">
-      <header className="sticky top-0 z-20 flex items-center gap-3 px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
-        <div className="relative">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          {unreadNotifs.length > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-0.5">
-              {unreadNotifs.length > 99 ? "99+" : unreadNotifs.length}
-            </span>
-          )}
+    <div
+      className="min-h-screen relative"
+      onTouchStart={onSwipeStart}
+      onTouchMove={onSwipeMove}
+      onTouchEnd={onSwipeEnd}
+    >
+      <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4 animate-[nudge-left_2s_ease-in-out_infinite]" />
+          <span className="text-xs font-medium">{t.dash_home as string}</span>
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            {unreadNotifs.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-0.5">
+                {unreadNotifs.length > 99 ? "99+" : unreadNotifs.length}
+              </span>
+            )}
+          </div>
+          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{t.msg_title as string}</h1>
         </div>
-        <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{t.msg_title as string}</h1>
       </header>
       <div className="p-5 max-w-2xl mx-auto relative z-10 space-y-2">
         {/* DM Tile */}
