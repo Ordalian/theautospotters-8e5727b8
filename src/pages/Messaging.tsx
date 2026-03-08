@@ -24,6 +24,7 @@ const Messaging = () => {
   const [newTopicTitle, setNewTopicTitle] = useState("");
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
+  const [showDMs, setShowDMs] = useState(false);
 
   // Unread topic_reply notifications
   const { data: unreadNotifs = [] } = useQuery({
