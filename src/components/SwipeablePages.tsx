@@ -97,7 +97,7 @@ const SwipeablePages = ({ pages, initialPage = 0, onPageChange }: SwipeablePages
       <div
         className="flex h-full"
         style={{
-          transform: `translateX(calc(-${currentPage * 100}% + ${offset}px))`,
+          transform: `translateX(calc(-${currentPage * (100 / pages.length)}% + ${offset}px))`,
           transition: dragging && directionLocked.current === "h" ? "none" : "transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
           width: `${pages.length * 100}%`,
         }}
