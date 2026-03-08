@@ -202,7 +202,7 @@ const AddCar = () => {
   };
 
   const handleAddExtraPhoto = (file: File) => {
-    if (additionalPhotoUrls.length + additionalPhotoFiles.length >= 4) return;
+    if (additionalPhotoUrls.length + additionalPhotoFiles.length >= 7) return;
     const reader = new FileReader();
     reader.onload = () => {
       setAdditionalPhotoFiles((prev) => [...prev, { file, preview: reader.result as string }]);
