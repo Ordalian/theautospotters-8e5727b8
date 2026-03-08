@@ -199,7 +199,35 @@ const Messaging = () => {
     );
   }
 
-  // Topics list view
+  // Channel subscription (bell)
+  const { data: channelSubscriptions = [] } = useQuery({
+    queryKey: ["channel_subs", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("channel_subscriptions")
+        .select("channel_id")
+        .eq("user_id", user!.id);
+      return (data || []).map((s: any) => s.channel_id);
+    },
+    enabled: !!user,
+  });
+
+  const isSubscribed = selectedChannel ? channelSubscriptions.includes(selectedChannel.id) : false;
+
+  const toggleSubscription = useMutation({
+    mutationFn: async () => {
+      if (isSubscribed) {
+        await supabase.from("channel_subscriptions").delete().eq("user_id", user!.id).eq("channel_id", selectedChannel!.id);
+      } else {
+        await supabase.from("channel_subscriptions").insert({ user_id: user!.id, channel_id: selectedChannel!.id } as any);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["channel_subs", user?.id] });
+    },
+  });
+
+  // Topics list view (with bell)
   if (selectedChannel) {
     return (
       <div className="min-h-screen relative flex flex-col">
@@ -211,6 +239,16 @@ const Messaging = () => {
             <h1 className="text-sm font-bold flex items-center gap-1.5"><Hash className="h-4 w-4 text-primary" />{selectedChannel.name}</h1>
             {selectedChannel.description && <p className="text-xs text-muted-foreground truncate">{selectedChannel.description}</p>}
           </div>
+          <Button
+            size="icon"
+            variant={isSubscribed ? "default" : "ghost"}
+            className="shrink-0"
+            onClick={() => toggleSubscription.mutate()}
+            disabled={toggleSubscription.isPending}
+            title={isSubscribed ? (t.notif_channel_unsubscribe as string) : (t.notif_channel_subscribe as string)}
+          >
+            {isSubscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4 text-muted-foreground" />}
+          </Button>
           <Button size="sm" variant="outline" onClick={() => setShowNewTopic(true)} className="shrink-0">
             <Plus className="h-4 w-4 mr-1" />{t.msg_new_topic as string}
           </Button>

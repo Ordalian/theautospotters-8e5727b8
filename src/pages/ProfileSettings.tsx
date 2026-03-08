@@ -377,6 +377,9 @@ const ProfileSettings = () => {
           </Button>
         </div>
 
+        {/* Notification Preferences */}
+        <NotificationPreferences user={user} />
+
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Bell className="h-5 w-5 text-primary" />
