@@ -29,6 +29,7 @@ const DeliverSelectFriend = lazy(() => import("./pages/DeliverSelectFriend"));
 const CarDetails = lazy(() => import("./pages/CarDetails"));
 const VehicleTypeMenu = lazy(() => import("./pages/VehicleTypeMenu"));
 const EmblemPreview = lazy(() => import("./pages/EmblemPreview"));
+const Messaging = lazy(() => import("./pages/Messaging"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
