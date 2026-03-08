@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import BlackGoldBg from "@/components/BlackGoldBg";
+
 
 type Channel = { id: string; name: string; slug: string; description: string | null; sort_order: number };
 type Topic = { id: string; channel_id: string; user_id: string; title: string; body: string; created_at: string; username?: string; reply_count?: number };
@@ -145,8 +145,7 @@ const Messaging = () => {
   // Reply thread view
   if (selectedTopic) {
     return (
-      <div className="min-h-screen bg-background relative flex flex-col">
-        <BlackGoldBg />
+      <div className="min-h-screen relative flex flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
           <Button variant="ghost" size="icon" onClick={() => setSelectedTopic(null)}>
             <ChevronLeft className="h-5 w-5" />
@@ -192,8 +191,7 @@ const Messaging = () => {
   // Topics list view
   if (selectedChannel) {
     return (
-      <div className="min-h-screen bg-background relative flex flex-col">
-        <BlackGoldBg />
+      <div className="min-h-screen relative flex flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
           <Button variant="ghost" size="icon" onClick={() => { setSelectedChannel(null); setShowNewTopic(false); }}>
             <ChevronLeft className="h-5 w-5" />
@@ -256,8 +254,7 @@ const Messaging = () => {
 
   // Channel list view
   return (
-    <div className="min-h-screen bg-background relative">
-      <BlackGoldBg />
+    <div className="min-h-screen relative">
       <header className="sticky top-0 z-20 flex items-center gap-3 px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
         <div className="relative">
           <MessageSquare className="h-5 w-5 text-primary" />

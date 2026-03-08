@@ -103,7 +103,7 @@ const SwipeablePages = ({ pages, initialPage = 0, onPageChange }: SwipeablePages
         }}
       >
         {pages.map((page, i) => (
-          <div key={i} className="w-full h-full overflow-y-auto" style={{ flex: `0 0 ${100 / pages.length}%` }}>
+          <div key={i} className="w-full h-full overflow-y-auto" style={{ flex: `0 0 ${100 / pages.length}%`, isolation: "isolate" }}>
             {page}
           </div>
         ))}
