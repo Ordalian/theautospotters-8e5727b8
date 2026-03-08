@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Car, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
+import { CarLikeButton } from "@/components/CarLikeButton";
 import { useQuery } from "@tanstack/react-query";
 
 const VEHICLE_TYPES = [
