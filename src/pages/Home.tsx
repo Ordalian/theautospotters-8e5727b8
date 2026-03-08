@@ -13,7 +13,8 @@ const PageLoader = () => (
 
 const Home = () => {
   return (
-    <div className="h-screen w-screen overflow-hidden">
+    <div className="h-screen w-screen overflow-hidden relative">
+      <BlackGoldBg />
       <SwipeablePages
         pages={[
           <Suspense fallback={<PageLoader />} key="dash"><Dashboard /></Suspense>,
