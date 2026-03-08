@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import SwipeablePages from "@/components/SwipeablePages";
+import BlackGoldBg from "@/components/BlackGoldBg";
 import { Loader2 } from "lucide-react";
 
 const Dashboard = lazy(() => import("./Dashboard"));
