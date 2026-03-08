@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import GoldParticles from "@/components/GoldParticles";
 import { RatingExplainer } from "@/components/RatingExplainer";
+import { CarLikeButton } from "@/components/CarLikeButton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -482,6 +483,7 @@ const CarDetails = () => {
             )}
             <div className="flex items-center gap-2 mt-1.5">
               <RatingExplainer rarityLevel={car.rarity_rating ?? 5} qualityLevel={car.quality_rating ?? 3} size="md" />
+              <CarLikeButton carId={car.id} ownerId={car.user_id} />
             </div>
           </div>
 

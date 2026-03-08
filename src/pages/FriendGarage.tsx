@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Car, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
+import { CarLikeButton } from "@/components/CarLikeButton";
 import { useQuery } from "@tanstack/react-query";
 
 const VEHICLE_TYPES = [
@@ -184,9 +185,12 @@ const FriendGarage = () => {
                 <div className={`h-40 flex items-center justify-center bg-muted img-fallback ${car.image_url ? 'hidden' : ''}`}>
                   <Car className="h-10 w-10 text-muted-foreground/40" />
                 </div>
-                <div className="p-3">
-                  <p className="font-bold">{car.brand} {car.model}</p>
-                  <p className="text-sm text-muted-foreground">{car.year}</p>
+                <div className="p-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold">{car.brand} {car.model}</p>
+                    <p className="text-sm text-muted-foreground">{car.year}</p>
+                  </div>
+                  <CarLikeButton carId={car.id} ownerId={friendId!} size="sm" />
                 </div>
               </button>
             ))}
