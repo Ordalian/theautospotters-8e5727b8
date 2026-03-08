@@ -122,6 +122,21 @@ const Messaging = () => {
     },
   });
 
+  // Mark notifications as read when opening a topic
+  const markTopicRead = async (topicId: string) => {
+    const toMark = unreadNotifs.filter((n) => {
+      const d = n.data as any;
+      return d?.topic_id === topicId;
+    });
+    if (toMark.length > 0) {
+      await supabase
+        .from("notifications")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", toMark.map((n) => n.id));
+      qc.invalidateQueries({ queryKey: ["msg_notifications"] });
+    }
+  };
+
   const formatDate = (d: string) => {
     const date = new Date(d);
     return date.toLocaleDateString(undefined, { day: "numeric", month: "short" }) + " " + date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
