@@ -254,8 +254,7 @@ const Messaging = () => {
 
   // Channel list view
   return (
-    <div className="min-h-screen bg-background relative">
-      <BlackGoldBg />
+    <div className="min-h-screen relative">
       <header className="sticky top-0 z-20 flex items-center gap-3 px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
         <div className="relative">
           <MessageSquare className="h-5 w-5 text-primary" />

@@ -163,8 +163,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background relative">
-      <BlackGoldBg />
+    <div className="min-h-screen relative">
       <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 ring-1 ring-primary/20">
