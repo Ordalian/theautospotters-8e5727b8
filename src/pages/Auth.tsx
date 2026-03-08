@@ -19,8 +19,21 @@ const Auth = () => {
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
 
+  const pwdRules = [
+    { key: "pwd_min_length", test: password.length >= 8 },
+    { key: "pwd_uppercase", test: /[A-Z]/.test(password) },
+    { key: "pwd_lowercase", test: /[a-z]/.test(password) },
+    { key: "pwd_digit", test: /\d/.test(password) },
+    { key: "pwd_symbol", test: /[^A-Za-z0-9]/.test(password) },
+  ];
+  const passwordValid = pwdRules.every((r) => r.test);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSignUp && !passwordValid) {
+      toast.error(t.pwd_weak as string);
+      return;
+    }
     if (isSignUp && !signUpLanguage) {
       toast.error(t.auth_choose_language as string);
       return;
