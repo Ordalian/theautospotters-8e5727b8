@@ -230,6 +230,35 @@ export type Database = {
           },
         ]
       }
+      channel_subscriptions: {
+        Row: {
+          channel_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_subscriptions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_topics: {
         Row: {
           body: string
@@ -329,25 +358,31 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          image_url: string | null
           read_at: string | null
           receiver_id: string
           sender_id: string
+          video_url: string | null
         }
         Insert: {
           body: string
           created_at?: string
           id?: string
+          image_url?: string | null
           read_at?: string | null
           receiver_id: string
           sender_id: string
+          video_url?: string | null
         }
         Update: {
           body?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           read_at?: string | null
           receiver_id?: string
           sender_id?: string
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -468,6 +503,8 @@ export type Database = {
           id: string
           language: string
           last_delivery_at: string | null
+          notify_channels: boolean
+          notify_dms: boolean
           pinned_car_id: string | null
           theme: string | null
           total_xp: number
@@ -484,6 +521,8 @@ export type Database = {
           id?: string
           language?: string
           last_delivery_at?: string | null
+          notify_channels?: boolean
+          notify_dms?: boolean
           pinned_car_id?: string | null
           theme?: string | null
           total_xp?: number
@@ -500,6 +539,8 @@ export type Database = {
           id?: string
           language?: string
           last_delivery_at?: string | null
+          notify_channels?: boolean
+          notify_dms?: boolean
           pinned_car_id?: string | null
           theme?: string | null
           total_xp?: number

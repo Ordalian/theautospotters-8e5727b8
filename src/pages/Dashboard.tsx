@@ -3,12 +3,37 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loader2 } from "lucide-react";
+import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useUnreadDMs } from "@/hooks/useUnreadDMs";
 
 import { useQuery } from "@tanstack/react-query";
 
 const DashboardMap = lazy(() => import("@/components/DashboardMap"));
+
+const MessagingArrow = ({ displayName }: { displayName: string }) => {
+  const { t } = useLanguage();
+  const unreadDMs = useUnreadDMs();
+  const totalUnread = unreadDMs;
+  const badgeText = totalUnread > 99 ? "99+" : totalUnread > 0 ? String(totalUnread) : null;
+
+  return (
+    <div className="flex items-center justify-between mb-5">
+      <h2 className="text-base font-medium text-muted-foreground">
+        {t.dash_hey as string} <span className="text-foreground font-semibold">{displayName}</span> 👋
+      </h2>
+      <div className="flex items-center gap-1.5 text-muted-foreground relative">
+        <span className="text-xs font-medium">{t.dash_messaging as string}</span>
+        <ChevronRight className="h-4 w-4 animate-[nudge_2s_ease-in-out_infinite]" />
+        {badgeText && (
+          <span className="absolute -top-2.5 -right-2.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-1 shadow-lg">
+            {badgeText}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -207,7 +232,7 @@ const Dashboard = () => {
       </header>
 
       <main className="p-5 max-w-2xl mx-auto relative z-10">
-        <h2 className="text-base font-medium text-muted-foreground mb-5">{t.dash_hey as string} <span className="text-foreground font-semibold">{displayName}</span> 👋</h2>
+        <MessagingArrow displayName={displayName} />
 
         {/* Row 1: Mon Garage + Zone de Jeu */}
         <div className="grid grid-cols-2 gap-3 mb-3">

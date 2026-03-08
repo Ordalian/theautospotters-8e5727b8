@@ -558,6 +558,20 @@ const fr: Translations = {
   dm_placeholder: "Écrire un message...",
   dm_no_messages: "Aucun message. Dites bonjour !",
   dm_no_friends: "Ajoutez des amis pour commencer à discuter.",
+  dm_video_too_large: "La vidéo dépasse 15 Mo.",
+  dm_video_too_long: "La vidéo dépasse 15 secondes.",
+
+  // Dashboard extra
+  dash_messaging: "Messagerie",
+
+  // Notification settings
+  notif_settings_title: "Préférences de notifications",
+  notif_channels: "Notifications de canaux",
+  notif_channels_desc: "Recevoir les notifications des canaux auxquels vous participez",
+  notif_dms: "Notifications de messages",
+  notif_dms_desc: "Recevoir les notifications de messages privés d'amis",
+  notif_channel_subscribe: "Suivre ce canal",
+  notif_channel_unsubscribe: "Ne plus suivre",
 };
 
 export default fr;
