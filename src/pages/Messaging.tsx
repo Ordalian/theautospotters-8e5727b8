@@ -145,8 +145,7 @@ const Messaging = () => {
   // Reply thread view
   if (selectedTopic) {
     return (
-      <div className="min-h-screen bg-background relative flex flex-col">
-        <BlackGoldBg />
+      <div className="min-h-screen relative flex flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
           <Button variant="ghost" size="icon" onClick={() => setSelectedTopic(null)}>
             <ChevronLeft className="h-5 w-5" />
