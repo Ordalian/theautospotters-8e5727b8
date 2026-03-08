@@ -3,11 +3,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ArrowLeft, User, Settings, BarChart3, Trophy, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { hasUnreadPatchNotes } from "@/lib/patchNotes";
 
 const Profile = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const unreadNews = hasUnreadPatchNotes();
 
   return (
     <div className="min-h-screen bg-background relative">
