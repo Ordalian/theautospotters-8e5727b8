@@ -208,7 +208,7 @@ const Dashboard = () => {
       </header>
 
       <main className="p-5 max-w-2xl mx-auto relative z-10">
-        <h2 className="text-base font-medium text-muted-foreground mb-5">{t.dash_hey as string} <span className="text-foreground font-semibold">{displayName}</span> 👋</h2>
+        <MessagingArrow displayName={displayName} />
 
         {/* Row 1: Mon Garage + Zone de Jeu */}
         <div className="grid grid-cols-2 gap-3 mb-3">
