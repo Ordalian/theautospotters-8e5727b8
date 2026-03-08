@@ -278,6 +278,19 @@ const Messaging = () => {
         <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{t.msg_title as string}</h1>
       </header>
       <div className="p-5 max-w-2xl mx-auto relative z-10 space-y-2">
+        {/* DM Tile */}
+        <button
+          onClick={() => setShowDMs(true)}
+          className="w-full text-left rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 p-4 hover:border-primary/50 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-3 mb-3"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 shrink-0">
+            <Mail className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-sm">{t.msg_messages as string}</h3>
+            <p className="text-xs text-muted-foreground">{t.msg_messages_desc as string}</p>
+          </div>
+        </button>
         {channels.map((ch) => (
           <button
             key={ch.id}
