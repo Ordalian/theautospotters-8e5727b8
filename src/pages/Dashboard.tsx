@@ -13,6 +13,7 @@ const DashboardMap = lazy(() => import("@/components/DashboardMap"));
 
 const MessagingArrow = ({ displayName }: { displayName: string }) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const unreadDMs = useUnreadDMs();
   const totalUnread = unreadDMs;
   const badgeText = totalUnread > 99 ? "99+" : totalUnread > 0 ? String(totalUnread) : null;
@@ -22,7 +23,10 @@ const MessagingArrow = ({ displayName }: { displayName: string }) => {
       <h2 className="text-base font-medium text-muted-foreground">
         {t.dash_hey as string} <span className="text-foreground font-semibold">{displayName}</span> 👋
       </h2>
-      <div className="flex items-center gap-1.5 text-muted-foreground relative">
+      <button
+        onClick={() => navigate("/messaging")}
+        className="flex items-center gap-1.5 text-muted-foreground relative hover:text-primary transition-colors"
+      >
         <span className="text-xs font-medium">{t.dash_messaging as string}</span>
         <ChevronRight className="h-4 w-4 animate-[nudge_2s_ease-in-out_infinite]" />
         {badgeText && (
@@ -30,7 +34,7 @@ const MessagingArrow = ({ displayName }: { displayName: string }) => {
             {badgeText}
           </span>
         )}
-      </div>
+      </button>
     </div>
   );
 };
