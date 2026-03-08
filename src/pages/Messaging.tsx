@@ -28,41 +28,21 @@ const Messaging = () => {
   const [replyBody, setReplyBody] = useState("");
   const [showDMs, setShowDMs] = useState(false);
 
-  // Swipe to go back to home
-  const swipeRef = useRef({ startX: 0, startY: 0, locked: null as "h" | "v" | null });
-  const handleSwipeStart = (e: React.TouchEvent) => {
-    swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, locked: null };
+  // Swipe right to go back to home (only on channel list view)
+  const swipeRef = useRef({ startX: 0, startY: 0, locked: null as "h" | "v" | null, delta: 0 });
+  const onSwipeStart = (e: React.TouchEvent) => {
+    swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, locked: null, delta: 0 };
   };
-  const handleSwipeMove = (e: React.TouchEvent) => {
+  const onSwipeMove = (e: React.TouchEvent) => {
     const dx = e.touches[0].clientX - swipeRef.current.startX;
     const dy = e.touches[0].clientY - swipeRef.current.startY;
     if (!swipeRef.current.locked && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
       swipeRef.current.locked = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
     }
+    if (swipeRef.current.locked === "h") swipeRef.current.delta = dx;
   };
-  const handleSwipeEnd = () => {
-    // Not in a sub-view (channel/topic/DM) → swipe right = go home
-    if (!selectedChannel && !selectedTopic && !showDMs && swipeRef.current.locked === "h") {
-      const dx = swipeRef.current.startX; // we only know start, so check end via delta
-      // We need the actual delta, let's store it
-    }
-  };
-  // Better approach: track delta
-  const swipeDelta = useRef(0);
-  const handleSwipeStart2 = (e: React.TouchEvent) => {
-    swipeRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, locked: null };
-    swipeDelta.current = 0;
-  };
-  const handleSwipeMove2 = (e: React.TouchEvent) => {
-    const dx = e.touches[0].clientX - swipeRef.current.startX;
-    const dy = e.touches[0].clientY - swipeRef.current.startY;
-    if (!swipeRef.current.locked && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
-      swipeRef.current.locked = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
-    }
-    if (swipeRef.current.locked === "h") swipeDelta.current = dx;
-  };
-  const handleSwipeEnd2 = () => {
-    if (!selectedChannel && !selectedTopic && !showDMs && swipeRef.current.locked === "h" && swipeDelta.current > 80) {
+  const onSwipeEnd = () => {
+    if (!selectedChannel && !selectedTopic && !showDMs && swipeRef.current.locked === "h" && swipeRef.current.delta > 80) {
       navigate("/");
     }
   };
