@@ -235,7 +235,10 @@ const Messaging = () => {
                 onClick={() => { markTopicRead(topic.id); setSelectedTopic(topic); }}
                 className={`w-full text-left rounded-xl border bg-card/80 p-4 hover:border-primary/40 transition-colors ${unreadNotifs.some((n) => (n.data as any)?.topic_id === topic.id) ? "border-primary/50 ring-1 ring-primary/20" : "border-border/50"}`}
               >
-                <h3 className="font-semibold text-sm">{topic.title}</h3>
+                <h3 className="font-semibold text-sm flex items-center gap-1.5">
+                  {unreadNotifs.some((n) => (n.data as any)?.topic_id === topic.id) && <span className="h-2 w-2 rounded-full bg-primary shrink-0" />}
+                  {topic.title}
+                </h3>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{topic.body}</p>
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                   <span>{topic.username || t.anonymous as string}</span>
