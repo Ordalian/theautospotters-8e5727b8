@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell } from "lucide-react";
+import { ArrowLeft, Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const DirectMessages = lazy(() => import("@/components/messaging/DirectMessages"));
 
 type Channel = { id: string; name: string; slug: string; description: string | null; sort_order: number };
 type Topic = { id: string; channel_id: string; user_id: string; title: string; body: string; created_at: string; username?: string; reply_count?: number };
