@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface CarLikeButtonProps {
   carId: string;
-  ownerId: string; // car owner's user_id
+  ownerId: string;
   size?: "sm" | "md";
   showCount?: boolean;
   className?: string;
@@ -18,11 +18,10 @@ export function CarLikeButton({ carId, ownerId, size = "md", showCount = true, c
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
 
-  // Don't show on own cars
-  if (!user || user.id === ownerId) return null;
+  const isOwn = !user || user.id === ownerId;
 
   const { data: liked = false } = useQuery({
-    queryKey: ["car-like", carId, user.id],
+    queryKey: ["car-like", carId, user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("car_likes")
@@ -32,6 +31,7 @@ export function CarLikeButton({ carId, ownerId, size = "md", showCount = true, c
         .maybeSingle();
       return !!data;
     },
+    enabled: !isOwn,
     staleTime: 2 * 60 * 1000,
   });
 
@@ -44,8 +44,11 @@ export function CarLikeButton({ carId, ownerId, size = "md", showCount = true, c
         .eq("car_id", carId);
       return count ?? 0;
     },
+    enabled: !isOwn,
     staleTime: 2 * 60 * 1000,
   });
+
+  if (isOwn) return null;
 
   const toggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -76,14 +79,14 @@ export function CarLikeButton({ carId, ownerId, size = "md", showCount = true, c
         "inline-flex items-center gap-1 rounded-full transition-all active:scale-90",
         size === "sm" ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm",
         liked
-          ? "text-red-500"
-          : "text-muted-foreground hover:text-red-400",
+          ? "text-destructive"
+          : "text-muted-foreground hover:text-destructive/70",
         className
       )}
       aria-label={liked ? "Unlike" : "Like"}
     >
       <Heart
-        className={cn(iconSize, "transition-all", liked && "fill-red-500")}
+        className={cn(iconSize, "transition-all", liked && "fill-destructive text-destructive")}
       />
       {showCount && likeCount > 0 && (
         <span className="font-medium">{likeCount}</span>
