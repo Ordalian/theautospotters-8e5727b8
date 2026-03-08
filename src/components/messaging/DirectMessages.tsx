@@ -324,7 +324,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
             onChange={handleFileSelect}
           />
           <Button variant="ghost" size="icon" className="shrink-0" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-            <ImagePlus className="h-5 w-5" />
+            <Plus className="h-5 w-5" />
           </Button>
           <Input
             value={messageBody}
