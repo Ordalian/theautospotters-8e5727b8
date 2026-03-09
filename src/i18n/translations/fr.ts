@@ -573,6 +573,27 @@ const fr: Translations = {
   notif_dms_desc: "Recevoir les notifications de messages privés d'amis",
   notif_channel_subscribe: "Suivre ce canal",
   notif_channel_unsubscribe: "Ne plus suivre",
+
+  // Card Game
+  game_title: "Zone de Jeu",
+  game_collection: "Collection",
+  game_booster: "Booster",
+  game_all: "Tous",
+  game_speed: "Vitesse",
+  game_resilience: "Résistance",
+  game_adaptability: "Adaptabilité",
+  game_power: "Puissance",
+  game_common: "Commun",
+  game_uncommon: "Peu commun",
+  game_rare: "Rare",
+  game_mythic: "Mythique",
+  game_no_cards: "Aucune carte. Ouvre un booster pour commencer !",
+  game_booster_desc: "Ouvre un booster pour obtenir 5 nouvelles cartes ! Disponible toutes les 12 heures.",
+  game_open_booster: "Ouvrir un booster",
+  game_next_booster: "Prochain booster dans",
+  game_booster_opening: "Ouverture du booster !",
+  game_reveal_all: "Tout révéler",
+  game_back_collection: "Voir ma collection",
 };
 
 export default fr;

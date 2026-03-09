@@ -32,6 +32,7 @@ const CarDetails = lazy(() => import("./pages/CarDetails"));
 const VehicleTypeMenu = lazy(() => import("./pages/VehicleTypeMenu"));
 const EmblemPreview = lazy(() => import("./pages/EmblemPreview"));
 const Messaging = lazy(() => import("./pages/Messaging"));
+const CardGame = lazy(() => import("./pages/CardGame"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -93,6 +94,7 @@ function AnimatedRoutes() {
           <Route path="/map" element={<ProtectedRoute><PageTransition><SpotMap /></PageTransition></ProtectedRoute>} />
           <Route path="/car/:id" element={<ProtectedRoute><PageTransition><CarDetails /></PageTransition></ProtectedRoute>} />
           <Route path="/messaging" element={<ProtectedRoute><PageTransition><Messaging /></PageTransition></ProtectedRoute>} />
+          <Route path="/card-game" element={<ProtectedRoute><PageTransition><CardGame /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
       </Suspense>
