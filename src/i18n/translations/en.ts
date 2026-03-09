@@ -571,6 +571,27 @@ const en: Translations = {
   notif_dms_desc: "Receive notifications from friends' private messages",
   notif_channel_subscribe: "Follow this channel",
   notif_channel_unsubscribe: "Unfollow",
+
+  // Card Game
+  game_title: "Game Zone",
+  game_collection: "Collection",
+  game_booster: "Booster",
+  game_all: "All",
+  game_speed: "Speed",
+  game_resilience: "Resilience",
+  game_adaptability: "Adaptability",
+  game_power: "Power",
+  game_common: "Common",
+  game_uncommon: "Uncommon",
+  game_rare: "Rare",
+  game_mythic: "Mythic",
+  game_no_cards: "No cards yet. Open a booster to get started!",
+  game_booster_desc: "Open a booster to get 5 new cards! Available every 12 hours.",
+  game_open_booster: "Open Booster",
+  game_next_booster: "Next booster in",
+  game_booster_opening: "Opening booster!",
+  game_reveal_all: "Reveal all",
+  game_back_collection: "View my collection",
 };
 
 export default en;

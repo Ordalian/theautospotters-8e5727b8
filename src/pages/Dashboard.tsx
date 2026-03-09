@@ -178,7 +178,7 @@ const Dashboard = () => {
 
   const topTiles = [
     { title: t.dash_my_garage as string, subtitle: carsSpottedText, icon: Car, image: latestCarImage, onClick: () => navigate("/garage-menu"), gradient: "from-primary/20 to-primary/5", notificationCount: 0, iframe: null as string | null },
-    { title: t.dash_zone_jeu as string, subtitle: t.dash_zone_jeu_sub as string, icon: Gamepad2, image: null, onClick: () => {}, gradient: "from-violet-500/20 to-violet-500/5", notificationCount: 0, iframe: null as string | null },
+    { title: t.dash_zone_jeu as string, subtitle: t.dash_zone_jeu_sub as string, icon: Gamepad2, image: null, onClick: () => navigate("/card-game"), gradient: "from-violet-500/20 to-violet-500/5", notificationCount: 0, iframe: null as string | null },
   ];
 
   const bottomTiles = [

@@ -94,6 +94,7 @@ function AnimatedRoutes() {
           <Route path="/map" element={<ProtectedRoute><PageTransition><SpotMap /></PageTransition></ProtectedRoute>} />
           <Route path="/car/:id" element={<ProtectedRoute><PageTransition><CarDetails /></PageTransition></ProtectedRoute>} />
           <Route path="/messaging" element={<ProtectedRoute><PageTransition><Messaging /></PageTransition></ProtectedRoute>} />
+          <Route path="/card-game" element={<ProtectedRoute><PageTransition><CardGame /></PageTransition></ProtectedRoute>} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
       </Suspense>
