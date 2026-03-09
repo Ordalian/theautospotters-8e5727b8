@@ -45,7 +45,7 @@ function StatBar({ icon: Icon, label, value, color }: { icon: typeof Zap; label:
   );
 }
 
-export function GameCard({ name, brand, rarity, archetype, speed, resilience, adaptability, power, hp, flipped = false, onClick, className = "" }: GameCardProps) {
+export function GameCard({ name, brand, rarity, archetype, speed, resilience, adaptability, power, hp, flipped = false, greyed = false, count, onClick, className = "" }: GameCardProps) {
   const style = RARITY_STYLES[rarity];
   const ArchIcon = ARCHETYPE_ICON[archetype];
 
