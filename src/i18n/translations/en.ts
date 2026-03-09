@@ -592,6 +592,10 @@ const en: Translations = {
   game_booster_opening: "Opening booster!",
   game_reveal_all: "Reveal all",
   game_back_collection: "View my collection",
+  game_friends: "Friends",
+  game_friend_collection: "Collection of",
+  game_no_friends: "Add friends to see their collections!",
+  game_owned: "owned",
 };
 
 export default en;
