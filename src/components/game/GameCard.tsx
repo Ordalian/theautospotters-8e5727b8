@@ -12,6 +12,8 @@ interface GameCardProps {
   power: number;
   hp: number;
   flipped?: boolean;
+  greyed?: boolean;
+  count?: number;
   onClick?: () => void;
   className?: string;
 }
