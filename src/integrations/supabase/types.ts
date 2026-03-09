@@ -410,6 +410,51 @@ export type Database = {
         }
         Relationships: []
       }
+      game_cards: {
+        Row: {
+          adaptability: number
+          archetype: string
+          brand: string
+          hp: number
+          id: string
+          image_url: string | null
+          model: string
+          name: string
+          power: number
+          rarity: string
+          resilience: number
+          speed: number
+        }
+        Insert: {
+          adaptability: number
+          archetype: string
+          brand: string
+          hp: number
+          id?: string
+          image_url?: string | null
+          model: string
+          name: string
+          power: number
+          rarity: string
+          resilience: number
+          speed: number
+        }
+        Update: {
+          adaptability?: number
+          archetype?: string
+          brand?: string
+          hp?: number
+          id?: string
+          image_url?: string | null
+          model?: string
+          name?: string
+          power?: number
+          rarity?: string
+          resilience?: number
+          speed?: number
+        }
+        Relationships: []
+      }
       garage_groups: {
         Row: {
           created_at: string
@@ -549,6 +594,53 @@ export type Database = {
           username_locked?: boolean
         }
         Relationships: []
+      }
+      user_booster_cooldown: {
+        Row: {
+          id: string
+          last_opened_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_opened_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_opened_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_game_cards: {
+        Row: {
+          card_id: string
+          id: string
+          obtained_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          id?: string
+          obtained_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          id?: string
+          obtained_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_game_cards_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "game_cards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
