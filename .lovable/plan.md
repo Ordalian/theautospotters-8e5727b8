@@ -1,33 +1,34 @@
 
 
-## Problem
+# Card Game — Add Independent HP Pool
 
-The friend's garage page (`FriendGarage.tsx`) displays car photos using raw storage URLs without any optimization. On weak mobile networks, these full-resolution images fail to load (as shown in the screenshot where only alt text appears). The same optimization already applied to the friends carousel in `FriendsGarages.tsx` is missing here.
+## Change to Card Design
 
-There are 3 places in `FriendGarage.tsx` where images are rendered without optimization:
-1. **Car list items** (line 174) -- the main car grid when viewing a type filter
-2. **"All" tile background** (line 220) -- the vehicle type menu
-3. **Vehicle type tile backgrounds** (line 251) -- each category tile
+Each card gets an **HP** stat that is independent from the 4 core stats (speed, resilience, adaptability, power). HP is determined by rarity tier, not by individual stats.
 
-## Plan
+### HP by Rarity Tier
 
-### 1. Add image optimization helper
+| Rarity | HP |
+|---|---|
+| Common (Weak) | 10 |
+| Uncommon (Average) | 15 |
+| Rare (Strong) | 22 |
+| Mythic (Legendary) | 32 |
 
-Create a small utility function (or inline) that converts raw Supabase storage URLs to the render/transform endpoint with appropriate size and quality parameters:
-- Car list thumbnails: `width=600&quality=60`
-- Menu tile backgrounds: `width=400&quality=50`
+### What Changes from the Previous Plan
 
-### 2. Apply to all 3 image locations in FriendGarage.tsx
+1. **`game_cards` DB table** — add `hp integer NOT NULL` column
+2. **`src/data/gameCards.ts`** — each card definition includes an `hp` field set by its rarity tier
+3. **`src/components/game/GameCard.tsx`** — display HP as a prominent heart/shield icon + value on the card face, separate from the 4 stat bars
+4. **Game mechanics** — resilience no longer defines HP. Resilience now purely governs damage reduction or defensive ability. HP is the actual hit pool that gets depleted in combat.
 
-For each `<img>` tag:
-- Use the transform URL instead of raw `image_url`
-- Add `loading="lazy"`
-- Add `onError` fallback handler (hide image, show fallback icon)
-- Add `bg-muted` class for loading state
+### Stat Clarification (updated)
 
-### 3. Add fallback elements
+- **Speed** — turn order
+- **Resilience** — damage reduction / defensive modifier
+- **Adaptability** — copy neighbor passives
+- **Power** — attack strength
+- **HP** — hit points, independent pool based on rarity
 
-For the car list view (line 173-179), add a hidden fallback `<div>` with `img-fallback` class that becomes visible on image error -- same pattern already used in `FriendsGarages.tsx`.
-
-For tile backgrounds, on error hide the image so the gradient+icon fallback shows through.
+Everything else from the previous plan (200 cards, 4 archetypes, 5 rarity tiers, booster system, DB tables, UI) remains the same.
 
