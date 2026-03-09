@@ -598,6 +598,39 @@ const fr: Translations = {
   game_friend_collection: "Collection de",
   game_no_friends: "Ajoute des amis pour voir leurs collections !",
   game_owned: "possédée(s)",
+  condition_damaged: "Abîmée",
+  condition_average: "Moyenne",
+  condition_good: "Bon état",
+  condition_perfect: "Parfaite",
+
+  // Home menu (3 tiles)
+  menu_boosters: "BOOSTERS",
+  menu_my_cards: "MES CARTES",
+  menu_friends_cards: "CARTES D'AMIS",
+  menu_pack_available: (n: number) => (n <= 1 ? "1 pack disponible" : `${n} packs disponibles`),
+  menu_packs_next: (h: number, m: number) => `Prochain dans ${h}h ${m}m`,
+  menu_cards_total: (n: number) => `${n} carte${n !== 1 ? "s" : ""} au total`,
+  menu_mythic_perfect: (mythic: number, perfect: number) => `${mythic} Mythic · ${perfect} Parfaites`,
+  menu_friends_count: (n: number) => `${n} ami${n !== 1 ? "s" : ""}`,
+  menu_new_cards_since: (n: number) => (n <= 1 ? "1 nouvelle carte" : `${n} nouvelles cartes`) + " depuis ta dernière visite",
+  menu_badge_new: "NOUVEAU",
+  menu_badge_mythic: (n: number) => `${n} MYTHIC`,
+  menu_badge_new_cards: (n: number) => `${n} NOUVELLES`,
+  amis_list_title: "Cartes d'amis",
+  amis_list_cards_count: (n: number) => `${n} carte${n !== 1 ? "s" : ""}`,
+  amis_list_last_cards: "Dernières cartes",
+  amis_list_view: "Voir la collection",
+
+  // Booster opening flow
+  booster_phase_pick_title: "Choisis un pack",
+  booster_pack_name: "BOOSTER",
+  booster_pack_remaining: (n: number) => `${n} restant${n > 1 ? "s" : ""}`,
+  booster_tap_to_open: "Appuie pour ouvrir",
+  booster_tap_to_continue: "Tap pour continuer",
+  booster_summary_title: "Tes nouvelles cartes !",
+  booster_summary_subtitle: (commons: number, uncommons: number, rares: number, mythics: number) =>
+    [commons && `${commons} Communes`, uncommons && `${uncommons} Peu communs`, rares && `${rares} Rares`, mythics && `${mythics} Mythiques`].filter(Boolean).join(" · ") || "",
+  booster_continue: "Continuer",
 };
 
 export default fr;

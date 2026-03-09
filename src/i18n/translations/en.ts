@@ -596,6 +596,39 @@ const en: Translations = {
   game_friend_collection: "Collection of",
   game_no_friends: "Add friends to see their collections!",
   game_owned: "owned",
+  condition_damaged: "Damaged",
+  condition_average: "Average",
+  condition_good: "Good",
+  condition_perfect: "Perfect",
+
+  // Home menu (3 tiles)
+  menu_boosters: "BOOSTERS",
+  menu_my_cards: "MY CARDS",
+  menu_friends_cards: "FRIENDS' CARDS",
+  menu_pack_available: (n: number) => (n <= 1 ? "1 pack available" : `${n} packs available`),
+  menu_packs_next: (h: number, m: number) => `Next in ${h}h ${m}m`,
+  menu_cards_total: (n: number) => `${n} card${n !== 1 ? "s" : ""} total`,
+  menu_mythic_perfect: (mythic: number, perfect: number) => `${mythic} Mythic · ${perfect} Perfect`,
+  menu_friends_count: (n: number) => `${n} friend${n !== 1 ? "s" : ""}`,
+  menu_new_cards_since: (n: number) => (n <= 1 ? "1 new card" : `${n} new cards`) + " since your last visit",
+  menu_badge_new: "NEW",
+  menu_badge_mythic: (n: number) => `${n} MYTHIC`,
+  menu_badge_new_cards: (n: number) => `${n} NEW`,
+  amis_list_title: "Friends' cards",
+  amis_list_cards_count: (n: number) => `${n} card${n !== 1 ? "s" : ""}`,
+  amis_list_last_cards: "Latest cards",
+  amis_list_view: "View collection",
+
+  // Booster opening flow
+  booster_phase_pick_title: "Choose a pack",
+  booster_pack_name: "BOOSTER",
+  booster_pack_remaining: (n: number) => `${n} left`,
+  booster_tap_to_open: "Tap to open",
+  booster_tap_to_continue: "Tap to continue",
+  booster_summary_title: "Your new cards!",
+  booster_summary_subtitle: (commons: number, uncommons: number, rares: number, mythics: number) =>
+    [commons && `${commons} Common`, uncommons && `${uncommons} Uncommon`, rares && `${rares} Rare`, mythics && `${mythics} Mythic`].filter(Boolean).join(" · ") || "",
+  booster_continue: "Continue",
 };
 
 export default en;

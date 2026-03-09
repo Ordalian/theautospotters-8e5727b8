@@ -330,16 +330,8 @@ const CarDetails = () => {
       if (e1) throw e1;
       const { error: e2 } = await supabase.from("cars").update({ linked_car_id: car.id } as any).eq("id", targetId).eq("user_id", user.id);
       if (e2) throw e2;
-      // Award XP for linking a real car and its miniature
-      const { data: currentProfile } = await supabase
-        .from("profiles")
-        .select("total_xp")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      await supabase
-        .from("profiles")
-        .update({ total_xp: (currentProfile?.total_xp ?? 0) + 20 })
-        .eq("user_id", user.id);
+      // Award XP for linking a real car and its miniature (atomic increment)
+      await supabase.rpc("increment_total_xp", { amount: 20 });
       toast.success(t.car_detail_linked as string);
       setLinkDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["car", car.id] });

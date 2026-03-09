@@ -1,5 +1,7 @@
 import { Heart, Zap, Shield, Brain, Sword } from "lucide-react";
-import type { CardRarity, CardArchetype } from "@/data/gameCards";
+import type { CardRarity, CardArchetype, CardCondition } from "@/data/gameCards";
+import { CONDITION_META, CONDITION_MODIFIERS } from "@/data/gameCards";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface GameCardProps {
   name: string;
@@ -11,6 +13,7 @@ interface GameCardProps {
   adaptability: number;
   power: number;
   hp: number;
+  condition?: CardCondition;
   flipped?: boolean;
   greyed?: boolean;
   count?: number;
@@ -45,9 +48,15 @@ function StatBar({ icon: Icon, label, value, color }: { icon: typeof Zap; label:
   );
 }
 
-export function GameCard({ name, brand, rarity, archetype, speed, resilience, adaptability, power, hp, flipped = false, greyed = false, count, onClick, className = "" }: GameCardProps) {
+export function GameCard({ name, brand, rarity, archetype, speed, resilience, adaptability, power, hp, condition, flipped = false, greyed = false, count, onClick, className = "" }: GameCardProps) {
+  const { t } = useLanguage();
   const style = RARITY_STYLES[rarity];
   const ArchIcon = ARCHETYPE_ICON[archetype];
+  const mod = condition ? CONDITION_MODIFIERS[condition] : 1;
+  const effectiveSpeed = Math.round(speed * mod);
+  const effectiveResilience = Math.round(resilience * mod);
+  const effectiveAdaptability = Math.round(adaptability * mod);
+  const effectivePower = Math.round(power * mod);
 
   if (flipped) {
     return (
@@ -63,7 +72,7 @@ export function GameCard({ name, brand, rarity, archetype, speed, resilience, ad
   return (
     <div
       onClick={onClick}
-      className={`relative w-[140px] h-[200px] rounded-xl border-2 ${style.border} bg-gradient-to-br ${style.bg} shadow-lg ${style.glow} cursor-pointer transition-transform hover:scale-105 flex flex-col overflow-hidden ${greyed ? "grayscale opacity-40" : ""} ${className}`}
+      className={`relative w-[140px] h-[200px] rounded-xl border-2 ${style.border} bg-gradient-to-br ${style.bg} shadow-lg ${style.glow} cursor-pointer transition-transform hover:scale-105 flex flex-col overflow-hidden ${greyed ? "grayscale opacity-40" : ""} ${condition ? CONDITION_META[condition].overlayClass : ""} ${className}`}
     >
       {/* Count badge */}
       {count && count > 1 && !greyed && (
@@ -92,11 +101,17 @@ export function GameCard({ name, brand, rarity, archetype, speed, resilience, ad
 
       {/* Stats */}
       <div className="px-2 pb-2 space-y-0.5">
-        <StatBar icon={Zap} label="SPD" value={speed} color="text-yellow-500" />
-        <StatBar icon={Shield} label="RES" value={resilience} color="text-blue-500" />
-        <StatBar icon={Brain} label="ADP" value={adaptability} color="text-cyan-500" />
-        <StatBar icon={Sword} label="PWR" value={power} color="text-red-500" />
+        <StatBar icon={Zap} label="SPD" value={effectiveSpeed} color="text-yellow-500" />
+        <StatBar icon={Shield} label="RES" value={effectiveResilience} color="text-blue-500" />
+        <StatBar icon={Brain} label="ADP" value={effectiveAdaptability} color="text-cyan-500" />
+        <StatBar icon={Sword} label="PWR" value={effectivePower} color="text-red-500" />
       </div>
+
+      {condition && (
+        <div className={`mx-2 mb-2 px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-wide text-center ${CONDITION_META[condition].badgeClass}`}>
+          {CONDITION_META[condition].emoji} {(t as Record<string, string>)[`condition_${condition}`]}
+        </div>
+      )}
     </div>
   );
 }

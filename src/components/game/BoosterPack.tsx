@@ -3,6 +3,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GameCard } from "./GameCard";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
+import type { CardCondition } from "@/data/gameCards";
+
+export function rollCondition(): CardCondition {
+  const roll = Math.random();
+  if (roll < 0.1) return "damaged";
+  if (roll < 0.35) return "average";
+  if (roll < 0.75) return "good";
+  return "perfect";
+}
 
 interface CardData {
   id: string;
@@ -16,6 +25,7 @@ interface CardData {
   adaptability: number;
   power: number;
   hp: number;
+  condition?: CardCondition;
 }
 
 interface BoosterPackProps {

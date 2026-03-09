@@ -1,11 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { pickWeightedRarity } from "@/data/gameCards";
+import type { CardCondition } from "@/data/gameCards";
+import { rollCondition } from "@/components/game/BoosterPack";
 import { GameCard } from "@/components/game/GameCard";
-import { BoosterPack } from "@/components/game/BoosterPack";
+import { BoosterOpeningFlow } from "@/components/game/BoosterOpeningFlow";
+import type { DrawnCard } from "@/components/game/BoosterOpeningFlow";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +29,7 @@ interface MasterCard {
   adaptability: number;
   power: number;
   hp: number;
+  condition?: "damaged" | "average" | "good" | "perfect";
 }
 
 interface FriendProfile {
@@ -38,14 +42,17 @@ export default function CardGame() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>("collection");
+  const location = useLocation();
+  const [tab, setTab] = useState<Tab>(() => (location.state as { tab?: Tab } | null)?.tab ?? "collection");
   const [masterCards, setMasterCards] = useState<MasterCard[]>([]);
   const [ownedCounts, setOwnedCounts] = useState<Map<string, number>>(new Map());
+  const [ownedBestCondition, setOwnedBestCondition] = useState<Map<string, CardCondition>>(new Map());
   const [loading, setLoading] = useState(true);
   const [filterArch, setFilterArch] = useState<FilterArch>("all");
   const [filterRarity, setFilterRarity] = useState<FilterRarity>("all");
   const [cooldownEnd, setCooldownEnd] = useState<Date | null>(null);
   const [boosterCards, setBoosterCards] = useState<MasterCard[] | null>(null);
+  const [showBoosterFlow, setShowBoosterFlow] = useState(false);
   const [opening, setOpening] = useState(false);
   const [countdown, setCountdown] = useState("");
 
@@ -53,7 +60,14 @@ export default function CardGame() {
   const [friends, setFriends] = useState<FriendProfile[]>([]);
   const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null);
   const [friendCounts, setFriendCounts] = useState<Map<string, number>>(new Map());
+  const [friendBestCondition, setFriendBestCondition] = useState<Map<string, CardCondition>>(new Map());
   const [friendLoading, setFriendLoading] = useState(false);
+
+  const CONDITION_RANK: Record<CardCondition, number> = { damaged: 0, average: 1, good: 2, perfect: 3 };
+  function bestCondition(conditions: CardCondition[]): CardCondition {
+    if (conditions.length === 0) return "good";
+    return conditions.reduce((a, b) => (CONDITION_RANK[a] >= CONDITION_RANK[b] ? a : b));
+  }
 
   // Load master cards + own collection + cooldown
   useEffect(() => {
@@ -62,15 +76,24 @@ export default function CardGame() {
       setLoading(true);
       const [{ data: master }, { data: owned }, { data: cd }] = await Promise.all([
         supabase.from("game_cards").select("*").order("rarity").order("archetype").order("name"),
-        supabase.from("user_game_cards").select("card_id").eq("user_id", user.id),
+        supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id),
         supabase.from("user_booster_cooldown").select("*").eq("user_id", user.id).maybeSingle(),
       ]);
 
       setMasterCards((master || []) as MasterCard[]);
 
       const counts = new Map<string, number>();
-      (owned || []).forEach((o: any) => counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1));
+      const byCard = new Map<string, CardCondition[]>();
+      (owned || []).forEach((o: { card_id: string; condition?: string | null }) => {
+        counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
+        const cond = (o.condition ?? "good") as CardCondition;
+        if (!byCard.has(o.card_id)) byCard.set(o.card_id, []);
+        byCard.get(o.card_id)!.push(cond);
+      });
       setOwnedCounts(counts);
+      const best = new Map<string, CardCondition>();
+      byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
+      setOwnedBestCondition(best);
 
       if (cd) {
         const end = new Date(new Date(cd.last_opened_at).getTime() + 12 * 60 * 60 * 1000);
@@ -109,18 +132,38 @@ export default function CardGame() {
     })();
   }, [user]);
 
+  // Open friend collection when navigating from AmisList with openFriendId
+  useEffect(() => {
+    const openId = (location.state as { openFriendId?: string } | null)?.openFriendId;
+    if (!openId || friends.length === 0) return;
+    const friend = friends.find((f) => f.user_id === openId);
+    if (friend) {
+      loadFriendCollection(friend);
+      navigate("/card-game", { replace: true, state: { tab: "friends" } });
+    }
+  }, [friends, location.state]);
+
   // Load friend's collection
   async function loadFriendCollection(friend: FriendProfile) {
     setSelectedFriend(friend);
     setFriendLoading(true);
     const { data } = await supabase
       .from("user_game_cards")
-      .select("card_id")
+      .select("card_id, condition")
       .eq("user_id", friend.user_id);
 
     const counts = new Map<string, number>();
-    (data || []).forEach((o: any) => counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1));
+    const byCard = new Map<string, CardCondition[]>();
+    (data || []).forEach((o: { card_id: string; condition?: string | null }) => {
+      counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
+      const cond = (o.condition ?? "good") as CardCondition;
+      if (!byCard.has(o.card_id)) byCard.set(o.card_id, []);
+      byCard.get(o.card_id)!.push(cond);
+    });
     setFriendCounts(counts);
+    const best = new Map<string, CardCondition>();
+    byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
+    setFriendBestCondition(best);
     setFriendLoading(false);
   }
 
@@ -154,51 +197,76 @@ export default function CardGame() {
     return total;
   }, [ownedCounts]);
 
-  async function openBooster() {
+  function startBoosterFlow() {
     if (!user || opening) return;
     setOpening(true);
-    try {
-      // Pick 5 cards
-      const picked: MasterCard[] = [];
-      for (let i = 0; i < 5; i++) {
-        const rarity = pickWeightedRarity();
-        const pool = masterCards.filter((m) => m.rarity === rarity);
-        const card = pool[Math.floor(Math.random() * pool.length)];
-        picked.push(card);
-      }
-
-      const inserts = picked.map((c) => ({ user_id: user.id, card_id: c.id }));
-      const { error } = await supabase.from("user_game_cards").insert(inserts);
-      if (error) throw error;
-
-      // Update cooldown
-      const { data: existing } = await supabase.from("user_booster_cooldown").select("id").eq("user_id", user.id).maybeSingle();
-      if (existing) {
-        await supabase.from("user_booster_cooldown").update({ last_opened_at: new Date().toISOString() }).eq("user_id", user.id);
-      } else {
-        await supabase.from("user_booster_cooldown").insert({ user_id: user.id, last_opened_at: new Date().toISOString() });
-      }
-
-      setCooldownEnd(new Date(Date.now() + 12 * 60 * 60 * 1000));
-      setBoosterCards(picked);
-      setTab("booster");
-    } catch (e: any) {
-      toast.error(e.message || "Error opening booster");
-    } finally {
-      setOpening(false);
-    }
+    setShowBoosterFlow(true);
   }
+
+  const handleBoosterOpenPack = useCallback(async (): Promise<DrawnCard[]> => {
+    const picked: DrawnCard[] = [];
+    for (let i = 0; i < 5; i++) {
+      const rarity = pickWeightedRarity();
+      const pool = masterCards.filter((m) => m.rarity === rarity);
+      const card = pool[Math.floor(Math.random() * pool.length)];
+      if (!card) continue;
+      picked.push({ ...card, condition: rollCondition() } as DrawnCard);
+    }
+    return picked;
+  }, [masterCards]);
+
+  const handleBoosterComplete = useCallback(
+    async (drawnCards: DrawnCard[]) => {
+      if (!user || drawnCards.length === 0) {
+        setShowBoosterFlow(false);
+        setOpening(false);
+        return;
+      }
+      try {
+        const inserts = drawnCards.map((c) => ({
+          user_id: user.id,
+          card_id: c.id,
+          condition: c.condition ?? "good",
+        }));
+        const { error } = await supabase.from("user_game_cards").insert(inserts);
+        if (error) throw error;
+        const { data: existing } = await supabase.from("user_booster_cooldown").select("id").eq("user_id", user.id).maybeSingle();
+        if (existing) {
+          await supabase.from("user_booster_cooldown").update({ last_opened_at: new Date().toISOString() }).eq("user_id", user.id);
+        } else {
+          await supabase.from("user_booster_cooldown").insert({ user_id: user.id, last_opened_at: new Date().toISOString() });
+        }
+        setCooldownEnd(new Date(Date.now() + 12 * 60 * 60 * 1000));
+        setTab("collection");
+        handleBoosterDone();
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "Error saving cards");
+      } finally {
+        setShowBoosterFlow(false);
+        setOpening(false);
+      }
+    },
+    [user, handleBoosterDone]
+  );
 
   function handleBoosterDone() {
     setBoosterCards(null);
     setTab("collection");
-    // Reload owned counts
     if (!user) return;
     (async () => {
-      const { data: owned } = await supabase.from("user_game_cards").select("card_id").eq("user_id", user.id);
+      const { data: owned } = await supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id);
       const counts = new Map<string, number>();
-      (owned || []).forEach((o: any) => counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1));
+      const byCard = new Map<string, CardCondition[]>();
+      (owned || []).forEach((o: { card_id: string; condition?: string | null }) => {
+        counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
+        const cond = (o.condition ?? "good") as CardCondition;
+        if (!byCard.has(o.card_id)) byCard.set(o.card_id, []);
+        byCard.get(o.card_id)!.push(cond);
+      });
       setOwnedCounts(counts);
+      const best = new Map<string, CardCondition>();
+      byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
+      setOwnedBestCondition(best);
     })();
   }
 
@@ -220,7 +288,7 @@ export default function CardGame() {
   };
 
   // Catalog view (reused for own collection and friend's collection)
-  function renderCatalog(counts: Map<string, number>) {
+  function renderCatalog(counts: Map<string, number>, bestConditionMap?: Map<string, CardCondition>) {
     return (
       <div className="px-4 py-4">
         {/* Archetype filter */}
@@ -257,10 +325,12 @@ export default function CardGame() {
         <div className="flex flex-wrap justify-center gap-3">
           {filtered.map((card) => {
             const count = counts.get(card.id) || 0;
+            const condition = bestConditionMap?.get(card.id);
             return (
               <GameCard
                 key={card.id}
                 {...card}
+                condition={condition}
                 greyed={count === 0}
                 count={count}
               />
@@ -319,9 +389,9 @@ export default function CardGame() {
           <div className="flex items-center justify-center py-20">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
-        ) : renderCatalog(friendCounts)
+        ) : renderCatalog(friendCounts, friendBestCondition)
       ) : tab === "collection" ? (
-        renderCatalog(ownedCounts)
+        renderCatalog(ownedCounts, ownedBestCondition)
       ) : tab === "friends" ? (
         <div className="px-4 py-4">
           {friends.length === 0 ? (
@@ -348,8 +418,12 @@ export default function CardGame() {
             </div>
           )}
         </div>
-      ) : boosterCards ? (
-        <BoosterPack cards={boosterCards} onDone={handleBoosterDone} />
+      ) : showBoosterFlow ? (
+        <BoosterOpeningFlow
+          packs={[{ id: "booster", name: (t.game_booster as string) || "BOOSTER", count: 1 }]}
+          onOpenPack={handleBoosterOpenPack}
+          onComplete={handleBoosterComplete}
+        />
       ) : (
         <div className="flex flex-col items-center justify-center py-20 gap-6 px-4">
           <div className="text-6xl">📦</div>
@@ -363,7 +437,7 @@ export default function CardGame() {
               <p className="text-2xl font-bold font-mono text-primary">{countdown}</p>
             </div>
           ) : (
-            <Button onClick={openBooster} disabled={opening} size="lg" className="gap-2">
+            <Button onClick={startBoosterFlow} disabled={opening} size="lg" className="gap-2">
               <Package className="h-5 w-5" />
               {opening ? (t.loading as string) : (t.game_open_booster as string)}
             </Button>

@@ -4,6 +4,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === CARD CONDITION OVERLAYS === */
+.condition-damaged {
+  filter: saturate(0.3) brightness(0.85);
+}
+.condition-damaged::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(0, 0, 0, 0.18) 4px,
+    rgba(0, 0, 0, 0.18) 6px
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.condition-average {
+  filter: saturate(0.75) sepia(0.15);
+}
+
+.condition-good {
+}
+
+.condition-perfect::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 70%
+  );
+  background-size: 200% 200%;
+  animation: shimmer 2.5s ease-in-out infinite;
+  border-radius: inherit;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 @layer base {
   :root,
   [data-theme="noir-or"] {
@@ -322,6 +372,34 @@
   position: relative;
   z-index: 1;
 }
+
+/* === BOOSTER OPENING FLOW === */
+@keyframes booster-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+@keyframes booster-glow-pulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(245, 158, 11, 0.35); }
+  50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.55); }
+}
+@keyframes booster-flash {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes booster-tap-blink {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes booster-ring-expand {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.booster-shake { animation: booster-shake 0.6s ease-in-out infinite; }
+.booster-glow-pulse { animation: booster-glow-pulse 1.2s ease-in-out infinite; }
+.booster-tap-blink { animation: booster-tap-blink 1.2s ease-in-out infinite; }
 
 @layer base {
   * {
