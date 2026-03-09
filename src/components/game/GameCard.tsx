@@ -12,6 +12,8 @@ interface GameCardProps {
   power: number;
   hp: number;
   flipped?: boolean;
+  greyed?: boolean;
+  count?: number;
   onClick?: () => void;
   className?: string;
 }
@@ -43,7 +45,7 @@ function StatBar({ icon: Icon, label, value, color }: { icon: typeof Zap; label:
   );
 }
 
-export function GameCard({ name, brand, rarity, archetype, speed, resilience, adaptability, power, hp, flipped = false, onClick, className = "" }: GameCardProps) {
+export function GameCard({ name, brand, rarity, archetype, speed, resilience, adaptability, power, hp, flipped = false, greyed = false, count, onClick, className = "" }: GameCardProps) {
   const style = RARITY_STYLES[rarity];
   const ArchIcon = ARCHETYPE_ICON[archetype];
 
@@ -61,8 +63,15 @@ export function GameCard({ name, brand, rarity, archetype, speed, resilience, ad
   return (
     <div
       onClick={onClick}
-      className={`relative w-[140px] h-[200px] rounded-xl border-2 ${style.border} bg-gradient-to-br ${style.bg} shadow-lg ${style.glow} cursor-pointer transition-transform hover:scale-105 flex flex-col overflow-hidden ${className}`}
+      className={`relative w-[140px] h-[200px] rounded-xl border-2 ${style.border} bg-gradient-to-br ${style.bg} shadow-lg ${style.glow} cursor-pointer transition-transform hover:scale-105 flex flex-col overflow-hidden ${greyed ? "grayscale opacity-40" : ""} ${className}`}
     >
+      {/* Count badge */}
+      {count && count > 1 && !greyed && (
+        <div className="absolute -top-1.5 -right-1.5 z-10 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow">
+          ×{count}
+        </div>
+      )}
+
       {/* Header */}
       <div className="px-2 pt-2 pb-1 flex items-center justify-between">
         <div className="flex items-center gap-1">

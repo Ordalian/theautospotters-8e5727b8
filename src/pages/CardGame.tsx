@@ -3,26 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ALL_GAME_CARDS, pickWeightedRarity } from "@/data/gameCards";
+import { pickWeightedRarity } from "@/data/gameCards";
 import { GameCard } from "@/components/game/GameCard";
 import { BoosterPack } from "@/components/game/BoosterPack";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword } from "lucide-react";
+import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users } from "lucide-react";
 import { toast } from "sonner";
 
-type Tab = "collection" | "booster";
+type Tab = "collection" | "booster" | "friends";
 type FilterArch = "all" | "speed" | "resilience" | "adaptability" | "power";
 type FilterRarity = "all" | "common" | "uncommon" | "rare" | "mythic";
 
-interface DBCard {
+interface MasterCard {
   id: string;
-  card_id: string;
-  obtained_at: string;
-}
-
-interface FullCard {
-  id: string;
-  card_id: string;
   name: string;
   brand: string;
   model: string;
@@ -35,36 +28,10 @@ interface FullCard {
   hp: number;
 }
 
-// We need the master card list from DB for card_id mapping
-let masterCardsCache: any[] | null = null;
-
-async function ensureMasterCards() {
-  if (masterCardsCache) return masterCardsCache;
-  const { data } = await supabase.from("game_cards").select("*");
-  if (data && data.length > 0) {
-    masterCardsCache = data;
-    return data;
-  }
-  // Seed if empty
-  const inserts = ALL_GAME_CARDS.map((c) => ({
-    name: c.name,
-    brand: c.brand,
-    model: c.model,
-    archetype: c.archetype,
-    rarity: c.rarity,
-    speed: c.speed,
-    resilience: c.resilience,
-    adaptability: c.adaptability,
-    power: c.power,
-    hp: c.hp,
-  }));
-  // Insert in batches of 50
-  for (let i = 0; i < inserts.length; i += 50) {
-    await supabase.from("game_cards").insert(inserts.slice(i, i + 50));
-  }
-  const { data: seeded } = await supabase.from("game_cards").select("*");
-  masterCardsCache = seeded || [];
-  return masterCardsCache;
+interface FriendProfile {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
 }
 
 export default function CardGame() {
@@ -72,31 +39,39 @@ export default function CardGame() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("collection");
-  const [collection, setCollection] = useState<FullCard[]>([]);
+  const [masterCards, setMasterCards] = useState<MasterCard[]>([]);
+  const [ownedCounts, setOwnedCounts] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
   const [filterArch, setFilterArch] = useState<FilterArch>("all");
   const [filterRarity, setFilterRarity] = useState<FilterRarity>("all");
   const [cooldownEnd, setCooldownEnd] = useState<Date | null>(null);
-  const [boosterCards, setBoosterCards] = useState<FullCard[] | null>(null);
+  const [boosterCards, setBoosterCards] = useState<MasterCard[] | null>(null);
   const [opening, setOpening] = useState(false);
   const [countdown, setCountdown] = useState("");
 
-  // Load collection & cooldown
+  // Friends tab state
+  const [friends, setFriends] = useState<FriendProfile[]>([]);
+  const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null);
+  const [friendCounts, setFriendCounts] = useState<Map<string, number>>(new Map());
+  const [friendLoading, setFriendLoading] = useState(false);
+
+  // Load master cards + own collection + cooldown
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const master = await ensureMasterCards();
-      const masterMap = new Map(master.map((m: any) => [m.id, m]));
+      const [{ data: master }, { data: owned }, { data: cd }] = await Promise.all([
+        supabase.from("game_cards").select("*").order("rarity").order("archetype").order("name"),
+        supabase.from("user_game_cards").select("card_id").eq("user_id", user.id),
+        supabase.from("user_booster_cooldown").select("*").eq("user_id", user.id).maybeSingle(),
+      ]);
 
-      const { data: owned } = await supabase.from("user_game_cards").select("*").eq("user_id", user.id);
-      const cards: FullCard[] = (owned || []).map((o: any) => {
-        const m = masterMap.get(o.card_id);
-        return m ? { id: o.id, card_id: o.card_id, ...m } : null;
-      }).filter(Boolean) as FullCard[];
-      setCollection(cards);
+      setMasterCards((master || []) as MasterCard[]);
 
-      const { data: cd } = await supabase.from("user_booster_cooldown").select("*").eq("user_id", user.id).maybeSingle();
+      const counts = new Map<string, number>();
+      (owned || []).forEach((o: any) => counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1));
+      setOwnedCounts(counts);
+
       if (cd) {
         const end = new Date(new Date(cd.last_opened_at).getTime() + 12 * 60 * 60 * 1000);
         if (end > new Date()) setCooldownEnd(end);
@@ -104,6 +79,50 @@ export default function CardGame() {
       setLoading(false);
     })();
   }, [user]);
+
+  // Load friends list
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: friendships } = await supabase
+        .from("friendships")
+        .select("requester_id, addressee_id")
+        .eq("status", "accepted")
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+
+      if (!friendships || friendships.length === 0) { setFriends([]); return; }
+
+      const friendIds = friendships.map((f: any) =>
+        f.requester_id === user.id ? f.addressee_id : f.requester_id
+      );
+
+      const { data: profiles } = await supabase
+        .from("profiles_public")
+        .select("user_id, username, avatar_url")
+        .in("user_id", friendIds);
+
+      setFriends((profiles || []).map((p: any) => ({
+        user_id: p.user_id,
+        username: p.username || (t.anonymous as string),
+        avatar_url: p.avatar_url,
+      })));
+    })();
+  }, [user]);
+
+  // Load friend's collection
+  async function loadFriendCollection(friend: FriendProfile) {
+    setSelectedFriend(friend);
+    setFriendLoading(true);
+    const { data } = await supabase
+      .from("user_game_cards")
+      .select("card_id")
+      .eq("user_id", friend.user_id);
+
+    const counts = new Map<string, number>();
+    (data || []).forEach((o: any) => counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1));
+    setFriendCounts(counts);
+    setFriendLoading(false);
+  }
 
   // Countdown timer
   useEffect(() => {
@@ -122,30 +141,33 @@ export default function CardGame() {
   }, [cooldownEnd]);
 
   const filtered = useMemo(() => {
-    return collection.filter((c) => {
+    return masterCards.filter((c) => {
       if (filterArch !== "all" && c.archetype !== filterArch) return false;
       if (filterRarity !== "all" && c.rarity !== filterRarity) return false;
       return true;
     });
-  }, [collection, filterArch, filterRarity]);
+  }, [masterCards, filterArch, filterRarity]);
+
+  const ownedTotal = useMemo(() => {
+    let total = 0;
+    ownedCounts.forEach((v) => total += v);
+    return total;
+  }, [ownedCounts]);
 
   async function openBooster() {
     if (!user || opening) return;
     setOpening(true);
     try {
-      const master = await ensureMasterCards();
-
       // Pick 5 cards
-      const picked: any[] = [];
+      const picked: MasterCard[] = [];
       for (let i = 0; i < 5; i++) {
         const rarity = pickWeightedRarity();
-        const pool = master.filter((m: any) => m.rarity === rarity);
+        const pool = masterCards.filter((m) => m.rarity === rarity);
         const card = pool[Math.floor(Math.random() * pool.length)];
         picked.push(card);
       }
 
-      // Insert into user_game_cards
-      const inserts = picked.map((c: any) => ({ user_id: user.id, card_id: c.id }));
+      const inserts = picked.map((c) => ({ user_id: user.id, card_id: c.id }));
       const { error } = await supabase.from("user_game_cards").insert(inserts);
       if (error) throw error;
 
@@ -157,18 +179,8 @@ export default function CardGame() {
         await supabase.from("user_booster_cooldown").insert({ user_id: user.id, last_opened_at: new Date().toISOString() });
       }
 
-      const end = new Date(Date.now() + 12 * 60 * 60 * 1000);
-      setCooldownEnd(end);
-
-      // Get inserted IDs
-      const { data: newCards } = await supabase.from("user_game_cards").select("*").eq("user_id", user.id).order("obtained_at", { ascending: false }).limit(5);
-      const masterMap = new Map(master.map((m: any) => [m.id, m]));
-      const fullCards = (newCards || []).map((o: any) => {
-        const m = masterMap.get(o.card_id);
-        return m ? { id: o.id, card_id: o.card_id, ...m } : null;
-      }).filter(Boolean) as FullCard[];
-
-      setBoosterCards(fullCards);
+      setCooldownEnd(new Date(Date.now() + 12 * 60 * 60 * 1000));
+      setBoosterCards(picked);
       setTab("booster");
     } catch (e: any) {
       toast.error(e.message || "Error opening booster");
@@ -180,17 +192,13 @@ export default function CardGame() {
   function handleBoosterDone() {
     setBoosterCards(null);
     setTab("collection");
-    // Reload collection
+    // Reload owned counts
     if (!user) return;
     (async () => {
-      const master = await ensureMasterCards();
-      const masterMap = new Map(master.map((m: any) => [m.id, m]));
-      const { data: owned } = await supabase.from("user_game_cards").select("*").eq("user_id", user.id);
-      const cards: FullCard[] = (owned || []).map((o: any) => {
-        const m = masterMap.get(o.card_id);
-        return m ? { id: o.id, card_id: o.card_id, ...m } : null;
-      }).filter(Boolean) as FullCard[];
-      setCollection(cards);
+      const { data: owned } = await supabase.from("user_game_cards").select("card_id").eq("user_id", user.id);
+      const counts = new Map<string, number>();
+      (owned || []).forEach((o: any) => counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1));
+      setOwnedCounts(counts);
     })();
   }
 
@@ -211,77 +219,131 @@ export default function CardGame() {
     mythic: t.game_mythic as string,
   };
 
+  // Catalog view (reused for own collection and friend's collection)
+  function renderCatalog(counts: Map<string, number>) {
+    return (
+      <div className="px-4 py-4">
+        {/* Archetype filter */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-none">
+          {archFilters.map(({ key, icon: Icon, label }) => (
+            <button
+              key={key}
+              onClick={() => setFilterArch(key)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                filterArch === key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <Icon className="h-3 w-3" />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Rarity filter */}
+        <div className="flex gap-2 overflow-x-auto pb-3 mb-3 scrollbar-none">
+          {rarityFilters.map((r) => (
+            <button
+              key={r}
+              onClick={() => setFilterRarity(r)}
+              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                filterRarity === r ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {rarityLabels[r]}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-3">
+          {filtered.map((card) => {
+            const count = counts.get(card.id) || 0;
+            return (
+              <GameCard
+                key={card.id}
+                {...card}
+                greyed={count === 0}
+                count={count}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
+        <button onClick={() => selectedFriend ? setSelectedFriend(null) : navigate("/")} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-lg font-bold text-foreground">{t.game_title as string}</h1>
+        <h1 className="text-lg font-bold text-foreground">
+          {selectedFriend ? `${t.game_friend_collection as string} ${selectedFriend.username}` : (t.game_title as string)}
+        </h1>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border">
-        <button
-          onClick={() => { setTab("collection"); setBoosterCards(null); }}
-          className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${tab === "collection" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-        >
-          <LayoutGrid className="h-4 w-4 inline mr-1.5" />
-          {t.game_collection as string} ({collection.length})
-        </button>
-        <button
-          onClick={() => setTab("booster")}
-          className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${tab === "booster" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-        >
-          <Package className="h-4 w-4 inline mr-1.5" />
-          {t.game_booster as string}
-        </button>
-      </div>
+      {!selectedFriend && (
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => { setTab("collection"); setBoosterCards(null); }}
+            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${tab === "collection" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
+          >
+            <LayoutGrid className="h-4 w-4 inline mr-1.5" />
+            {t.game_collection as string} ({ownedCounts.size}/{masterCards.length})
+          </button>
+          <button
+            onClick={() => setTab("booster")}
+            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${tab === "booster" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
+          >
+            <Package className="h-4 w-4 inline mr-1.5" />
+            {t.game_booster as string}
+          </button>
+          <button
+            onClick={() => setTab("friends")}
+            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${tab === "friends" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
+          >
+            <Users className="h-4 w-4 inline mr-1.5" />
+            {t.game_friends as string}
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
+      ) : selectedFriend ? (
+        friendLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        ) : renderCatalog(friendCounts)
       ) : tab === "collection" ? (
+        renderCatalog(ownedCounts)
+      ) : tab === "friends" ? (
         <div className="px-4 py-4">
-          {/* Archetype filter */}
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-none">
-            {archFilters.map(({ key, icon: Icon, label }) => (
-              <button
-                key={key}
-                onClick={() => setFilterArch(key)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  filterArch === key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                <Icon className="h-3 w-3" />
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Rarity filter */}
-          <div className="flex gap-2 overflow-x-auto pb-3 mb-3 scrollbar-none">
-            {rarityFilters.map((r) => (
-              <button
-                key={r}
-                onClick={() => setFilterRarity(r)}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  filterRarity === r ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {rarityLabels[r]}
-              </button>
-            ))}
-          </div>
-
-          {filtered.length === 0 ? (
-            <p className="text-center text-muted-foreground py-10 text-sm">{t.game_no_cards as string}</p>
+          {friends.length === 0 ? (
+            <p className="text-center text-muted-foreground py-10 text-sm">{t.game_no_friends as string}</p>
           ) : (
-            <div className="flex flex-wrap justify-center gap-3">
-              {filtered.map((card) => (
-                <GameCard key={card.id} {...card} />
+            <div className="space-y-2">
+              {friends.map((f) => (
+                <button
+                  key={f.user_id}
+                  onClick={() => { loadFriendCollection(f); }}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+                >
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                    {f.avatar_url ? (
+                      <img src={f.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Users className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <span className="font-medium text-foreground">{f.username}</span>
+                  <ArrowLeft className="h-4 w-4 text-muted-foreground ml-auto rotate-180" />
+                </button>
               ))}
             </div>
           )}
