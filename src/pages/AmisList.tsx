@@ -55,8 +55,8 @@ export default function AmisList() {
         supabase.from("profiles_public").select("user_id, username, avatar_url").in("user_id", friendIds),
         supabase
           .from("user_game_cards")
-          .select("user_id, card_id, condition, obtained_at")
-          .in("user_id", friendIds)
+          .select("user_id, card_id, obtained_at")
+          .in("user_id", friendIds as string[])
           .order("obtained_at", { ascending: false }),
       ]);
 
@@ -67,15 +67,15 @@ export default function AmisList() {
         ])
       );
 
-      const byUser = new Map<string, { card_id: string; condition?: string | null; obtained_at: string }[]>();
-      (allOwned || []).forEach((row: { user_id: string; card_id: string; condition?: string | null; obtained_at: string }) => {
+      const byUser = new Map<string, { card_id: string; obtained_at: string }[]>();
+      (allOwned as any[] || []).forEach((row: any) => {
         if (!byUser.has(row.user_id)) byUser.set(row.user_id, []);
         const arr = byUser.get(row.user_id)!;
-        if (arr.length < 3) arr.push({ card_id: row.card_id, condition: row.condition, obtained_at: row.obtained_at });
+        if (arr.length < 3) arr.push({ card_id: row.card_id, obtained_at: row.obtained_at });
       });
 
       const totalByUser = new Map<string, number>();
-      (allOwned || []).forEach((row: { user_id: string }) => {
+      (allOwned as any[] || []).forEach((row: any) => {
         totalByUser.set(row.user_id, (totalByUser.get(row.user_id) || 0) + 1);
       });
 
@@ -95,7 +95,7 @@ export default function AmisList() {
           .map((r) => {
             const card = cardMap.get(r.card_id);
             if (!card) return null;
-            return { card, condition: (r.condition ?? "good") as CardCondition };
+            return { card, condition: "good" as CardCondition };
           })
           .filter((x): x is { card: CardDef; condition: CardCondition } => x !== null);
         return {
