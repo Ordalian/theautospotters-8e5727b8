@@ -19,8 +19,8 @@ const Home = () => {
       <BlackGoldBg />
       <SwipeablePages
         pages={[
-          <Suspense fallback={<PageLoader />} key="menu"><HomeMenu /></Suspense>,
           <Suspense fallback={<PageLoader />} key="dash"><Dashboard /></Suspense>,
+          <Suspense fallback={<PageLoader />} key="menu"><HomeMenu /></Suspense>,
           <Suspense fallback={<PageLoader />} key="msg"><Messaging /></Suspense>,
         ]}
       />
