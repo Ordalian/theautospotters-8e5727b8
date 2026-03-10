@@ -84,16 +84,11 @@ export default function CardGame() {
       setMasterCards((master || []) as MasterCard[]);
 
       const counts = new Map<string, number>();
-      const byCard = new Map<string, CardCondition[]>();
-      (owned || []).forEach((o: { card_id: string; condition?: string | null }) => {
+      (owned as any[] || []).forEach((o: any) => {
         counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
-        const cond = (o.condition ?? "good") as CardCondition;
-        if (!byCard.has(o.card_id)) byCard.set(o.card_id, []);
-        byCard.get(o.card_id)!.push(cond);
       });
       setOwnedCounts(counts);
       const best = new Map<string, CardCondition>();
-      byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
       setOwnedBestCondition(best);
 
       if (cd) {
