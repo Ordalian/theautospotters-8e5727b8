@@ -145,7 +145,7 @@ export default function CardGame() {
     setFriendLoading(true);
     const { data } = await supabase
       .from("user_game_cards")
-      .select("card_id, condition")
+      .select("card_id")
       .eq("user_id", friend.user_id);
 
     const counts = new Map<string, number>();
