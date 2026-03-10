@@ -59,7 +59,7 @@ export function GameCard({ name, brand, model: modelProp, rarity, archetype, spe
   const effectiveResilience = Math.round(resilience * mod);
   const effectiveAdaptability = Math.round(adaptability * mod);
   const effectivePower = Math.round(power * mod);
-  const model = modelProp ?? name.replace(new RegExp(`^${brand}\\s+`), "").trim() || name;
+  const model = modelProp ?? (name.replace(new RegExp(`^${brand}\\s+`), "").trim() || name);
   const cardCondition: CardCondition = condition ?? "good";
 
   if (flipped) {
