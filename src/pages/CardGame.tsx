@@ -149,17 +149,11 @@ export default function CardGame() {
       .eq("user_id", friend.user_id);
 
     const counts = new Map<string, number>();
-    const byCard = new Map<string, CardCondition[]>();
-    (data || []).forEach((o: { card_id: string; condition?: string | null }) => {
+    (data as any[] || []).forEach((o: any) => {
       counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
-      const cond = (o.condition ?? "good") as CardCondition;
-      if (!byCard.has(o.card_id)) byCard.set(o.card_id, []);
-      byCard.get(o.card_id)!.push(cond);
     });
     setFriendCounts(counts);
-    const best = new Map<string, CardCondition>();
-    byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
-    setFriendBestCondition(best);
+    setFriendBestCondition(new Map<string, CardCondition>());
     setFriendLoading(false);
   }
 
