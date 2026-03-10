@@ -67,11 +67,11 @@ export default function AmisList() {
         ])
       );
 
-      const byUser = new Map<string, { card_id: string; condition?: string | null; obtained_at: string }[]>();
-      (allOwned || []).forEach((row: { user_id: string; card_id: string; condition?: string | null; obtained_at: string }) => {
+      const byUser = new Map<string, { card_id: string; obtained_at: string }[]>();
+      (allOwned as any[] || []).forEach((row: any) => {
         if (!byUser.has(row.user_id)) byUser.set(row.user_id, []);
         const arr = byUser.get(row.user_id)!;
-        if (arr.length < 3) arr.push({ card_id: row.card_id, condition: row.condition, obtained_at: row.obtained_at });
+        if (arr.length < 3) arr.push({ card_id: row.card_id, obtained_at: row.obtained_at });
       });
 
       const totalByUser = new Map<string, number>();
