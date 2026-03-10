@@ -244,19 +244,13 @@ export default function CardGame() {
     setTab("collection");
     if (!user) return;
     (async () => {
-      const { data: owned } = await supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id);
+      const { data: owned } = await supabase.from("user_game_cards").select("card_id").eq("user_id", user.id);
       const counts = new Map<string, number>();
-      const byCard = new Map<string, CardCondition[]>();
-      (owned || []).forEach((o: { card_id: string; condition?: string | null }) => {
+      (owned as any[] || []).forEach((o: any) => {
         counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
-        const cond = (o.condition ?? "good") as CardCondition;
-        if (!byCard.has(o.card_id)) byCard.set(o.card_id, []);
-        byCard.get(o.card_id)!.push(cond);
       });
       setOwnedCounts(counts);
-      const best = new Map<string, CardCondition>();
-      byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
-      setOwnedBestCondition(best);
+      setOwnedBestCondition(new Map<string, CardCondition>());
     })();
   }
 
