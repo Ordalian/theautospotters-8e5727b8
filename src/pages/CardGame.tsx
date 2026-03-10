@@ -10,11 +10,13 @@ import { GameCard } from "@/components/game/GameCard";
 import { BoosterOpeningFlow } from "@/components/game/BoosterOpeningFlow";
 import type { DrawnCard } from "@/components/game/BoosterOpeningFlow";
 import { Button } from "@/components/ui/button";
+import { MenuTile } from "@/components/MenuTile";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home } from "lucide-react";
+import type { Translations } from "@/i18n/translations/fr";
 import { toast } from "sonner";
 
-type Tab = "collection" | "booster" | "friends";
+type Tab = "menu" | "collection" | "booster" | "friends";
 type FilterArch = "all" | "speed" | "resilience" | "adaptability" | "power";
 type FilterRarity = "all" | "common" | "uncommon" | "rare" | "mythic";
 
@@ -44,7 +46,7 @@ export default function CardGame() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const [tab, setTab] = useState<Tab>(() => (location.state as { tab?: Tab } | null)?.tab ?? "collection");
+  const [tab, setTab] = useState<Tab>(() => (location.state as { tab?: Tab } | null)?.tab ?? "menu");
   const [masterCards, setMasterCards] = useState<MasterCard[]>([]);
   const [ownedCounts, setOwnedCounts] = useState<Map<string, number>>(new Map());
   const [ownedBestCondition, setOwnedBestCondition] = useState<Map<string, CardCondition>>(new Map());
@@ -65,10 +67,10 @@ export default function CardGame() {
   const [friendLoading, setFriendLoading] = useState(false);
 
   const CONDITION_RANK: Record<CardCondition, number> = { damaged: 0, average: 1, good: 2, perfect: 3 };
-  function bestCondition(conditions: CardCondition[]): CardCondition {
+  const bestCondition = useCallback((conditions: CardCondition[]): CardCondition => {
     if (conditions.length === 0) return "good";
     return conditions.reduce((a, b) => (CONDITION_RANK[a] >= CONDITION_RANK[b] ? a : b));
-  }
+  }, []);
 
   // Load master cards + own collection + cooldown
   useEffect(() => {
@@ -77,18 +79,23 @@ export default function CardGame() {
       setLoading(true);
       const [{ data: master }, { data: owned }, { data: cd }] = await Promise.all([
         supabase.from("game_cards").select("*").order("rarity").order("archetype").order("name"),
-        supabase.from("user_game_cards").select("card_id").eq("user_id", user.id),
+        supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id),
         supabase.from("user_booster_cooldown").select("*").eq("user_id", user.id).maybeSingle(),
       ]);
 
       setMasterCards((master || []) as MasterCard[]);
 
       const counts = new Map<string, number>();
-      (owned as any[] || []).forEach((o: any) => {
+      const byCard = new Map<string, CardCondition[]>();
+      (owned as { card_id: string; condition?: string | null }[] || []).forEach((o) => {
         counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
+        const cond = (o.condition ?? "good") as CardCondition;
+        if (!byCard.has(o.card_id)) byCard.set(o.card_id, []);
+        byCard.get(o.card_id)!.push(cond);
       });
       setOwnedCounts(counts);
       const best = new Map<string, CardCondition>();
+      byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
       setOwnedBestCondition(best);
 
       if (cd) {
@@ -97,7 +104,7 @@ export default function CardGame() {
       }
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, bestCondition]);
 
   // Load friends list
   useEffect(() => {
@@ -186,6 +193,29 @@ export default function CardGame() {
     ownedCounts.forEach((v) => total += v);
     return total;
   }, [ownedCounts]);
+
+  // Stats for menu tiles (same as HomeMenu)
+  const menuStats = useMemo(() => {
+    const now = Date.now();
+    const packAvailable = !cooldownEnd || now >= cooldownEnd.getTime();
+    const remainingMs = cooldownEnd ? Math.max(0, cooldownEnd.getTime() - now) : 0;
+    const remainingH = Math.floor(remainingMs / 3600000);
+    const remainingM = Math.floor((remainingMs % 3600000) / 60000);
+    const cardIds = [...ownedCounts.keys()];
+    const masterMap = new Map(masterCards.map((c) => [c.id, c.rarity]));
+    const mythicCount = cardIds.filter((id) => masterMap.get(id) === "mythic").length;
+    let perfectCount = 0;
+    ownedBestCondition.forEach((cond) => { if (cond === "perfect") perfectCount++; });
+    return {
+      packAvailable,
+      remainingH,
+      remainingM,
+      totalCards: ownedTotal,
+      mythicCount,
+      perfectCount,
+      friendsCount: friends.length,
+    };
+  }, [cooldownEnd, ownedCounts, ownedTotal, masterCards, ownedBestCondition, friends.length]);
 
   function startBoosterFlow() {
     if (!user || opening) return;
@@ -325,15 +355,46 @@ export default function CardGame() {
     );
   }
 
+  const tx = t as Translations;
+  const menuSubtitleBoosters =
+    menuStats.packAvailable
+      ? (typeof tx.menu_pack_available === "function" ? tx.menu_pack_available(1) : "1 pack disponible")
+      : (typeof tx.menu_packs_next === "function" ? tx.menu_packs_next(menuStats.remainingH, menuStats.remainingM) : "");
+  const menuSubtitleCollection =
+    typeof tx.menu_cards_total === "function" && typeof tx.menu_mythic_perfect === "function"
+      ? `${tx.menu_cards_total(menuStats.totalCards)}\n${tx.menu_mythic_perfect(menuStats.mythicCount, menuStats.perfectCount)}`
+      : "—";
+  const menuSubtitleFriends =
+    typeof tx.menu_friends_count === "function"
+      ? tx.menu_friends_count(menuStats.friendsCount)
+      : "—";
+
+  const headerTitle =
+    selectedFriend
+      ? `${t.game_friend_collection as string} ${selectedFriend.username}`
+      : tab === "menu"
+        ? (t.game_title as string)
+        : tab === "collection"
+          ? (t.game_collection as string)
+          : tab === "booster"
+            ? (t.game_booster as string)
+            : (t.game_friends as string);
+
+  const onBack = () => {
+    if (selectedFriend) setSelectedFriend(null);
+    else if (tab !== "menu") setTab("menu");
+    else navigate("/home");
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between gap-3">
-        <button onClick={() => selectedFriend ? setSelectedFriend(null) : navigate("/home")} className="shrink-0 text-muted-foreground hover:text-foreground">
+        <button onClick={onBack} className="shrink-0 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="min-w-0 flex-1 text-lg font-bold text-foreground text-center truncate">
-          {selectedFriend ? `${t.game_friend_collection as string} ${selectedFriend.username}` : (t.game_title as string)}
+          {headerTitle}
         </h1>
         <Link
           to="/home"
@@ -344,36 +405,36 @@ export default function CardGame() {
         </Link>
       </div>
 
-      {/* Tabs */}
-      {!selectedFriend && (
-        <div className="flex border-b border-border">
-          <button
-            onClick={() => { setTab("collection"); setBoosterCards(null); }}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${tab === "collection" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-          >
-            <LayoutGrid className="h-4 w-4 inline mr-1.5" />
-            {t.game_collection as string} ({ownedCounts.size}/{masterCards.length})
-          </button>
-          <button
-            onClick={() => setTab("booster")}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${tab === "booster" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-          >
-            <Package className="h-4 w-4 inline mr-1.5" />
-            {t.game_booster as string}
-          </button>
-          <button
-            onClick={() => setTab("friends")}
-            className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${tab === "friends" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}
-          >
-            <Users className="h-4 w-4 inline mr-1.5" />
-            {t.game_friends as string}
-          </button>
-        </div>
-      )}
-
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      ) : tab === "menu" ? (
+        <div className="px-4 py-6 pb-24">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <MenuTile
+              icon="📦"
+              title={tx.menu_boosters as string}
+              subtitle={menuSubtitleBoosters}
+              badge={menuStats.packAvailable ? (tx.menu_badge_new as string) : undefined}
+              badgeVariant={menuStats.packAvailable ? "red" : undefined}
+              onClick={() => setTab("booster")}
+            />
+            <MenuTile
+              icon="🏎️"
+              title={tx.menu_my_cards as string}
+              subtitle={menuSubtitleCollection}
+              badge={menuStats.mythicCount > 0 && typeof tx.menu_badge_mythic === "function" ? tx.menu_badge_mythic(menuStats.mythicCount) : undefined}
+              badgeVariant="gold"
+              onClick={() => setTab("collection")}
+            />
+            <MenuTile
+              icon="👥"
+              title={tx.menu_friends_cards as string}
+              subtitle={menuSubtitleFriends}
+              onClick={() => setTab("friends")}
+            />
+          </div>
         </div>
       ) : selectedFriend ? (
         friendLoading ? (
@@ -392,7 +453,7 @@ export default function CardGame() {
               {friends.map((f) => (
                 <button
                   key={f.user_id}
-                  onClick={() => { loadFriendCollection(f); }}
+                  onClick={() => loadFriendCollection(f)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
                 >
                   <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
