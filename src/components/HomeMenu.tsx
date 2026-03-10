@@ -22,7 +22,7 @@ export function HomeMenu() {
         { data: friendships },
       ] = await Promise.all([
         supabase.from("user_booster_cooldown").select("last_opened_at").eq("user_id", user!.id).maybeSingle(),
-        supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user!.id),
+        supabase.from("user_game_cards").select("card_id").eq("user_id", user!.id),
         supabase.from("game_cards").select("id, rarity").order("rarity").order("archetype").order("name"),
         supabase
           .from("friendships")
