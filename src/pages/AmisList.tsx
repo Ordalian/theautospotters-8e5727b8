@@ -55,8 +55,8 @@ export default function AmisList() {
         supabase.from("profiles_public").select("user_id, username, avatar_url").in("user_id", friendIds),
         supabase
           .from("user_game_cards")
-          .select("user_id, card_id, condition, obtained_at")
-          .in("user_id", friendIds)
+          .select("user_id, card_id, obtained_at")
+          .in("user_id", friendIds as string[])
           .order("obtained_at", { ascending: false }),
       ]);
 
