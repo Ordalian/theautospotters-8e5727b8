@@ -603,10 +603,10 @@ const fr: Translations = {
   game_friend_collection: "Collection de",
   game_no_friends: "Ajoute des amis pour voir leurs collections !",
   game_owned: "possédée(s)",
-  condition_damaged: "Abîmée",
-  condition_average: "Moyenne",
-  condition_good: "Bon état",
-  condition_perfect: "Parfaite",
+  card_condition_damaged: "Abîmée",
+  card_condition_average: "Moyenne",
+  card_condition_good: "Bon état",
+  card_condition_perfect: "Parfaite",
 
   // Home menu (3 tiles)
   menu_boosters: "BOOSTERS",

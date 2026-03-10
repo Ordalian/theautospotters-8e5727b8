@@ -75,7 +75,7 @@ export default function AmisList() {
       });
 
       const totalByUser = new Map<string, number>();
-      (allOwned || []).forEach((row: { user_id: string }) => {
+      (allOwned as any[] || []).forEach((row: any) => {
         totalByUser.set(row.user_id, (totalByUser.get(row.user_id) || 0) + 1);
       });
 

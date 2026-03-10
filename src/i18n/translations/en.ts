@@ -601,10 +601,10 @@ const en: Translations = {
   game_friend_collection: "Collection of",
   game_no_friends: "Add friends to see their collections!",
   game_owned: "owned",
-  condition_damaged: "Damaged",
-  condition_average: "Average",
-  condition_good: "Good",
-  condition_perfect: "Perfect",
+  card_condition_damaged: "Damaged",
+  card_condition_average: "Average",
+  card_condition_good: "Good",
+  card_condition_perfect: "Perfect",
 
   // Home menu (3 tiles)
   menu_boosters: "BOOSTERS",

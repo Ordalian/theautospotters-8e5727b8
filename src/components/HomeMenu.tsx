@@ -42,7 +42,7 @@ export function HomeMenu() {
 
       const ownedList = owned || [];
       const totalCards = ownedList.length;
-      const perfectCount = ownedList.filter((o) => (o as { condition?: string | null }).condition === "perfect").length;
+      const perfectCount = 0;
       const cardIds = [...new Set(ownedList.map((o) => o.card_id))];
       const masterMap = new Map((masterCards || []).map((c: { id: string; rarity: string }) => [c.id, c.rarity]));
       const mythicCount = cardIds.filter((id) => masterMap.get(id) === "mythic").length;
