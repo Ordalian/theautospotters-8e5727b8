@@ -2,10 +2,12 @@ import { Heart, Zap, Shield, Brain, Sword } from "lucide-react";
 import type { CardRarity, CardArchetype, CardCondition } from "@/data/gameCards";
 import { CONDITION_META, CONDITION_MODIFIERS } from "@/data/gameCards";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { CardImage } from "./CardImage";
 
 interface GameCardProps {
   name: string;
   brand: string;
+  model?: string;
   rarity: CardRarity;
   archetype: CardArchetype;
   speed: number;
@@ -48,7 +50,7 @@ function StatBar({ icon: Icon, label, value, color }: { icon: typeof Zap; label:
   );
 }
 
-export function GameCard({ name, brand, rarity, archetype, speed, resilience, adaptability, power, hp, condition, flipped = false, greyed = false, count, onClick, className = "" }: GameCardProps) {
+export function GameCard({ name, brand, model: modelProp, rarity, archetype, speed, resilience, adaptability, power, hp, condition, flipped = false, greyed = false, count, onClick, className = "" }: GameCardProps) {
   const { t } = useLanguage();
   const style = RARITY_STYLES[rarity];
   const ArchIcon = ARCHETYPE_ICON[archetype];
@@ -57,12 +59,14 @@ export function GameCard({ name, brand, rarity, archetype, speed, resilience, ad
   const effectiveResilience = Math.round(resilience * mod);
   const effectiveAdaptability = Math.round(adaptability * mod);
   const effectivePower = Math.round(power * mod);
+  const model = modelProp ?? name.replace(new RegExp(`^${brand}\\s+`), "").trim() || name;
+  const cardCondition: CardCondition = condition ?? "good";
 
   if (flipped) {
     return (
       <div
         onClick={onClick}
-        className={`relative w-[140px] h-[200px] rounded-xl border-2 border-muted bg-gradient-to-br from-muted to-card cursor-pointer transition-transform hover:scale-105 flex items-center justify-center ${className}`}
+        className={`relative w-[160px] h-[260px] rounded-xl border-2 border-muted bg-gradient-to-br from-muted to-card cursor-pointer transition-transform hover:scale-105 flex items-center justify-center ${className}`}
       >
         <div className="text-3xl">🏎️</div>
       </div>
@@ -72,7 +76,7 @@ export function GameCard({ name, brand, rarity, archetype, speed, resilience, ad
   return (
     <div
       onClick={onClick}
-      className={`relative w-[140px] h-[200px] rounded-xl border-2 ${style.border} bg-gradient-to-br ${style.bg} shadow-lg ${style.glow} cursor-pointer transition-transform hover:scale-105 flex flex-col overflow-hidden ${greyed ? "grayscale opacity-40" : ""} ${condition ? CONDITION_META[condition].overlayClass : ""} ${className}`}
+      className={`relative w-[160px] h-[260px] rounded-xl border-2 ${style.border} bg-gradient-to-br ${style.bg} shadow-lg ${style.glow} cursor-pointer transition-transform hover:scale-105 flex flex-col overflow-hidden ${greyed ? "grayscale opacity-40" : ""} ${className}`}
     >
       {/* Count badge */}
       {count && count > 1 && !greyed && (
@@ -82,7 +86,7 @@ export function GameCard({ name, brand, rarity, archetype, speed, resilience, ad
       )}
 
       {/* Header */}
-      <div className="px-2 pt-2 pb-1 flex items-center justify-between">
+      <div className="px-2 pt-2 pb-1 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1">
           <ArchIcon className="h-3 w-3 text-foreground/70" />
           <span className="text-[9px] uppercase font-bold tracking-wider text-foreground/70">{style.label}</span>
@@ -93,10 +97,15 @@ export function GameCard({ name, brand, rarity, archetype, speed, resilience, ad
         </div>
       </div>
 
-      {/* Car name area */}
-      <div className="px-2 py-2 flex-1 flex flex-col justify-center items-center text-center">
+      {/* Image + frame (Midjourney + SVG overlay) */}
+      <div className="px-2 shrink-0">
+        <CardImage brand={brand} model={model} archetype={archetype} condition={cardCondition} />
+      </div>
+
+      {/* Car name */}
+      <div className="px-2 py-1 flex flex-col justify-center items-center text-center shrink-0">
         <span className="text-[9px] text-muted-foreground uppercase tracking-wide">{brand}</span>
-        <span className="text-xs font-bold text-foreground leading-tight mt-0.5">{name.replace(`${brand} `, "")}</span>
+        <span className="text-xs font-bold text-foreground leading-tight mt-0.5">{model}</span>
       </div>
 
       {/* Stats */}

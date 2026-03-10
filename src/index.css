@@ -54,6 +54,36 @@
   }
 }
 
+/* === CARD FRAME PERFECT (holo) — respect prefers-reduced-motion === */
+@keyframes holo-rotate {
+  0%   { color: #ff6b6b; }
+  17%  { color: #ffa500; }
+  33%  { color: #ffd700; }
+  50%  { color: #51cf66; }
+  67%  { color: #74c0fc; }
+  83%  { color: #cc5de8; }
+  100% { color: #ff6b6b; }
+}
+.card-frame-perfect .card-frame-perfect-stroke {
+  animation: holo-rotate 3s linear infinite;
+}
+@keyframes shimmer-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.card-frame-perfect .card-frame-perfect-shimmer {
+  animation: shimmer-slide 2.5s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-frame-perfect .card-frame-perfect-stroke,
+  .card-frame-perfect .card-frame-perfect-shimmer {
+    animation: none;
+  }
+  .card-frame-perfect .card-frame-perfect-stroke {
+    color: #ffd700;
+  }
+}
+
 @layer base {
   :root,
   [data-theme="noir-or"] {
