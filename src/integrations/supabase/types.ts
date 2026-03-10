@@ -616,18 +616,21 @@ export type Database = {
       user_game_cards: {
         Row: {
           card_id: string
+          condition: string | null
           id: string
           obtained_at: string
           user_id: string
         }
         Insert: {
           card_id: string
+          condition?: string | null
           id?: string
           obtained_at?: string
           user_id: string
         }
         Update: {
           card_id?: string
+          condition?: string | null
           id?: string
           obtained_at?: string
           user_id?: string
@@ -696,6 +699,7 @@ export type Database = {
           username: string
         }[]
       }
+      increment_total_xp: { Args: { amount?: number }; Returns: undefined }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
       recompute_user_total_xp: {
         Args: { p_user_id: string }
