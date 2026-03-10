@@ -1,5 +1,5 @@
 import { useState, useRef, lazy, Suspense } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +43,7 @@ const Messaging = () => {
   };
   const onSwipeEnd = () => {
     if (!selectedChannel && !selectedTopic && !showDMs && swipeRef.current.locked === "h" && swipeRef.current.delta > 80) {
-      navigate("/");
+      navigate("/home");
     }
   };
 
@@ -329,13 +329,13 @@ const Messaging = () => {
       onTouchEnd={onSwipeEnd}
     >
       <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
-        <button
-          onClick={() => navigate("/")}
+        <Link
+          to="/home"
           className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors"
         >
           <ChevronLeft className="h-4 w-4 animate-[nudge-left_2s_ease-in-out_infinite]" />
           <span className="text-xs font-medium">{t.dash_home as string}</span>
-        </button>
+        </Link>
         <div className="flex items-center gap-2">
           <div className="relative">
             <MessageSquare className="h-5 w-5 text-primary" />

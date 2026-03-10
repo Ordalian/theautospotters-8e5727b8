@@ -126,7 +126,7 @@ const GarageSettings = () => {
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/home")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold">{t.settings_title as string}</h1>

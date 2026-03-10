@@ -26,6 +26,11 @@ const fr: Translations = {
   // App
   app_name: "La Machinerie",
 
+  // Landing
+  landing_welcome: "Bienvenue sur La Machinerie",
+  landing_tagline: "Spot. Collecte. Compétition.",
+  landing_connect: "Se connecter",
+
   // Auth
   auth_title: "La Machinerie",
   auth_subtitle: "Spot. Collect. Compete.",

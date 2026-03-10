@@ -14,7 +14,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <header className="flex items-center gap-3 px-4 py-4 border-b border-border/50 relative z-10">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/home")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-bold">{t.profile_title as string}</h1>

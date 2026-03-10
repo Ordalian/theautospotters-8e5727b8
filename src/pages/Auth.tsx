@@ -50,7 +50,7 @@ const Auth = () => {
         await signIn(email, password);
         toast.success(t.auth_success_signin as string);
       }
-      navigate("/");
+      navigate("/home");
     } catch (err: any) {
       toast.error(err.message || (t.auth_error as string));
     } finally {

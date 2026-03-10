@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
+const Landing = lazy(() => import("./pages/Landing"));
 const Home = lazy(() => import("./pages/Home"));
 const MyGarage = lazy(() => import("./pages/MyGarage"));
 const AddCar = lazy(() => import("./pages/AddCar"));
@@ -63,7 +64,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <PageLoader />;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/home" replace />;
   return <>{children}</>;
 }
 
@@ -74,7 +75,8 @@ function AnimatedRoutes() {
       <Suspense fallback={<PageLoader />} key={location.pathname}>
         <Routes location={location} key={location.pathname}>
           <Route path="/auth" element={<AuthRoute><PageTransition><Auth /></PageTransition></AuthRoute>} />
-          <Route path="/" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
+          <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+          <Route path="/home" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
           <Route path="/garage" element={<ProtectedRoute><PageTransition><MyGarage /></PageTransition></ProtectedRoute>} />
           <Route path="/garage-menu" element={<ProtectedRoute><PageTransition><VehicleTypeMenu /></PageTransition></ProtectedRoute>} />
           <Route path="/add-car" element={<ProtectedRoute><PageTransition><AddCar /></PageTransition></ProtectedRoute>} />

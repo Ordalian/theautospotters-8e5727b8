@@ -10,7 +10,8 @@ import { GameCard } from "@/components/game/GameCard";
 import { BoosterOpeningFlow } from "@/components/game/BoosterOpeningFlow";
 import type { DrawnCard } from "@/components/game/BoosterOpeningFlow";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home } from "lucide-react";
 import { toast } from "sonner";
 
 type Tab = "collection" | "booster" | "friends";
@@ -344,13 +345,20 @@ export default function CardGame() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <button onClick={() => selectedFriend ? setSelectedFriend(null) : navigate("/")} className="text-muted-foreground hover:text-foreground">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between gap-3">
+        <button onClick={() => selectedFriend ? setSelectedFriend(null) : navigate("/home")} className="shrink-0 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-lg font-bold text-foreground">
+        <h1 className="min-w-0 flex-1 text-lg font-bold text-foreground text-center truncate">
           {selectedFriend ? `${t.game_friend_collection as string} ${selectedFriend.username}` : (t.game_title as string)}
         </h1>
+        <Link
+          to="/home"
+          className="shrink-0 flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-xs font-medium"
+        >
+          <Home className="h-4 w-4" />
+          <span>{t.dash_home as string}</span>
+        </Link>
       </div>
 
       {/* Tabs */}
