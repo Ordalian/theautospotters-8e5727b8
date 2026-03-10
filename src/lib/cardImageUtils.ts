@@ -19,10 +19,10 @@ export function getCardImageKey(brand: string, model: string): string {
 
 /**
  * Public URL for a card image in Supabase Storage.
- * Path: {key}.webp (or .png if you prefer).
+ * Path: {key}.png (pixel-art garage images).
  */
 export function getCardImageUrl(key: string): string {
-  const path = `${key}.webp`;
+  const path = `${key}.png`;
   const { data } = supabase.storage.from(CARD_IMAGES_BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
