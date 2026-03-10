@@ -95,7 +95,7 @@ export default function AmisList() {
           .map((r) => {
             const card = cardMap.get(r.card_id);
             if (!card) return null;
-            return { card, condition: (r.condition ?? "good") as CardCondition };
+            return { card, condition: "good" as CardCondition };
           })
           .filter((x): x is { card: CardDef; condition: CardCondition } => x !== null);
         return {
