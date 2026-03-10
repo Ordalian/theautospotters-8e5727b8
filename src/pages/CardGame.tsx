@@ -77,7 +77,7 @@ export default function CardGame() {
       setLoading(true);
       const [{ data: master }, { data: owned }, { data: cd }] = await Promise.all([
         supabase.from("game_cards").select("*").order("rarity").order("archetype").order("name"),
-        supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id),
+        supabase.from("user_game_cards").select("card_id").eq("user_id", user.id),
         supabase.from("user_booster_cooldown").select("*").eq("user_id", user.id).maybeSingle(),
       ]);
 
