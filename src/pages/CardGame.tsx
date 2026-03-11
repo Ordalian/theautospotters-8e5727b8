@@ -666,7 +666,7 @@ function CardDetailPopup({ card, condition, count, onClose }: { card: MasterCard
   const effectiveResilience = Math.round(card.resilience * mod);
   const effectiveAdaptability = Math.round(card.adaptability * mod);
   const effectivePower = Math.round(card.power * mod);
-  const model = card.model ?? card.name.replace(new RegExp(`^${card.brand}\\s+`), "").trim() || card.name;
+  const model = card.model ?? (card.name.replace(new RegExp(`^${card.brand}\\s+`), "").trim() || card.name);
   const cardCondition: CardCondition = condition ?? "good";
 
   const RARITY_LABELS: Record<string, string> = {

@@ -159,6 +159,8 @@ const ProfileStats = () => {
             emblem_slot_1: (data as { emblem_slot_1?: string | null }).emblem_slot_1 ?? null,
             emblem_slot_2: (data as { emblem_slot_2?: string | null }).emblem_slot_2 ?? null,
             emblem_slot_3: (data as { emblem_slot_3?: string | null }).emblem_slot_3 ?? null,
+            role: (data as { role?: string | null }).role ?? "user",
+            is_premium: Boolean((data as { is_premium?: boolean | null }).is_premium ?? false),
           }
         : null;
     },
@@ -182,6 +184,8 @@ const ProfileStats = () => {
             emblem_slot_1: (data as { emblem_slot_1?: string | null }).emblem_slot_1 ?? null,
             emblem_slot_2: (data as { emblem_slot_2?: string | null }).emblem_slot_2 ?? null,
             emblem_slot_3: (data as { emblem_slot_3?: string | null }).emblem_slot_3 ?? null,
+            role: (data as { role?: string | null }).role ?? "user",
+            is_premium: Boolean((data as { is_premium?: boolean | null }).is_premium ?? false),
           }
         : null;
     },

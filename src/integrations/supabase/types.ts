@@ -386,6 +386,54 @@ export type Database = {
         }
         Relationships: []
       }
+      dm_conversation_status: {
+        Row: {
+          created_at: string
+          id: string
+          other_user_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          other_user_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          other_user_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feature_usage: {
+        Row: {
+          feature: string
+          id: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          feature: string
+          id?: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          feature?: string
+          id?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -538,6 +586,30 @@ export type Database = {
           },
         ]
       }
+      page_views: {
+        Row: {
+          duration_ms: number | null
+          entered_at: string
+          id: string
+          page: string
+          user_id: string
+        }
+        Insert: {
+          duration_ms?: number | null
+          entered_at?: string
+          id?: string
+          page: string
+          user_id: string
+        }
+        Update: {
+          duration_ms?: number | null
+          entered_at?: string
+          id?: string
+          page?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -601,126 +673,62 @@ export type Database = {
         }
         Relationships: []
       }
-      page_views: {
-        Row: {
-          id: string
-          user_id: string
-          page: string
-          entered_at: string
-          duration_ms: number | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          page: string
-          entered_at?: string
-          duration_ms?: number | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          page?: string
-          entered_at?: string
-          duration_ms?: number | null
-        }
-        Relationships: []
-      }
-      dm_conversation_status: {
-        Row: {
-          id: string
-          user_id: string
-          other_user_id: string
-          status: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          other_user_id: string
-          status?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          other_user_id?: string
-          status?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      feature_usage: {
-        Row: {
-          id: string
-          user_id: string
-          feature: string
-          used_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          feature: string
-          used_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          feature?: string
-          used_at?: string
-        }
-        Relationships: []
-      }
-      support_tickets: {
-        Row: {
-          id: string
-          user_id: string
-          subject: string
-          body: string
-          status: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          subject: string
-          body: string
-          status?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          subject?: string
-          body?: string
-          status?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       support_replies: {
         Row: {
+          body: string
+          created_at: string
           id: string
           ticket_id: string
           user_id: string
-          body: string
-          created_at: string
         }
         Insert: {
+          body: string
+          created_at?: string
           id?: string
           ticket_id: string
           user_id: string
-          body: string
-          created_at?: string
         }
         Update: {
+          body?: string
+          created_at?: string
           id?: string
           ticket_id?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_replies_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          status: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          status?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
           body?: string
           created_at?: string
+          id?: string
+          status?: string
+          subject?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -821,6 +829,19 @@ export type Database = {
     }
     Functions: {
       achievement_xp_for_level: { Args: { p_level: number }; Returns: number }
+      get_admin_stats: {
+        Args: never
+        Returns: {
+          open_tickets: number
+          total_deliveries: number
+          total_dms: number
+          total_messages: number
+          total_miniatures: number
+          total_spots: number
+          total_tickets: number
+          total_users: number
+        }[]
+      }
       get_leaderboard: {
         Args: never
         Returns: {
@@ -830,6 +851,33 @@ export type Database = {
           car_count: number
           car_level: number
           total_estimated_price: number
+          user_id: string
+          username: string
+        }[]
+      }
+      get_top_features: {
+        Args: { p_limit?: number }
+        Returns: {
+          feature: string
+          use_count: number
+        }[]
+      }
+      get_top_pages: {
+        Args: { p_limit?: number }
+        Returns: {
+          avg_duration_ms: number
+          page: string
+          visit_count: number
+        }[]
+      }
+      get_users_for_admin: {
+        Args: never
+        Returns: {
+          car_count: number
+          created_at: string
+          email: string
+          is_premium: boolean
+          role: string
           user_id: string
           username: string
         }[]

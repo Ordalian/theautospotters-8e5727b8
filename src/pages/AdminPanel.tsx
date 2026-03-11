@@ -93,15 +93,21 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+async function rpcAny<T>(fn: string, params?: Record<string, unknown>): Promise<T> {
+  const { data, error } = await (supabase as any).rpc(fn, params);
+  if (error) throw error;
+  return data as T;
+}
+
 // ───── Stats Tab ─────
 
 function StatsTab() {
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_admin_stats");
-      if (!data || (Array.isArray(data) && data.length === 0)) return null;
-      return (Array.isArray(data) ? data[0] : data) as AdminStats;
+      const data = await rpcAny<AdminStats[]>("get_admin_stats");
+      if (!data || data.length === 0) return null;
+      return data[0];
     },
     staleTime: 60_000,
   });
@@ -109,8 +115,8 @@ function StatsTab() {
   const { data: topPages = [] } = useQuery({
     queryKey: ["admin-top-pages"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_top_pages", { p_limit: 10 });
-      return (data ?? []) as TopPage[];
+      const data = await rpcAny<TopPage[]>("get_top_pages", { p_limit: 10 });
+      return data ?? [];
     },
     staleTime: 60_000,
   });
@@ -118,8 +124,8 @@ function StatsTab() {
   const { data: topFeatures = [] } = useQuery({
     queryKey: ["admin-top-features"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_top_features", { p_limit: 10 });
-      return (data ?? []) as TopFeature[];
+      const data = await rpcAny<TopFeature[]>("get_top_features", { p_limit: 10 });
+      return data ?? [];
     },
     staleTime: 60_000,
   });
@@ -216,8 +222,8 @@ function UsersTab() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users-full"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_users_for_admin");
-      return (data ?? []) as AdminUser[];
+      const data = await rpcAny<AdminUser[]>("get_users_for_admin");
+      return data ?? [];
     },
     staleTime: 30_000,
   });
