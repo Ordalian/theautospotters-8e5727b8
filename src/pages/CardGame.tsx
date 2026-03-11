@@ -5,14 +5,16 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
 import { pickWeightedRarity } from "@/data/gameCards";
-import type { CardCondition } from "@/data/gameCards";
+import type { CardCondition, CardArchetype } from "@/data/gameCards";
+import { CONDITION_META, CONDITION_MODIFIERS } from "@/data/gameCards";
 import { rollCondition } from "@/components/game/BoosterPack";
 import { GameCard } from "@/components/game/GameCard";
+import { getCardImageKey, useCardImage, CONDITION_IMAGE_FILTERS } from "@/lib/cardImageUtils";
 import { BoosterOpeningFlow } from "@/components/game/BoosterOpeningFlow";
 import type { DrawnCard } from "@/components/game/BoosterOpeningFlow";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home, SlidersHorizontal, Check, Sparkles, ArrowDownWideNarrow } from "lucide-react";
+import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home, SlidersHorizontal, Check, Sparkles, ArrowDownWideNarrow, X, Heart } from "lucide-react";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import type { Translations } from "@/i18n/translations/fr";
 import { toast } from "sonner";
@@ -61,6 +63,7 @@ export default function CardGame() {
   const [showBoosterFlow, setShowBoosterFlow] = useState(false);
   const [opening, setOpening] = useState(false);
   const [countdown, setCountdown] = useState("");
+  const [popupCard, setPopupCard] = useState<{ card: MasterCard; condition?: CardCondition; count: number } | null>(null);
 
   // Friends tab state
   const [friends, setFriends] = useState<FriendProfile[]>([]);
@@ -451,6 +454,7 @@ export default function CardGame() {
                 condition={condition}
                 greyed={count === 0}
                 count={count}
+                onClick={count > 0 ? () => setPopupCard({ card, condition, count }) : undefined}
               />
             );
           })}
@@ -639,6 +643,143 @@ export default function CardGame() {
           )}
         </div>
       )}
+
+      {/* Card detail popup */}
+      {popupCard && (
+        <CardDetailPopup
+          card={popupCard.card}
+          condition={popupCard.condition}
+          count={popupCard.count}
+          onClose={() => setPopupCard(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ───── Card Detail Popup ─────
+
+function CardDetailPopup({ card, condition, count, onClose }: { card: MasterCard; condition?: CardCondition; count: number; onClose: () => void }) {
+  const { t } = useLanguage();
+  const mod = condition ? CONDITION_MODIFIERS[condition] : 1;
+  const effectiveSpeed = Math.round(card.speed * mod);
+  const effectiveResilience = Math.round(card.resilience * mod);
+  const effectiveAdaptability = Math.round(card.adaptability * mod);
+  const effectivePower = Math.round(card.power * mod);
+  const model = card.model ?? card.name.replace(new RegExp(`^${card.brand}\\s+`), "").trim() || card.name;
+  const cardCondition: CardCondition = condition ?? "good";
+
+  const RARITY_LABELS: Record<string, string> = {
+    common: t.game_common as string,
+    uncommon: t.game_uncommon as string,
+    rare: t.game_rare as string,
+    mythic: t.game_mythic as string,
+  };
+
+  const RARITY_COLORS: Record<string, string> = {
+    common: "text-zinc-400 border-zinc-500",
+    uncommon: "text-emerald-400 border-emerald-500",
+    rare: "text-violet-400 border-violet-500",
+    mythic: "text-amber-400 border-amber-400",
+  };
+
+  const RARITY_BORDER_CLASS: Record<string, string> = {
+    common: "border-zinc-500",
+    uncommon: "border-emerald-500",
+    rare: "border-violet-500",
+    mythic: "border-amber-400",
+  };
+
+  const stats = [
+    { icon: Zap, label: t.game_speed as string, abbr: "SPD", value: effectiveSpeed, base: card.speed, color: "text-yellow-500", bg: "bg-yellow-500" },
+    { icon: Shield, label: t.game_resilience as string, abbr: "RES", value: effectiveResilience, base: card.resilience, color: "text-blue-500", bg: "bg-blue-500" },
+    { icon: Brain, label: t.game_adaptability as string, abbr: "ADP", value: effectiveAdaptability, base: card.adaptability, color: "text-cyan-500", bg: "bg-cyan-500" },
+    { icon: Sword, label: t.game_power as string, abbr: "PWR", value: effectivePower, base: card.power, color: "text-red-500", bg: "bg-red-500" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className={`relative w-[320px] max-h-[90vh] overflow-y-auto rounded-2xl border-2 ${RARITY_BORDER_CLASS[card.rarity]} bg-gradient-to-br from-card to-background shadow-2xl`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-background/80 border border-border flex items-center justify-center hover:bg-background transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Card image — larger */}
+        <div className="p-4 pb-0">
+          <div className="relative w-full rounded-xl overflow-hidden" style={{ height: "200px" }}>
+            <CardImageLarge brand={card.brand} model={model} archetype={card.archetype} condition={cardCondition} />
+          </div>
+        </div>
+
+        {/* Card info */}
+        <div className="px-4 pt-3 pb-2 text-center">
+          <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${RARITY_COLORS[card.rarity]}`}>
+            {RARITY_LABELS[card.rarity]}
+          </span>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wide mt-2">{card.brand}</p>
+          <h2 className="text-xl font-bold mt-0.5">{model}</h2>
+          <div className="flex items-center justify-center gap-3 mt-1.5">
+            <span className="flex items-center gap-1 text-sm text-red-400 font-bold">
+              <Heart className="h-4 w-4 fill-red-500 text-red-500" /> {card.hp} HP
+            </span>
+            {count > 1 && (
+              <span className="text-sm text-muted-foreground">×{count} exemplaires</span>
+            )}
+          </div>
+          {condition && (
+            <div className={`inline-block mt-2 px-3 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wide ${CONDITION_META[condition].badgeClass}`}>
+              {CONDITION_META[condition].emoji} {(t as Record<string, string>)[`condition_${condition}`]}
+            </div>
+          )}
+        </div>
+
+        {/* Stats — large bars */}
+        <div className="px-4 pb-4 pt-2 space-y-2.5">
+          {stats.map((s) => (
+            <div key={s.abbr} className="flex items-center gap-2">
+              <s.icon className={`h-4 w-4 ${s.color} shrink-0`} />
+              <span className="text-xs font-medium text-muted-foreground w-20 shrink-0">{s.label}</span>
+              <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
+                <div className={`h-full rounded-full ${s.bg} transition-all`} style={{ width: `${s.value * 10}%` }} />
+              </div>
+              <span className="text-sm font-bold w-6 text-right">{s.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const POPUP_ARCHETYPE_FALLBACK: Record<string, { gradient: string; emoji: string }> = {
+  speed: { gradient: "from-yellow-900/60 to-zinc-900", emoji: "⚡" },
+  resilience: { gradient: "from-blue-900/60 to-zinc-900", emoji: "🛡️" },
+  adaptability: { gradient: "from-cyan-900/60 to-zinc-900", emoji: "🧠" },
+  power: { gradient: "from-red-900/60 to-zinc-900", emoji: "⚔️" },
+};
+
+function CardImageLarge({ brand, model, archetype, condition }: { brand: string; model: string; archetype: CardArchetype; condition: CardCondition }) {
+  const key = getCardImageKey(brand, model);
+  const { url, loaded, error } = useCardImage(key);
+  const filter = CONDITION_IMAGE_FILTERS[condition];
+
+  return loaded && !error ? (
+    <img
+      src={url}
+      alt={`${brand} ${model}`}
+      className="absolute inset-0 w-full h-full object-cover rounded-xl"
+      style={{ filter: filter !== "none" ? filter : undefined }}
+    />
+  ) : (
+    <div className={`absolute inset-0 bg-gradient-to-br ${POPUP_ARCHETYPE_FALLBACK[archetype]?.gradient} flex items-center justify-center rounded-xl`}>
+      <span className="text-5xl opacity-80">{POPUP_ARCHETYPE_FALLBACK[archetype]?.emoji}</span>
     </div>
   );
 }
