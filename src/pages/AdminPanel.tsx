@@ -115,8 +115,8 @@ function StatsTab() {
   const { data: topPages = [] } = useQuery({
     queryKey: ["admin-top-pages"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_top_pages", { p_limit: 10 });
-      return (data ?? []) as TopPage[];
+      const data = await rpcAny<TopPage[]>("get_top_pages", { p_limit: 10 });
+      return data ?? [];
     },
     staleTime: 60_000,
   });
