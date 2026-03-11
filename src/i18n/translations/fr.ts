@@ -564,9 +564,17 @@ const fr: Translations = {
   dm_title: "Messages",
   dm_placeholder: "Écrire un message...",
   dm_no_messages: "Aucun message. Dites bonjour !",
-  dm_no_friends: "Ajoutez des amis pour commencer à discuter.",
+  dm_no_friends: "Aucune conversation. Recherchez quelqu'un pour discuter !",
+  dm_search_placeholder: "Rechercher un utilisateur...",
   dm_video_too_large: "La vidéo dépasse 15 Mo.",
   dm_video_too_long: "La vidéo dépasse 15 secondes.",
+  dm_request_title: "Demande de message",
+  dm_request_desc: "Acceptez pour que vos réponses et confirmations de lecture soient visibles.",
+  dm_accept: "Accepter",
+  dm_block: "Bloquer",
+  dm_accept_to_reply: "Acceptez la conversation pour répondre",
+  dm_request_badge: "Demande",
+  dm_no_search_results: "Aucun utilisateur trouvé",
 
   // Dashboard extra
   dash_messaging: "Messagerie",

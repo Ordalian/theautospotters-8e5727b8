@@ -625,6 +625,33 @@ export type Database = {
         }
         Relationships: []
       }
+      dm_conversation_status: {
+        Row: {
+          id: string
+          user_id: string
+          other_user_id: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          other_user_id: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          other_user_id?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feature_usage: {
         Row: {
           id: string

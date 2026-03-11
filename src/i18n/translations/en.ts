@@ -562,9 +562,17 @@ const en: Translations = {
   dm_title: "Messages",
   dm_placeholder: "Write a message...",
   dm_no_messages: "No messages yet. Say hello!",
-  dm_no_friends: "Add friends to start chatting.",
+  dm_no_friends: "No conversations yet. Search for someone to chat with!",
+  dm_search_placeholder: "Search for a user...",
   dm_video_too_large: "Video exceeds 15 MB.",
   dm_video_too_long: "Video exceeds 15 seconds.",
+  dm_request_title: "Message request",
+  dm_request_desc: "Accept to let your replies and read receipts be visible.",
+  dm_accept: "Accept",
+  dm_block: "Block",
+  dm_accept_to_reply: "Accept the conversation to reply",
+  dm_request_badge: "Request",
+  dm_no_search_results: "No users found",
 
   // Dashboard extra
   dash_messaging: "Messaging",
