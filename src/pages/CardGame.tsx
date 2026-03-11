@@ -11,7 +11,6 @@ import { GameCard } from "@/components/game/GameCard";
 import { BoosterOpeningFlow } from "@/components/game/BoosterOpeningFlow";
 import type { DrawnCard } from "@/components/game/BoosterOpeningFlow";
 import { Button } from "@/components/ui/button";
-import { MenuTile } from "@/components/MenuTile";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home } from "lucide-react";
 import UserRoleBadge from "@/components/UserRoleBadge";
@@ -416,29 +415,68 @@ export default function CardGame() {
         </div>
       ) : tab === "menu" ? (
         <div className="px-4 py-6 pb-24">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <MenuTile
-              icon="📦"
-              title={tx.menu_boosters as string}
-              subtitle={menuSubtitleBoosters}
-              badge={menuStats.packAvailable ? (tx.menu_badge_new as string) : undefined}
-              badgeVariant={menuStats.packAvailable ? "red" : undefined}
+          {/* Boosters — full width */}
+          <div className="mb-3">
+            <button
+              type="button"
               onClick={() => setTab("booster")}
-            />
-            <MenuTile
-              icon="🏎️"
-              title={tx.menu_my_cards as string}
-              subtitle={menuSubtitleCollection}
-              badge={menuStats.mythicCount > 0 && typeof tx.menu_badge_mythic === "function" ? tx.menu_badge_mythic(menuStats.mythicCount) : undefined}
-              badgeVariant="gold"
+              className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] shadow-lg shadow-black/20 w-full"
+            >
+              <div className="flex w-full items-center gap-4 rounded-xl bg-card/90 p-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5">
+                  <Package className="h-10 w-10 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-sm leading-tight">{tx.menu_boosters as string}</h3>
+                  <p className="text-[10px] text-muted-foreground mt-1 whitespace-pre-line">{menuSubtitleBoosters}</p>
+                </div>
+                {menuStats.packAvailable && (
+                  <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40">
+                    {tx.menu_badge_new as string}
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
+
+          {/* My Cards + Friends Cards — side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
               onClick={() => setTab("collection")}
-            />
-            <MenuTile
-              icon="👥"
-              title={tx.menu_friends_cards as string}
-              subtitle={menuSubtitleFriends}
+              className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20 w-full"
+            >
+              <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
+                <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-violet-500/20 to-violet-500/5 rounded-lg relative">
+                  <LayoutGrid className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+                  {menuStats.mythicCount > 0 && typeof tx.menu_badge_mythic === "function" && (
+                    <span className="absolute top-1.5 right-1.5 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                      {tx.menu_badge_mythic(menuStats.mythicCount)}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2">
+                  <h3 className="font-bold text-sm leading-tight">{tx.menu_my_cards as string}</h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 whitespace-pre-line">{menuSubtitleCollection}</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setTab("friends")}
-            />
+              className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20 w-full"
+            >
+              <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
+                <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-blue-500/20 to-blue-500/5 rounded-lg">
+                  <Users className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+                </div>
+                <div className="mt-2">
+                  <h3 className="font-bold text-sm leading-tight">{tx.menu_friends_cards as string}</h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{menuSubtitleFriends}</p>
+                </div>
+              </div>
+            </button>
           </div>
         </div>
       ) : selectedFriend ? (
