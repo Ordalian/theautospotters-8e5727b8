@@ -19,7 +19,7 @@ type Reply = { id: string; topic_id: string; user_id: string; body: string; crea
 const Messaging = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { isStaff } = useUserRole();
+  const { isStaff, isFounder, isAdmin } = useUserRole();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -242,7 +242,7 @@ const Messaging = () => {
           <div className="rounded-xl border border-primary/20 bg-card/90 p-4">
             <div className="flex items-center justify-between mb-1">
               <p className="text-xs text-muted-foreground flex items-center gap-1">{selectedTopic.username || t.anonymous as string} <UserRoleBadge role={selectedTopic.role} isPremium={selectedTopic.is_premium} /> • {formatDate(selectedTopic.created_at)}</p>
-              {(isStaff || selectedTopic.user_id === user?.id) && (
+              {(selectedTopic.user_id === user?.id || isFounder || (isAdmin && (!selectedTopic.role || selectedTopic.role === "user"))) && (
                 <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => { if (confirm("Supprimer ce sujet et toutes ses réponses ?")) deleteTopicMut.mutate(selectedTopic.id); }}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -257,7 +257,7 @@ const Messaging = () => {
               <div key={r.id} className="rounded-lg border border-border/40 bg-card/70 p-3 ml-4">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">{r.username || t.anonymous as string} <UserRoleBadge role={r.role} isPremium={r.is_premium} /> • {formatDate(r.created_at)}</p>
-                  {(isStaff || r.user_id === user?.id) && (
+                  {(r.user_id === user?.id || isFounder || (isAdmin && (!r.role || r.role === "user"))) && (
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => { if (confirm("Supprimer cette réponse ?")) deleteReplyMut.mutate(r.id); }}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>

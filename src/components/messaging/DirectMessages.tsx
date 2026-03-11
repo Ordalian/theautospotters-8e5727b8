@@ -24,7 +24,7 @@ const MAX_VIDEO_DURATION = 15; // seconds
 const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { isStaff } = useUserRole();
+  const { isFounder, isAdmin } = useUserRole();
   const qc = useQueryClient();
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [messageBody, setMessageBody] = useState("");
@@ -280,7 +280,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
               return (
                 <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"} group`}>
                   <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 relative ${isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"}`}>
-                    {isStaff && (
+                    {(isFounder || (isAdmin && !isMine && (!selectedFriend?.role || selectedFriend.role === "user"))) && (
                       <button
                         type="button"
                         onClick={async () => {

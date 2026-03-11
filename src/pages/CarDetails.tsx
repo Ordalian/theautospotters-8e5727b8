@@ -70,7 +70,7 @@ const CarDetails = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isStaff } = useUserRole();
+  const { isStaff, isFounder, isAdmin } = useUserRole();
   const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
 
   const navState = location.state as { carIds?: string[]; returnTo?: string } | null;
@@ -169,7 +169,23 @@ const CarDetails = () => {
   }, [carRaw, linkedCarId]);
 
   const isOwner = !!user && car?.user_id === user.id;
-  const canDelete = isOwner || isStaff;
+
+  const { data: ownerRole } = useQuery({
+    queryKey: ["car-owner-role", car?.user_id],
+    queryFn: async () => {
+      if (!car || isOwner) return "user";
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", car.user_id)
+        .maybeSingle();
+      return ((data as any)?.role as string) ?? "user";
+    },
+    enabled: !!car && !isOwner,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const canDelete = isOwner || isFounder || (isAdmin && ownerRole === "user");
   const needLinkType = car ? ((car.vehicle_type || "car") === "hot_wheels" ? "spot" : "hot_wheels") : null;
   const { data: carsToLink = [] } = useQuery({
     queryKey: ["my-cars-to-link", user?.id, needLinkType, car?.id],
@@ -451,10 +467,16 @@ const CarDetails = () => {
     if (!confirm(t.car_detail_delete_confirm as string)) return;
     setDeleting(true);
     try {
-      let q = supabase.from("cars").delete().eq("id", car.id);
-      if (!isStaff) q = q.eq("user_id", user.id);
-      const { error } = await q;
+      const { data: deleted, error } = await supabase
+        .from("cars")
+        .delete()
+        .eq("id", car.id)
+        .select("id");
       if (error) throw error;
+      if (!deleted || deleted.length === 0) {
+        toast.error(t.car_detail_delete_error as string);
+        return;
+      }
       toast.success(t.car_detail_deleted as string);
       queryClient.invalidateQueries({ queryKey: ["my-cars", car.user_id] });
       navigate(returnTo ?? "/garage");
