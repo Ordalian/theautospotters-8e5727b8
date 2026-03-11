@@ -35,6 +35,7 @@ const EmblemPreview = lazy(() => import("./pages/EmblemPreview"));
 const Messaging = lazy(() => import("./pages/Messaging"));
 const CardGame = lazy(() => import("./pages/CardGame"));
 const AmisList = lazy(() => import("./pages/AmisList"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -88,6 +89,7 @@ function AnimatedRoutes() {
           <Route path="/profile/achievements" element={<ProtectedRoute><PageTransition><ProfileAchievements /></PageTransition></ProtectedRoute>} />
           <Route path="/emblem-preview" element={<ProtectedRoute><PageTransition><EmblemPreview /></PageTransition></ProtectedRoute>} />
           <Route path="/profile/news" element={<ProtectedRoute><PageTransition><ProfileNews /></PageTransition></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><PageTransition><AdminPanel /></PageTransition></ProtectedRoute>} />
           <Route path="/garage-settings" element={<ProtectedRoute><PageTransition><GarageSettings /></PageTransition></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute><PageTransition><FriendsGarages /></PageTransition></ProtectedRoute>} />
           <Route path="/friends/:friendId/stats" element={<ProtectedRoute><PageTransition><ProfileStats /></PageTransition></ProtectedRoute>} />

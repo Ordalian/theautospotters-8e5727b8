@@ -3,12 +3,14 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Send, Loader2, User, Plus, X } from "lucide-react";
+import { ChevronLeft, Send, Loader2, User, Plus, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resizeImage } from "@/lib/imageUtils";
+import UserRoleBadge from "@/components/UserRoleBadge";
+import { useUserRole } from "@/hooks/useUserRole";
 
-type Friend = { user_id: string; username: string; avatar_url: string | null };
+type Friend = { user_id: string; username: string; avatar_url: string | null; role?: string | null; is_premium?: boolean };
 type Conversation = Friend & { last_message?: string; last_at?: string; unread_count: number };
 type DM = { id: string; sender_id: string; receiver_id: string; body: string; created_at: string; read_at: string | null; image_url: string | null; video_url: string | null };
 
@@ -22,6 +24,7 @@ const MAX_VIDEO_DURATION = 15; // seconds
 const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { isStaff } = useUserRole();
   const qc = useQueryClient();
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [messageBody, setMessageBody] = useState("");
@@ -47,7 +50,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       );
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, username, avatar_url")
+        .select("user_id, username, avatar_url, role, is_premium")
         .in("user_id", friendIds);
       return (profiles || []) as Friend[];
     },
@@ -263,7 +266,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
             ) : (
               <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center"><User className="h-4 w-4 text-primary" /></div>
             )}
-            <h1 className="text-sm font-bold truncate">{selectedFriend.username}</h1>
+            <h1 className="text-sm font-bold truncate flex items-center gap-1">{selectedFriend.username} <UserRoleBadge role={selectedFriend.role} isPremium={selectedFriend.is_premium} /></h1>
           </div>
         </header>
         <div className="flex-1 overflow-y-auto p-4 space-y-2 relative z-10">
@@ -275,8 +278,22 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
             messages.map((m) => {
               const isMine = m.sender_id === user!.id;
               return (
-                <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 ${isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"}`}>
+                <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"} group`}>
+                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 relative ${isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"}`}>
+                    {isStaff && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!confirm("Supprimer ce message ?")) return;
+                          await supabase.from("direct_messages").delete().eq("id", m.id);
+                          qc.invalidateQueries({ queryKey: ["dm_messages"] });
+                          qc.invalidateQueries({ queryKey: ["dm_conversations"] });
+                        }}
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
                     {m.image_url && (
                       <button onClick={() => setViewingImage(m.image_url)} className="block mb-1 rounded-lg overflow-hidden">
                         <img src={m.image_url} alt="" className="max-w-full max-h-48 rounded-lg object-cover" loading="lazy" />
@@ -381,7 +398,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm truncate">{conv.username}</span>
+                  <span className="font-semibold text-sm truncate flex items-center gap-1">{conv.username} <UserRoleBadge role={conv.role} isPremium={conv.is_premium} /></span>
                   {conv.last_at && <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{formatTime(conv.last_at)}</span>}
                 </div>
                 {conv.last_message && (

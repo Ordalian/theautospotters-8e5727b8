@@ -4,19 +4,22 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail } from "lucide-react";
+import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const DirectMessages = lazy(() => import("@/components/messaging/DirectMessages"));
+import UserRoleBadge from "@/components/UserRoleBadge";
 
 type Channel = { id: string; name: string; slug: string; description: string | null; sort_order: number };
-type Topic = { id: string; channel_id: string; user_id: string; title: string; body: string; created_at: string; username?: string; reply_count?: number };
-type Reply = { id: string; topic_id: string; user_id: string; body: string; created_at: string; username?: string };
+type Topic = { id: string; channel_id: string; user_id: string; title: string; body: string; created_at: string; username?: string; reply_count?: number; role?: string | null; is_premium?: boolean };
+type Reply = { id: string; topic_id: string; user_id: string; body: string; created_at: string; username?: string; role?: string | null; is_premium?: boolean };
 
 const Messaging = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { isStaff } = useUserRole();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -83,13 +86,13 @@ const Messaging = () => {
         .order("created_at", { ascending: false });
       if (!topicsData || topicsData.length === 0) return [];
       const userIds = [...new Set(topicsData.map((t) => t.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username").in("user_id", userIds);
-      const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
+      const { data: profiles } = await supabase.from("profiles").select("user_id, username, role, is_premium").in("user_id", userIds);
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
       const topicIds = topicsData.map((t) => t.id);
       const { data: replies } = await supabase.from("channel_replies").select("topic_id").in("topic_id", topicIds);
       const countMap = new Map<string, number>();
       (replies || []).forEach((r) => countMap.set(r.topic_id, (countMap.get(r.topic_id) || 0) + 1));
-      return topicsData.map((t) => ({ ...t, username: profileMap.get(t.user_id) || (t as any).anonymous, reply_count: countMap.get(t.id) || 0 })) as Topic[];
+      return topicsData.map((t) => ({ ...t, username: profileMap.get(t.user_id)?.username || (t as any).anonymous, role: profileMap.get(t.user_id)?.role ?? null, is_premium: profileMap.get(t.user_id)?.is_premium ?? false, reply_count: countMap.get(t.id) || 0 })) as Topic[];
     },
     enabled: !!selectedChannel,
   });
@@ -105,9 +108,9 @@ const Messaging = () => {
         .order("created_at", { ascending: true });
       if (!data || data.length === 0) return [];
       const userIds = [...new Set(data.map((r) => r.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username").in("user_id", userIds);
-      const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
-      return data.map((r) => ({ ...r, username: profileMap.get(r.user_id) || null })) as Reply[];
+      const { data: profiles } = await supabase.from("profiles").select("user_id, username, role, is_premium").in("user_id", userIds);
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
+      return data.map((r) => ({ ...r, username: profileMap.get(r.user_id)?.username || null, role: profileMap.get(r.user_id)?.role ?? null, is_premium: profileMap.get(r.user_id)?.is_premium ?? false })) as Reply[];
     },
     enabled: !!selectedTopic,
   });
@@ -154,6 +157,27 @@ const Messaging = () => {
       qc.invalidateQueries({ queryKey: ["channel_replies", selectedTopic?.id] });
       qc.invalidateQueries({ queryKey: ["channel_topics", selectedChannel?.id] });
       setReplyBody("");
+    },
+  });
+
+  const deleteTopicMut = useMutation({
+    mutationFn: async (topicId: string) => {
+      await supabase.from("channel_replies").delete().eq("topic_id", topicId);
+      await supabase.from("channel_topics").delete().eq("id", topicId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["channel_topics", selectedChannel?.id] });
+      setSelectedTopic(null);
+    },
+  });
+
+  const deleteReplyMut = useMutation({
+    mutationFn: async (replyId: string) => {
+      await supabase.from("channel_replies").delete().eq("id", replyId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["channel_replies", selectedTopic?.id] });
+      qc.invalidateQueries({ queryKey: ["channel_topics", selectedChannel?.id] });
     },
   });
 
@@ -211,12 +235,19 @@ const Messaging = () => {
           </Button>
           <div className="min-w-0 flex-1">
             <h1 className="text-sm font-bold truncate">{selectedTopic.title}</h1>
-            <p className="text-xs text-muted-foreground">par {selectedTopic.username || t.anonymous as string}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">par {selectedTopic.username || t.anonymous as string} <UserRoleBadge role={selectedTopic.role} isPremium={selectedTopic.is_premium} /></p>
           </div>
         </header>
         <div className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10">
           <div className="rounded-xl border border-primary/20 bg-card/90 p-4">
-            <p className="text-xs text-muted-foreground mb-1">{selectedTopic.username || t.anonymous as string} • {formatDate(selectedTopic.created_at)}</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">{selectedTopic.username || t.anonymous as string} <UserRoleBadge role={selectedTopic.role} isPremium={selectedTopic.is_premium} /> • {formatDate(selectedTopic.created_at)}</p>
+              {(isStaff || selectedTopic.user_id === user?.id) && (
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => { if (confirm("Supprimer ce sujet et toutes ses réponses ?")) deleteTopicMut.mutate(selectedTopic.id); }}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
             <p className="text-sm whitespace-pre-wrap">{selectedTopic.body}</p>
           </div>
           {repliesLoading ? (
@@ -224,7 +255,14 @@ const Messaging = () => {
           ) : (
             replies.map((r) => (
               <div key={r.id} className="rounded-lg border border-border/40 bg-card/70 p-3 ml-4">
-                <p className="text-xs text-muted-foreground mb-1">{r.username || t.anonymous as string} • {formatDate(r.created_at)}</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">{r.username || t.anonymous as string} <UserRoleBadge role={r.role} isPremium={r.is_premium} /> • {formatDate(r.created_at)}</p>
+                  {(isStaff || r.user_id === user?.id) && (
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => { if (confirm("Supprimer cette réponse ?")) deleteReplyMut.mutate(r.id); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
                 <p className="text-sm whitespace-pre-wrap">{r.body}</p>
               </div>
             ))
@@ -307,7 +345,7 @@ const Messaging = () => {
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{topic.body}</p>
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                  <span>{topic.username || t.anonymous as string}</span>
+                  <span className="flex items-center gap-1">{topic.username || t.anonymous as string} <UserRoleBadge role={topic.role} isPremium={topic.is_premium} /></span>
                   <span>•</span>
                   <span>{formatDate(topic.created_at)}</span>
                   <span className="flex items-center gap-1 ml-auto"><MessageSquare className="h-3 w-3" />{topic.reply_count || 0}</span>

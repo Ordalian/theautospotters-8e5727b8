@@ -546,11 +546,13 @@ export type Database = {
           emblem_slot_2: string | null
           emblem_slot_3: string | null
           id: string
+          is_premium: boolean
           language: string
           last_delivery_at: string | null
           notify_channels: boolean
           notify_dms: boolean
           pinned_car_id: string | null
+          role: string
           theme: string | null
           total_xp: number
           user_id: string
@@ -564,11 +566,13 @@ export type Database = {
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
           id?: string
+          is_premium?: boolean
           language?: string
           last_delivery_at?: string | null
           notify_channels?: boolean
           notify_dms?: boolean
           pinned_car_id?: string | null
+          role?: string
           theme?: string | null
           total_xp?: number
           user_id: string
@@ -582,11 +586,13 @@ export type Database = {
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
           id?: string
+          is_premium?: boolean
           language?: string
           last_delivery_at?: string | null
           notify_channels?: boolean
           notify_dms?: boolean
           pinned_car_id?: string | null
+          role?: string
           theme?: string | null
           total_xp?: number
           user_id?: string
@@ -654,7 +660,9 @@ export type Database = {
           emblem_slot_1: string | null
           emblem_slot_2: string | null
           emblem_slot_3: string | null
+          is_premium: boolean | null
           pinned_car_id: string | null
+          role: string | null
           total_xp: number | null
           user_id: string | null
           username: string | null
@@ -665,7 +673,9 @@ export type Database = {
           emblem_slot_1?: string | null
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
+          is_premium?: boolean | null
           pinned_car_id?: string | null
+          role?: string | null
           total_xp?: number | null
           user_id?: string | null
           username?: string | null
@@ -676,7 +686,9 @@ export type Database = {
           emblem_slot_1?: string | null
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
+          is_premium?: boolean | null
           pinned_car_id?: string | null
+          role?: string | null
           total_xp?: number | null
           user_id?: string | null
           username?: string | null

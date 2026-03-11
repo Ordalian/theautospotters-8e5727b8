@@ -5,6 +5,7 @@ import { ArrowLeft, Trophy, Medal, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
+import UserRoleBadge from "@/components/UserRoleBadge";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,8 @@ interface LeaderboardEntry {
   avg_rarity: number;
   car_level: number;
   total_estimated_price: number;
+  role?: string | null;
+  is_premium?: boolean;
 }
 
 const Leaderboard = () => {
@@ -49,6 +52,9 @@ const Leaderboard = () => {
     const { data, error: err } = await supabase.rpc("get_leaderboard");
     if (!err && data) {
       const raw = (data as Record<string, unknown>[]) ?? [];
+      const userIds = raw.map((e) => e.user_id as string);
+      const { data: roles } = await supabase.from("profiles").select("user_id, role, is_premium").in("user_id", userIds);
+      const roleMap = new Map(roles?.map((r: any) => [r.user_id, { role: r.role, is_premium: r.is_premium }]) || []);
       setEntries(
         raw.map((e) => ({
           user_id: e.user_id as string,
@@ -59,6 +65,8 @@ const Leaderboard = () => {
           avg_rarity: Number(e.avg_rarity ?? 0),
           car_level: Number(e.car_level ?? 0),
           total_estimated_price: Number(e.total_estimated_price ?? 0),
+          role: roleMap.get(e.user_id as string)?.role ?? null,
+          is_premium: roleMap.get(e.user_id as string)?.is_premium ?? false,
         }))
       );
     } else {
@@ -169,10 +177,11 @@ const Leaderboard = () => {
               >
                 <div className="shrink-0">{getRankIcon(i)}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm truncate">
+                  <p className="font-bold text-sm truncate flex items-center gap-1">
                     {entry.username || (t.leaderboard_anonymous as string)}
+                    <UserRoleBadge role={entry.role} isPremium={entry.is_premium} />
                     {entry.user_id === user?.id && (
-                      <span className="ml-2 text-xs text-primary font-normal">{t.leaderboard_you as string}</span>
+                      <span className="ml-1 text-xs text-primary font-normal">{t.leaderboard_you as string}</span>
                     )}
                   </p>
                 </div>

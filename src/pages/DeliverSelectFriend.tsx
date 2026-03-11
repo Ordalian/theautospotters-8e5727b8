@@ -5,6 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import UserRoleBadge from "@/components/UserRoleBadge";
 import { Input } from "@/components/ui/input";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { toast } from "sonner";
@@ -12,6 +13,8 @@ import { toast } from "sonner";
 interface Friend {
   user_id: string;
   username: string | null;
+  role?: string | null;
+  is_premium?: boolean;
 }
 
 interface CarToDeliver {
@@ -66,10 +69,10 @@ const DeliverSelectFriend = () => {
         );
         const { data: profiles } = await supabase
           .from("profiles")
-          .select("user_id, username")
+          .select("user_id, username, role, is_premium")
           .in("user_id", ids);
         setFriends(
-          (profiles || []).map((p) => ({ user_id: p.user_id, username: p.username }))
+          (profiles || []).map((p: any) => ({ user_id: p.user_id, username: p.username, role: p.role ?? null, is_premium: p.is_premium ?? false }))
         );
       }
     } catch {
@@ -238,7 +241,7 @@ const DeliverSelectFriend = () => {
                     {(friend.username || "?")[0].toUpperCase()}
                   </span>
                 </div>
-                <span className="font-medium">{friend.username || (t.anonymous as string)}</span>
+                <span className="font-medium flex items-center gap-1">{friend.username || (t.anonymous as string)} <UserRoleBadge role={friend.role} isPremium={friend.is_premium} /></span>
               </button>
             ))
           )}

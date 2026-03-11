@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight } from "lucide-react";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
+import UserRoleBadge from "@/components/UserRoleBadge";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -24,6 +25,8 @@ interface Friend {
   user_id: string;
   username: string | null;
   friendship_id: string;
+  role?: string | null;
+  is_premium?: boolean;
 }
 
 interface FriendCar {
@@ -37,6 +40,8 @@ interface FriendCar {
   user_id: string;
   username: string | null;
   garage_group_id: string | null;
+  role?: string | null;
+  is_premium?: boolean;
 }
 
 interface FriendGarageGroup {
@@ -49,6 +54,8 @@ interface FriendRequest {
   id: string;
   requester_id: string;
   username: string | null;
+  role?: string | null;
+  is_premium?: boolean;
 }
 
 interface DeliveryNotification {
@@ -160,9 +167,9 @@ const FriendsGarages = () => {
       .eq("status", "pending");
     if (data?.length) {
       const userIds = data.map((r) => r.requester_id);
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username").in("user_id", userIds);
-      const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
-      setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id) || null })));
+      const { data: profiles } = await supabase.from("profiles").select("user_id, username, role, is_premium").in("user_id", userIds);
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
+      setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id)?.username || null, role: profileMap.get(r.requester_id)?.role ?? null, is_premium: profileMap.get(r.requester_id)?.is_premium ?? false })));
     } else {
       setRequests([]);
     }
@@ -184,13 +191,14 @@ const FriendsGarages = () => {
       );
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, username")
+        .select("user_id, username, role, is_premium")
         .in("user_id", friendUserIds);
-      const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
 
       const friendsList = data.map((f) => {
         const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
-        return { user_id: friendId, username: profileMap.get(friendId) || null, friendship_id: f.id };
+        const prof = profileMap.get(friendId);
+        return { user_id: friendId, username: prof?.username || null, friendship_id: f.id, role: prof?.role ?? null, is_premium: prof?.is_premium ?? false };
       });
       setFriends(friendsList);
 
@@ -207,7 +215,7 @@ const FriendsGarages = () => {
 
       if (spots) {
         setRecentSpots(
-          spots.map((s) => ({ ...s, username: profileMap.get(s.user_id) || null }))
+          spots.map((s) => ({ ...s, username: profileMap.get(s.user_id)?.username || null, role: profileMap.get(s.user_id)?.role ?? null, is_premium: profileMap.get(s.user_id)?.is_premium ?? false }))
         );
       }
     } else {
@@ -418,7 +426,7 @@ const FriendsGarages = () => {
                     key={req.id}
                     className="flex items-center justify-between rounded-xl border border-border bg-card p-3"
                   >
-                    <span className="font-medium">{req.username || "Anonyme"}</span>
+                    <span className="font-medium flex items-center gap-1">{req.username || "Anonyme"} <UserRoleBadge role={req.role} isPremium={req.is_premium} /></span>
                     <div className="flex gap-2">
                       <Button type="button" size="sm" onClick={() => handleAcceptRequest(req.id)} className="gap-1">
                         <Check className="h-4 w-4" /> Accepter
@@ -461,8 +469,8 @@ const FriendsGarages = () => {
                           ) : null}
                           <div className="p-2">
                             <p className="font-bold text-sm">{spot.brand} {spot.model}{(spot as { generation?: string | null }).generation ? ` ${(spot as { generation?: string | null }).generation}` : ""}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {spot.username || "Ami"} • {spot.year}
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              {spot.username || "Ami"} <UserRoleBadge role={spot.role} isPremium={spot.is_premium} /> • {spot.year}
                             </p>
                           </div>
                         </div>
@@ -495,7 +503,7 @@ const FriendsGarages = () => {
                           {(friend.username || "?")[0].toUpperCase()}
                         </span>
                       </div>
-                      <span className="font-medium">{friend.username || "Anonyme"}</span>
+                      <span className="font-medium flex items-center gap-1">{friend.username || "Anonyme"} <UserRoleBadge role={friend.role} isPremium={friend.is_premium} /></span>
                     </div>
                     <Button
                       size="sm"

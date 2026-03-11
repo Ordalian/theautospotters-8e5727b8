@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { MenuTile } from "@/components/MenuTile";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home } from "lucide-react";
+import UserRoleBadge from "@/components/UserRoleBadge";
 import type { Translations } from "@/i18n/translations/fr";
 import { toast } from "sonner";
 
@@ -124,13 +125,15 @@ export default function CardGame() {
 
       const { data: profiles } = await supabase
         .from("profiles_public")
-        .select("user_id, username, avatar_url")
+        .select("user_id, username, avatar_url, role, is_premium")
         .in("user_id", friendIds);
 
       setFriends((profiles || []).map((p: any) => ({
         user_id: p.user_id,
         username: p.username || (t.anonymous as string),
         avatar_url: p.avatar_url,
+        role: p.role ?? null,
+        is_premium: p.is_premium ?? false,
       })));
     })();
   }, [user]);
@@ -463,7 +466,7 @@ export default function CardGame() {
                       <Users className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <span className="font-medium text-foreground">{f.username}</span>
+                  <span className="font-medium text-foreground flex items-center gap-1">{f.username} <UserRoleBadge role={(f as any).role} isPremium={(f as any).is_premium} /></span>
                   <ArrowLeft className="h-4 w-4 text-muted-foreground ml-auto rotate-180" />
                 </button>
               ))}

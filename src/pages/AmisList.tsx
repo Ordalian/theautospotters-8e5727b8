@@ -7,6 +7,7 @@ import { GameCard } from "@/components/game/GameCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users } from "lucide-react";
 import type { CardCondition } from "@/data/gameCards";
+import UserRoleBadge from "@/components/UserRoleBadge";
 
 interface CardDef {
   id: string;
@@ -52,7 +53,7 @@ export default function AmisList() {
       );
 
       const [{ data: profiles }, { data: allOwned }] = await Promise.all([
-        supabase.from("profiles_public").select("user_id, username, avatar_url").in("user_id", friendIds),
+        supabase.from("profiles_public").select("user_id, username, avatar_url, role, is_premium").in("user_id", friendIds),
         supabase
           .from("user_game_cards")
           .select("user_id, card_id, obtained_at")
@@ -102,6 +103,8 @@ export default function AmisList() {
           user_id: uid,
           username: profile?.username ?? null,
           avatar_url: profile?.avatar_url ?? null,
+          role: (profile as any)?.role ?? null,
+          is_premium: (profile as any)?.is_premium ?? false,
           totalCards: totalByUser.get(uid) || 0,
           lastCards,
         };
@@ -145,8 +148,9 @@ export default function AmisList() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-foreground truncate">
+                  <p className="font-bold text-foreground truncate flex items-center gap-1">
                     {friend.username ?? (t as { anonymous?: string }).anonymous ?? "Anonyme"}
+                    <UserRoleBadge role={(friend as any).role} isPremium={(friend as any).is_premium} />
                   </p>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">
                     {cardsCountStr(friend.totalCards)}

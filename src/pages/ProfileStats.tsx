@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import UserRoleBadge from "@/components/UserRoleBadge";
 
 const VEHICLE_TYPES_ORDER = ["car", "truck", "motorcycle", "boat", "plane", "train"] as const;
 const TYPE_LABEL_KEYS: Record<string, string> = {
@@ -147,7 +148,7 @@ const ProfileStats = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("username, pinned_car_id, total_xp, emblem_slot_1, emblem_slot_2, emblem_slot_3")
+        .select("username, pinned_car_id, total_xp, emblem_slot_1, emblem_slot_2, emblem_slot_3, role, is_premium")
         .eq("user_id", friendId!)
         .maybeSingle();
       return data
@@ -170,7 +171,7 @@ const ProfileStats = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("pinned_car_id, username, total_xp, emblem_slot_1, emblem_slot_2, emblem_slot_3")
+        .select("pinned_car_id, username, total_xp, emblem_slot_1, emblem_slot_2, emblem_slot_3, role, is_premium")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data
@@ -410,7 +411,10 @@ const ProfileStats = () => {
         {/* Level bar under user name */}
         <section className="rounded-xl border border-border bg-card p-4">
           {displayName && (
-            <p className="text-sm font-medium text-muted-foreground mb-2">{displayName}</p>
+            <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+              {displayName}
+              <UserRoleBadge role={(isFriendView ? friendProfile : myProfile)?.role} isPremium={(isFriendView ? friendProfile : myProfile)?.is_premium} />
+            </p>
           )}
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">

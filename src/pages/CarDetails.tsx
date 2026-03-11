@@ -13,6 +13,7 @@ import { RatingExplainer } from "@/components/RatingExplainer";
 import { CarLikeButton } from "@/components/CarLikeButton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,7 @@ const CarDetails = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isStaff } = useUserRole();
   const [photoPopupOpen, setPhotoPopupOpen] = useState(false);
 
   const navState = location.state as { carIds?: string[]; returnTo?: string } | null;
@@ -167,6 +169,7 @@ const CarDetails = () => {
   }, [carRaw, linkedCarId]);
 
   const isOwner = !!user && car?.user_id === user.id;
+  const canDelete = isOwner || isStaff;
   const needLinkType = car ? ((car.vehicle_type || "car") === "hot_wheels" ? "spot" : "hot_wheels") : null;
   const { data: carsToLink = [] } = useQuery({
     queryKey: ["my-cars-to-link", user?.id, needLinkType, car?.id],
@@ -443,15 +446,18 @@ const CarDetails = () => {
   }, []);
 
   const handleDelete = async () => {
-    if (!car || !user || car.user_id !== user.id) return;
+    if (!car || !user) return;
+    if (!canDelete) return;
     if (!confirm(t.car_detail_delete_confirm as string)) return;
     setDeleting(true);
     try {
-      const { error } = await supabase.from("cars").delete().eq("id", car.id).eq("user_id", user.id);
+      let q = supabase.from("cars").delete().eq("id", car.id);
+      if (!isStaff) q = q.eq("user_id", user.id);
+      const { error } = await q;
       if (error) throw error;
       toast.success(t.car_detail_deleted as string);
-      queryClient.invalidateQueries({ queryKey: ["my-cars", user.id] });
-      navigate("/garage");
+      queryClient.invalidateQueries({ queryKey: ["my-cars", car.user_id] });
+      navigate(returnTo ?? "/garage");
     } catch (err: any) {
       toast.error(err?.message || (t.car_detail_delete_error as string));
     } finally {
@@ -509,7 +515,7 @@ const CarDetails = () => {
             </span>
           </Button>
         )}
-        {user && car.user_id === user.id && (
+        {canDelete && (
           <Button
             variant="ghost"
             size="icon"

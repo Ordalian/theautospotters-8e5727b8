@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe } from "lucide-react";
+import UserRoleBadge from "@/components/UserRoleBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -183,10 +184,10 @@ const ProfileSettings = () => {
       const userIds = data.map((r) => r.requester_id);
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, username")
+        .select("user_id, username, role, is_premium")
         .in("user_id", userIds);
-      const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
-      setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id) || null })));
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
+      setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id)?.username || null, role: profileMap.get(r.requester_id)?.role ?? null, is_premium: profileMap.get(r.requester_id)?.is_premium ?? false })));
     } else {
       setRequests([]);
     }
@@ -492,7 +493,7 @@ const ProfileSettings = () => {
                 key={req.id}
                 className="flex items-center justify-between rounded-xl border border-border bg-card p-3"
               >
-                <span className="font-medium">{req.username || (t.profile_anonymous as string)}</span>
+                <span className="font-medium flex items-center gap-1">{req.username || (t.profile_anonymous as string)} <UserRoleBadge role={(req as any).role} isPremium={(req as any).is_premium} /></span>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleAccept(req.id)} className="gap-1">
                     <Check className="h-4 w-4" /> {t.profile_accept as string}
