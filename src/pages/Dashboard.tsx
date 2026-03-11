@@ -189,7 +189,6 @@ const Dashboard = () => {
   const smallTiles = [
     { title: t.dash_autospotter as string, subtitle: t.dash_autospotter_sub as string, icon: Brain, image: null, onClick: () => navigate("/autospotter"), gradient: "from-emerald-500/20 to-emerald-500/5", notificationCount: 0 },
     { title: t.dash_leaderboard as string, subtitle: t.dash_leaderboard_sub as string, icon: Trophy, image: null, onClick: () => navigate("/leaderboard"), gradient: "from-amber-500/20 to-amber-500/5", notificationCount: 0 },
-    { title: t.dash_board_game as string, subtitle: t.dash_board_game_sub as string, icon: Gamepad2, image: null, onClick: () => navigate("/board-game"), gradient: "from-amber-500/20 to-amber-500/5", notificationCount: 0 },
   ];
 
   return (
