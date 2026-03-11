@@ -93,6 +93,12 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+async function rpcAny<T>(fn: string, params?: Record<string, unknown>): Promise<T> {
+  const { data, error } = await (supabase as any).rpc(fn, params);
+  if (error) throw error;
+  return data as T;
+}
+
 // ───── Stats Tab ─────
 
 function StatsTab() {
