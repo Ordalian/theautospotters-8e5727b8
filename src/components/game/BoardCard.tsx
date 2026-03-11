@@ -6,37 +6,56 @@ interface BoardCardProps {
   onClick?: () => void;
 }
 
-/** Mini carte pour affichage sur le plateau (w-8 h-12). */
+/** Mini carte isométrique pour affichage sur le plateau. */
 export function BoardCard({
   placedCard,
   selected = false,
   onClick,
 }: BoardCardProps) {
-  const { card, currentHP } = placedCard;
+  const { card, currentHP, owner } = placedCard;
   const maxHp = card.hp ?? 10;
+  const hpPercent = Math.max(0, Math.min(100, (currentHP / maxHp) * 100));
+
+  const ownerColor =
+    owner === "player1"
+      ? "from-blue-500 to-blue-600"
+      : "from-red-500 to-red-600";
+  const borderColor = selected
+    ? "border-amber-400 shadow-amber-400/50"
+    : "border-white/60";
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={`
-        w-8 h-12 rounded border-2 flex flex-col items-center justify-center
-        bg-card text-card-foreground shadow-md overflow-hidden
-        ${selected ? "border-amber-500 ring-2 ring-amber-500/50" : "border-border"}
-        hover:border-primary/60 transition-colors
-        ${onClick ? "cursor-pointer" : "cursor-default"}
+        relative w-10 h-6 rounded-sm border
+        bg-gradient-to-br ${ownerColor}
+        ${borderColor}
+        shadow-lg
+        flex items-center justify-center
+        transition-all duration-150
+        hover:scale-110 hover:z-50
+        ${selected ? "scale-110 z-50" : ""}
       `}
-      title={card.name}
+      title={`${card.name} — HP ${currentHP}/${maxHp}`}
     >
-      <span className="text-lg leading-none" aria-hidden>
-        🚗
-      </span>
-      <span className="text-[10px] font-medium mt-0.5 truncate w-full px-0.5">
-        SPD {card.speed}
-      </span>
-      <span className="text-[9px] text-muted-foreground">
-        HP {currentHP}/{maxHp}
-      </span>
+      {/* Emoji voiture */}
+      <span className="text-[10px] leading-none drop-shadow-md">🏎️</span>
+
+      {/* Barre HP */}
+      <div className="absolute -bottom-1 left-0.5 right-0.5 h-[3px] bg-black/50 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${
+            hpPercent > 50
+              ? "bg-green-400"
+              : hpPercent > 25
+              ? "bg-yellow-400"
+              : "bg-red-400"
+          }`}
+          style={{ width: `${hpPercent}%` }}
+        />
+      </div>
     </button>
   );
 }
