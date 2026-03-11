@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { trackFeature } from "@/hooks/useTrackFeature";
 import { callCarApi } from "@/lib/carApi";
 import { resizeImage, blurPlateInImage, dataUrlToFile } from "@/lib/imageUtils";
 import { getBrandsForVehicleType, getModelsForBrand, getYearsForModel } from "@/data/carData";
@@ -448,10 +449,12 @@ const AddCar = () => {
 
       if (isDeliveryMode) {
         const inserted = await runInsert();
+        trackFeature("car_submitted");
         toast.success(t.add_car_delivery_added as string);
         navigate(`/deliver-car/select-friend?carId=${inserted.id}`);
       } else {
         const inserted = await runInsert();
+        trackFeature("car_submitted");
         if (isMiniature && inserted?.id) {
           try {
             const { data: spots } = await supabase

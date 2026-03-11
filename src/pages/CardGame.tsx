@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { trackFeature } from "@/hooks/useTrackFeature";
 import { pickWeightedRarity } from "@/data/gameCards";
 import type { CardCondition } from "@/data/gameCards";
 import { rollCondition } from "@/components/game/BoosterPack";
@@ -253,6 +254,7 @@ export default function CardGame() {
         }));
         const { error } = await supabase.from("user_game_cards").insert(inserts);
         if (error) throw error;
+        trackFeature("booster_opened");
         const { data: existing } = await supabase.from("user_booster_cooldown").select("id").eq("user_id", user.id).maybeSingle();
         if (existing) {
           await supabase.from("user_booster_cooldown").update({ last_opened_at: new Date().toISOString() }).eq("user_id", user.id);

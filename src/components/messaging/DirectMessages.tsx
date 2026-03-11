@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { trackFeature } from "@/hooks/useTrackFeature";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Send, Loader2, User, Plus, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -227,6 +228,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       } as any);
     },
     onSuccess: () => {
+      trackFeature("dm_sent");
       qc.invalidateQueries({ queryKey: ["dm_messages", user?.id, selectedFriend?.user_id] });
       qc.invalidateQueries({ queryKey: ["dm_conversations"] });
       setMessageBody("");

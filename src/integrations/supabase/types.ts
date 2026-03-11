@@ -601,6 +601,102 @@ export type Database = {
         }
         Relationships: []
       }
+      page_views: {
+        Row: {
+          id: string
+          user_id: string
+          page: string
+          entered_at: string
+          duration_ms: number | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          page: string
+          entered_at?: string
+          duration_ms?: number | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          page?: string
+          entered_at?: string
+          duration_ms?: number | null
+        }
+        Relationships: []
+      }
+      feature_usage: {
+        Row: {
+          id: string
+          user_id: string
+          feature: string
+          used_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          feature: string
+          used_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          feature?: string
+          used_at?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          id: string
+          user_id: string
+          subject: string
+          body: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          subject: string
+          body: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          subject?: string
+          body?: string
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      support_replies: {
+        Row: {
+          id: string
+          ticket_id: string
+          user_id: string
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ticket_id: string
+          user_id: string
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ticket_id?: string
+          user_id?: string
+          body?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       user_booster_cooldown: {
         Row: {
           id: string

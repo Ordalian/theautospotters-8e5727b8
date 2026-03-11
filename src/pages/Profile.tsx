@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { ArrowLeft, User, Settings, BarChart3, Trophy, Newspaper, Shield } from "lucide-react";
+import { ArrowLeft, User, Settings, BarChart3, Trophy, Newspaper, Shield, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { hasUnreadPatchNotes } from "@/lib/patchNotes";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -12,7 +12,7 @@ const Profile = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const unreadNews = hasUnreadPatchNotes();
-  const { isFounder, role, is_premium } = useUserRole();
+  const { isFounder, isStaff, role, is_premium } = useUserRole();
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -93,7 +93,21 @@ const Profile = () => {
           </div>
         </button>
 
-        {isFounder && (
+        <button
+          type="button"
+          onClick={() => navigate("/support")}
+          className="w-full flex items-center gap-4 p-4 text-left rounded-xl border border-border/50 bg-card hover:border-primary/30 transition-colors"
+        >
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <MessageSquare className="h-6 w-6 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-base">Support</p>
+            <p className="text-sm text-muted-foreground truncate">Poser une question ou signaler un problème</p>
+          </div>
+        </button>
+
+        {isStaff && (
           <button
             type="button"
             onClick={() => navigate("/admin")}
@@ -104,7 +118,7 @@ const Profile = () => {
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-bold text-base">Administration</p>
-              <p className="text-sm text-muted-foreground truncate">Gérer les rôles et modérer</p>
+              <p className="text-sm text-muted-foreground truncate">Stats, utilisateurs et support</p>
             </div>
           </button>
         )}

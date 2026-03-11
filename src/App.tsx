@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
 import { Loader2 } from "lucide-react";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
@@ -36,6 +37,7 @@ const Messaging = lazy(() => import("./pages/Messaging"));
 const CardGame = lazy(() => import("./pages/CardGame"));
 const AmisList = lazy(() => import("./pages/AmisList"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const Support = lazy(() => import("./pages/Support"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -71,6 +73,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 function AnimatedRoutes() {
   const location = useLocation();
+  usePageTracking();
   return (
     <AnimatePresence mode="wait">
       <Suspense fallback={<PageLoader />} key={location.pathname}>
@@ -90,6 +93,7 @@ function AnimatedRoutes() {
           <Route path="/emblem-preview" element={<ProtectedRoute><PageTransition><EmblemPreview /></PageTransition></ProtectedRoute>} />
           <Route path="/profile/news" element={<ProtectedRoute><PageTransition><ProfileNews /></PageTransition></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><PageTransition><AdminPanel /></PageTransition></ProtectedRoute>} />
+          <Route path="/support" element={<ProtectedRoute><PageTransition><Support /></PageTransition></ProtectedRoute>} />
           <Route path="/garage-settings" element={<ProtectedRoute><PageTransition><GarageSettings /></PageTransition></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute><PageTransition><FriendsGarages /></PageTransition></ProtectedRoute>} />
           <Route path="/friends/:friendId/stats" element={<ProtectedRoute><PageTransition><ProfileStats /></PageTransition></ProtectedRoute>} />

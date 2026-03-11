@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { trackFeature } from "@/hooks/useTrackFeature";
 import { ArrowLeft, Car, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UserRoleBadge from "@/components/UserRoleBadge";
@@ -150,6 +151,8 @@ const DeliverSelectFriend = () => {
         .from("profiles")
         .update({ last_delivery_at: new Date().toISOString() })
         .eq("user_id", user.id);
+
+      trackFeature("delivery_confirmed");
 
       const successMsg = typeof t.deliver_success === "function"
         ? t.deliver_success(selectedFriend.username || (t.friend as string))

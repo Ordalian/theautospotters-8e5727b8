@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { trackFeature } from "@/hooks/useTrackFeature";
 import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight } from "lucide-react";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
@@ -260,6 +261,7 @@ const FriendsGarages = () => {
         if (error.code === "23505") toast.error("Demande déjà envoyée");
         else toast.error(error.message);
       } else {
+        trackFeature("friend_request_sent");
         toast.success("Demande d'ami envoyée !");
         setSearchUsername("");
       }
