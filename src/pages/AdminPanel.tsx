@@ -222,8 +222,8 @@ function UsersTab() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users-full"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_users_for_admin");
-      return (data ?? []) as AdminUser[];
+      const data = await rpcAny<AdminUser[]>("get_users_for_admin");
+      return data ?? [];
     },
     staleTime: 30_000,
   });
