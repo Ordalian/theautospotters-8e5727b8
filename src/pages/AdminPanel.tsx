@@ -105,9 +105,9 @@ function StatsTab() {
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_admin_stats");
-      if (!data || (Array.isArray(data) && data.length === 0)) return null;
-      return (Array.isArray(data) ? data[0] : data) as AdminStats;
+      const data = await rpcAny<AdminStats[]>("get_admin_stats");
+      if (!data || data.length === 0) return null;
+      return data[0];
     },
     staleTime: 60_000,
   });
