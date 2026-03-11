@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -12,7 +12,7 @@ import { BoosterOpeningFlow } from "@/components/game/BoosterOpeningFlow";
 import type { DrawnCard } from "@/components/game/BoosterOpeningFlow";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home } from "lucide-react";
+import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home, SlidersHorizontal, Check, Sparkles, ArrowDownWideNarrow } from "lucide-react";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import type { Translations } from "@/i18n/translations/fr";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 type Tab = "menu" | "collection" | "booster" | "friends";
 type FilterArch = "all" | "speed" | "resilience" | "adaptability" | "power";
 type FilterRarity = "all" | "common" | "uncommon" | "rare" | "mythic";
+type SortStat = "none" | "speed" | "resilience" | "adaptability" | "power";
 
 interface MasterCard {
   id: string;
@@ -54,6 +55,7 @@ export default function CardGame() {
   const [loading, setLoading] = useState(true);
   const [filterArch, setFilterArch] = useState<FilterArch>("all");
   const [filterRarity, setFilterRarity] = useState<FilterRarity>("all");
+  const [sortStat, setSortStat] = useState<SortStat>("none");
   const [cooldownEnd, setCooldownEnd] = useState<Date | null>(null);
   const [boosterCards, setBoosterCards] = useState<MasterCard[] | null>(null);
   const [showBoosterFlow, setShowBoosterFlow] = useState(false);
@@ -184,12 +186,16 @@ export default function CardGame() {
   }, [cooldownEnd]);
 
   const filtered = useMemo(() => {
-    return masterCards.filter((c) => {
+    const result = masterCards.filter((c) => {
       if (filterArch !== "all" && c.archetype !== filterArch) return false;
       if (filterRarity !== "all" && c.rarity !== filterRarity) return false;
       return true;
     });
-  }, [masterCards, filterArch, filterRarity]);
+    if (sortStat !== "none") {
+      result.sort((a, b) => (b[sortStat] ?? 0) - (a[sortStat] ?? 0));
+    }
+    return result;
+  }, [masterCards, filterArch, filterRarity, sortStat]);
 
   const ownedTotal = useMemo(() => {
     let total = 0;
@@ -288,7 +294,7 @@ export default function CardGame() {
     })();
   }
 
-  const archFilters: { key: FilterArch; icon: typeof Zap; label: string }[] = [
+  const archOptions: { key: FilterArch; icon: typeof Zap; label: string }[] = [
     { key: "all", icon: LayoutGrid, label: t.game_all as string },
     { key: "speed", icon: Zap, label: t.game_speed as string },
     { key: "resilience", icon: Shield, label: t.game_resilience as string },
@@ -296,48 +302,142 @@ export default function CardGame() {
     { key: "power", icon: Sword, label: t.game_power as string },
   ];
 
-  const rarityFilters: FilterRarity[] = ["all", "common", "uncommon", "rare", "mythic"];
-  const rarityLabels: Record<FilterRarity, string> = {
-    all: t.game_all as string,
-    common: t.game_common as string,
-    uncommon: t.game_uncommon as string,
-    rare: t.game_rare as string,
-    mythic: t.game_mythic as string,
-  };
+  const rarityOptions: { key: FilterRarity; label: string }[] = [
+    { key: "all", label: t.game_all as string },
+    { key: "common", label: t.game_common as string },
+    { key: "uncommon", label: t.game_uncommon as string },
+    { key: "rare", label: t.game_rare as string },
+    { key: "mythic", label: t.game_mythic as string },
+  ];
 
-  // Catalog view (reused for own collection and friend's collection)
+  const sortStatOptions: { key: SortStat; icon: typeof Zap; label: string }[] = [
+    { key: "none", icon: LayoutGrid, label: t.game_all as string },
+    { key: "speed", icon: Zap, label: t.game_speed as string },
+    { key: "power", icon: Sword, label: t.game_power as string },
+    { key: "adaptability", icon: Brain, label: t.game_adaptability as string },
+    { key: "resilience", icon: Shield, label: t.game_resilience as string },
+  ];
+
+  // Dropdown state for the 3 filter buttons
+  const [openDropdown, setOpenDropdown] = useState<"arch" | "rarity" | "sort" | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handler = (e: PointerEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpenDropdown(null);
+    };
+    document.addEventListener("pointerdown", handler);
+    return () => document.removeEventListener("pointerdown", handler);
+  }, [openDropdown]);
+
   function renderCatalog(counts: Map<string, number>, bestConditionMap?: Map<string, CardCondition>) {
+    const activeArchLabel = archOptions.find((o) => o.key === filterArch);
+    const activeRarityLabel = rarityOptions.find((o) => o.key === filterRarity);
+    const activeSortLabel = sortStatOptions.find((o) => o.key === sortStat);
+
     return (
       <div className="px-4 py-4">
-        {/* Archetype filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-none">
-          {archFilters.map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              onClick={() => setFilterArch(key)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                filterArch === key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-              }`}
+        <div className="flex items-center gap-2 mb-4" ref={dropdownRef}>
+          {/* Archetype filter */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="icon"
+              className={`shrink-0 ${filterArch !== "all" ? "border-primary/50 text-primary" : ""}`}
+              onClick={() => setOpenDropdown(openDropdown === "arch" ? null : "arch")}
             >
-              <Icon className="h-3 w-3" />
-              {label}
-            </button>
-          ))}
-        </div>
+              <SlidersHorizontal className="h-5 w-5" />
+            </Button>
+            {openDropdown === "arch" && (
+              <div className="absolute left-0 top-full mt-1 z-50 min-w-[170px] rounded-xl border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
+                {archOptions.map(({ key, icon: Icon, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => { setFilterArch(key); setOpenDropdown(null); }}
+                    className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                  >
+                    <span className="flex items-center gap-2"><Icon className="h-3.5 w-3.5" />{label}</span>
+                    {filterArch === key && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Rarity filter */}
-        <div className="flex gap-2 overflow-x-auto pb-3 mb-3 scrollbar-none">
-          {rarityFilters.map((r) => (
-            <button
-              key={r}
-              onClick={() => setFilterRarity(r)}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                filterRarity === r ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
-              }`}
+          {/* Rarity filter */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="icon"
+              className={`shrink-0 ${filterRarity !== "all" ? "border-primary/50 text-primary" : ""}`}
+              onClick={() => setOpenDropdown(openDropdown === "rarity" ? null : "rarity")}
             >
-              {rarityLabels[r]}
-            </button>
-          ))}
+              <Sparkles className="h-5 w-5" />
+            </Button>
+            {openDropdown === "rarity" && (
+              <div className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-xl border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
+                {rarityOptions.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => { setFilterRarity(key); setOpenDropdown(null); }}
+                    className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                  >
+                    {label}
+                    {filterRarity === key && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sort by stat */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="icon"
+              className={`shrink-0 ${sortStat !== "none" ? "border-primary/50 text-primary" : ""}`}
+              onClick={() => setOpenDropdown(openDropdown === "sort" ? null : "sort")}
+            >
+              <ArrowDownWideNarrow className="h-5 w-5" />
+            </Button>
+            {openDropdown === "sort" && (
+              <div className="absolute left-0 top-full mt-1 z-50 min-w-[170px] rounded-xl border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
+                {sortStatOptions.map(({ key, icon: Icon, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => { setSortStat(key); setOpenDropdown(null); }}
+                    className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                  >
+                    <span className="flex items-center gap-2"><Icon className="h-3.5 w-3.5" />{key === "none" ? (t.game_no_sort as string || "Aucun tri") : label}</span>
+                    {sortStat === key && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Active filters summary */}
+          <div className="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            {filterArch !== "all" && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
+                {activeArchLabel?.label}
+              </span>
+            )}
+            {filterRarity !== "all" && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
+                {activeRarityLabel?.label}
+              </span>
+            )}
+            {sortStat !== "none" && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
+                ↓ {activeSortLabel?.label}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap justify-center gap-3">

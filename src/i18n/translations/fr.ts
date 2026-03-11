@@ -598,6 +598,7 @@ const fr: Translations = {
   game_resilience: "Résistance",
   game_adaptability: "Adaptabilité",
   game_power: "Puissance",
+  game_no_sort: "Aucun tri",
   game_common: "Commun",
   game_uncommon: "Peu commun",
   game_rare: "Rare",

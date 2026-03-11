@@ -596,6 +596,7 @@ const en: Translations = {
   game_resilience: "Resilience",
   game_adaptability: "Adaptability",
   game_power: "Power",
+  game_no_sort: "No sorting",
   game_common: "Common",
   game_uncommon: "Uncommon",
   game_rare: "Rare",
