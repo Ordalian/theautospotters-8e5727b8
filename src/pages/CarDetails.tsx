@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -83,6 +83,11 @@ const CarDetails = () => {
     : null;
   const swipeState = useRef<{ startX: number; startY: number; isTouch: boolean } | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const panStart = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+  const pinchStart = useRef<{ dist: number; zoom: number } | null>(null);
+  const imgContainerRef = useRef<HTMLDivElement>(null);
   const [deleting, setDeleting] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linking, setLinking] = useState(false);
@@ -345,6 +350,97 @@ const CarDetails = () => {
       setLinking(false);
     }
   };
+
+  const resetZoom = useCallback(() => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+    panStart.current = null;
+    pinchStart.current = null;
+  }, []);
+
+  const clampPan = useCallback((x: number, y: number, scale: number) => {
+    if (scale <= 1) return { x: 0, y: 0 };
+    const container = imgContainerRef.current;
+    if (!container) return { x, y };
+    const rect = container.getBoundingClientRect();
+    const maxX = (rect.width * (scale - 1)) / 2;
+    const maxY = (rect.height * (scale - 1)) / 2;
+    return { x: Math.max(-maxX, Math.min(maxX, x)), y: Math.max(-maxY, Math.min(maxY, y)) };
+  }, []);
+
+  const handlePhotoDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (zoomLevel > 1) {
+      resetZoom();
+    } else {
+      const container = imgContainerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const cx = e.clientX - rect.left - rect.width / 2;
+      const cy = e.clientY - rect.top - rect.height / 2;
+      setZoomLevel(2.5);
+      setPanOffset(clampPan(-cx * 1.5, -cy * 1.5, 2.5));
+    }
+  }, [zoomLevel, resetZoom, clampPan]);
+
+  const handlePhotoWheel = useCallback((e: React.WheelEvent) => {
+    e.stopPropagation();
+    const newZoom = Math.max(1, Math.min(4, zoomLevel - e.deltaY * 0.005));
+    setZoomLevel(newZoom);
+    if (newZoom <= 1) {
+      setPanOffset({ x: 0, y: 0 });
+    } else {
+      setPanOffset((prev) => clampPan(prev.x, prev.y, newZoom));
+    }
+  }, [zoomLevel, clampPan]);
+
+  const handlePanPointerDown = useCallback((e: React.PointerEvent) => {
+    if (zoomLevel <= 1) return;
+    e.stopPropagation();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    panStart.current = { x: e.clientX, y: e.clientY, ox: panOffset.x, oy: panOffset.y };
+  }, [zoomLevel, panOffset]);
+
+  const handlePanPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!panStart.current || zoomLevel <= 1) return;
+    e.stopPropagation();
+    const dx = e.clientX - panStart.current.x;
+    const dy = e.clientY - panStart.current.y;
+    setPanOffset(clampPan(panStart.current.ox + dx, panStart.current.oy + dy, zoomLevel));
+  }, [zoomLevel, clampPan]);
+
+  const handlePanPointerUp = useCallback(() => {
+    panStart.current = null;
+  }, []);
+
+  const getTouchDist = (touches: React.TouchList) => {
+    const [a, b] = [touches[0], touches[1]];
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  };
+
+  const handlePinchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      pinchStart.current = { dist: getTouchDist(e.touches), zoom: zoomLevel };
+    }
+  }, [zoomLevel]);
+
+  const handlePinchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && pinchStart.current) {
+      const newDist = getTouchDist(e.touches);
+      const scale = newDist / pinchStart.current.dist;
+      const newZoom = Math.max(1, Math.min(4, pinchStart.current.zoom * scale));
+      setZoomLevel(newZoom);
+      if (newZoom <= 1) {
+        setPanOffset({ x: 0, y: 0 });
+      } else {
+        setPanOffset((prev) => clampPan(prev.x, prev.y, newZoom));
+      }
+    }
+  }, [clampPan]);
+
+  const handlePinchEnd = useCallback(() => {
+    pinchStart.current = null;
+  }, []);
 
   const handleDelete = async () => {
     if (!car || !user || car.user_id !== user.id) return;
@@ -633,7 +729,7 @@ const CarDetails = () => {
         open={photoPopupOpen}
         onOpenChange={(open) => {
           setPhotoPopupOpen(open);
-          if (!open) setPhotoIndex(0);
+          if (!open) { setPhotoIndex(0); resetZoom(); }
         }}
       >
         <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto p-0 overflow-hidden bg-black/95 border-0">
@@ -655,7 +751,7 @@ const CarDetails = () => {
                 variant="ghost"
                 size="icon"
                 className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-                onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => (i === 0 ? allPhotoUrls.length - 1 : i - 1)); }}
+                onClick={(e) => { e.stopPropagation(); resetZoom(); setPhotoIndex((i) => (i === 0 ? allPhotoUrls.length - 1 : i - 1)); }}
               >
                 <ChevronLeft className="h-6 w-6" />
               </Button>
@@ -664,18 +760,37 @@ const CarDetails = () => {
                 variant="ghost"
                 size="icon"
                 className="absolute right-12 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-                onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => (i === allPhotoUrls.length - 1 ? 0 : i + 1)); }}
+                onClick={(e) => { e.stopPropagation(); resetZoom(); setPhotoIndex((i) => (i === allPhotoUrls.length - 1 ? 0 : i + 1)); }}
               >
                 <ChevronRight className="h-6 w-6" />
               </Button>
             </>
           )}
-          <img
-            src={allPhotoUrls[photoIndex] ?? car.image_url!}
-            alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
-            className="max-w-full max-h-[90vh] w-auto h-auto object-contain mx-auto"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div
+            ref={imgContainerRef}
+            className="flex items-center justify-center overflow-hidden touch-none select-none"
+            style={{ cursor: zoomLevel > 1 ? "grab" : "zoom-in" }}
+            onDoubleClick={handlePhotoDoubleClick}
+            onWheel={handlePhotoWheel}
+            onPointerDown={handlePanPointerDown}
+            onPointerMove={handlePanPointerMove}
+            onPointerUp={handlePanPointerUp}
+            onPointerCancel={handlePanPointerUp}
+            onTouchStart={handlePinchStart}
+            onTouchMove={handlePinchMove}
+            onTouchEnd={handlePinchEnd}
+          >
+            <img
+              src={allPhotoUrls[photoIndex] ?? car.image_url!}
+              alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
+              className="max-w-full max-h-[90vh] w-auto h-auto object-contain pointer-events-none"
+              draggable={false}
+              style={{
+                transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
+                transition: panStart.current || pinchStart.current ? "none" : "transform 0.2s ease-out",
+              }}
+            />
+          </div>
           {allPhotoUrls.length > 1 && (
             <p className="text-center text-sm text-white/70 pb-2">
               {photoIndex + 1} / {allPhotoUrls.length}

@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Plus, Car, Loader2, Trash2, FolderPlus, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Car, Loader2, Trash2, FolderPlus, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -61,6 +61,7 @@ const MyGarage = () => {
   const returnTo = `${location.pathname}${location.search || ""}`;
   const queryClient = useQueryClient();
   const [sortOption, setSortOption] = useState<GarageSortOption>("newest");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showNewGroupDialog, setShowNewGroupDialog] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
@@ -254,6 +255,15 @@ const MyGarage = () => {
           {brandFilter ? brandFilter : groupFilter ? (groups.find((g) => g.id === groupFilter)?.name ?? (groupFilter === "none" ? (t.garage_no_group as string) : "Groupe")) : (!typeFilter ? (t.garage_menu_all as string) : garageTitleByType[typeFilter] ? (t[garageTitleByType[typeFilter]] as string) : (t.garage_title as string))}
         </h1>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setViewMode((v) => (v === "list" ? "grid" : "list"))}
+            className="shrink-0"
+            aria-label={viewMode === "list" ? (t.garage_view_grid as string) : (t.garage_view_list as string)}
+          >
+            {viewMode === "list" ? <LayoutGrid className="h-5 w-5" /> : <List className="h-5 w-5" />}
+          </Button>
           <GarageSortSelect value={sortOption} onChange={setSortOption} />
           <Button variant="outline" size="icon" onClick={() => setShowNewGroupDialog(true)} className="shrink-0" aria-label={t.garage_new_group as string}>
             <FolderPlus className="h-5 w-5" />
@@ -333,6 +343,33 @@ const MyGarage = () => {
                   </div>
                 );
               })}
+            </div>
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-2 gap-2">
+              {sortedCars.map((car) => (
+                <button
+                  key={car.id}
+                  type="button"
+                  onClick={() => navigate(`/car/${car.id}`, { state: { carIds: sortedCars.map((c) => c.id), returnTo } })}
+                  className="aspect-square rounded-xl overflow-hidden relative group focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {car.image_url ? (
+                    <img
+                      src={car.image_url}
+                      alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-secondary/20 flex items-center justify-center">
+                      <Car className="h-10 w-10 text-muted-foreground/20" />
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6">
+                    <p className="text-white text-xs font-semibold truncate">{car.brand} {car.model}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           ) : (
             sortedCars.map((car) => (

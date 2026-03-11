@@ -94,6 +94,8 @@ const en: Translations = {
   garage_group_created: "Group created",
   garage_no_group: "No group",
   garage_none_group: "No group",
+  garage_view_grid: "Grid view",
+  garage_view_list: "List view",
   garage_vehicles: (n: number) => `${n} vehicle${n > 1 ? "s" : ""}`,
 
   // Garage menu (vehicle types)
