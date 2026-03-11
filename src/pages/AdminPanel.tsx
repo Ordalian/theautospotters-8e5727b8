@@ -124,8 +124,8 @@ function StatsTab() {
   const { data: topFeatures = [] } = useQuery({
     queryKey: ["admin-top-features"],
     queryFn: async () => {
-      const { data } = await supabase.rpc("get_top_features", { p_limit: 10 });
-      return (data ?? []) as TopFeature[];
+      const data = await rpcAny<TopFeature[]>("get_top_features", { p_limit: 10 });
+      return data ?? [];
     },
     staleTime: 60_000,
   });
