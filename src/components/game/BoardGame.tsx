@@ -14,7 +14,7 @@ import {
 } from "@/lib/boardMovement";
 import type { PlacedCard } from "@/types/board";
 import type { Position } from "@/types/board";
-import { Board } from "./Board";
+import { PhaserBoard } from "./PhaserBoard";
 import { BoardSetup, type DeckCard } from "./BoardSetup";
 
 type GamePhase = "setup" | "playing" | "ended";
@@ -259,7 +259,7 @@ export function BoardGame({
           <span aria-hidden>{weatherConfig.emoji}</span>
           <span>{weatherConfig.label}</span>
         </div>
-        <Board
+        <PhaserBoard
           board={board}
           weather={weather}
           placedCards={placedCards}

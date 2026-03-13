@@ -1,43 +1,33 @@
 
 
-# Plan: Phaser 3 Board with Fresh AI-Generated Tile Assets
+## Problem
 
-## Summary
-Replace the current 12 placeholder tile PNGs with **new AI-generated isometric pixel-art tiles** (4-5 variants each, ~28 images total), and integrate **Phaser 3** as the board renderer. The existing `src/assets/tiles/` images will be deleted.
+The friend's garage page (`FriendGarage.tsx`) displays car photos using raw storage URLs without any optimization. On weak mobile networks, these full-resolution images fail to load (as shown in the screenshot where only alt text appears). The same optimization already applied to the friends carousel in `FriendsGarages.tsx` is missing here.
 
-## 1. Delete existing tile assets
-Remove all 12 current PNGs from `src/assets/tiles/`.
+There are 3 places in `FriendGarage.tsx` where images are rendered without optimization:
+1. **Car list items** (line 174) -- the main car grid when viewing a type filter
+2. **"All" tile background** (line 220) -- the vehicle type menu
+3. **Vehicle type tile backgrounds** (line 251) -- each category tile
 
-## 2. Generate new isometric tile art via AI image generation
-Use the Nano banana pro model (`google/gemini-3-pro-image-preview`) to generate 28 tile images in a consistent pixel-art isometric style (diamond shape, 128×64px logical, transparent background):
+## Plan
 
-| Type | Variants | Visual ideas |
-|------|----------|-------------|
-| **road** | 5 | Straight asphalt, curve, intersection, crosswalk, cracked highway |
-| **city** | 5 | Office building, parking lot, gas station, shops, urban park |
-| **countryside** | 5 | Green grass, wheat field, wooden fence, trees, pond |
-| **mountain** | 4 | Rocky terrain, snowy peak, tunnel entrance, scree slope |
-| **desert** | 5 | Sand dunes, cactus patch, cracked earth, oasis, dusty trail |
-| **blocked** | 4 | Barricade, river, construction zone, collapsed wall |
+### 1. Add image optimization helper
 
-Each image saved to `src/assets/tiles/{type}-{n}.png`. The existing `tileAssets.ts` glob loader picks them up automatically.
+Create a small utility function (or inline) that converts raw Supabase storage URLs to the render/transform endpoint with appropriate size and quality parameters:
+- Car list thumbnails: `width=600&quality=60`
+- Menu tile backgrounds: `width=400&quality=50`
 
-## 3. Install Phaser & create renderer
+### 2. Apply to all 3 image locations in FriendGarage.tsx
 
-### New files
-- **`src/components/game/PhaserBoard.tsx`** — React wrapper: mounts a `Phaser.Game` in a div ref, syncs React state via scene events, destroys on unmount.
-- **`src/components/game/scenes/BoardScene.ts`** — Phaser scene: loads tile textures, renders 20×20 isometric grid with depth sorting, draws car sprites (colored diamond + HP bar), highlights reachable tiles with pulsing tweens, handles click input with diamond hit areas, provides drag-to-pan and scroll-to-zoom camera.
+For each `<img>` tag:
+- Use the transform URL instead of raw `image_url`
+- Add `loading="lazy"`
+- Add `onError` fallback handler (hide image, show fallback icon)
+- Add `bg-muted` class for loading state
 
-### Edited files
-- **`package.json`** — add `phaser` dependency
-- **`src/components/game/BoardGame.tsx`** — swap `<Board>` for `<PhaserBoard>` with same props interface
-- **`src/lib/tileAssets.ts`** — no change needed (glob already works)
+### 3. Add fallback elements
 
-### Kept as fallback
-- `src/components/game/Board.tsx` — not deleted, just unused
+For the car list view (line 173-179), add a hidden fallback `<div>` with `img-fallback` class that becomes visible on image error -- same pattern already used in `FriendsGarages.tsx`.
 
-## 4. State sync pattern
-- React → Phaser: `scene.events.emit('stateUpdate', { placedCards, selectedCard, reachableSet })` on every React state change
-- Phaser → React: `scene.events.on('tileClicked', pos)` and `scene.events.on('cardSelected', card)` forwarded to React callbacks
-- Card movement animated with Phaser tweens (smooth slide between tiles)
+For tile backgrounds, on error hide the image so the gradient+icon fallback shows through.
 
