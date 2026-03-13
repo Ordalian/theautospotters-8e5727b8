@@ -161,7 +161,7 @@ export default function CardDetailPage() {
     );
   }
 
-  const model = card.model ?? card.name.replace(new RegExp(`^${card.brand}\\s+`), "").trim() || card.name;
+  const model = card.model ?? (card.name.replace(new RegExp(`^${card.brand}\\s+`), "").trim() || card.name);
   const RARITY_LABELS: Record<string, string> = {
     common: t.game_common as string,
     uncommon: t.game_uncommon as string,
