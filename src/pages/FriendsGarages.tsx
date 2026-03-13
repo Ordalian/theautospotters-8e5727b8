@@ -73,6 +73,7 @@ const FriendsGarages = () => {
   const navigate = useNavigate();
   const returnTo = `${location.pathname}${location.search || ""}`;
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [searchUsername, setSearchUsername] = useState("");
   const [sending, setSending] = useState(false);
   const [friends, setFriends] = useState<Friend[]>([]);
