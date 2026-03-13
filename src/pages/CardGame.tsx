@@ -84,7 +84,7 @@ export default function CardGame() {
     if (!user) return;
     (async () => {
       setLoading(true);
-      await supabase.rpc("claim_daily_boosters");
+      await (supabase.rpc as any)("claim_daily_boosters");
       const [{ data: master }, { data: owned }, { data: cd }, { data: purchased }] = await Promise.all([
         supabase.from("game_cards").select("*").order("rarity").order("archetype").order("name"),
         supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id),
