@@ -655,7 +655,7 @@ const en: Translations = {
   board_setup_player2: "Player 2",
   board_setup_points: (used: number, max: number) => `${used} / ${max} points`,
   board_setup_min_max: "Min. 3 cards, max. 10 cards, 30 points max.",
-  board_setup_place_hint: "Select a card then click a cell in your start zone (columns 1-2).",
+  board_setup_place_hint: "Select a card then click a cell in your start column.",
   board_setup_remove: "Remove",
   board_setup_ready: "Ready",
   board_game_weather: "Weather",

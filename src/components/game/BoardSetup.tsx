@@ -40,7 +40,7 @@ export function BoardSetup({
     },
     0
   );
-  const startCols = playerLabel === "player1" ? [0, 1] : [18, 19];
+  const startCols = playerLabel === "player1" ? [0] : [7];
   const canReady =
     placedForPlayer.length >= MIN_CARDS && usedPoints <= DECK_POINT_LIMIT;
   const placedDeckIndices = new Set(placedForPlayer.map((p) => p.deckIndex));
@@ -105,8 +105,8 @@ export function BoardSetup({
       <p className="text-xs text-muted-foreground">
         {t.board_setup_place_hint as string}
       </p>
-      <div className="grid grid-cols-2 gap-1 w-24">
-        {Array.from({ length: 20 }, (_, row) =>
+      <div className="grid grid-cols-1 gap-1 w-12">
+        {Array.from({ length: 8 }, (_, row) =>
           startCols.map((col) => ({ col, row }))
         )
           .flat()

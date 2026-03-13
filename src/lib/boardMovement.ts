@@ -85,7 +85,7 @@ export function canMoveTo(
   return true;
 }
 
-const BOARD_SIZE = 20;
+const BOARD_SIZE = 8;
 
 export function getReachablePositions(
   board: TileType[][],

@@ -21,8 +21,8 @@ type GamePhase = "setup" | "playing" | "ended";
 type Winner = "player1" | "player2" | null;
 
 const FLAGS = {
-  player1: { x: 0, y: 10 } as Position,
-  player2: { x: 19, y: 10 } as Position,
+  player1: { x: 0, y: 4 } as Position,
+  player2: { x: 7, y: 4 } as Position,
 };
 
 function createPlacedCard(

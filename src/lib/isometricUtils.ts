@@ -5,7 +5,7 @@
 export const TILE_W = 80;
 export const TILE_H = 40;
 export const TILE_DEPTH = 16; // Height of the block sides
-export const BOARD_SIZE = 20;
+export const BOARD_SIZE = 8;
 
 /** Convertit une position grille (gx, gy) en coordonnées écran (px). */
 export function gridToScreen(gx: number, gy: number) {
