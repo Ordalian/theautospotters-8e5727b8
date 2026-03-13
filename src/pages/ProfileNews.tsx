@@ -77,6 +77,16 @@ const ProfileNews = () => {
       ],
       tag: "fix",
     },
+    {
+      icon: Sparkles,
+      title: "Rééquilibrage de la rareté",
+      details: [
+        "Dictionnaire de rareté étendu à 60+ marques et des centaines de modèles avec des valeurs réalistes.",
+        "Les marques inconnues passent de rareté 5 (Rare) à 3 (Uncommon) par défaut.",
+        "Support du champ units_produced pour un calcul automatique de la rareté quand disponible.",
+      ],
+      tag: "fix",
+    },
   ] : [
     {
       icon: UserCog,
@@ -120,6 +130,16 @@ const ProfileNews = () => {
       title: "Globe-trotter achievement fix",
       details: [
         "The Globe-trotter achievement now counts distinct countries (France, Germany…) instead of individual addresses.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Sparkles,
+      title: "Rarity rebalancing",
+      details: [
+        "Rarity dictionary expanded to 60+ brands and hundreds of models with realistic values.",
+        "Unknown brands now default to rarity 3 (Uncommon) instead of 5 (Rare).",
+        "Support for units_produced field for automatic rarity calculation when available.",
       ],
       tag: "fix",
     },
