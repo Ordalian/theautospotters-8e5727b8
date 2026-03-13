@@ -539,7 +539,7 @@ export default function CardGame() {
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : tab === "menu" ? (
-        <div className="px-4 py-6 pb-24">
+        <div className="px-4 py-6 pb-32">
           {/* Boosters — full width */}
           <div className="mb-3">
             <button
@@ -608,7 +608,7 @@ export default function CardGame() {
           <button
             type="button"
             onClick={() => navigate("/card-game/deck-builder")}
-            className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] shadow-lg shadow-black/20 w-full"
+            className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] shadow-lg shadow-black/20 w-full mt-3"
           >
             <div className="flex w-full items-center gap-4 rounded-xl bg-card/90 p-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-violet-500/10">
