@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import type { TileType } from "@/lib/boardGenerator";
-import { TILE_CONFIG } from "@/lib/boardGenerator";
 import type { PlacedCard, Position } from "@/types/board";
 import {
   TILE_W,
@@ -12,7 +11,6 @@ import {
 } from "@/lib/isometricUtils";
 import { getTileVariants } from "@/lib/tileAssets";
 
-/** Couleurs fallback par type de tuile (hex sans alpha). */
 const TILE_COLORS: Record<TileType, number> = {
   road: 0x4b5563,
   city: 0x64748b,
@@ -38,24 +36,31 @@ interface BoardState {
 
 export class BoardScene extends Phaser.Scene {
   private boardState!: BoardState;
-  private tileSprites: (Phaser.GameObjects.Image | Phaser.GameObjects.Polygon)[][] = [];
   private highlightOverlays: Map<string, Phaser.GameObjects.Polygon> = new Map();
   private selectionOverlay: Phaser.GameObjects.Polygon | null = null;
   private cardSprites: Map<string, Phaser.GameObjects.Container> = new Map();
-  private flagSprites: { player1?: Phaser.GameObjects.Text; player2?: Phaser.GameObjects.Text } = {};
   private dims = getBoardDimensions();
   private tileTextureMap: Map<string, string[]> = new Map();
+  private ready = false;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private wasDrag = false;
 
   constructor() {
     super({ key: "BoardScene" });
   }
 
-  init(data: { initialState: BoardState }) {
-    this.boardState = data.initialState;
+  /** Called from React wrapper once scene is active. */
+  setInitialState(state: BoardState) {
+    this.boardState = state;
+    if (this.ready) {
+      this.renderBoard();
+      this.renderFlags();
+      this.updateState(state);
+    }
   }
 
   preload() {
-    // Preload all tile variant images
     const tileTypes: TileType[] = ["road", "city", "countryside", "mountain", "desert", "blocked"];
     for (const type of tileTypes) {
       const variants = getTileVariants(type);
@@ -70,61 +75,50 @@ export class BoardScene extends Phaser.Scene {
   }
 
   create() {
-    // Set world bounds
-    this.cameras.main.setBounds(
-      -100,
-      -100,
-      this.dims.totalW + 200,
-      this.dims.totalH + 200
-    );
+    this.cameras.main.setBounds(-100, -100, this.dims.totalW + 200, this.dims.totalH + 200);
 
-    // Enable camera drag & zoom
-    // Camera drag handled below
-    this.cameras.main.setZoom(1);
-
-    // Drag to pan
-    let dragStartX = 0;
-    let dragStartY = 0;
+    // Drag-to-pan
     let camStartX = 0;
     let camStartY = 0;
-    let isDragging = false;
 
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      dragStartX = pointer.x;
-      dragStartY = pointer.y;
+    this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
+      this.dragStartX = p.x;
+      this.dragStartY = p.y;
       camStartX = this.cameras.main.scrollX;
       camStartY = this.cameras.main.scrollY;
-      isDragging = false;
+      this.wasDrag = false;
     });
 
-    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      if (!pointer.isDown) return;
-      const dx = pointer.x - dragStartX;
-      const dy = pointer.y - dragStartY;
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) isDragging = true;
-      if (isDragging) {
+    this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
+      if (!p.isDown) return;
+      const dx = p.x - this.dragStartX;
+      const dy = p.y - this.dragStartY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) this.wasDrag = true;
+      if (this.wasDrag) {
         this.cameras.main.scrollX = camStartX - dx / this.cameras.main.zoom;
         this.cameras.main.scrollY = camStartY - dy / this.cameras.main.zoom;
       }
     });
 
-    // Scroll to zoom
-    this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _gx: number[], _gy: number[], _gz: number, deltaY: number) => {
-      const zoom = this.cameras.main.zoom;
-      const newZoom = Phaser.Math.Clamp(zoom - deltaY * 0.001, 0.3, 3);
-      this.cameras.main.setZoom(newZoom);
+    this.input.on("wheel", (_p: unknown, _gx: unknown, _gy: unknown, _gz: unknown, deltaY: number) => {
+      const z = Phaser.Math.Clamp(this.cameras.main.zoom - deltaY * 0.001, 0.3, 3);
+      this.cameras.main.setZoom(z);
     });
 
-    this.renderBoard();
-    this.renderFlags();
-    this.updateState(this.boardState);
+    this.ready = true;
+
+    if (this.boardState) {
+      this.renderBoard();
+      this.renderFlags();
+      this.updateState(this.boardState);
+    }
 
     // Center camera
     this.cameras.main.scrollX = (this.dims.totalW - this.cameras.main.width) / 2;
     this.cameras.main.scrollY = (this.dims.totalH - this.cameras.main.height) / 2;
   }
 
-  private getDiamondPoints(): Phaser.Geom.Point[] {
+  private diamondPts(): Phaser.Geom.Point[] {
     return [
       new Phaser.Geom.Point(TILE_W / 2, 0),
       new Phaser.Geom.Point(TILE_W, TILE_H / 2),
@@ -135,10 +129,7 @@ export class BoardScene extends Phaser.Scene {
 
   private renderBoard() {
     const board = this.boardState.board;
-    this.tileSprites = [];
-
     for (let gy = 0; gy < BOARD_SIZE; gy++) {
-      this.tileSprites[gy] = [];
       for (let gx = 0; gx < BOARD_SIZE; gx++) {
         const tileType = board[gy][gx];
         const { x: sx, y: sy } = gridToScreen(gx, gy);
@@ -146,242 +137,136 @@ export class BoardScene extends Phaser.Scene {
         const py = sy + this.dims.offsetY;
         const depth = gx + gy;
 
-        const textureKeys = this.tileTextureMap.get(tileType) || [];
-        const variantIdx = getTileVariant(gx, gy, textureKeys.length || 1);
-        const textureKey = textureKeys[variantIdx];
+        const keys = this.tileTextureMap.get(tileType) || [];
+        const vi = getTileVariant(gx, gy, keys.length || 1);
+        const texKey = keys[vi];
 
-        let tileObj: Phaser.GameObjects.Image | Phaser.GameObjects.Polygon;
-
-        if (textureKey && this.textures.exists(textureKey)) {
-          const img = this.add.image(px + TILE_W / 2, py + TILE_H / 2, textureKey);
-          img.setDisplaySize(TILE_W, TILE_H);
-          img.setDepth(depth);
-          tileObj = img;
+        let obj: Phaser.GameObjects.Image | Phaser.GameObjects.Polygon;
+        if (texKey && this.textures.exists(texKey)) {
+          obj = this.add.image(px + TILE_W / 2, py + TILE_H / 2, texKey)
+            .setDisplaySize(TILE_W, TILE_H)
+            .setDepth(depth);
         } else {
-          // Fallback: colored diamond
-          const points = this.getDiamondPoints();
-          const poly = this.add.polygon(
-            px + TILE_W / 2,
-            py + TILE_H / 2,
-            points,
-            TILE_COLORS[tileType],
-            0.9
-          );
-          poly.setDepth(depth);
-          tileObj = poly;
+          obj = this.add.polygon(px + TILE_W / 2, py + TILE_H / 2, this.diamondPts(), TILE_COLORS[tileType], 0.9)
+            .setDepth(depth);
         }
 
-        // Make interactive with diamond hit area
-        const hitArea = new Phaser.Geom.Polygon(this.getDiamondPoints());
-        tileObj.setInteractive(hitArea, Phaser.Geom.Polygon.Contains);
-        
-        tileObj.on("pointerup", (pointer: Phaser.Input.Pointer) => {
-          // Ignore if it was a drag
-          const dx = Math.abs(pointer.x - dragStartXCapture);
-          const dy = Math.abs(pointer.y - dragStartYCapture);
-          if (dx > 6 || dy > 6) return;
+        const hitArea = new Phaser.Geom.Polygon(this.diamondPts());
+        obj.setInteractive(hitArea, Phaser.Geom.Polygon.Contains);
+        obj.on("pointerup", (ptr: Phaser.Input.Pointer) => {
+          if (Math.abs(ptr.x - this.dragStartX) > 6 || Math.abs(ptr.y - this.dragStartY) > 6) return;
           this.events.emit("tileClicked", { x: gx, y: gy });
         });
-
-        this.tileSprites[gy][gx] = tileObj;
       }
     }
-
-    // Capture drag start for click vs drag detection
-    let dragStartXCapture = 0;
-    let dragStartYCapture = 0;
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      dragStartXCapture = pointer.x;
-      dragStartYCapture = pointer.y;
-    });
   }
 
   private renderFlags() {
-    const flags = this.boardState.flags;
-
-    const p1 = gridToScreen(flags.player1.x, flags.player1.y);
-    this.flagSprites.player1 = this.add.text(
-      p1.x + this.dims.offsetX + TILE_W / 2,
-      p1.y + this.dims.offsetY + TILE_H / 2,
-      "🚩",
-      { fontSize: "16px" }
-    ).setOrigin(0.5).setDepth(500);
-
-    const p2 = gridToScreen(flags.player2.x, flags.player2.y);
-    this.flagSprites.player2 = this.add.text(
-      p2.x + this.dims.offsetX + TILE_W / 2,
-      p2.y + this.dims.offsetY + TILE_H / 2,
-      "🏁",
-      { fontSize: "16px" }
-    ).setOrigin(0.5).setDepth(500);
+    const f = this.boardState.flags;
+    for (const [key, pos, emoji] of [["p1", f.player1, "🚩"], ["p2", f.player2, "🏁"]] as const) {
+      const { x, y } = gridToScreen(pos.x, pos.y);
+      this.add.text(x + this.dims.offsetX + TILE_W / 2, y + this.dims.offsetY + TILE_H / 2, emoji, { fontSize: "16px" })
+        .setOrigin(0.5).setDepth(500);
+    }
   }
 
   updateState(state: BoardState) {
+    if (!this.ready) return;
     this.boardState = state;
-    this.updateHighlights();
-    this.updateSelection();
-    this.updateCards();
+    this.syncHighlights();
+    this.syncSelection();
+    this.syncCards();
   }
 
-  private updateHighlights() {
-    // Remove old highlights
-    for (const overlay of this.highlightOverlays.values()) {
-      overlay.destroy();
-    }
+  private syncHighlights() {
+    for (const o of this.highlightOverlays.values()) o.destroy();
     this.highlightOverlays.clear();
 
-    // Add new highlights for reachable positions
     for (const key of this.boardState.reachableSet) {
-      const [gxStr, gyStr] = key.split(",");
-      const gx = parseInt(gxStr);
-      const gy = parseInt(gyStr);
+      const [xs, ys] = key.split(",");
+      const gx = +xs, gy = +ys;
       const { x: sx, y: sy } = gridToScreen(gx, gy);
-      const px = sx + this.dims.offsetX;
-      const py = sy + this.dims.offsetY;
-
-      const points = this.getDiamondPoints();
-      const overlay = this.add.polygon(
-        px + TILE_W / 2,
-        py + TILE_H / 2,
-        points,
-        0x4ade80,
-        0.4
-      );
-      overlay.setDepth(gx + gy + 50);
-
-      // Pulse animation
-      this.tweens.add({
-        targets: overlay,
-        alpha: { from: 0.4, to: 0.15 },
-        duration: 600,
-        yoyo: true,
-        repeat: -1,
-      });
-
-      this.highlightOverlays.set(key, overlay);
+      const o = this.add.polygon(sx + this.dims.offsetX + TILE_W / 2, sy + this.dims.offsetY + TILE_H / 2, this.diamondPts(), 0x4ade80, 0.4)
+        .setDepth(gx + gy + 50);
+      this.tweens.add({ targets: o, alpha: { from: 0.4, to: 0.15 }, duration: 600, yoyo: true, repeat: -1 });
+      this.highlightOverlays.set(key, o);
     }
   }
 
-  private updateSelection() {
-    if (this.selectionOverlay) {
-      this.selectionOverlay.destroy();
-      this.selectionOverlay = null;
-    }
-
+  private syncSelection() {
+    this.selectionOverlay?.destroy();
+    this.selectionOverlay = null;
     const sel = this.boardState.selectedCard;
     if (!sel) return;
-
     const { x: sx, y: sy } = gridToScreen(sel.position.x, sel.position.y);
-    const px = sx + this.dims.offsetX;
-    const py = sy + this.dims.offsetY;
-    const points = this.getDiamondPoints();
     this.selectionOverlay = this.add.polygon(
-      px + TILE_W / 2,
-      py + TILE_H / 2,
-      points,
-      0xfbbf24,
-      0.5
-    );
-    this.selectionOverlay.setDepth(sel.position.x + sel.position.y + 90);
-    this.selectionOverlay.setStrokeStyle(2, 0xfbbf24);
+      sx + this.dims.offsetX + TILE_W / 2,
+      sy + this.dims.offsetY + TILE_H / 2,
+      this.diamondPts(), 0xfbbf24, 0.5
+    ).setDepth(sel.position.x + sel.position.y + 90).setStrokeStyle(2, 0xfbbf24);
   }
 
-  private updateCards() {
-    const currentIds = new Set(this.boardState.placedCards.map(c => c.id));
-
-    // Remove cards no longer on the board
-    for (const [id, container] of this.cardSprites.entries()) {
-      if (!currentIds.has(id)) {
-        container.destroy();
-        this.cardSprites.delete(id);
-      }
+  private syncCards() {
+    const ids = new Set(this.boardState.placedCards.map(c => c.id));
+    for (const [id, cont] of this.cardSprites.entries()) {
+      if (!ids.has(id)) { cont.destroy(); this.cardSprites.delete(id); }
     }
 
     for (const card of this.boardState.placedCards) {
       const { x: sx, y: sy } = gridToScreen(card.position.x, card.position.y);
-      const targetX = sx + this.dims.offsetX + TILE_W / 2;
-      const targetY = sy + this.dims.offsetY + TILE_H / 2;
+      const tx = sx + this.dims.offsetX + TILE_W / 2;
+      const ty = sy + this.dims.offsetY + TILE_H / 2;
       const depth = card.position.x + card.position.y + 100;
 
-      let container = this.cardSprites.get(card.id);
-      if (container) {
-        // Animate movement
-        this.tweens.add({
-          targets: container,
-          x: targetX,
-          y: targetY,
-          duration: 250,
-          ease: "Power2",
-        });
-        container.setDepth(depth);
-        // Update HP bar
-        this.updateCardHP(container, card);
+      let c = this.cardSprites.get(card.id);
+      if (c) {
+        this.tweens.add({ targets: c, x: tx, y: ty, duration: 250, ease: "Power2" });
+        c.setDepth(depth);
+        this.updateHP(c, card);
       } else {
-        // Create new card sprite
-        container = this.createCardContainer(card, targetX, targetY, depth);
-        this.cardSprites.set(card.id, container);
+        c = this.makeCard(card, tx, ty, depth);
+        this.cardSprites.set(card.id, c);
       }
     }
   }
 
-  private createCardContainer(
-    card: PlacedCard,
-    x: number,
-    y: number,
-    depth: number
-  ): Phaser.GameObjects.Container {
-    const container = this.add.container(x, y);
-    container.setDepth(depth);
+  private makeCard(card: PlacedCard, x: number, y: number, depth: number) {
+    const c = this.add.container(x, y).setDepth(depth);
+    const col = OWNER_COLORS[card.owner];
 
-    const color = OWNER_COLORS[card.owner];
-
-    // Car body - small diamond
     const body = this.add.polygon(0, 0, [
       new Phaser.Geom.Point(0, -8),
       new Phaser.Geom.Point(12, 0),
       new Phaser.Geom.Point(0, 8),
       new Phaser.Geom.Point(-12, 0),
-    ], color, 0.9);
-    body.setStrokeStyle(1.5, 0xffffff, 0.8);
+    ], col, 0.9).setStrokeStyle(1.5, 0xffffff, 0.8);
 
-    // Label
     const label = this.add.text(0, -14, card.card.model.slice(0, 6), {
-      fontSize: "8px",
-      color: "#ffffff",
-      fontStyle: "bold",
-      stroke: "#000000",
-      strokeThickness: 2,
+      fontSize: "8px", color: "#fff", fontStyle: "bold", stroke: "#000", strokeThickness: 2,
     }).setOrigin(0.5);
 
-    // HP bar background
-    const hpBg = this.add.rectangle(0, 12, 20, 3, 0x000000, 0.6);
-    // HP bar fill
     const maxHP = card.card.hp ?? 10;
-    const hpRatio = card.currentHP / maxHP;
-    const hpFill = this.add.rectangle(-10 + (20 * hpRatio) / 2, 12, 20 * hpRatio, 3, hpRatio > 0.5 ? 0x22c55e : hpRatio > 0.25 ? 0xeab308 : 0xef4444);
-    hpFill.setName("hpFill");
-    hpBg.setName("hpBg");
+    const ratio = card.currentHP / maxHP;
+    const hpBg = this.add.rectangle(0, 12, 20, 3, 0x000000, 0.6).setName("hpBg");
+    const hpFill = this.add.rectangle(-10 + (20 * ratio) / 2, 12, 20 * ratio, 3, this.hpColor(ratio)).setName("hpFill");
 
-    container.add([body, label, hpBg, hpFill]);
-
-    // Make container interactive
-    container.setSize(24, 24);
-    container.setInteractive();
-    container.on("pointerup", () => {
-      this.events.emit("cardSelected", card);
-    });
-
-    return container;
+    c.add([body, label, hpBg, hpFill]);
+    c.setSize(24, 24).setInteractive();
+    c.on("pointerup", () => this.events.emit("cardSelected", card));
+    return c;
   }
 
-  private updateCardHP(container: Phaser.GameObjects.Container, card: PlacedCard) {
-    const hpFill = container.getByName("hpFill") as Phaser.GameObjects.Rectangle;
-    if (hpFill) {
-      const maxHP = card.card.hp ?? 10;
-      const hpRatio = card.currentHP / maxHP;
-      hpFill.width = 20 * hpRatio;
-      hpFill.x = -10 + (20 * hpRatio) / 2;
-      hpFill.fillColor = hpRatio > 0.5 ? 0x22c55e : hpRatio > 0.25 ? 0xeab308 : 0xef4444;
-    }
+  private updateHP(container: Phaser.GameObjects.Container, card: PlacedCard) {
+    const f = container.getByName("hpFill") as Phaser.GameObjects.Rectangle;
+    if (!f) return;
+    const maxHP = card.card.hp ?? 10;
+    const r = card.currentHP / maxHP;
+    f.width = 20 * r;
+    f.x = -10 + (20 * r) / 2;
+    f.fillColor = this.hpColor(r);
+  }
+
+  private hpColor(ratio: number): number {
+    return ratio > 0.5 ? 0x22c55e : ratio > 0.25 ? 0xeab308 : 0xef4444;
   }
 }

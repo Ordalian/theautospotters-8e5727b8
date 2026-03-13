@@ -14,7 +14,7 @@ import {
 } from "@/lib/boardMovement";
 import type { PlacedCard } from "@/types/board";
 import type { Position } from "@/types/board";
-import { Board } from "./Board";
+import { PhaserBoard } from "./PhaserBoard";
 import { BoardSetup, type DeckCard } from "./BoardSetup";
 
 type GamePhase = "setup" | "playing" | "ended";

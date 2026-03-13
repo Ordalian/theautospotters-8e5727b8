@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useCallback } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import Phaser from "phaser";
 import type { TileType, WeatherType } from "@/lib/boardGenerator";
 import type { PlacedCard, Position } from "@/types/board";
@@ -30,62 +30,26 @@ export function PhaserBoard({
   const gameRef = useRef<Phaser.Game | null>(null);
   const sceneRef = useRef<BoardScene | null>(null);
   const callbacksRef = useRef({ onCardSelect, onTileClick });
-
-  // Keep callbacks fresh
   callbacksRef.current = { onCardSelect, onTileClick };
 
-  // Compute reachable set
   const reachableSet = useMemo(() => {
     const set = new Set<string>();
     if (selectedCard && selectedCard.owner === currentTurn) {
       const budget = getMoveBudget(selectedCard, weather) - selectedCard.moveBudgetUsed;
-      const reachable = getReachablePositions(
-        board,
-        selectedCard.position,
-        budget,
-        placedCards,
-        selectedCard.owner
-      );
-      for (const p of reachable) {
-        set.add(`${p.x},${p.y}`);
-      }
+      const reachable = getReachablePositions(board, selectedCard.position, budget, placedCards, selectedCard.owner);
+      for (const p of reachable) set.add(`${p.x},${p.y}`);
     }
     return set;
   }, [selectedCard, currentTurn, weather, board, placedCards]);
 
-  // Initialize Phaser game
+  // Store latest state for scene init
+  const stateRef = useRef({ board, placedCards, selectedCard, reachableSet, flags, currentTurn });
+  stateRef.current = { board, placedCards, selectedCard, reachableSet, flags, currentTurn };
+
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return;
 
-    const scene = new BoardScene();
-    sceneRef.current = scene;
-
     const game = new Phaser.Game({
-      type: Phaser.AUTO,
-      parent: containerRef.current,
-      width: containerRef.current.clientWidth,
-      height: 500,
-      transparent: true,
-      scene: {
-        key: "BoardScene",
-        preload: scene.preload.bind(scene),
-        create: scene.create.bind(scene),
-        init: scene.init.bind(scene),
-      },
-      scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-      },
-      input: {
-        mouse: { preventDefaultWheel: false },
-      },
-    });
-
-    // We need to instantiate the scene properly
-    game.destroy(true);
-
-    // Recreate with proper scene class
-    const game2 = new Phaser.Game({
       type: Phaser.AUTO,
       parent: containerRef.current,
       width: containerRef.current.clientWidth,
@@ -96,68 +60,43 @@ export function PhaserBoard({
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
-      input: {
-        mouse: { preventDefaultWheel: false },
-      },
     });
+    gameRef.current = game;
 
-    gameRef.current = game2;
+    // Poll until scene is ready
+    const poll = setInterval(() => {
+      const s = game.scene.getScene("BoardScene") as BoardScene | null;
+      if (s && s.scene.isActive()) {
+        clearInterval(poll);
+        sceneRef.current = s;
 
-    // Wait for scene to be ready, then pass initial state and bind events
-    const checkScene = () => {
-      const boardScene = game2.scene.getScene("BoardScene") as BoardScene;
-      if (boardScene && boardScene.scene.isActive()) {
-        sceneRef.current = boardScene;
-        boardScene.init({
-          initialState: {
-            board,
-            placedCards,
-            selectedCard,
-            reachableSet,
-            flags,
-            currentTurn,
-          },
+        // Pass initial state
+        s.setInitialState(stateRef.current);
+
+        // Bind events
+        s.events.on("tileClicked", (pos: Position) => {
+          callbacksRef.current.onTileClick(pos);
         });
-
-        // Listen for events from Phaser
-        boardScene.events.on("tileClicked", (pos: Position) => {
-          const card = placedCards.find(c => c.position.x === pos.x && c.position.y === pos.y);
-          if (card) {
-            callbacksRef.current.onCardSelect(card);
-          } else {
-            callbacksRef.current.onTileClick(pos);
-          }
-        });
-
-        boardScene.events.on("cardSelected", (card: PlacedCard) => {
+        s.events.on("cardSelected", (card: PlacedCard) => {
           callbacksRef.current.onCardSelect(card);
         });
-      } else {
-        setTimeout(checkScene, 100);
       }
-    };
-    setTimeout(checkScene, 200);
+    }, 100);
 
     return () => {
-      game2.destroy(true);
+      clearInterval(poll);
+      game.destroy(true);
       gameRef.current = null;
       sceneRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync state to Phaser scene
+  // Sync state to scene
   useEffect(() => {
-    if (sceneRef.current) {
-      sceneRef.current.updateState({
-        board,
-        placedCards,
-        selectedCard,
-        reachableSet,
-        flags,
-        currentTurn,
-      });
-    }
+    sceneRef.current?.updateState({
+      board, placedCards, selectedCard, reachableSet, flags, currentTurn,
+    });
   }, [board, placedCards, selectedCard, reachableSet, flags, currentTurn]);
 
   return (
