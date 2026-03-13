@@ -142,12 +142,10 @@ export default function DeckBuilder() {
         .upsert(
           {
             user_id: user.id,
-            deck_index: activeDeck.index,
-            name,
             card_ids: deckIds,
             updated_at: new Date().toISOString(),
-          },
-          { onConflict: ["user_id", "deck_index"] }
+          } as any,
+          { onConflict: "user_id" as any }
         );
       if (error) throw error;
       toast.success(t.deck_saved as string);
