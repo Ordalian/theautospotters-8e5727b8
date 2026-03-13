@@ -40,7 +40,7 @@ export function BoardSetup({
     },
     0
   );
-  const startCols = playerLabel === "player1" ? [0, 1] : [18, 19];
+  const startCols = playerLabel === "player1" ? [0] : [7];
   const canReady =
     placedForPlayer.length >= MIN_CARDS && usedPoints <= DECK_POINT_LIMIT;
   const placedDeckIndices = new Set(placedForPlayer.map((p) => p.deckIndex));
