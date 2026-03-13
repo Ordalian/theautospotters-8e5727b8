@@ -259,7 +259,7 @@ export function BoardGame({
           <span aria-hidden>{weatherConfig.emoji}</span>
           <span>{weatherConfig.label}</span>
         </div>
-        <Board
+        <PhaserBoard
           board={board}
           weather={weather}
           placedCards={placedCards}
