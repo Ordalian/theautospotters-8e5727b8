@@ -59,7 +59,7 @@ export default function DeckBuilder() {
         .from("user_game_cards")
         .select("id, card_id, condition, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)")
         .eq("user_id", user.id),
-      supabase.from("user_deck").select("deck_index, name, card_ids").eq("user_id", user.id),
+      supabase.from("user_deck").select("*").eq("user_id", user.id),
     ]);
     const raw = (instancesRes.data ?? []) as (Omit<OwnedInstance, "game_cards"> & { game_cards: GameCardRow | null })[];
     setInstances(raw.map((r) => ({ ...r, game_cards: r.game_cards ?? null })));
