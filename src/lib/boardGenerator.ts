@@ -135,8 +135,8 @@ export const WEATHER_CONFIG: Record<
   },
 };
 
-const BOARD_SIZE = 20;
-const PROPAGATION_PASSES = 3;
+const BOARD_SIZE = 8;
+const PROPAGATION_PASSES = 2;
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
