@@ -38,6 +38,7 @@ const Messaging = lazy(() => import("./pages/Messaging"));
 const CardGame = lazy(() => import("./pages/CardGame"));
 const CardDetailPage = lazy(() => import("./pages/CardDetailPage"));
 const DeckBuilder = lazy(() => import("./pages/DeckBuilder"));
+const WorldDomination = lazy(() => import("./pages/WorldDomination"));
 
 const AmisList = lazy(() => import("./pages/AmisList"));
 const Store = lazy(() => import("./pages/Store"));
