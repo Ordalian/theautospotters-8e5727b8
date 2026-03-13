@@ -756,51 +756,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_owned_styles: {
-        Row: {
-          id: string
-          user_id: string
-          style_id: string
-          obtained_at: string
-          obtained_via: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          style_id: string
-          obtained_at?: string
-          obtained_via?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          style_id?: string
-          obtained_at?: string
-          obtained_via?: string
-        }
-        Relationships: []
-      }
-      user_purchased_boosters: {
-        Row: {
-          id: string
-          user_id: string
-          pending_count: number
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          pending_count?: number
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          pending_count?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       user_game_cards: {
         Row: {
           card_id: string
@@ -832,6 +787,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_owned_styles: {
+        Row: {
+          id: string
+          obtained_at: string
+          obtained_via: string
+          style_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          obtained_at?: string
+          obtained_via?: string
+          style_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          obtained_at?: string
+          obtained_via?: string
+          style_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_purchased_boosters: {
+        Row: {
+          id: string
+          pending_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          pending_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          pending_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -880,6 +880,9 @@ export type Database = {
     }
     Functions: {
       achievement_xp_for_level: { Args: { p_level: number }; Returns: number }
+      add_coins: { Args: { p_amount: number }; Returns: undefined }
+      add_purchased_boosters: { Args: { pack_size: number }; Returns: Json }
+      consume_purchased_booster: { Args: never; Returns: boolean }
       get_admin_stats: {
         Args: never
         Returns: {
@@ -933,23 +936,29 @@ export type Database = {
           username: string
         }[]
       }
+      grant_coins_for_spot: {
+        Args: { p_rarity_rating: number }
+        Returns: undefined
+      }
       increment_total_xp: { Args: { amount?: number }; Returns: undefined }
-      grant_coins_for_spot: { Args: { p_rarity_rating: number }; Returns: undefined }
-      send_coins_to_friend: { Args: { p_to_user_id: string; p_amount: number }; Returns: Json }
-      add_coins: { Args: { p_amount: number }; Returns: undefined }
-      add_purchased_boosters: { Args: { pack_size: number }; Returns: Json }
-      consume_purchased_booster: { Args: Record<string, never>; Returns: boolean }
-      unlock_style: { Args: { p_style_id: string; p_price: number }; Returns: Json }
-      process_booster_style_drop: { Args: Record<string, never>; Returns: Json }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
+      process_booster_style_drop: { Args: never; Returns: Json }
       recompute_user_total_xp: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      send_coins_to_friend: {
+        Args: { p_amount: number; p_to_user_id: string }
+        Returns: Json
       }
       spotter_level_from_count: { Args: { p_count: number }; Returns: number }
       total_achievement_xp_for_spotter: {
         Args: { p_spot_count: number }
         Returns: number
+      }
+      unlock_style: {
+        Args: { p_price: number; p_style_id: string }
+        Returns: Json
       }
       update_friendship_status: {
         Args: { p_friendship_id: string; p_new_status: string }
