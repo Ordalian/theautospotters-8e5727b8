@@ -63,7 +63,7 @@ export default function DeckBuilder() {
     ]);
     const raw = (instancesRes.data ?? []) as (Omit<OwnedInstance, "game_cards"> & { game_cards: GameCardRow | null })[];
     setInstances(raw.map((r) => ({ ...r, game_cards: r.game_cards ?? null })));
-    const rows = (deckRes.data as { deck_index: number; name: string; card_ids: string[] }[] | null) ?? [];
+    const rows = ((deckRes.data ?? []) as unknown as { deck_index: number; name: string; card_ids: string[] }[]);
     if (rows.length === 0) {
       setDecks([{ index: 1, name: "Deck 1", cardIds: [] }]);
       setActiveIndex(1);
