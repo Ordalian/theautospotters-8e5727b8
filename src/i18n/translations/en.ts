@@ -61,7 +61,8 @@ const en: Translations = {
   dash_cars_spotted: (n: number) => `${n} car${n !== 1 ? "s" : ""} spotted`,
   dash_zone_jeu: "Play Zone",
   dash_zone_jeu_sub: "Challenges & games",
-
+  dash_board_game: "Strategy Board",
+  dash_board_game_sub: "1v1 board",
   dash_friends: "Friends' Garages",
   dash_friends_sub: "See your friends",
   dash_shop: "Shop",
@@ -647,6 +648,22 @@ const en: Translations = {
     [commons && `${commons} Common`, uncommons && `${uncommons} Uncommon`, rares && `${rares} Rare`, mythics && `${mythics} Mythic`].filter(Boolean).join(" · ") || "",
   booster_continue: "Continue",
 
+  // Board game (1v1 strategy board)
+  board_game_title: "Strategy Board",
+  board_game_setup_title: "Setup — Place your cards",
+  board_setup_player1: "Player 1",
+  board_setup_player2: "Player 2",
+  board_setup_points: (used: number, max: number) => `${used} / ${max} points`,
+  board_setup_min_max: "Min. 3 cards, max. 10 cards, 30 points max.",
+  board_setup_place_hint: "Select a card then click a cell in your start column.",
+  board_setup_remove: "Remove",
+  board_setup_ready: "Ready",
+  board_game_weather: "Weather",
+  board_game_turn_order: "Turn order (SPD)",
+  board_game_cards_in_play: "Cards in play",
+  board_game_victory: "Victory!",
+  board_game_winner_p1: "Player 1 wins",
+  board_game_winner_p2: "Player 2 wins",
 };
 
 export default en;
