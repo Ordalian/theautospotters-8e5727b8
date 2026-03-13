@@ -200,7 +200,7 @@ export default function CardDetailPage() {
       <div className="p-4 max-w-lg mx-auto space-y-6">
         {/* Card visual + name + rarity */}
         <section className={`rounded-2xl border-2 ${RARITY_BORDER[card.rarity] ?? "border-border"} bg-card overflow-hidden`}>
-          <div className="relative aspect-[3/4] max-h-[320px] flex items-center justify-center bg-muted/30">
+          <div className="relative aspect-[3/4] max-h-[380px] mx-auto w-full flex items-center justify-center bg-muted/30">
             <CardImageBlock brand={card.brand} model={model} archetype={card.archetype as CardArchetype} condition={bestCond} />
           </div>
           <div className="p-4 text-center">
