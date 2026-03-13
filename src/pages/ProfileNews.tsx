@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye, Package, LayoutGrid, Sparkles, Trophy } from "lucide-react";
+import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye, Package, LayoutGrid, Sparkles, Trophy, UserCog, CheckCheck, Globe, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { markPatchNotesRead } from "@/lib/patchNotes";
@@ -30,6 +30,100 @@ const ProfileNews = () => {
   const lang = language === "fr" ? "fr" : "en";
 
   useEffect(() => { markPatchNotesRead(); }, []);
+
+  const patchesV03: PatchEntry[] = lang === "fr" ? [
+    {
+      icon: UserCog,
+      title: "Panneau d'administration",
+      details: [
+        "Nouveau dashboard admin : statistiques (temps par page, fonctionnalités utilisées), gestion des utilisateurs et support.",
+        "Accessible uniquement aux fondateurs et admins.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: CheckCheck,
+      title: "Messagerie améliorée",
+      details: [
+        "Indicateurs de lecture : ✓ (envoyé) et ✓✓ (lu) sur chaque message.",
+        "Recherche d'utilisateurs pour démarrer une conversation avec n'importe qui.",
+        "Demande de conversation : accepter ou bloquer les messages de non-amis. Indicateurs de lecture désactivés tant que non accepté.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: LayoutGrid,
+      title: "Zone de jeu simplifiée",
+      details: [
+        "Filtres compacts avec dropdowns (archétype, rareté, tri par stat) sur le modèle du garage.",
+        "Popup de détail au clic sur une carte : artwork agrandi, stats et condition.",
+        "Tuiles redessinées dans le style du dashboard principal.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Trash2,
+      title: "Plateau Stratégique retiré",
+      details: [
+        "Le mode Plateau Stratégique (1v1) a été retiré de la zone de jeu.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Globe,
+      title: "Correction succès Globe-trotter",
+      details: [
+        "Le succès Globe-trotter compte désormais les pays distincts (France, Allemagne…) et non plus les adresses individuelles.",
+      ],
+      tag: "fix",
+    },
+  ] : [
+    {
+      icon: UserCog,
+      title: "Admin panel",
+      details: [
+        "New admin dashboard: statistics (time per page, feature usage), user management and support.",
+        "Accessible to founders and admins only.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: CheckCheck,
+      title: "Improved messaging",
+      details: [
+        "Read receipts: ✓ (sent) and ✓✓ (read) on every message.",
+        "User search to start a conversation with anyone.",
+        "Conversation request: accept or block messages from non-friends. Read indicators disabled until accepted.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: LayoutGrid,
+      title: "Simplified game zone",
+      details: [
+        "Compact dropdown filters (archetype, rarity, sort by stat) matching the garage style.",
+        "Card detail popup on click: enlarged artwork, stats and condition.",
+        "Tiles redesigned to match the main dashboard style.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Trash2,
+      title: "Strategy Board removed",
+      details: [
+        "The Strategy Board mode (1v1) has been removed from the game zone.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Globe,
+      title: "Globe-trotter achievement fix",
+      details: [
+        "The Globe-trotter achievement now counts distinct countries (France, Germany…) instead of individual addresses.",
+      ],
+      tag: "fix",
+    },
+  ];
 
   const patchesV02: PatchEntry[] = lang === "fr" ? [
     {
@@ -243,13 +337,53 @@ const ProfileNews = () => {
       </header>
 
       <div className="p-4 max-w-lg mx-auto space-y-5">
-        {/* Patch v0.2 */}
+        {/* Patch v0.3 — most recent */}
         <div className="flex items-center gap-3 pt-2">
           <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
             <Newspaper className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold tracking-tight">Patch Note v0.2</h2>
+            <h2 className="text-lg font-bold tracking-tight">Patch Note v0.3</h2>
+            <p className="text-xs text-muted-foreground">11 {lang === "fr" ? "mars" : "March"} 2026</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {patchesV03.map((entry, i) => (
+            <Card key={`v03-${i}`} className="border-border/50 bg-card/80 overflow-hidden">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 mt-0.5">
+                    <entry.icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm leading-tight">{entry.title}</h3>
+                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${tagColors[entry.tag]}`}>
+                        {tagLabels[lang][entry.tag]}
+                      </span>
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {entry.details.map((d, j) => (
+                        <li key={j} className="text-xs text-muted-foreground leading-relaxed flex gap-2">
+                          <span className="text-primary/60 mt-1 shrink-0">•</span>
+                          <span>{d}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Patch v0.2 */}
+        <div className="flex items-center gap-3 pt-6">
+          <div className="h-10 w-10 rounded-xl bg-muted/50 flex items-center justify-center">
+            <Newspaper className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold tracking-tight text-muted-foreground">Patch Note v0.2</h2>
             <p className="text-xs text-muted-foreground">24 {lang === "fr" ? "février" : "February"} 2026</p>
           </div>
         </div>
