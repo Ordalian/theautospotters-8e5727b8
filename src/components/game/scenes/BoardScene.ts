@@ -79,11 +79,7 @@ export class BoardScene extends Phaser.Scene {
     );
 
     // Enable camera drag & zoom
-    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      if (pointer.isDown && pointer.button === 0 && !pointer.wasDragged) {
-        // handled by drag below
-      }
-    });
+    // Camera drag handled below
     this.cameras.main.setZoom(1);
 
     // Drag to pan
