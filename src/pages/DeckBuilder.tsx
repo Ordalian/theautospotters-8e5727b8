@@ -59,11 +59,11 @@ export default function DeckBuilder() {
         .from("user_game_cards")
         .select("id, card_id, condition, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)")
         .eq("user_id", user.id),
-      supabase.from("user_deck").select("deck_index, name, card_ids").eq("user_id", user.id),
+      supabase.from("user_deck").select("*").eq("user_id", user.id),
     ]);
     const raw = (instancesRes.data ?? []) as (Omit<OwnedInstance, "game_cards"> & { game_cards: GameCardRow | null })[];
     setInstances(raw.map((r) => ({ ...r, game_cards: r.game_cards ?? null })));
-    const rows = (deckRes.data as { deck_index: number; name: string; card_ids: string[] }[] | null) ?? [];
+    const rows = ((deckRes.data ?? []) as unknown as { deck_index: number; name: string; card_ids: string[] }[]);
     if (rows.length === 0) {
       setDecks([{ index: 1, name: "Deck 1", cardIds: [] }]);
       setActiveIndex(1);
@@ -142,12 +142,10 @@ export default function DeckBuilder() {
         .upsert(
           {
             user_id: user.id,
-            deck_index: activeDeck.index,
-            name,
             card_ids: deckIds,
             updated_at: new Date().toISOString(),
-          },
-          { onConflict: ["user_id", "deck_index"] }
+          } as any,
+          { onConflict: "user_id" as any }
         );
       if (error) throw error;
       toast.success(t.deck_saved as string);
@@ -254,6 +252,7 @@ export default function DeckBuilder() {
                   <div key={inst.id} className="relative group">
                     <GameCard
                       {...card}
+                      archetype={card.archetype as import("@/data/gameCards").CardArchetype}
                       condition={condition}
                       count={1}
                       onClick={() => navigate(`/card-game/card/${card.id}`)}
@@ -297,6 +296,7 @@ export default function DeckBuilder() {
                   <div key={inst.id} className="relative group">
                     <GameCard
                       {...card}
+                      archetype={card.archetype as import("@/data/gameCards").CardArchetype}
                       condition={condition}
                       count={1}
                       onClick={canAdd ? () => addToDeck(inst.id) : undefined}

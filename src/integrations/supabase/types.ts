@@ -527,6 +527,36 @@ export type Database = {
         }
         Relationships: []
       }
+      map_pois: {
+        Row: {
+          created_at: string
+          id: string
+          invulnerable_until: string | null
+          latitude: number
+          longitude: number
+          name: string
+          owner_team: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invulnerable_until?: string | null
+          latitude: number
+          longitude: number
+          name: string
+          owner_team?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invulnerable_until?: string | null
+          latitude?: number
+          longitude?: number
+          name?: string
+          owner_team?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -610,6 +640,95 @@ export type Database = {
         }
         Relationships: []
       }
+      poi_battle_cards: {
+        Row: {
+          battle_id: string
+          created_at: string
+          id: string
+          side: string
+          stat_value: number
+          team_color: string
+          user_game_card_id: string
+          user_id: string
+        }
+        Insert: {
+          battle_id: string
+          created_at?: string
+          id?: string
+          side?: string
+          stat_value?: number
+          team_color: string
+          user_game_card_id: string
+          user_id: string
+        }
+        Update: {
+          battle_id?: string
+          created_at?: string
+          id?: string
+          side?: string
+          stat_value?: number
+          team_color?: string
+          user_game_card_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poi_battle_cards_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "poi_battles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poi_battle_cards_user_game_card_id_fkey"
+            columns: ["user_game_card_id"]
+            isOneToOne: false
+            referencedRelation: "user_game_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poi_battles: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          phase: string
+          poi_id: string
+          resolved: boolean
+          started_at: string
+          winner_team: string | null
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          phase?: string
+          poi_id: string
+          resolved?: boolean
+          started_at?: string
+          winner_team?: string | null
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          phase?: string
+          poi_id?: string
+          resolved?: boolean
+          started_at?: string
+          winner_team?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poi_battles_poi_id_fkey"
+            columns: ["poi_id"]
+            isOneToOne: false
+            referencedRelation: "map_pois"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -627,6 +746,7 @@ export type Database = {
           notify_dms: boolean
           pinned_car_id: string | null
           role: string
+          team_color: string | null
           theme: string | null
           total_xp: number
           user_id: string
@@ -649,6 +769,7 @@ export type Database = {
           notify_dms?: boolean
           pinned_car_id?: string | null
           role?: string
+          team_color?: string | null
           theme?: string | null
           total_xp?: number
           user_id: string
@@ -671,6 +792,7 @@ export type Database = {
           notify_dms?: boolean
           pinned_car_id?: string | null
           role?: string
+          team_color?: string | null
           theme?: string | null
           total_xp?: number
           user_id?: string
@@ -759,16 +881,22 @@ export type Database = {
       user_deck: {
         Row: {
           card_ids: string[]
+          deck_index: number
+          name: string
           updated_at: string
           user_id: string
         }
         Insert: {
           card_ids?: string[]
+          deck_index?: number
+          name?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           card_ids?: string[]
+          deck_index?: number
+          name?: string
           updated_at?: string
           user_id?: string
         }
@@ -966,6 +1094,7 @@ export type Database = {
         Returns: undefined
       }
       repair_card: { Args: { p_user_game_card_id: string }; Returns: Json }
+      resolve_poi_battle: { Args: { p_battle_id: string }; Returns: Json }
       send_coins_to_friend: {
         Args: { p_amount: number; p_to_user_id: string }
         Returns: Json

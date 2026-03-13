@@ -627,6 +627,23 @@ export default function CardGame() {
             </div>
           </button>
 
+          {/* World Domination tile */}
+          <button
+            type="button"
+            onClick={() => navigate("/card-game/world-domination")}
+            className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] shadow-lg shadow-black/20 w-full mt-3"
+          >
+            <div className="flex w-full items-center gap-4 rounded-xl bg-card/90 p-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-red-500/20 to-amber-500/10">
+                <span className="text-2xl">🌍</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-sm leading-tight">{tx.menu_world_domination as string}</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{tx.menu_world_domination_sub as string}</p>
+              </div>
+            </div>
+          </button>
+
         </div>
       ) : selectedFriend ? (
         friendLoading ? (
