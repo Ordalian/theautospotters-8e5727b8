@@ -947,6 +947,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      repair_card: { Args: { p_user_game_card_id: string }; Returns: Json }
       send_coins_to_friend: {
         Args: { p_amount: number; p_to_user_id: string }
         Returns: Json
@@ -958,10 +959,6 @@ export type Database = {
       }
       unlock_style: {
         Args: { p_price: number; p_style_id: string }
-        Returns: Json
-      }
-      repair_card: {
-        Args: { p_user_game_card_id: string }
         Returns: Json
       }
       update_friendship_status: {
