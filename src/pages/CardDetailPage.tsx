@@ -174,12 +174,19 @@ export default function CardDetailPage() {
     rare: "border-violet-500",
     mythic: "border-amber-400",
   };
-  const stats = [
-    { icon: Zap, label: t.game_speed as string, value: effectiveSpeed, color: "text-yellow-500", bg: "bg-yellow-500" },
-    { icon: Shield, label: t.game_resilience as string, value: effectiveResilience, color: "text-blue-500", bg: "bg-blue-500" },
-    { icon: Brain, label: t.game_adaptability as string, value: effectiveAdaptability, color: "text-cyan-500", bg: "bg-cyan-500" },
-    { icon: Sword, label: t.game_power as string, value: effectivePower, color: "text-red-500", bg: "bg-red-500" },
+  const statsRaw = [
+    { key: "speed" as const, icon: Zap, label: t.game_speed as string, value: effectiveSpeed, color: "text-yellow-500", bg: "bg-yellow-500" },
+    { key: "resilience" as const, icon: Shield, label: t.game_resilience as string, value: effectiveResilience, color: "text-blue-500", bg: "bg-blue-500" },
+    { key: "adaptability" as const, icon: Brain, label: t.game_adaptability as string, value: effectiveAdaptability, color: "text-cyan-500", bg: "bg-cyan-500" },
+    { key: "power" as const, icon: Sword, label: t.game_power as string, value: effectivePower, color: "text-red-500", bg: "bg-red-500" },
   ];
+  const archetypeFirst = card.archetype ?? "speed";
+  const stats = [...statsRaw]
+    .sort((a, b) => {
+      if (a.key === archetypeFirst) return -1;
+      if (b.key === archetypeFirst) return 1;
+      return b.value - a.value;
+    });
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -325,12 +332,14 @@ function CardImageBlock({
 
   if (loaded && !error && url) {
     return (
-      <img
-        src={url}
-        alt={`${brand} ${model}`}
-        className="max-w-full max-h-full w-auto h-auto object-contain object-center"
-        style={{ filter: filter !== "none" ? filter : undefined }}
-      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          src={url}
+          alt={`${brand} ${model}`}
+          className="max-w-full max-h-full w-auto h-auto object-contain object-center"
+          style={{ filter: filter !== "none" ? filter : undefined }}
+        />
+      </div>
     );
   }
   const fallback = POPUP_ARCHETYPE_FALLBACK[archetype];
