@@ -35,7 +35,7 @@ const VehicleTypeMenu = lazy(() => import("./pages/VehicleTypeMenu"));
 const EmblemPreview = lazy(() => import("./pages/EmblemPreview"));
 const Messaging = lazy(() => import("./pages/Messaging"));
 const CardGame = lazy(() => import("./pages/CardGame"));
-const BoardGamePage = lazy(() => import("./pages/BoardGamePage"));
+
 const AmisList = lazy(() => import("./pages/AmisList"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Support = lazy(() => import("./pages/Support"));
@@ -106,7 +106,7 @@ function AnimatedRoutes() {
           <Route path="/messaging" element={<ProtectedRoute><PageTransition><Messaging /></PageTransition></ProtectedRoute>} />
           <Route path="/card-game" element={<ProtectedRoute><PageTransition><CardGame /></PageTransition></ProtectedRoute>} />
           <Route path="/card-game/friends" element={<ProtectedRoute><PageTransition><AmisList /></PageTransition></ProtectedRoute>} />
-          <Route path="/board-game" element={<ProtectedRoute><PageTransition><BoardGamePage /></PageTransition></ProtectedRoute>} />
+
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
       </Suspense>

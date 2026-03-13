@@ -63,8 +63,7 @@ const fr: Translations = {
   dash_cars_spotted: (n: number) => `${n} voiture${n !== 1 ? "s" : ""} spottée${n !== 1 ? "s" : ""}`,
   dash_zone_jeu: "Zone de Jeu",
   dash_zone_jeu_sub: "Défis et jeux",
-  dash_board_game: "Plateau Stratégique",
-  dash_board_game_sub: "1v1 plateau",
+
   dash_friends: "Garages d'Amis",
   dash_friends_sub: "Voir tes amis",
   dash_shop: "Magasin",
@@ -650,22 +649,6 @@ const fr: Translations = {
     [commons && `${commons} Communes`, uncommons && `${uncommons} Peu communs`, rares && `${rares} Rares`, mythics && `${mythics} Mythiques`].filter(Boolean).join(" · ") || "",
   booster_continue: "Continuer",
 
-  // Board game (plateau stratégique 1v1)
-  board_game_title: "Plateau Stratégique",
-  board_game_setup_title: "Préparation — Placez vos cartes",
-  board_setup_player1: "Joueur 1",
-  board_setup_player2: "Joueur 2",
-  board_setup_points: (used: number, max: number) => `${used} / ${max} points`,
-  board_setup_min_max: "Min. 3 cartes, max. 10 cartes, 30 points max.",
-  board_setup_place_hint: "Sélectionnez une carte puis cliquez sur une case de votre zone de départ (colonnes 1-2).",
-  board_setup_remove: "Retirer",
-  board_setup_ready: "Prêt",
-  board_game_weather: "Météo",
-  board_game_turn_order: "Ordre de jeu (SPD)",
-  board_game_cards_in_play: "Cartes en jeu",
-  board_game_victory: "Victoire !",
-  board_game_winner_p1: "Joueur 1 gagne",
-  board_game_winner_p2: "Joueur 2 gagne",
 };
 
 export default fr;
