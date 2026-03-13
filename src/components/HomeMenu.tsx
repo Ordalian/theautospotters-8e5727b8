@@ -15,7 +15,7 @@ export function HomeMenu() {
     queryKey: ["home-menu", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      await supabase.rpc("claim_daily_boosters");
+      await (supabase.rpc as any)("claim_daily_boosters");
       const [
         { data: cooldown },
         { data: owned },
