@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTheme, PAID_STYLES, type ThemeId } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Coins, Package, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Coins, Loader2, Package, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { toast } from "sonner";
@@ -26,6 +28,8 @@ export default function Store() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { ownedStyleIds, refetchOwned, setTheme } = useTheme();
+  const [unlockingStyleId, setUnlockingStyleId] = useState<string | null>(null);
 
   const { data: profile, isLoading: loadingCoins } = useQuery({
     queryKey: ["profile-coins", user?.id],
@@ -79,6 +83,27 @@ export default function Store() {
       }
     } catch (e) {
       toast.error((e as Error)?.message ?? "Error");
+    }
+  };
+
+  const handleUnlockStyle = async (styleId: string, price: number) => {
+    if (!user) return;
+    if (coins < price) {
+      toast.error(t.store_insufficient_coins as string);
+      return;
+    }
+    setUnlockingStyleId(styleId);
+    try {
+      const { error } = await supabase.rpc("unlock_style", { p_style_id: styleId, p_price: price });
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["profile-coins", user.id] });
+      await refetchOwned();
+      setTheme(styleId as ThemeId);
+      toast.success(t.store_style_unlocked as string);
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Error");
+    } finally {
+      setUnlockingStyleId(null);
     }
   };
 
@@ -150,6 +175,70 @@ export default function Store() {
                 </span>
               </button>
             ))}
+          </div>
+        </section>
+
+        {/* Buy / unlock styles */}
+        <section>
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <Palette className="h-5 w-5 text-primary" />
+            {t.store_buy_styles as string}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">{t.store_buy_styles_sub as string}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-2 -ml-2 text-muted-foreground"
+            onClick={() => navigate("/garage-settings")}
+          >
+            {t.store_choose_theme as string}
+          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            {PAID_STYLES.map((s) => {
+              const owned = ownedStyleIds.has(s.id);
+              const price = s.price ?? 0;
+              const canUnlock = coins >= price;
+              const unlocking = unlockingStyleId === s.id;
+              return (
+                <div
+                  key={s.id}
+                  className="rounded-xl border border-border bg-card p-3 flex items-center gap-3"
+                >
+                  <div
+                    className="h-12 w-12 shrink-0 rounded-lg border border-white/10"
+                    style={{
+                      background: `linear-gradient(135deg, ${s.preview.bg} 0%, ${s.preview.accent} 100%)`,
+                    }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm truncate">{s.label}</p>
+                    {owned ? (
+                      <p className="text-xs text-primary flex items-center gap-1 mt-0.5">
+                        <Check className="h-3 w-3" />
+                        {t.store_style_owned as string}
+                      </p>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="mt-1.5 h-8 text-xs"
+                        disabled={unlocking || !canUnlock}
+                        onClick={() => handleUnlockStyle(s.id, price)}
+                      >
+                        {unlocking ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Coins className="h-3.5 w-3.5 mr-1" />
+                            {price}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       </div>

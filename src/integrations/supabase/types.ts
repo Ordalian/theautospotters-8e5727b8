@@ -960,6 +960,10 @@ export type Database = {
         Args: { p_price: number; p_style_id: string }
         Returns: Json
       }
+      repair_card: {
+        Args: { p_user_game_card_id: string }
+        Returns: Json
+      }
       update_friendship_status: {
         Args: { p_friendship_id: string; p_new_status: string }
         Returns: undefined
