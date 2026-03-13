@@ -788,6 +788,24 @@ export type Database = {
           },
         ]
       }
+      user_deck: {
+        Row: {
+          user_id: string
+          card_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          card_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          card_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_owned_styles: {
         Row: {
           id: string

@@ -665,10 +665,27 @@ const fr: Translations = {
   card_model: "Modèle",
   card_archetype: "Archétype",
 
+  // Deck builder
+  deck_builder_title: "Constructeur de deck",
+  deck_my_deck: "Mon deck",
+  deck_cards: "cartes",
+  deck_save: "Enregistrer le deck",
+  deck_current: "Cartes dans le deck",
+  deck_empty: "Aucune carte dans le deck. Ajoute des cartes depuis ta collection.",
+  deck_collection: "Ma collection (boosters)",
+  deck_no_cards: "Tu n'as pas encore de cartes. Ouvre des boosters !",
+  deck_add: "Ajouter au deck",
+  deck_max_cards: "Maximum 12 cartes.",
+  deck_max_points: "Maximum 30 points.",
+  deck_invalid: "Deck invalide.",
+  deck_saved: "Deck enregistré.",
+
   // Home menu (3 tiles)
   menu_boosters: "BOOSTERS",
   menu_my_cards: "MES CARTES",
   menu_friends_cards: "CARTES D'AMIS",
+  menu_deck_builder: "CONSTRUCTEUR DE DECK",
+  menu_deck_builder_sub: "30 pts max · 12 cartes · pour les parties à venir",
   menu_pack_available: (n: number) => (n <= 1 ? "1 pack disponible" : `${n} packs disponibles`),
   menu_packs_next: (h: number, m: number) => `Prochain dans ${h}h ${m}m`,
   menu_cards_total: (n: number) => `${n} carte${n !== 1 ? "s" : ""} au total`,

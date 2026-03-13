@@ -5,6 +5,17 @@ export type CardRarity = "common" | "uncommon" | "rare" | "mythic";
 export type CardArchetype = "speed" | "resilience" | "adaptability" | "power";
 export type CardCondition = "damaged" | "average" | "good" | "perfect";
 
+/** Deck builder: point value per rarity. Max 30 pts, max 12 cards per deck. */
+export const CARD_POINTS: Record<CardRarity, number> = {
+  common: 3,
+  uncommon: 4,
+  rare: 6,
+  mythic: 9,
+};
+
+export const DECK_MAX_POINTS = 30;
+export const DECK_MAX_CARDS = 12;
+
 export interface GameCardDef {
   name: string;
   brand: string;

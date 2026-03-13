@@ -13,7 +13,7 @@ import { BoosterOpeningFlow } from "@/components/game/BoosterOpeningFlow";
 import type { DrawnCard } from "@/components/game/BoosterOpeningFlow";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home, SlidersHorizontal, Check, Sparkles, ArrowDownWideNarrow } from "lucide-react";
+import { ArrowLeft, Package, LayoutGrid, Zap, Shield, Brain, Sword, Users, Home, SlidersHorizontal, Check, Sparkles, ArrowDownWideNarrow, Layers } from "lucide-react";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import type { Translations } from "@/i18n/translations/fr";
 import { toast } from "sonner";
@@ -603,6 +603,23 @@ export default function CardGame() {
               </div>
             </button>
           </div>
+
+          {/* Deck builder tile */}
+          <button
+            type="button"
+            onClick={() => navigate("/card-game/deck-builder")}
+            className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] shadow-lg shadow-black/20 w-full"
+          >
+            <div className="flex w-full items-center gap-4 rounded-xl bg-card/90 p-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-violet-500/10">
+                <Layers className="h-7 w-7 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-sm leading-tight">{tx.menu_deck_builder as string}</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{tx.menu_deck_builder_sub as string}</p>
+              </div>
+            </div>
+          </button>
 
         </div>
       ) : selectedFriend ? (
