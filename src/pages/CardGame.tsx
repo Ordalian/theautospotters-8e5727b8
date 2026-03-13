@@ -291,7 +291,7 @@ export default function CardGame() {
         if (error) throw error;
         trackFeature("booster_opened");
         if (!isPurchased) {
-          const { data: consumed } = await supabase.rpc("consume_daily_booster");
+          const { data: consumed } = await (supabase.rpc as any)("consume_daily_booster");
           if (consumed && (consumed as { ok?: boolean }).ok !== false) {
             const { data: cd } = await supabase.from("user_booster_cooldown").select("stored_count, next_available_at").eq("user_id", user.id).maybeSingle();
             const row = cd as { stored_count?: number; next_available_at?: string | null } | null;
