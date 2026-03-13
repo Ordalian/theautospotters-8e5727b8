@@ -864,16 +864,22 @@ export type Database = {
         Row: {
           id: string
           last_opened_at: string
+          next_available_at: string | null
+          stored_count: number
           user_id: string
         }
         Insert: {
           id?: string
           last_opened_at?: string
+          next_available_at?: string | null
+          stored_count?: number
           user_id: string
         }
         Update: {
           id?: string
           last_opened_at?: string
+          next_available_at?: string | null
+          stored_count?: number
           user_id?: string
         }
         Relationships: []
@@ -1028,6 +1034,8 @@ export type Database = {
       achievement_xp_for_level: { Args: { p_level: number }; Returns: number }
       add_coins: { Args: { p_amount: number }; Returns: undefined }
       add_purchased_boosters: { Args: { pack_size: number }; Returns: Json }
+      claim_daily_boosters: { Args: never; Returns: Json }
+      consume_daily_booster: { Args: never; Returns: Json }
       consume_purchased_booster: { Args: never; Returns: boolean }
       get_admin_stats: {
         Args: never
