@@ -344,7 +344,7 @@ function CardImageBlock({
   }
   const fallback = POPUP_ARCHETYPE_FALLBACK[archetype];
   return (
-    <div className={`absolute inset-0 bg-gradient-to-br ${fallback?.gradient ?? "from-zinc-800 to-zinc-900"} flex items-center justify-center rounded-b-xl`}>
+    <div className={`absolute inset-0 bg-gradient-to-br ${fallback?.gradient ?? "from-zinc-800 to-zinc-900"} flex items-center justify-center`}>
       <span className="text-5xl opacity-80">{fallback?.emoji ?? "🚗"}</span>
     </div>
   );
