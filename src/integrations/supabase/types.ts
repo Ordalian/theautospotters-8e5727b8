@@ -756,6 +756,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_deck: {
+        Row: {
+          card_ids: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_ids?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_ids?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_game_cards: {
         Row: {
           card_id: string
@@ -787,30 +805,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      user_deck: {
-        Row: {
-          user_id: string
-          deck_index: number
-          name: string
-          card_ids: string[]
-          updated_at: string
-        }
-        Insert: {
-          user_id: string
-          deck_index?: number
-          name?: string
-          card_ids?: string[]
-          updated_at?: string
-        }
-        Update: {
-          user_id?: string
-          deck_index?: number
-          name?: string
-          card_ids?: string[]
-          updated_at?: string
-        }
-        Relationships: []
       }
       user_owned_styles: {
         Row: {
