@@ -298,6 +298,7 @@ export default function DeckBuilder() {
                   <div key={inst.id} className="relative group">
                     <GameCard
                       {...card}
+                      archetype={card.archetype as import("@/data/gameCards").CardArchetype}
                       condition={condition}
                       count={1}
                       onClick={canAdd ? () => addToDeck(inst.id) : undefined}
