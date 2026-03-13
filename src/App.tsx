@@ -37,6 +37,7 @@ const Messaging = lazy(() => import("./pages/Messaging"));
 const CardGame = lazy(() => import("./pages/CardGame"));
 
 const AmisList = lazy(() => import("./pages/AmisList"));
+const Store = lazy(() => import("./pages/Store"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Support = lazy(() => import("./pages/Support"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -106,6 +107,7 @@ function AnimatedRoutes() {
           <Route path="/messaging" element={<ProtectedRoute><PageTransition><Messaging /></PageTransition></ProtectedRoute>} />
           <Route path="/card-game" element={<ProtectedRoute><PageTransition><CardGame /></PageTransition></ProtectedRoute>} />
           <Route path="/card-game/friends" element={<ProtectedRoute><PageTransition><AmisList /></PageTransition></ProtectedRoute>} />
+          <Route path="/store" element={<ProtectedRoute><PageTransition><Store /></PageTransition></ProtectedRoute>} />
 
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>

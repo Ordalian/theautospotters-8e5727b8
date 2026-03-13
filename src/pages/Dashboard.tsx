@@ -183,7 +183,7 @@ const Dashboard = () => {
 
   const bottomTiles = [
     { title: t.dash_friends as string, subtitle: t.dash_friends_sub as string, icon: Users, image: null, onClick: () => navigate("/friends"), gradient: "from-blue-500/20 to-blue-500/5", notificationCount: friendNotificationCount, iframe: null as string | null },
-    { title: t.dash_shop as string, subtitle: t.dash_shop_sub as string, icon: Store, image: null, onClick: () => {}, gradient: "from-rose-500/20 to-rose-500/5", notificationCount: 0, iframe: null as string | null },
+    { title: t.dash_shop as string, subtitle: t.dash_shop_sub as string, icon: Store, image: null, onClick: () => navigate("/store"), gradient: "from-rose-500/20 to-rose-500/5", notificationCount: 0, iframe: null as string | null },
   ];
 
   const smallTiles = [

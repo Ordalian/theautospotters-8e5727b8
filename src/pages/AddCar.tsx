@@ -449,11 +449,17 @@ const AddCar = () => {
 
       if (isDeliveryMode) {
         const inserted = await runInsert();
+        if (!isMiniature) {
+          await supabase.rpc("grant_coins_for_spot", { p_rarity_rating: rarityRating.level });
+        }
         trackFeature("car_submitted");
         toast.success(t.add_car_delivery_added as string);
         navigate(`/deliver-car/select-friend?carId=${inserted.id}`);
       } else {
         const inserted = await runInsert();
+        if (!isMiniature) {
+          await supabase.rpc("grant_coins_for_spot", { p_rarity_rating: rarityRating.level });
+        }
         trackFeature("car_submitted");
         if (isMiniature && inserted?.id) {
           try {

@@ -613,6 +613,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          coins: number
           created_at: string
           emblem_slot_1: string | null
           emblem_slot_2: string | null
@@ -620,6 +621,7 @@ export type Database = {
           id: string
           is_premium: boolean
           language: string
+          last_coin_sent_at: string | null
           last_delivery_at: string | null
           notify_channels: boolean
           notify_dms: boolean
@@ -633,6 +635,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          coins?: number
           created_at?: string
           emblem_slot_1?: string | null
           emblem_slot_2?: string | null
@@ -640,6 +643,7 @@ export type Database = {
           id?: string
           is_premium?: boolean
           language?: string
+          last_coin_sent_at?: string | null
           last_delivery_at?: string | null
           notify_channels?: boolean
           notify_dms?: boolean
@@ -653,6 +657,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          coins?: number
           created_at?: string
           emblem_slot_1?: string | null
           emblem_slot_2?: string | null
@@ -660,6 +665,7 @@ export type Database = {
           id?: string
           is_premium?: boolean
           language?: string
+          last_coin_sent_at?: string | null
           last_delivery_at?: string | null
           notify_channels?: boolean
           notify_dms?: boolean
@@ -747,6 +753,51 @@ export type Database = {
           id?: string
           last_opened_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_owned_styles: {
+        Row: {
+          id: string
+          user_id: string
+          style_id: string
+          obtained_at: string
+          obtained_via: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          style_id: string
+          obtained_at?: string
+          obtained_via?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          style_id?: string
+          obtained_at?: string
+          obtained_via?: string
+        }
+        Relationships: []
+      }
+      user_purchased_boosters: {
+        Row: {
+          id: string
+          user_id: string
+          pending_count: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          pending_count?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          pending_count?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -883,6 +934,13 @@ export type Database = {
         }[]
       }
       increment_total_xp: { Args: { amount?: number }; Returns: undefined }
+      grant_coins_for_spot: { Args: { p_rarity_rating: number }; Returns: undefined }
+      send_coins_to_friend: { Args: { p_to_user_id: string; p_amount: number }; Returns: Json }
+      add_coins: { Args: { p_amount: number }; Returns: undefined }
+      add_purchased_boosters: { Args: { pack_size: number }; Returns: Json }
+      consume_purchased_booster: { Args: Record<string, never>; Returns: boolean }
+      unlock_style: { Args: { p_style_id: string; p_price: number }; Returns: Json }
+      process_booster_style_drop: { Args: Record<string, never>; Returns: Json }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
       recompute_user_total_xp: {
         Args: { p_user_id: string }

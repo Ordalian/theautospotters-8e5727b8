@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useTheme, THEMES, type ThemeId } from "@/hooks/useTheme";
+import { useTheme, THEMES, PAID_STYLES, type ThemeId } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Car, Check, ChevronLeft, Palette, Pin, Search, Truck, Bike, Ship, Plane, TrainFront, Sparkles } from "lucide-react";
+import { ArrowLeft, Car, Check, ChevronLeft, Lock, Palette, Pin, Search, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,8 +42,9 @@ const GarageSettings = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t } = useLanguage();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, ownedStyleIds, coins, refetchOwned } = useTheme();
   const [pinnedCarId, setPinnedCarId] = useState<string | null>(null);
+  const [unlockingStyleId, setUnlockingStyleId] = useState<string | null>(null);
   const [cars, setCars] = useState<CarOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -159,6 +160,71 @@ const GarageSettings = () => {
                 {theme === t.id && <Check className="absolute right-2 top-2 h-4 w-4 text-primary" />}
               </button>
             ))}
+          </div>
+          <h3 className="text-sm font-semibold text-muted-foreground pt-2">{t.settings_paid_styles as string}</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {PAID_STYLES.map((s) => {
+              const owned = ownedStyleIds.has(s.id);
+              const price = s.price ?? 0;
+              const canUnlock = coins >= price;
+              const unlocking = unlockingStyleId === s.id;
+              return (
+                <div
+                  key={s.id}
+                  className={`relative flex items-center gap-3 rounded-xl border-2 p-3 transition-all ${
+                    theme === s.id ? "border-primary bg-primary/10" : "border-border bg-card"
+                  } ${owned ? "" : "opacity-90"}`}
+                >
+                  <div
+                    className="h-10 w-10 shrink-0 rounded-lg border border-white/10"
+                    style={{
+                      background: `linear-gradient(135deg, ${s.preview.bg} 0%, ${s.preview.accent} 100%)`,
+                    }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm font-semibold block">{s.label}</span>
+                    {owned ? (
+                      <button
+                        type="button"
+                        onClick={() => setTheme(s.id)}
+                        className="text-xs text-primary hover:underline mt-0.5"
+                      >
+                        {theme === s.id ? "✓ Actif" : (t.settings_theme_apply as string)}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={unlocking || !canUnlock}
+                        onClick={async () => {
+                          setUnlockingStyleId(s.id);
+                          try {
+                            const { error } = await supabase.rpc("unlock_style", { p_style_id: s.id, p_price: price });
+                            if (error) throw error;
+                            await refetchOwned();
+                            setTheme(s.id);
+                            toast.success(t.settings_style_unlocked as string);
+                          } catch (err: any) {
+                            toast.error(err?.message ?? (t.error as string));
+                          } finally {
+                            setUnlockingStyleId(null);
+                          }
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 mt-0.5 disabled:opacity-50"
+                      >
+                        {unlocking ? "…" : (
+                          <>
+                            <Lock className="h-3 w-3" />
+                            <Coins className="h-3 w-3" />
+                            {price}
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  {theme === s.id && <Check className="absolute right-2 top-2 h-4 w-4 text-primary" />}
+                </div>
+              );
+            })}
           </div>
         </section>
 

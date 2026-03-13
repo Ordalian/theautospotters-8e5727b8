@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
-import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight } from "lucide-react";
+import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight, Coins } from "lucide-react";
+import { useLanguage } from "@/i18n/LanguageContext";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
 import UserRoleBadge from "@/components/UserRoleBadge";
@@ -83,8 +84,15 @@ const FriendsGarages = () => {
   const [deliveryPopupOpen, setDeliveryPopupOpen] = useState(false);
   const [deliveryNotifications, setDeliveryNotifications] = useState<DeliveryNotification[]>([]);
   const [tick, setTick] = useState(0);
+  const [myCoins, setMyCoins] = useState<number>(0);
+  const [lastCoinSentAt, setLastCoinSentAt] = useState<string | null>(null);
+  const [coinSendPopupOpen, setCoinSendPopupOpen] = useState(false);
+  const [coinSendFriendId, setCoinSendFriendId] = useState<string | null>(null);
+  const [coinSendAmount, setCoinSendAmount] = useState("");
+  const [coinSending, setCoinSending] = useState(false);
 
   const DELIVERY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+  const COIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
   const deliveryCooldown = useMemo(() => {
     if (!lastDeliveryAt) return { active: false, remainingMs: 0 };
@@ -106,6 +114,42 @@ const FriendsGarages = () => {
     return 1 - deliveryCooldown.remainingMs / DELIVERY_COOLDOWN_MS;
   }, [deliveryCooldown.active, deliveryCooldown.remainingMs]);
 
+  const coinCooldown = useMemo(() => {
+    if (!lastCoinSentAt) return { active: false, remainingMs: 0 };
+    const end = new Date(lastCoinSentAt).getTime() + COIN_COOLDOWN_MS;
+    const remaining = end - Date.now();
+    return { active: remaining > 0, remainingMs: Math.max(0, remaining) };
+  }, [lastCoinSentAt, tick]);
+
+  const handleSendCoin = async () => {
+    if (!user || !coinSendFriendId || !coinSendAmount.trim()) return;
+    const amount = parseInt(coinSendAmount.trim(), 10);
+    if (isNaN(amount) || amount <= 0 || amount > myCoins) {
+      toast.error(t.send_coin_insufficient as string);
+      return;
+    }
+    setCoinSending(true);
+    try {
+      const { data } = await supabase.rpc("send_coins_to_friend", { p_to_user_id: coinSendFriendId, p_amount: amount });
+      const result = data as { ok?: boolean; error?: string } | null;
+      if (result?.ok) {
+        setCoinSendPopupOpen(false);
+        setCoinSendFriendId(null);
+        setCoinSendAmount("");
+        setMyCoins((c) => c - amount);
+        setLastCoinSentAt(new Date().toISOString());
+        toast.success(t.send_coin_success as string);
+      } else {
+        const msg = result?.error === "cooldown_24h" ? (t.send_coin_cooldown as string) : result?.error === "insufficient_coins" ? (t.send_coin_insufficient as string) : result?.error || "Error";
+        toast.error(msg);
+      }
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Error");
+    } finally {
+      setCoinSending(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchFriends();
@@ -125,10 +169,12 @@ const FriendsGarages = () => {
     if (!user) return;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("last_delivery_at")
+      .select("last_delivery_at, coins, last_coin_sent_at")
       .eq("user_id", user.id)
       .maybeSingle();
     setLastDeliveryAt(profile?.last_delivery_at ?? null);
+    setMyCoins((profile as { coins?: number } | null)?.coins ?? 0);
+    setLastCoinSentAt((profile as { last_coin_sent_at?: string | null } | null)?.last_coin_sent_at ?? null);
 
     const { data: deliveries } = await supabase
       .from("deliveries")
@@ -375,6 +421,81 @@ const FriendsGarages = () => {
                   </Button>
                   <Button onClick={() => { setDeliveryPopupOpen(false); navigate("/deliver-car"); }} className="gap-1">
                     <Check className="h-4 w-4" /> Oui
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Send coin — next to delivery */}
+            <div className="rounded-xl border border-border bg-card overflow-hidden mt-3">
+              {coinCooldown.active ? (
+                <div className="flex items-center gap-4 p-4">
+                  <div className="h-14 w-14 shrink-0 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                    <Coins className="h-7 w-7 text-amber-500/50" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">{t.send_coin as string}</p>
+                    <p className="text-xs text-muted-foreground">{t.send_coin_cooldown as string}</p>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCoinSendPopupOpen(true)}
+                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-muted/30 transition-colors"
+                >
+                  <div className="h-14 w-14 shrink-0 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                    <Coins className="h-7 w-7 text-amber-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-lg">{t.send_coin as string}</p>
+                    <p className="text-sm text-muted-foreground">{t.send_coin_sub as string}</p>
+                  </div>
+                  <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{myCoins}</span>
+                </button>
+              )}
+            </div>
+
+            <Dialog open={coinSendPopupOpen} onOpenChange={(open) => { setCoinSendPopupOpen(open); if (!open) { setCoinSendFriendId(null); setCoinSendAmount(""); } }}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{t.send_coin_modal_title as string}</DialogTitle>
+                  <DialogDescription>{t.send_coin_choose_friend as string}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">{t.send_coin_choose_friend as string}</p>
+                    <div className="max-h-40 overflow-y-auto space-y-1 border rounded-lg p-2">
+                      {friends.map((f) => (
+                        <button
+                          key={f.user_id}
+                          type="button"
+                          onClick={() => setCoinSendFriendId(f.user_id)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm ${coinSendFriendId === f.user_id ? "bg-primary/20 text-primary" : "hover:bg-muted"}`}
+                        >
+                          {f.username || f.user_id}
+                        </button>
+                      ))}
+                      {friends.length === 0 && <p className="text-sm text-muted-foreground p-2">Aucun ami</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium mb-1">{t.send_coin_amount as string}</p>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={myCoins}
+                      value={coinSendAmount}
+                      onChange={(e) => setCoinSendAmount(e.target.value)}
+                      placeholder="0"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Solde : {myCoins}</p>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setCoinSendPopupOpen(false)}>Annuler</Button>
+                  <Button onClick={handleSendCoin} disabled={coinSending || !coinSendFriendId || !coinSendAmount.trim() || parseInt(coinSendAmount.trim(), 10) > myCoins}>
+                    {coinSending ? "…" : (t.send_coin as string)}
                   </Button>
                 </DialogFooter>
               </DialogContent>

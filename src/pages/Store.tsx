@@ -1,0 +1,158 @@
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Coins, Package, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import BlackGoldBg from "@/components/BlackGoldBg";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+
+const COIN_PACKS = [
+  { coins: 100, priceLabel: "1 €", packSize: 100 },
+  { coins: 500, priceLabel: "5 €", packSize: 500 },
+  { coins: 1000, priceLabel: "9 €", packSize: 1000 },
+] as const;
+
+const BOOSTER_PACKS = [
+  { count: 1, cost: 100 },
+  { count: 5, cost: 500 },
+  { count: 10, cost: 900 },
+] as const;
+
+export default function Store() {
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data: profile, isLoading: loadingCoins } = useQuery({
+    queryKey: ["profile-coins", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("coins")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data as { coins: number } | null;
+    },
+    enabled: !!user?.id,
+  });
+
+  const coins = profile?.coins ?? 0;
+
+  const handleAddCoins = async (amount: number) => {
+    if (!user) return;
+    try {
+      await supabase.rpc("add_coins", { p_amount: amount });
+      await queryClient.invalidateQueries({ queryKey: ["profile-coins", user.id] });
+      toast.success(
+        typeof t.store_coins_added === "function"
+          ? (t.store_coins_added as (n: number) => string)(amount)
+          : `${amount} coins added`
+      );
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Error");
+    }
+  };
+
+  const handleBuyBoosters = async (packSize: number, cost: number) => {
+    if (!user) return;
+    if (coins < cost) {
+      toast.error(t.store_insufficient_coins as string);
+      return;
+    }
+    try {
+      const { data } = await supabase.rpc("add_purchased_boosters", { pack_size: packSize });
+      const result = data as { ok?: boolean; error?: string } | null;
+      if (result?.ok) {
+        await queryClient.invalidateQueries({ queryKey: ["profile-coins", user.id] });
+        await queryClient.invalidateQueries({ queryKey: ["user-purchased-boosters", user.id] });
+        toast.success(
+          typeof t.store_boosters_bought === "function"
+            ? (t.store_boosters_bought as (n: number) => string)(packSize)
+            : `${packSize} booster(s) added`
+        );
+      } else {
+        toast.error((result?.error && t[`store_${result.error}` as keyof typeof t]) || result?.error || "Error");
+      }
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Error");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background relative">
+      <BlackGoldBg />
+      <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/home")}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-xl font-bold">{t.store_title as string}</h1>
+        <div className="flex items-center gap-1.5 min-w-[80px] justify-end">
+          {loadingCoins ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : (
+            <>
+              <Coins className="h-5 w-5 text-primary" />
+              <span className="font-bold tabular-nums">{coins}</span>
+            </>
+          )}
+        </div>
+      </header>
+
+      <div className="p-4 max-w-lg mx-auto space-y-8 relative z-10">
+        {/* Buy coins (free for now) */}
+        <section>
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <Coins className="h-5 w-5 text-primary" />
+            {t.store_buy_coins as string}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">{t.store_coins_free_hint as string}</p>
+          <div className="grid grid-cols-3 gap-3">
+            {COIN_PACKS.map(({ coins: amount, priceLabel, packSize }) => (
+              <button
+                key={packSize}
+                type="button"
+                onClick={() => handleAddCoins(packSize)}
+                className="rounded-xl border border-border bg-card p-4 flex flex-col items-center gap-1 hover:border-primary/40 transition-colors"
+              >
+                <span className="text-2xl font-bold text-primary">{amount}</span>
+                <span className="text-xs text-muted-foreground">{priceLabel}</span>
+                <span className="text-[10px] text-primary/80 mt-1">{t.store_get as string}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Buy boosters */}
+        <section>
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <Package className="h-5 w-5 text-primary" />
+            {t.store_buy_boosters as string}
+          </h2>
+          <div className="space-y-2">
+            {BOOSTER_PACKS.map(({ count, cost }) => (
+              <button
+                key={count}
+                type="button"
+                onClick={() => handleBuyBoosters(count, cost)}
+                disabled={coins < cost}
+                className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/40 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <span className="font-semibold">
+                  {count} {count === 1 ? (t.store_booster as string) : (t.store_boosters as string)}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Coins className="h-4 w-4 text-primary" />
+                  <span className="font-mono font-bold">{cost}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
