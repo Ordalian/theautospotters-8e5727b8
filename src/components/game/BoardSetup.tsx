@@ -105,8 +105,8 @@ export function BoardSetup({
       <p className="text-xs text-muted-foreground">
         {t.board_setup_place_hint as string}
       </p>
-      <div className="grid grid-cols-2 gap-1 w-24">
-        {Array.from({ length: 20 }, (_, row) =>
+      <div className="grid grid-cols-1 gap-1 w-12">
+        {Array.from({ length: 8 }, (_, row) =>
           startCols.map((col) => ({ col, row }))
         )
           .flat()
