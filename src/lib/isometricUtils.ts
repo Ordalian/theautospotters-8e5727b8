@@ -1,9 +1,10 @@
 /**
- * Utilitaires pour le rendu isométrique du plateau.
+ * Utilitaires pour le rendu isométrique du plateau (Into the Breach style).
  */
 
-export const TILE_W = 64;
-export const TILE_H = 32;
+export const TILE_W = 80;
+export const TILE_H = 40;
+export const TILE_DEPTH = 16; // Height of the block sides
 export const BOARD_SIZE = 20;
 
 /** Convertit une position grille (gx, gy) en coordonnées écran (px). */
@@ -39,13 +40,13 @@ export function getBoardDimensions() {
       minX = Math.min(minX, x);
       maxX = Math.max(maxX, x + TILE_W);
       minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y + TILE_H);
+      maxY = Math.max(maxY, y + TILE_H + TILE_DEPTH);
     }
   }
   return {
     offsetX: -minX,
     offsetY: -minY,
     totalW: maxX - minX,
-    totalH: maxY - minY,
+    totalH: maxY - minY + TILE_DEPTH,
   };
 }
