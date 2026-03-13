@@ -58,13 +58,14 @@ export default function CardGame() {
   const [filterArch, setFilterArch] = useState<FilterArch>("all");
   const [filterRarity, setFilterRarity] = useState<FilterRarity>("all");
   const [sortStat, setSortStat] = useState<SortStat>("none");
-  const [cooldownEnd, setCooldownEnd] = useState<Date | null>(null);
+  const [dailyStoredCount, setDailyStoredCount] = useState(0);
+  const [nextDailyAt, setNextDailyAt] = useState<Date | null>(null);
   const [purchasedBoosterCount, setPurchasedBoosterCount] = useState(0);
   const [openingWithPurchased, setOpeningWithPurchased] = useState(false);
   const [boosterCards, setBoosterCards] = useState<MasterCard[] | null>(null);
   const [showBoosterFlow, setShowBoosterFlow] = useState(false);
   const [opening, setOpening] = useState(false);
-  const [countdown, setCountdown] = useState("");
+  const [dailyCountdown, setDailyCountdown] = useState("");
   // Friends tab state
   const [friends, setFriends] = useState<FriendProfile[]>([]);
   const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null);
@@ -78,15 +79,16 @@ export default function CardGame() {
     return conditions.reduce((a, b) => (CONDITION_RANK[a] >= CONDITION_RANK[b] ? a : b));
   }, []);
 
-  // Load master cards + own collection + cooldown
+  // Load master cards + own collection + daily boosters (claim first) + purchased
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoading(true);
+      await supabase.rpc("claim_daily_boosters");
       const [{ data: master }, { data: owned }, { data: cd }, { data: purchased }] = await Promise.all([
         supabase.from("game_cards").select("*").order("rarity").order("archetype").order("name"),
         supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id),
-        supabase.from("user_booster_cooldown").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("user_booster_cooldown").select("stored_count, next_available_at").eq("user_id", user.id).maybeSingle(),
         supabase.from("user_purchased_boosters").select("pending_count").eq("user_id", user.id).maybeSingle(),
       ]);
 
@@ -105,10 +107,9 @@ export default function CardGame() {
       byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
       setOwnedBestCondition(best);
 
-      if (cd) {
-        const end = new Date(new Date(cd.last_opened_at).getTime() + 12 * 60 * 60 * 1000);
-        if (end > new Date()) setCooldownEnd(end);
-      }
+      const cdRow = cd as { stored_count?: number; next_available_at?: string | null } | null;
+      setDailyStoredCount(cdRow?.stored_count ?? 0);
+      setNextDailyAt(cdRow?.next_available_at ? new Date(cdRow.next_available_at) : null);
       setPurchasedBoosterCount((purchased as { pending_count?: number } | null)?.pending_count ?? 0);
       setLoading(false);
     })();
@@ -174,21 +175,21 @@ export default function CardGame() {
     setFriendLoading(false);
   }
 
-  // Countdown timer
+  // Daily booster countdown (next available when stored < 3)
   useEffect(() => {
-    if (!cooldownEnd) { setCountdown(""); return; }
+    if (!nextDailyAt || dailyStoredCount >= 3) { setDailyCountdown(""); return; }
     const tick = () => {
-      const diff = cooldownEnd.getTime() - Date.now();
-      if (diff <= 0) { setCooldownEnd(null); setCountdown(""); return; }
+      const diff = nextDailyAt.getTime() - Date.now();
+      if (diff <= 0) { setDailyCountdown(""); return; }
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      setCountdown(`${h}h ${m}m ${s}s`);
+      setDailyCountdown(`${h}h ${m}m ${s}s`);
     };
     tick();
     const iv = setInterval(tick, 1000);
     return () => clearInterval(iv);
-  }, [cooldownEnd]);
+  }, [nextDailyAt, dailyStoredCount]);
 
   const filtered = useMemo(() => {
     const result = masterCards.filter((c) => {
@@ -208,11 +209,16 @@ export default function CardGame() {
     return total;
   }, [ownedCounts]);
 
+  const dailyAvailable = useMemo(() => {
+    const now = Date.now();
+    const currentReady = nextDailyAt ? now >= nextDailyAt.getTime() : false;
+    return Math.min(4, dailyStoredCount + (currentReady ? 1 : 0));
+  }, [dailyStoredCount, nextDailyAt]);
+
   // Stats for menu tiles (same as HomeMenu)
   const menuStats = useMemo(() => {
     const now = Date.now();
-    const packAvailable = !cooldownEnd || now >= cooldownEnd.getTime();
-    const remainingMs = cooldownEnd ? Math.max(0, cooldownEnd.getTime() - now) : 0;
+    const remainingMs = nextDailyAt && dailyStoredCount < 3 ? Math.max(0, nextDailyAt.getTime() - now) : 0;
     const remainingH = Math.floor(remainingMs / 3600000);
     const remainingM = Math.floor((remainingMs % 3600000) / 60000);
     const cardIds = [...ownedCounts.keys()];
@@ -221,7 +227,9 @@ export default function CardGame() {
     let perfectCount = 0;
     ownedBestCondition.forEach((cond) => { if (cond === "perfect") perfectCount++; });
     return {
-      packAvailable,
+      packAvailable: dailyAvailable > 0,
+      dailyAvailable,
+      dailyStoredCount,
       remainingH,
       remainingM,
       totalCards: ownedTotal,
@@ -229,7 +237,7 @@ export default function CardGame() {
       perfectCount,
       friendsCount: friends.length,
     };
-  }, [cooldownEnd, ownedCounts, ownedTotal, masterCards, ownedBestCondition, friends.length]);
+  }, [dailyAvailable, dailyStoredCount, nextDailyAt, ownedCounts, ownedTotal, masterCards, ownedBestCondition, friends.length]);
 
   function startBoosterFlow(usePurchased: boolean) {
     if (!user || opening) return;
@@ -283,13 +291,13 @@ export default function CardGame() {
         if (error) throw error;
         trackFeature("booster_opened");
         if (!isPurchased) {
-          const { data: existing } = await supabase.from("user_booster_cooldown").select("id").eq("user_id", user.id).maybeSingle();
-          if (existing) {
-            await supabase.from("user_booster_cooldown").update({ last_opened_at: new Date().toISOString() }).eq("user_id", user.id);
-          } else {
-            await supabase.from("user_booster_cooldown").insert({ user_id: user.id, last_opened_at: new Date().toISOString() });
+          const { data: consumed } = await supabase.rpc("consume_daily_booster");
+          if (consumed && (consumed as { ok?: boolean }).ok !== false) {
+            const { data: cd } = await supabase.from("user_booster_cooldown").select("stored_count, next_available_at").eq("user_id", user.id).maybeSingle();
+            const row = cd as { stored_count?: number; next_available_at?: string | null } | null;
+            setDailyStoredCount(row?.stored_count ?? 0);
+            setNextDailyAt(row?.next_available_at ? new Date(row.next_available_at) : null);
           }
-          setCooldownEnd(new Date(Date.now() + 12 * 60 * 60 * 1000));
         } else {
           setPurchasedBoosterCount((c) => Math.max(0, c - 1));
         }
@@ -493,7 +501,7 @@ export default function CardGame() {
   const tx = t as Translations;
   const menuSubtitleBoosters =
     menuStats.packAvailable
-      ? (typeof tx.menu_pack_available === "function" ? tx.menu_pack_available(1) : "1 pack disponible")
+      ? (typeof tx.menu_pack_available === "function" ? tx.menu_pack_available(menuStats.dailyAvailable) : `${menuStats.dailyAvailable} pack(s) disponible(s)`)
       : (typeof tx.menu_packs_next === "function" ? tx.menu_packs_next(menuStats.remainingH, menuStats.remainingM) : "");
   const menuSubtitleCollection =
     typeof tx.menu_cards_total === "function" && typeof tx.menu_mythic_perfect === "function"
@@ -691,32 +699,59 @@ export default function CardGame() {
           onComplete={handleBoosterComplete}
         />
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 gap-6 px-4">
-          <div className="text-6xl">📦</div>
-          <p className="text-center text-muted-foreground text-sm max-w-xs">
+        <div className="flex flex-col py-8 px-4 gap-8 max-w-md mx-auto">
+          <p className="text-center text-muted-foreground text-sm">
             {t.game_booster_desc as string}
           </p>
 
-          {cooldownEnd && (
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-1">{t.game_next_booster as string}</p>
-              <p className="text-2xl font-bold font-mono text-primary">{countdown}</p>
-            </div>
-          )}
+          {/* Boosters quotidiens */}
+          <div className="rounded-2xl border border-border/60 bg-card/80 p-4 space-y-3">
+            <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+              <span className="text-lg">📅</span>
+              {typeof tx.game_daily_boosters === "string" ? tx.game_daily_boosters : "Boosters quotidiens"}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {dailyAvailable > 0
+                ? (typeof tx.game_daily_boosters_available === "function" ? (tx.game_daily_boosters_available as (n: number) => string)(dailyAvailable) : `${dailyAvailable} à ouvrir`)
+                : (typeof tx.game_daily_boosters_stored === "function" ? (tx.game_daily_boosters_stored as (n: number) => string)(dailyStoredCount) : `${dailyStoredCount}/3 stockés`)}
+            </p>
+            {dailyStoredCount < 3 && nextDailyAt && nextDailyAt.getTime() > Date.now() && (
+              <p className="text-xs text-muted-foreground">
+                {t.game_next_booster as string} <span className="font-mono font-semibold text-primary">{dailyCountdown}</span>
+              </p>
+            )}
+            <Button
+              onClick={() => startBoosterFlow(false)}
+              disabled={opening || dailyAvailable <= 0}
+              size="lg"
+              className="w-full gap-2"
+            >
+              <Package className="h-5 w-5" />
+              {opening ? (t.loading as string) : (t.game_open_free_booster as string)}
+            </Button>
+          </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
-            {!cooldownEnd && (
-              <Button onClick={() => startBoosterFlow(false)} disabled={opening} size="lg" className="gap-2 flex-1">
-                <Package className="h-5 w-5" />
-                {opening ? (t.loading as string) : (t.game_open_free_booster as string)}
-              </Button>
-            )}
-            {purchasedBoosterCount > 0 && (
-              <Button onClick={() => startBoosterFlow(true)} disabled={opening} variant={cooldownEnd ? "default" : "outline"} size="lg" className="gap-2 flex-1">
-                <Package className="h-5 w-5" />
-                {opening ? (t.loading as string) : (typeof t.game_open_purchased_booster === "function" ? (t.game_open_purchased_booster as (n: number) => string)(purchasedBoosterCount) : `${t.game_open_booster} (${purchasedBoosterCount})`)}
-              </Button>
-            )}
+          {/* Boosters premium */}
+          <div className="rounded-2xl border border-border/60 bg-card/80 p-4 space-y-3">
+            <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+              <span className="text-lg">⭐</span>
+              {typeof tx.game_premium_boosters === "string" ? tx.game_premium_boosters : "Boosters premium"}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {typeof tx.game_premium_boosters_count === "function"
+                ? (tx.game_premium_boosters_count as (n: number) => string)(purchasedBoosterCount)
+                : `${purchasedBoosterCount} à ouvrir`}
+            </p>
+            <Button
+              onClick={() => startBoosterFlow(true)}
+              disabled={opening || purchasedBoosterCount <= 0}
+              variant="secondary"
+              size="lg"
+              className="w-full gap-2"
+            >
+              <Package className="h-5 w-5" />
+              {opening ? (t.loading as string) : (typeof t.game_open_purchased_booster === "function" ? (t.game_open_purchased_booster as (n: number) => string)(purchasedBoosterCount) : `${t.game_open_booster} (${purchasedBoosterCount})`)}
+            </Button>
           </div>
         </div>
       )}

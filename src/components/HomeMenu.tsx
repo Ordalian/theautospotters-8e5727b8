@@ -15,13 +15,14 @@ export function HomeMenu() {
     queryKey: ["home-menu", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      await supabase.rpc("claim_daily_boosters");
       const [
         { data: cooldown },
         { data: owned },
         { data: masterCards },
         { data: friendships },
       ] = await Promise.all([
-        supabase.from("user_booster_cooldown").select("last_opened_at").eq("user_id", user!.id).maybeSingle(),
+        supabase.from("user_booster_cooldown").select("stored_count, next_available_at").eq("user_id", user!.id).maybeSingle(),
         supabase.from("user_game_cards").select("card_id").eq("user_id", user!.id),
         supabase.from("game_cards").select("id, rarity").order("rarity").order("archetype").order("name"),
         supabase
@@ -31,12 +32,14 @@ export function HomeMenu() {
           .or(`requester_id.eq.${user!.id},addressee_id.eq.${user!.id}`),
       ]);
 
-      const COOLDOWN_MS = 12 * 60 * 60 * 1000;
-      const lastOpened = cooldown?.last_opened_at ? new Date(cooldown.last_opened_at).getTime() : 0;
-      const cooldownEnd = lastOpened + COOLDOWN_MS;
+      const cd = cooldown as { stored_count?: number; next_available_at?: string | null } | null;
+      const storedCount = cd?.stored_count ?? 0;
+      const nextAt = cd?.next_available_at ? new Date(cd.next_available_at) : null;
       const now = Date.now();
-      const packAvailable = now >= cooldownEnd;
-      const remainingMs = Math.max(0, cooldownEnd - now);
+      const currentReady = nextAt ? now >= nextAt.getTime() : false;
+      const dailyAvailable = Math.min(4, storedCount + (currentReady ? 1 : 0));
+      const packAvailable = dailyAvailable > 0;
+      const remainingMs = nextAt && storedCount < 3 ? Math.max(0, nextAt.getTime() - now) : 0;
       const remainingH = Math.floor(remainingMs / 3600000);
       const remainingM = Math.floor((remainingMs % 3600000) / 60000);
 
@@ -53,6 +56,7 @@ export function HomeMenu() {
 
       return {
         packAvailable,
+        dailyAvailable,
         remainingH,
         remainingM,
         totalCards,
@@ -73,7 +77,7 @@ export function HomeMenu() {
     );
   }
 
-  const menuPackAvailable = typeof tx.menu_pack_available === "function" ? tx.menu_pack_available(1) : "1 pack disponible";
+  const menuPackAvailable = typeof tx.menu_pack_available === "function" ? tx.menu_pack_available(data.dailyAvailable) : `${data.dailyAvailable} pack(s)`;
   const menuPacksNext =
     !data.packAvailable && typeof tx.menu_packs_next === "function"
       ? tx.menu_packs_next(data.remainingH, data.remainingM)

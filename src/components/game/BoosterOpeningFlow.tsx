@@ -6,7 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import type { GameCardDef } from "@/data/gameCards";
 import type { CardCondition } from "@/data/gameCards";
 
-export type Phase = "pick" | "anticipation" | "tear" | "reveal" | "summary" | "back";
+export type Phase = "pick" | "anticipation" | "tear" | "reveal_all" | "summary" | "back";
 
 export interface Pack {
   id: string;
@@ -23,21 +23,12 @@ interface BoosterOpeningState {
   phase: Phase;
   selectedPack: Pack | null;
   drawnCards: DrawnCard[];
-  currentCardIndex: number;
-  isFlipping: boolean;
-  tearDone: boolean;
-  mythicExtraShown: boolean;
 }
 
 type Action =
   | { type: "SELECT_PACK"; pack: Pack }
-  | { type: "START_ANTICIPATION" }
   | { type: "START_TEAR" }
   | { type: "TEAR_DONE"; cards: DrawnCard[] }
-  | { type: "NEXT_CARD" }
-  | { type: "FLIP_START" }
-  | { type: "FLIP_END" }
-  | { type: "MYTHIC_EXTRA_DONE" }
   | { type: "GO_SUMMARY" }
   | { type: "GO_BACK" };
 
@@ -45,30 +36,16 @@ const initialState: BoosterOpeningState = {
   phase: "pick",
   selectedPack: null,
   drawnCards: [],
-  currentCardIndex: 0,
-  isFlipping: false,
-  tearDone: false,
-  mythicExtraShown: false,
 };
 
 function reducer(state: BoosterOpeningState, action: Action): BoosterOpeningState {
   switch (action.type) {
     case "SELECT_PACK":
       return { ...state, selectedPack: action.pack, phase: "anticipation" };
-    case "START_ANTICIPATION":
-      return state;
     case "START_TEAR":
       return { ...state, phase: "tear" };
     case "TEAR_DONE":
-      return { ...state, phase: "reveal", drawnCards: action.cards, tearDone: true };
-    case "NEXT_CARD":
-      return { ...state, currentCardIndex: state.currentCardIndex + 1, isFlipping: false, mythicExtraShown: false };
-    case "FLIP_START":
-      return { ...state, isFlipping: true };
-    case "FLIP_END":
-      return { ...state, isFlipping: false };
-    case "MYTHIC_EXTRA_DONE":
-      return { ...state, mythicExtraShown: true };
+      return { ...state, phase: "reveal_all", drawnCards: action.cards };
     case "GO_SUMMARY":
       return { ...state, phase: "summary" };
     case "GO_BACK":
@@ -86,24 +63,28 @@ interface BoosterOpeningFlowProps {
 
 const PACK_ROTATION = () => (Math.random() * 6 - 3);
 
+const ANTICIPATION_MS = 1200;
+
 export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpeningFlowProps) {
   const { t } = useLanguage();
   const [state, dispatch] = useReducer(reducer, initialState);
   const tearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mythicExtraRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anticipationRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tx = t as Record<string, string | ((...args: unknown[]) => string)>;
 
-  const handlePackSelect = useCallback(
-    (pack: Pack) => {
-      dispatch({ type: "SELECT_PACK", pack });
-    },
-    []
-  );
-
-  const handleTapToOpen = useCallback(() => {
-    dispatch({ type: "START_TEAR" });
+  const handlePackSelect = useCallback((pack: Pack) => {
+    dispatch({ type: "SELECT_PACK", pack });
   }, []);
+
+  // Auto-start tear after anticipation
+  useEffect(() => {
+    if (state.phase !== "anticipation") return;
+    anticipationRef.current = setTimeout(() => dispatch({ type: "START_TEAR" }), ANTICIPATION_MS);
+    return () => {
+      if (anticipationRef.current) clearTimeout(anticipationRef.current);
+    };
+  }, [state.phase]);
 
   useEffect(() => {
     if (state.phase !== "tear" || !state.selectedPack) return;
@@ -117,33 +98,6 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
       if (tearTimeoutRef.current) clearTimeout(tearTimeoutRef.current);
     };
   }, [state.phase, state.selectedPack, onOpenPack]);
-
-  const currentCard = state.drawnCards[state.currentCardIndex];
-  const isMythic = currentCard?.rarity === "mythic";
-  const allRevealed = state.drawnCards.length > 0 && state.currentCardIndex >= state.drawnCards.length;
-  const canTapNext =
-    state.phase === "reveal" &&
-    currentCard &&
-    !state.isFlipping &&
-    (isMythic ? state.mythicExtraShown : true);
-
-  const handleRevealTap = useCallback(() => {
-    if (!canTapNext) return;
-    if (state.currentCardIndex + 1 >= state.drawnCards.length) {
-      dispatch({ type: "GO_SUMMARY" });
-    } else {
-      dispatch({ type: "NEXT_CARD" });
-    }
-  }, [canTapNext, state.currentCardIndex, state.drawnCards.length]);
-
-  useEffect(() => {
-    if (state.phase !== "reveal" || !currentCard || currentCard.rarity !== "mythic" || state.isFlipping) return;
-    if (state.mythicExtraShown) return;
-    mythicExtraRef.current = setTimeout(() => dispatch({ type: "MYTHIC_EXTRA_DONE" }), 1500);
-    return () => {
-      if (mythicExtraRef.current) clearTimeout(mythicExtraRef.current);
-    };
-  }, [state.phase, currentCard?.id, currentCard?.rarity, state.isFlipping, state.mythicExtraShown]);
 
   const handleContinue = useCallback(() => {
     onComplete(state.drawnCards);
@@ -200,7 +154,7 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
           </motion.div>
         )}
 
-        {/* Phase 2 — Anticipation */}
+        {/* Phase 2 — Anticipation (auto box open) */}
         {state.phase === "anticipation" && state.selectedPack && (
           <motion.div
             key="anticipation"
@@ -208,28 +162,18 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 flex flex-col items-center justify-center px-4"
-            onClick={handleTapToOpen}
           >
             <motion.div
               initial={{ scale: 0.8 }}
-              animate={{
-                scale: 1,
-                rotate: PACK_ROTATION(),
-              }}
+              animate={{ scale: 1, rotate: PACK_ROTATION() }}
               transition={{ duration: 0.4, ease: "easeOut" }}
-              className={`relative w-[220px] aspect-[3/4] rounded-2xl border-2 border-amber-500/50 bg-gradient-to-br from-zinc-900 to-zinc-800 shadow-xl flex flex-col items-center justify-center p-6 booster-shake booster-glow-pulse`}
+              className="relative w-[220px] aspect-[3/4] rounded-2xl border-2 border-amber-500/50 bg-gradient-to-br from-zinc-900 to-zinc-800 shadow-xl flex flex-col items-center justify-center p-6 booster-shake booster-glow-pulse"
             >
               <span className="text-6xl mb-2">{({ speed: "⚡", resilience: "🛡️", adaptability: "🧠", power: "⚔️" } as Record<string, string>)[state.selectedPack.id] ?? "📦"}</span>
-              <span className="text-base font-bold uppercase tracking-wider text-foreground">
-                {state.selectedPack.name}
-              </span>
+              <span className="text-base font-bold uppercase tracking-wider text-foreground">{state.selectedPack.name}</span>
             </motion.div>
-            <motion.p
-              className="mt-8 text-sm text-muted-foreground booster-tap-blink"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 1.2, repeat: Infinity }}
-            >
-              {typeof tx.booster_tap_to_open === "string" ? tx.booster_tap_to_open : "Appuie pour ouvrir"}
+            <motion.p className="mt-6 text-sm text-muted-foreground" animate={{ opacity: [0.6, 1] }} transition={{ duration: 0.8 }}>
+              {typeof tx.game_booster_opening === "string" ? tx.game_booster_opening : "Ouverture…"}
             </motion.p>
           </motion.div>
         )}
@@ -239,34 +183,58 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
           <TearPhase key="tear" packName={state.selectedPack.name} />
         )}
 
-        {/* Phase 4 — Reveal card by card */}
-        {state.phase === "reveal" && state.drawnCards.length > 0 && (
+        {/* Phase 4 — Reveal all: cards in arc above box */}
+        {state.phase === "reveal_all" && state.drawnCards.length > 0 && state.selectedPack && (
           <motion.div
-            key="reveal"
+            key="reveal_all"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 flex flex-col items-center justify-center px-4"
+            className="absolute inset-0 flex flex-col items-center justify-end pb-8 px-4"
           >
-            {currentCard && (
-              <RevealCard
-                card={currentCard}
-                isFlipping={state.isFlipping}
-                onFlipStart={() => dispatch({ type: "FLIP_START" })}
-                onFlipEnd={() => dispatch({ type: "FLIP_END" })}
-                onTapNext={handleRevealTap}
-                canTapNext={canTapNext}
-                tapLabel={typeof tx.booster_tap_to_continue === "string" ? tx.booster_tap_to_continue : "Tap pour continuer"}
-              />
-            )}
-            <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2">
-              {state.drawnCards.map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-2 w-2 rounded-full ${i < state.currentCardIndex ? "bg-amber-500" : "bg-zinc-600"}`}
-                />
-              ))}
+            {/* Cards in a slight arc above the box */}
+            <div className="flex justify-center items-end gap-1 mb-4" style={{ perspective: "800px" }}>
+              {state.drawnCards.map((card, i) => {
+                const n = state.drawnCards.length;
+                const spread = 28;
+                const baseRotate = (i - (n - 1) / 2) * spread;
+                const yOffset = Math.abs(i - (n - 1) / 2) * 12;
+                return (
+                  <motion.div
+                    key={card.id}
+                    initial={{ opacity: 0, y: 40, rotateY: -20 }}
+                    animate={{ opacity: 1, y: 0, rotateY: 0 }}
+                    transition={{ delay: 0.15 * i, duration: 0.35, ease: "easeOut" }}
+                    style={{
+                      transform: `translateY(${-yOffset}px) rotate(${baseRotate}deg)`,
+                      transformStyle: "preserve-3d",
+                    }}
+                    className="origin-bottom"
+                  >
+                    <GameCard {...card} condition={card.condition} />
+                  </motion.div>
+                );
+              })}
             </div>
+            {/* Box (opened) below */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0.5 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+              className="w-24 aspect-[3/4] rounded-xl border-2 border-amber-500/30 bg-gradient-to-br from-zinc-800 to-zinc-900 flex flex-col items-center justify-center shadow-lg"
+            >
+              <span className="text-2xl">{({ speed: "⚡", resilience: "🛡️", adaptability: "🧠", power: "⚔️" } as Record<string, string>)[state.selectedPack.id] ?? "📦"}</span>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-6"
+            >
+              <Button onClick={() => dispatch({ type: "GO_SUMMARY" })} size="lg" className="uppercase tracking-wider">
+                {typeof tx.booster_tap_to_continue === "string" ? tx.booster_tap_to_continue : "Continuer"}
+              </Button>
+            </motion.div>
           </motion.div>
         )}
 
