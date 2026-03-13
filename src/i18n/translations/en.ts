@@ -700,6 +700,7 @@ const en: Translations = {
 
   // Booster opening flow
   booster_phase_pick_title: "Choose a pack",
+  booster_rares_mythic_hint: "Common & Uncommon: all types. Rare & Mythic: this type only.",
   booster_pack_name: "BOOSTER",
   booster_pack_remaining: (n: number) => `${n} left`,
   booster_tap_to_open: "Tap to open",

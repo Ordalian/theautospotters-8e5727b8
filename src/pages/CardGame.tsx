@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
 import { pickWeightedRarity } from "@/data/gameCards";
 import type { CardCondition, CardArchetype } from "@/data/gameCards";
+import type { CardRarity } from "@/data/gameCards";
 import { CONDITION_META, CONDITION_MODIFIERS } from "@/data/gameCards";
 import { rollCondition } from "@/components/game/BoosterPack";
 import { GameCard } from "@/components/game/GameCard";
@@ -238,11 +239,16 @@ export default function CardGame() {
     setShowBoosterFlow(true);
   }
 
-  const handleBoosterOpenPack = useCallback(async (): Promise<DrawnCard[]> => {
+  const handleBoosterOpenPack = useCallback(async (packId: string): Promise<DrawnCard[]> => {
+    const archetype = packId as CardArchetype;
     const picked: DrawnCard[] = [];
     for (let i = 0; i < 5; i++) {
-      const rarity = pickWeightedRarity();
-      const pool = masterCards.filter((m) => m.rarity === rarity);
+      const rarity = pickWeightedRarity() as CardRarity;
+      let pool = masterCards.filter((m) => m.rarity === rarity);
+      if (rarity === "rare" || rarity === "mythic") {
+        const typed = pool.filter((m) => m.archetype === archetype);
+        if (typed.length > 0) pool = typed;
+      }
       const card = pool[Math.floor(Math.random() * pool.length)];
       if (!card) continue;
       picked.push({ ...card, condition: rollCondition() } as DrawnCard);
@@ -658,7 +664,12 @@ export default function CardGame() {
         </div>
       ) : showBoosterFlow ? (
         <BoosterOpeningFlow
-          packs={[{ id: "booster", name: (t.game_booster as string) || "BOOSTER", count: 1 }]}
+          packs={[
+            { id: "speed", name: (t.game_speed as string) || "Speed", count: openingWithPurchased ? purchasedBoosterCount : 1 },
+            { id: "resilience", name: (t.game_resilience as string) || "Resilience", count: openingWithPurchased ? purchasedBoosterCount : 1 },
+            { id: "adaptability", name: (t.game_adaptability as string) || "Adaptability", count: openingWithPurchased ? purchasedBoosterCount : 1 },
+            { id: "power", name: (t.game_power as string) || "Power", count: openingWithPurchased ? purchasedBoosterCount : 1 },
+          ]}
           onOpenPack={handleBoosterOpenPack}
           onComplete={handleBoosterComplete}
         />

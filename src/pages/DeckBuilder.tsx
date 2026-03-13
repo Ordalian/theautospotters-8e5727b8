@@ -36,12 +36,19 @@ function getPoints(rarity: CardRarity): number {
   return CARD_POINTS[rarity] ?? 3;
 }
 
+interface DeckState {
+  index: number;
+  name: string;
+  cardIds: string[];
+}
+
 export default function DeckBuilder() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [instances, setInstances] = useState<OwnedInstance[]>([]);
-  const [deckIds, setDeckIds] = useState<string[]>([]);
+  const [decks, setDecks] = useState<DeckState[]>([]);
+  const [activeIndex, setActiveIndex] = useState<number>(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -52,12 +59,23 @@ export default function DeckBuilder() {
         .from("user_game_cards")
         .select("id, card_id, condition, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)")
         .eq("user_id", user.id),
-      supabase.from("user_deck").select("card_ids").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_deck").select("deck_index, name, card_ids").eq("user_id", user.id),
     ]);
     const raw = (instancesRes.data ?? []) as (Omit<OwnedInstance, "game_cards"> & { game_cards: GameCardRow | null })[];
     setInstances(raw.map((r) => ({ ...r, game_cards: r.game_cards ?? null })));
-    const ids = (deckRes.data as { card_ids?: string[] } | null)?.card_ids ?? [];
-    setDeckIds(Array.isArray(ids) ? ids.filter(Boolean) : []);
+    const rows = (deckRes.data as { deck_index: number; name: string; card_ids: string[] }[] | null) ?? [];
+    if (rows.length === 0) {
+      setDecks([{ index: 1, name: "Deck 1", cardIds: [] }]);
+      setActiveIndex(1);
+    } else {
+      const mapped: DeckState[] = rows.map((r) => ({
+        index: r.deck_index,
+        name: r.name || `Deck ${r.deck_index}`,
+        cardIds: Array.isArray(r.card_ids) ? r.card_ids.filter(Boolean) : [],
+      }));
+      setDecks(mapped.sort((a, b) => a.index - b.index));
+      setActiveIndex(mapped[0]?.index ?? 1);
+    }
   }, [user?.id]);
 
   useEffect(() => {
@@ -71,6 +89,8 @@ export default function DeckBuilder() {
 
   const validInstances = instances.filter((i): i is OwnedInstance => i.game_cards != null);
   const instanceMap = new Map(validInstances.map((i) => [i.id, i]));
+  const activeDeck = decks.find((d) => d.index === activeIndex) ?? { index: activeIndex, name: `Deck ${activeIndex}`, cardIds: [] };
+  const deckIds = activeDeck.cardIds;
   const deckInstances = deckIds.map((id) => instanceMap.get(id)).filter(Boolean) as OwnedInstance[];
   const collectionInstances = validInstances.filter((i) => !deckIds.includes(i.id));
 
@@ -93,11 +113,19 @@ export default function DeckBuilder() {
       toast.error(t.deck_max_points as string);
       return;
     }
-    setDeckIds((prev) => [...prev, instanceId]);
+    setDecks((prev) =>
+      prev.map((d) =>
+        d.index === activeIndex ? { ...d, cardIds: [...d.cardIds, instanceId] } : d
+      )
+    );
   };
 
   const removeFromDeck = (instanceId: string) => {
-    setDeckIds((prev) => prev.filter((id) => id !== instanceId));
+    setDecks((prev) =>
+      prev.map((d) =>
+        d.index === activeIndex ? { ...d, cardIds: d.cardIds.filter((id) => id !== instanceId) } : d
+      )
+    );
   };
 
   const saveDeck = async () => {
@@ -106,13 +134,20 @@ export default function DeckBuilder() {
       toast.error(t.deck_invalid as string);
       return;
     }
+    const name = activeDeck.name || `Deck ${activeDeck.index}`;
     setSaving(true);
     try {
       const { error } = await supabase
         .from("user_deck")
         .upsert(
-          { user_id: user.id, card_ids: deckIds, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" }
+          {
+            user_id: user.id,
+            deck_index: activeDeck.index,
+            name,
+            card_ids: deckIds,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: ["user_id", "deck_index"] }
         );
       if (error) throw error;
       toast.success(t.deck_saved as string);
@@ -141,7 +176,7 @@ export default function DeckBuilder() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between gap-3">
+        <header className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between gap-3">
         <button type="button" onClick={() => navigate("/card-game")} className="shrink-0 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -152,14 +187,47 @@ export default function DeckBuilder() {
       </header>
 
       <div className="p-4 max-w-lg mx-auto space-y-6">
-        {/* Deck summary + save */}
-        <section className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between gap-4 mb-3">
-            <h2 className="font-bold text-sm">{t.deck_my_deck as string}</h2>
-            <span className="text-sm text-muted-foreground tabular-nums">
+        {/* Deck selector + summary + save */}
+        <section className="rounded-xl border border-border bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex gap-1">
+              {[1, 2, 3].map((idx) => {
+                const d = decks.find((deck) => deck.index === idx);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveIndex(idx)}
+                    className={`px-2 py-1 rounded-md text-xs font-semibold border ${
+                      activeIndex === idx ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border"
+                    }`}
+                  >
+                    {d?.name || `Deck ${idx}`}
+                  </button>
+                );
+              })}
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">
               {deckPoints}/{DECK_MAX_POINTS} pts · {deckCount}/{DECK_MAX_CARDS} {t.deck_cards as string}
             </span>
           </div>
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <h2 className="font-bold text-sm">{t.deck_my_deck as string}</h2>
+          </div>
+          <input
+            type="text"
+            value={activeDeck.name}
+            onChange={(e) => {
+              const value = e.target.value;
+              setDecks((prev) =>
+                prev.some((d) => d.index === activeIndex)
+                  ? prev.map((d) => (d.index === activeIndex ? { ...d, name: value } : d))
+                  : [...prev, { index: activeIndex, name: value, cardIds: [] }]
+              );
+            }}
+            placeholder={`Deck ${activeDeck.index}`}
+            className="w-full mb-2 rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
           <Button
             className="w-full gap-2"
             disabled={saving}

@@ -80,7 +80,7 @@ function reducer(state: BoosterOpeningState, action: Action): BoosterOpeningStat
 
 interface BoosterOpeningFlowProps {
   packs: Pack[];
-  onOpenPack: () => Promise<DrawnCard[]>;
+  onOpenPack: (packId: string) => Promise<DrawnCard[]>;
   onComplete: (cards: DrawnCard[]) => void;
 }
 
@@ -106,16 +106,17 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
   }, []);
 
   useEffect(() => {
-    if (state.phase !== "tear") return;
+    if (state.phase !== "tear" || !state.selectedPack) return;
+    const packId = state.selectedPack.id;
     tearTimeoutRef.current = setTimeout(() => {
-      onOpenPack().then((cards) => {
+      onOpenPack(packId).then((cards) => {
         dispatch({ type: "TEAR_DONE", cards });
       });
     }, 800);
     return () => {
       if (tearTimeoutRef.current) clearTimeout(tearTimeoutRef.current);
     };
-  }, [state.phase, onOpenPack]);
+  }, [state.phase, state.selectedPack, onOpenPack]);
 
   const currentCard = state.drawnCards[state.currentCardIndex];
   const isMythic = currentCard?.rarity === "mythic";
@@ -165,11 +166,16 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
             exit={{ opacity: 0 }}
             className="px-4 py-6 w-full max-w-md"
           >
-            <h2 className="text-lg font-bold uppercase tracking-wider text-foreground text-center mb-6">
+            <h2 className="text-lg font-bold uppercase tracking-wider text-foreground text-center mb-2">
               {typeof tx.booster_phase_pick_title === "string" ? tx.booster_phase_pick_title : "Choisis un pack"}
             </h2>
+            <p className="text-xs text-muted-foreground text-center mb-4 max-w-sm mx-auto">
+              {typeof tx.booster_rares_mythic_hint === "string" ? tx.booster_rares_mythic_hint : "Common & Uncommon: all types. Rare & Mythic: this type only."}
+            </p>
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 justify-items-center">
-              {packs.map((pack) => (
+              {packs.map((pack) => {
+                const packEmoji: Record<string, string> = { speed: "⚡", resilience: "🛡️", adaptability: "🧠", power: "⚔️" };
+                return (
                 <motion.button
                   key={pack.id}
                   type="button"
@@ -178,7 +184,7 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <span className="text-5xl mb-2">🏎️</span>
+                  <span className="text-5xl mb-2">{packEmoji[pack.id] ?? "📦"}</span>
                   <span className="text-sm font-bold uppercase tracking-wider text-foreground">
                     {pack.name}
                   </span>
@@ -188,7 +194,8 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
                       : `${pack.count}`}
                   </span>
                 </motion.button>
-              ))}
+              );
+              })}
             </div>
           </motion.div>
         )}
@@ -212,7 +219,7 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
               transition={{ duration: 0.4, ease: "easeOut" }}
               className={`relative w-[220px] aspect-[3/4] rounded-2xl border-2 border-amber-500/50 bg-gradient-to-br from-zinc-900 to-zinc-800 shadow-xl flex flex-col items-center justify-center p-6 booster-shake booster-glow-pulse`}
             >
-              <span className="text-6xl mb-2">🏎️</span>
+              <span className="text-6xl mb-2">{({ speed: "⚡", resilience: "🛡️", adaptability: "🧠", power: "⚔️" } as Record<string, string>)[state.selectedPack.id] ?? "📦"}</span>
               <span className="text-base font-bold uppercase tracking-wider text-foreground">
                 {state.selectedPack.name}
               </span>
