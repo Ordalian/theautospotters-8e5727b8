@@ -21,7 +21,8 @@ const TEAM_COLORS: Record<string, string> = {
 
 const SAINT_AMAND_CENTER = { lat: 50.4478, lng: 3.4340 };
 
-const ZOOM_3D_THRESHOLD = 18;
+const ZOOM_3D_THRESHOLD = 17;
+const ZOOM_LABELS_VISIBLE = 14;
 const ZOOM_ROAD_VS_AREA = 14;
 
 function haversineMeters(
@@ -111,9 +112,9 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     controlLayersRef.current = [];
 
     const zoomLevel = map.getZoom();
-    const isRoadStyle = zoomLevel >= ZOOM_ROAD_VS_AREA;
-    const weight = isRoadStyle ? 6 : 28;
-    const opacity = isRoadStyle ? 0.9 : 0.45;
+    const isZoomedIn = zoomLevel >= ZOOM_ROAD_VS_AREA;
+    const weight = isZoomedIn ? 18 : 32;
+    const opacity = isZoomedIn ? 0.88 : 0.5;
 
     const edges = buildEdges(pois);
     for (const [a, b] of edges) {
@@ -142,13 +143,15 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     }
   }, [pois, zoom]);
 
-  // Update POI markers
+  // Update POI markers (labels hidden when zoomed out for clarity)
   useEffect(() => {
     const map = mapInstance.current;
     if (!map) return;
 
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
+
+    const showLabels = zoom >= ZOOM_LABELS_VISIBLE;
 
     pois.forEach((poi) => {
       const color = poi.owner_team ? TEAM_COLORS[poi.owner_team] ?? "#888" : "#888";
@@ -163,7 +166,7 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
       });
 
       marker.bindTooltip(poi.name, {
-        permanent: true,
+        permanent: showLabels,
         direction: "top",
         offset: [0, -12],
         className: "poi-tooltip",
@@ -173,7 +176,7 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
       marker.addTo(map);
       markersRef.current.push(marker);
     });
-  }, [pois, onPOIClick]);
+  }, [pois, onPOIClick, zoom]);
 
   // User position marker
   useEffect(() => {
@@ -199,12 +202,12 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     height: "100%",
     borderRadius: "inherit",
     overflow: "hidden",
-    perspective: isMaxZoom ? "800px" : "1200px",
+    perspective: isMaxZoom ? "550px" : "1200px",
     transform: isMaxZoom
-      ? "rotateX(28deg) scale(1.08)"
+      ? "rotateX(42deg) scale(1.12)"
       : "rotateX(15deg) scale(1.05)",
     transformOrigin: "center bottom",
-    transition: "transform 0.25s ease-out, perspective 0.25s ease-out",
+    transition: "transform 0.3s ease-out, perspective 0.3s ease-out",
   };
 
   return (
