@@ -53,7 +53,7 @@ const ProfileAchievements = () => {
   });
 
   const { data: distinctLocations = 0 } = useQuery({
-    queryKey: ["achievement-distinct-locations", user?.id],
+    queryKey: ["achievement-distinct-countries", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("cars")
@@ -62,8 +62,17 @@ const ProfileAchievements = () => {
         .neq("vehicle_type", "hot_wheels")
         .not("location_name", "is", null);
       if (!data) return 0;
-      const unique = new Set(data.map((r) => r.location_name?.toLowerCase().trim()).filter(Boolean));
-      return unique.size;
+      const countries = new Set(
+        data
+          .map((r) => {
+            const name = r.location_name?.trim();
+            if (!name) return null;
+            const parts = name.split(",");
+            return parts[parts.length - 1]?.trim().toLowerCase() || null;
+          })
+          .filter(Boolean)
+      );
+      return countries.size;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,

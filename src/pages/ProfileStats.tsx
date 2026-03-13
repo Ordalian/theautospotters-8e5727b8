@@ -338,7 +338,14 @@ const ProfileStats = () => {
     const rarityCountExact10 = byRarity[10] || 0;
 
     const distinctLocations = new Set(
-      carsExclMini.map((c) => c.location_name?.toLowerCase().trim()).filter(Boolean)
+      carsExclMini
+        .map((c) => {
+          const name = c.location_name?.trim();
+          if (!name) return null;
+          const parts = name.split(",");
+          return parts[parts.length - 1]?.trim().toLowerCase() || null;
+        })
+        .filter(Boolean)
     ).size;
     const distinctBrands = new Set(
       carsExclMini.map((c) => c.brand?.toLowerCase().trim()).filter(Boolean)
