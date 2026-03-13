@@ -217,7 +217,7 @@ export function generateBoard(): TileType[][] {
 
   const seeds: { type: SeedType; x: number; y: number }[] = [];
   for (const type of seedTypes) {
-    const count = randomInt(3, 5);
+    const count = randomInt(1, 3);
     for (let i = 0; i < count; i++) {
       seeds.push({
         type,
@@ -249,7 +249,7 @@ export function generateBoard(): TileType[][] {
         for (const n of neighbors) {
           if (
             board[n.y][n.x] === "countryside" &&
-            Math.random() < config.propagationChance
+            Math.random() < config.propagationChance * 2
           ) {
             next[n.y][n.x] = tile;
           }
@@ -263,43 +263,35 @@ export function generateBoard(): TileType[][] {
     }
   }
 
+  // Spawn zones: column 0 = P1, column 7 = P2 (forced road)
   for (let y = 0; y < BOARD_SIZE; y++) {
     board[y][0] = "road";
-    board[y][1] = "road";
-    board[y][18] = "road";
-    board[y][19] = "road";
+    board[y][BOARD_SIZE - 1] = "road";
   }
 
+  // Small blocked features (max 1-2 tiles)
   const mountainClusters = getClusters(board, "mountain");
   for (const cluster of mountainClusters) {
-    if (cluster.length <= 4) continue;
+    if (cluster.length <= 2) continue;
     for (const { x, y } of cluster) {
-      if (Math.random() < 0.1) board[y][x] = "blocked";
+      if (Math.random() < 0.15 && x > 0 && x < BOARD_SIZE - 1) board[y][x] = "blocked";
     }
   }
 
-  const riverCount = randomInt(1, 2);
-  for (let r = 0; r < riverCount; r++) {
-    const row = randomInt(0, BOARD_SIZE - 1);
-    const start = randomInt(2, BOARD_SIZE - 10);
-    const length = randomInt(8, 15);
-    for (let x = start; x < Math.min(BOARD_SIZE - 2, start + length); x++) {
-      if (x >= 2 && x <= 17) board[row][x] = "blocked";
+  // Optional single river segment (1-3 tiles)
+  if (Math.random() < 0.5) {
+    const row = randomInt(1, BOARD_SIZE - 2);
+    const start = randomInt(1, BOARD_SIZE - 3);
+    const length = randomInt(1, 3);
+    for (let x = start; x < Math.min(BOARD_SIZE - 1, start + length); x++) {
+      board[row][x] = "blocked";
     }
   }
 
-  const cityClusters = getClusters(board, "city");
-  for (const cluster of cityClusters) {
-    for (const { x, y } of cluster) {
-      if (Math.random() < 0.05) board[y][x] = "blocked";
-    }
-  }
-
+  // Re-enforce spawn columns
   for (let y = 0; y < BOARD_SIZE; y++) {
     board[y][0] = "road";
-    board[y][1] = "road";
-    board[y][18] = "road";
-    board[y][19] = "road";
+    board[y][BOARD_SIZE - 1] = "road";
   }
 
   return board;
