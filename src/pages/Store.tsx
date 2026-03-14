@@ -143,6 +143,10 @@ export default function Store() {
   return (
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
+      <div className="relative w-full h-48 overflow-hidden">
+        <img src={storeBg} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background" />
+      </div>
       <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur">
         <Button variant="ghost" size="icon" onClick={() => navigate("/home")}>
           <ArrowLeft className="h-5 w-5" />
