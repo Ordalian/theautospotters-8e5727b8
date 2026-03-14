@@ -436,6 +436,7 @@ const Dashboard = () => {
             title={t.dash_shop as string}
             subtitle={t.dash_shop_sub as string}
             icon={Store}
+            image={storeBg}
             onClick={() => navigate("/store")}
             className="aspect-square"
           />
