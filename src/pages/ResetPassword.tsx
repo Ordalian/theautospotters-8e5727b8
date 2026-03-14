@@ -31,7 +31,15 @@ const ResetPassword = () => {
   useEffect(() => {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setHasRecoverySession(!!session?.user);
+      if (session?.user) {
+        setHasRecoverySession(true);
+        setCheckingSession(false);
+        return;
+      }
+      // Quand on arrive depuis l’email, le hash est traité de façon asynchrone : on réessaie après un court délai.
+      await new Promise((r) => setTimeout(r, 1500));
+      const { data: { session: sessionRetry } } = await supabase.auth.getSession();
+      setHasRecoverySession(!!sessionRetry?.user);
       setCheckingSession(false);
     };
     check();
