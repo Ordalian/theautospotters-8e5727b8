@@ -171,7 +171,7 @@ const Dashboard = () => {
           .in("user_id", friendIds)
           .neq("vehicle_type", "hot_wheels")
           .order("created_at", { ascending: false })
-          .limit(10);
+          .limit(5);
         friendSpots = (friendCars || []).map((c) => ({
           id: c.id,
           brand: c.brand,
