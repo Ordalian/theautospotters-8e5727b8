@@ -36,7 +36,7 @@ export function useUserRole(): UserRoleData & { loading: boolean } {
     staleTime: 5 * 60 * 1000,
   });
 
-  const role = (data?.role === "map_marker" ? "user" : data?.role) ?? "user";
+  const role = ((data?.role as string) === "map_marker" ? "user" : data?.role) ?? "user";
   const is_premium = data?.is_premium ?? false;
   const is_map_marker = data?.is_map_marker ?? false;
 

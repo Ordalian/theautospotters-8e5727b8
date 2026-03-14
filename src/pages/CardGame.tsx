@@ -73,7 +73,7 @@ export default function CardGame() {
   const [friendBestCondition, setFriendBestCondition] = useState<Map<string, CardCondition>>(new Map());
   const [friendLoading, setFriendLoading] = useState(false);
 
-  const CONDITION_RANK: Record<CardCondition, number> = { damaged: 0, average: 1, good: 2, perfect: 3 };
+  const CONDITION_RANK: Record<CardCondition, number> = { destroyed: -1, damaged: 0, average: 1, good: 2, perfect: 3 };
   const bestCondition = useCallback((conditions: CardCondition[]): CardCondition => {
     if (conditions.length === 0) return "good";
     return conditions.reduce((a, b) => (CONDITION_RANK[a] >= CONDITION_RANK[b] ? a : b));

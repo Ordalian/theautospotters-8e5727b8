@@ -31,6 +31,7 @@ export function getCardImageUrl(key: string): string {
  * CSS filter strings applied to the <img> per condition.
  */
 export const CONDITION_IMAGE_FILTERS: Record<CardCondition, string> = {
+  destroyed: "saturate(0) brightness(0.5)",
   damaged: "saturate(0.25) brightness(0.80) contrast(0.90)",
   average: "saturate(0.75) sepia(0.15) brightness(0.95)",
   good: "none",

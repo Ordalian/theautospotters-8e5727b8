@@ -29,6 +29,7 @@ export function getCardPoints(
     mythic: 8,
   };
   const mod: Record<CardCondition, number> = {
+    destroyed: 0,
     damaged: 0.5,
     average: 0.75,
     good: 1.0,
