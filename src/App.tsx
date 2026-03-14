@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
@@ -12,6 +13,7 @@ import { PageTransition } from "@/components/PageTransition";
 import ThemeParticles from "@/components/ThemeParticles";
 import { Loader2 } from "lucide-react";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { createIDBPersister } from "@/lib/queryPersistence";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
@@ -53,12 +55,14 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 min cache
-      gcTime: 10 * 60 * 1000,
+      gcTime: 24 * 60 * 60 * 1000, // 24h — keep in IndexedDB across sessions
       retry: 1,
       refetchOnWindowFocus: false,
     },
   },
 });
+
+const persister = createIDBPersister();
 
 const PageLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-background">
@@ -134,7 +138,7 @@ function AnimatedRoutes() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: 24 * 60 * 60 * 1000 }}>
     <TooltipProvider>
       <Toaster />
       <BrowserRouter>
@@ -148,7 +152,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
