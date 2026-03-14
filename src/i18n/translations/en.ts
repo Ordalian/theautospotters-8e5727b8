@@ -28,6 +28,19 @@ const en: Translations = {
   landing_welcome: "Welcome to The Machinery",
   landing_tagline: "Spot. Collect. Compete.",
   landing_connect: "Sign in",
+  landing_try_me: "Try me",
+  landing_feature_garage_title: "Garage",
+  landing_feature_garage_desc: "Add your cars, organize them in groups, and share photos with the community.",
+  landing_feature_cards_title: "Card game",
+  landing_feature_cards_desc: "Collect cards, build your deck, and compete in World Domination at real-world POIs.",
+  landing_feature_map_title: "Spot map",
+  landing_feature_map_desc: "Discover POIs on the map, battle for control, and earn rewards.",
+  landing_feature_messaging_title: "Messaging",
+  landing_feature_messaging_desc: "Channels and direct messages to chat with the community and your friends.",
+  landing_feature_friends_title: "Friends",
+  landing_feature_friends_desc: "View friends' garages, compare stats, and deliver cars as gifts.",
+  landing_feature_profile_title: "Profile & store",
+  landing_feature_profile_desc: "XP, emblems, achievements, and the in-app store for coins and boosters.",
 
   // Auth
   auth_title: "The Machinery",
@@ -585,6 +598,8 @@ const en: Translations = {
   msg_publish: "Publish",
   msg_no_topics: "No topics yet. Be the first!",
   msg_reply_placeholder: "Reply...",
+  msg_translate: "Translate",
+  msg_original: "Original",
   msg_messages: "Messages",
   msg_messages_desc: "Chat with your friends",
 

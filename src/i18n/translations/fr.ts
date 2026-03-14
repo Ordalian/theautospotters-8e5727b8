@@ -30,6 +30,19 @@ const fr: Translations = {
   landing_welcome: "Bienvenue sur La Machinerie",
   landing_tagline: "Spot. Collecte. Compétition.",
   landing_connect: "Se connecter",
+  landing_try_me: "Essayer",
+  landing_feature_garage_title: "Garage",
+  landing_feature_garage_desc: "Ajoute tes voitures, organise-les en groupes et partage tes photos avec la communauté.",
+  landing_feature_cards_title: "Jeu de cartes",
+  landing_feature_cards_desc: "Collectionne des cartes, construis ton deck et affronte le mode World Domination sur des POI réels.",
+  landing_feature_map_title: "Carte des spots",
+  landing_feature_map_desc: "Découvre les POI sur la carte, bats-toi pour les contrôler et gagne des récompenses.",
+  landing_feature_messaging_title: "Messagerie",
+  landing_feature_messaging_desc: "Canaux et messages directs pour discuter avec la communauté et tes amis.",
+  landing_feature_friends_title: "Amis",
+  landing_feature_friends_desc: "Vois les garages des amis, compare les stats et livre des voitures en cadeau.",
+  landing_feature_profile_title: "Profil et boutique",
+  landing_feature_profile_desc: "XP, emblèmes, succès et boutique in-app pour les pièces et les boosters.",
 
   // Auth
   auth_title: "La Machinerie",
@@ -587,6 +600,8 @@ const fr: Translations = {
   msg_publish: "Publier",
   msg_no_topics: "Aucun sujet pour le moment. Soyez le premier !",
   msg_reply_placeholder: "Répondre...",
+  msg_translate: "Traduire",
+  msg_original: "Original",
   msg_messages: "Messages",
   msg_messages_desc: "Discutez avec vos amis",
 

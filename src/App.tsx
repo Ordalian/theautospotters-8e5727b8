@@ -6,6 +6,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
@@ -84,6 +85,13 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isStaff, loading } = useUserRole();
+  if (loading) return <PageLoader />;
+  if (!isStaff) return <Navigate to="/home" replace />;
+  return <>{children}</>;
+}
+
 // Tab bar removed
 
 function AnimatedRoutes() {
@@ -108,7 +116,7 @@ function AnimatedRoutes() {
             <Route path="/profile/achievements" element={<ProtectedRoute><PageTransition><ProfileAchievements /></PageTransition></ProtectedRoute>} />
             <Route path="/emblem-preview" element={<ProtectedRoute><PageTransition><EmblemPreview /></PageTransition></ProtectedRoute>} />
             <Route path="/profile/news" element={<ProtectedRoute><PageTransition><ProfileNews /></PageTransition></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><PageTransition><AdminPanel /></PageTransition></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminRoute><PageTransition><AdminPanel /></PageTransition></AdminRoute></ProtectedRoute>} />
             <Route path="/support" element={<ProtectedRoute><PageTransition><Support /></PageTransition></ProtectedRoute>} />
             <Route path="/garage-settings" element={<ProtectedRoute><PageTransition><GarageSettings /></PageTransition></ProtectedRoute>} />
             <Route path="/friends" element={<ProtectedRoute><PageTransition><FriendsGarages /></PageTransition></ProtectedRoute>} />

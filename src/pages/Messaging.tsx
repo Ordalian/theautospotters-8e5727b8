@@ -4,7 +4,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2 } from "lucide-react";
+import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -16,8 +16,10 @@ type Channel = { id: string; name: string; slug: string; description: string | n
 type Topic = { id: string; channel_id: string; user_id: string; title: string; body: string; created_at: string; username?: string; reply_count?: number; role?: string | null; is_premium?: boolean };
 type Reply = { id: string; topic_id: string; user_id: string; body: string; created_at: string; username?: string; role?: string | null; is_premium?: boolean };
 
+const MYMEMORY_API = "https://api.mymemory.translated.net/get";
+
 const Messaging = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { isStaff, isFounder, isAdmin } = useUserRole();
   const navigate = useNavigate();
@@ -30,6 +32,29 @@ const Messaging = () => {
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
   const [showDMs, setShowDMs] = useState(false);
+  const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({});
+  const [showTranslatedIds, setShowTranslatedIds] = useState<Set<string>>(new Set());
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
+
+  const translateMessage = async (id: string, text: string) => {
+    if (!text.trim()) return;
+    const sourceLang = language === "fr" ? "en" : "fr";
+    const langpair = `${sourceLang}|${language}`;
+    setTranslatingId(id);
+    try {
+      const res = await fetch(`${MYMEMORY_API}?q=${encodeURIComponent(text)}&langpair=${langpair}`);
+      const data = await res.json();
+      const translated = data?.responseData?.translatedText;
+      if (translated) {
+        setTranslatedMap((m) => ({ ...m, [id]: translated }));
+        setShowTranslatedIds((s) => new Set(s).add(id));
+      }
+    } catch {
+      // ignore
+    } finally {
+      setTranslatingId(null);
+    }
+  };
 
   // Swipe right to go back to home (only on channel list view)
   const swipeRef = useRef({ startX: 0, startY: 0, locked: null as "h" | "v" | null, delta: 0 });
@@ -240,32 +265,80 @@ const Messaging = () => {
         </header>
         <div className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10">
           <div className="rounded-xl border border-primary/20 bg-card/90 p-4">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-muted-foreground flex items-center gap-1">{selectedTopic.username || t.anonymous as string} <UserRoleBadge role={selectedTopic.role} isPremium={selectedTopic.is_premium} /> • {formatDate(selectedTopic.created_at)}</p>
+            <div className="flex items-center justify-between mb-1 flex-wrap gap-x-2 gap-y-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">{selectedTopic.username || t.anonymous as string} <UserRoleBadge role={selectedTopic.role} isPremium={selectedTopic.is_premium} /> • {formatDate(selectedTopic.created_at)}</p>
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                  onClick={() => {
+                    const id = `topic-${selectedTopic.id}`;
+                    if (showTranslatedIds.has(id)) {
+                      setShowTranslatedIds((s) => { const n = new Set(s); n.delete(id); return n; });
+                    } else if (translatedMap[id]) {
+                      setShowTranslatedIds((s) => new Set(s).add(id));
+                    } else {
+                      translateMessage(id, selectedTopic.body);
+                    }
+                  }}
+                  disabled={translatingId === `topic-${selectedTopic.id}`}
+                >
+                  {translatingId === `topic-${selectedTopic.id}` ? <Loader2 className="h-3 w-3 animate-spin" /> : <Languages className="h-3 w-3" />}
+                  <span className="ml-0.5">{showTranslatedIds.has(`topic-${selectedTopic.id}`) ? (t.msg_original as string) : (t.msg_translate as string)}</span>
+                </button>
+              </div>
               {(selectedTopic.user_id === user?.id || isFounder || (isAdmin && (!selectedTopic.role || selectedTopic.role === "user"))) && (
                 <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => { if (confirm("Supprimer ce sujet et toutes ses réponses ?")) deleteTopicMut.mutate(selectedTopic.id); }}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
-            <p className="text-sm whitespace-pre-wrap">{selectedTopic.body}</p>
+            <p className="text-sm whitespace-pre-wrap">
+              {showTranslatedIds.has(`topic-${selectedTopic.id}`) && translatedMap[`topic-${selectedTopic.id}`]
+                ? translatedMap[`topic-${selectedTopic.id}`]
+                : selectedTopic.body}
+            </p>
           </div>
           {repliesLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : (
-            replies.map((r) => (
-              <div key={r.id} className="rounded-lg border border-border/40 bg-card/70 p-3 ml-4">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">{r.username || t.anonymous as string} <UserRoleBadge role={r.role} isPremium={r.is_premium} /> • {formatDate(r.created_at)}</p>
-                  {(r.user_id === user?.id || isFounder || (isAdmin && (!r.role || r.role === "user"))) && (
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => { if (confirm("Supprimer cette réponse ?")) deleteReplyMut.mutate(r.id); }}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
+            replies.map((r) => {
+              const replyKey = `reply-${r.id}`;
+              return (
+                <div key={r.id} className="rounded-lg border border-border/40 bg-card/70 p-3 ml-4">
+                  <div className="flex items-center justify-between mb-1 flex-wrap gap-x-2 gap-y-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">{r.username || t.anonymous as string} <UserRoleBadge role={r.role} isPremium={r.is_premium} /> • {formatDate(r.created_at)}</p>
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                        onClick={() => {
+                          if (showTranslatedIds.has(replyKey)) {
+                            setShowTranslatedIds((s) => { const n = new Set(s); n.delete(replyKey); return n; });
+                          } else if (translatedMap[replyKey]) {
+                            setShowTranslatedIds((s) => new Set(s).add(replyKey));
+                          } else {
+                            translateMessage(replyKey, r.body);
+                          }
+                        }}
+                        disabled={translatingId === replyKey}
+                      >
+                        {translatingId === replyKey ? <Loader2 className="h-3 w-3 animate-spin" /> : <Languages className="h-3 w-3" />}
+                        <span className="ml-0.5">{showTranslatedIds.has(replyKey) ? (t.msg_original as string) : (t.msg_translate as string)}</span>
+                      </button>
+                    </div>
+                    {(r.user_id === user?.id || isFounder || (isAdmin && (!r.role || r.role === "user"))) && (
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => { if (confirm("Supprimer cette réponse ?")) deleteReplyMut.mutate(r.id); }}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {showTranslatedIds.has(replyKey) && translatedMap[replyKey] ? translatedMap[replyKey] : r.body}
+                  </p>
                 </div>
-                <p className="text-sm whitespace-pre-wrap">{r.body}</p>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
         <div className="sticky bottom-0 z-20 p-3 border-t border-border/40 bg-background/95 backdrop-blur flex gap-2">
