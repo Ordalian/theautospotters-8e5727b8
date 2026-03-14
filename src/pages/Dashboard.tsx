@@ -300,7 +300,7 @@ const Dashboard = () => {
 
         {/* Row 1: Mon Garage + Zone de Jeu */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <GlassTile
+          <DashTile
             title={t.dash_my_garage as string}
             subtitle={carsSpottedText}
             icon={Car}
@@ -308,7 +308,7 @@ const Dashboard = () => {
             onClick={() => navigate("/garage-menu")}
             className="aspect-square w-full"
           />
-          <GlassTile
+          <DashTile
             title={t.dash_zone_jeu as string}
             subtitle={t.dash_zone_jeu_sub as string}
             icon={Gamepad2}
