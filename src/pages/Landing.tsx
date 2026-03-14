@@ -84,6 +84,12 @@ const Landing = () => {
         <Button asChild size="lg">
           <Link to="/auth">{t.landing_try_me as string}</Link>
         </Button>
+        <Link
+          to="/legal"
+          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 mt-4"
+        >
+          {t.landing_legal as string}
+        </Link>
       </section>
     </div>
   );

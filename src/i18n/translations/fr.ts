@@ -43,6 +43,17 @@ const fr: Translations = {
   landing_feature_friends_desc: "Vois les garages des amis, compare les stats et livre des voitures en cadeau.",
   landing_feature_profile_title: "Profil et boutique",
   landing_feature_profile_desc: "XP, emblèmes, succès et boutique in-app pour les pièces et les boosters.",
+  landing_legal: "Mentions légales",
+
+  // Legal
+  legal_title: "Mentions légales",
+  legal_copyright_title: "Propriété intellectuelle",
+  legal_copyright_text: "© 2026 La Machinerie. Tous droits réservés.\n\nL'application, son design et tout contenu associé sont protégés par le droit de la propriété intellectuelle. Aucune partie de cette application ne peut être reproduite, diffusée ou utilisée sans autorisation écrite préalable de l'éditeur.",
+  legal_privacy_title: "Confidentialité et protection des données",
+  legal_privacy_text: "Nous collectons et traitons les données suivantes pour faire fonctionner l'application :\n\n• Données de compte : adresse e-mail, pseudo, préférences de profil.\n• Données d'usage : voitures ajoutées, cartes collectées, messages envoyés et actions dans l'app.\n• Données techniques : connexion et analytics d'usage (ex. temps par page) pour améliorer le service.\n\nLes données sont hébergées sur des serveurs sécurisés (Supabase). Nous ne vendons pas vos données à des tiers.\n\nVous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour l'exercer, utilisez le support in-app ou contactez l'éditeur. Vous pouvez aussi avoir un droit à la portabilité et introduire une réclamation auprès d'une autorité de contrôle.",
+  legal_terms_title: "Conditions d'utilisation",
+  legal_terms_text: "En utilisant cette application vous acceptez ces conditions.\n\n• Vous devez utiliser le service de manière licite et ne pas harceler d'autres utilisateurs, diffuser de contenu illégal ou contourner les contrôles d'accès ou les mesures de sécurité.\n\n• L'application est fournie « telle quelle ». Nous excluons les garanties dans la mesure permise par la loi. La responsabilité pour dommages indirects ou consécutifs est exclue.\n\n• Nous pouvons suspendre ou résilier votre accès en cas de violation de ces conditions ou de la loi applicable.\n\n• L'application et sa marque restent la propriété de l'éditeur. Vous conservez la propriété du contenu que vous créez ; en le publiant vous accordez une licence nécessaire au fonctionnement du service.",
+  legal_last_updated: "Dernière mise à jour : mars 2026. Pour toute question, utilisez le support in-app.",
 
   // Auth
   auth_title: "La Machinerie",

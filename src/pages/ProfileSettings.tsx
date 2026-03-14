@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe } from "lucide-react";
+import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe, Scale } from "lucide-react";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -441,6 +441,18 @@ const ProfileSettings = () => {
 
         {/* Notification Preferences */}
         <NotificationPreferences user={user} />
+
+        <div className="space-y-3">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Scale className="h-5 w-5 text-primary" />
+            {t.legal_title as string}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t.landing_legal as string}</p>
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={() => navigate("/legal")}>
+            <Scale className="h-4 w-4" />
+            {t.legal_title as string}
+          </Button>
+        </div>
 
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">

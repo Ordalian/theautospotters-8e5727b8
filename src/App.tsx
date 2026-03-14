@@ -51,6 +51,7 @@ const Store = lazy(() => import("./pages/Store"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Support = lazy(() => import("./pages/Support"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Legal = lazy(() => import("./pages/Legal"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +105,7 @@ function AnimatedRoutes() {
           <Routes location={location} key={location.pathname}>
             <Route path="/auth" element={<AuthRoute><PageTransition><Auth /></PageTransition></AuthRoute>} />
             <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+            <Route path="/legal" element={<PageTransition><Legal /></PageTransition>} />
             <Route path="/home" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
             <Route path="/garage" element={<ProtectedRoute><PageTransition><MyGarage /></PageTransition></ProtectedRoute>} />
             <Route path="/garage-menu" element={<ProtectedRoute><PageTransition><VehicleTypeMenu /></PageTransition></ProtectedRoute>} />

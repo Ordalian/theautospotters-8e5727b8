@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye, Package, LayoutGrid, Sparkles, Trophy, UserCog, CheckCheck, Globe, Trash2 } from "lucide-react";
+import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye, Package, LayoutGrid, Sparkles, Trophy, UserCog, CheckCheck, Globe, Trash2, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { markPatchNotesRead } from "@/lib/patchNotes";
@@ -30,6 +30,64 @@ const ProfileNews = () => {
   const lang = language === "fr" ? "fr" : "en";
 
   useEffect(() => { markPatchNotesRead(); }, []);
+
+  const patchesV035: PatchEntry[] = lang === "fr" ? [
+    {
+      icon: Shield,
+      title: "Sécurité renforcée pour les testeurs",
+      details: [
+        "Route /admin protégée : les utilisateurs non staff sont redirigés vers l'accueil sans voir la page admin.",
+        "Stockage : les uploads de photos de voitures sont limités à ton propre dossier (pas d'upload dans le dossier d'un autre).",
+      ],
+      tag: "security",
+    },
+    {
+      icon: LayoutGrid,
+      title: "Landing page et bouton Try me",
+      details: [
+        "Nouvelle page d'accueil scrollable : hero + 6 sections (Garage, Cartes, Carte des spots, Messagerie, Amis, Profil).",
+        "Bouton sticky « Essayer » en bas à droite, lien vers la connexion. Textes en FR/EN.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Scale,
+      title: "Mentions légales et protection des données",
+      details: [
+        "Nouvelle page Legal (copyright, confidentialité, conditions d'utilisation) pour protéger l'éditeur et informer les utilisateurs.",
+        "Liens depuis la landing et les paramètres du profil. Droits d'accès, rectification et suppression des données rappelés.",
+      ],
+      tag: "feature",
+    },
+  ] : [
+    {
+      icon: Shield,
+      title: "Security hardening for testers",
+      details: [
+        "Admin route protected: non-staff users are redirected to home without seeing the admin page.",
+        "Storage: car photo uploads restricted to your own folder (no upload into another user's folder).",
+      ],
+      tag: "security",
+    },
+    {
+      icon: LayoutGrid,
+      title: "Landing page and Try me button",
+      details: [
+        "New scrollable landing: hero + 6 sections (Garage, Cards, Spot map, Messaging, Friends, Profile).",
+        "Sticky « Try me » button bottom-right, link to sign-in. Copy in EN/FR.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Scale,
+      title: "Legal notices and data protection",
+      details: [
+        "New Legal page (copyright, privacy, terms of use) to protect the owner and inform users.",
+        "Links from landing and profile settings. Access, rectification and deletion rights stated.",
+      ],
+      tag: "feature",
+    },
+  ];
 
   const patchesV03: PatchEntry[] = lang === "fr" ? [
     {
@@ -357,13 +415,53 @@ const ProfileNews = () => {
       </header>
 
       <div className="p-4 max-w-lg mx-auto space-y-5">
-        {/* Patch v0.3 — most recent */}
+        {/* Patch v0.3.5 — most recent */}
         <div className="flex items-center gap-3 pt-2">
           <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
             <Newspaper className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold tracking-tight">Patch Note v0.3</h2>
+            <h2 className="text-lg font-bold tracking-tight">Patch Note v0.3.5</h2>
+            <p className="text-xs text-muted-foreground">14 {lang === "fr" ? "mars" : "March"} 2026</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {patchesV035.map((entry, i) => (
+            <Card key={`v035-${i}`} className="border-border/50 bg-card/80 overflow-hidden">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 mt-0.5">
+                    <entry.icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm leading-tight">{entry.title}</h3>
+                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${tagColors[entry.tag]}`}>
+                        {tagLabels[lang][entry.tag]}
+                      </span>
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {entry.details.map((d, j) => (
+                        <li key={j} className="text-xs text-muted-foreground leading-relaxed flex gap-2">
+                          <span className="text-primary/60 mt-1 shrink-0">•</span>
+                          <span>{d}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Patch v0.3 */}
+        <div className="flex items-center gap-3 pt-6">
+          <div className="h-10 w-10 rounded-xl bg-muted/50 flex items-center justify-center">
+            <Newspaper className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold tracking-tight text-muted-foreground">Patch Note v0.3</h2>
             <p className="text-xs text-muted-foreground">11 {lang === "fr" ? "mars" : "March"} 2026</p>
           </div>
         </div>
