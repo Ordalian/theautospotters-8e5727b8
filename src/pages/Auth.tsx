@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage, type Language } from "@/i18n/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,6 +16,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [signUpLanguage, setSignUpLanguage] = useState<Language | null>(null);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const { signIn, signUp } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
@@ -30,6 +33,20 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (forgotPassword) {
+      setLoading(true);
+      try {
+        const redirectTo = `${window.location.origin}/reset-password`;
+        await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+        setResetEmailSent(true);
+        toast.success(t.auth_reset_sent as string);
+      } catch (err: any) {
+        toast.error(err.message || (t.auth_error as string));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     if (isSignUp && !passwordValid) {
       toast.error(t.pwd_weak as string);
       return;
@@ -71,98 +88,146 @@ const Auth = () => {
 
         <Card className="border-border/50 bg-card/80 backdrop-blur">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">{isSignUp ? (t.auth_create_account as string) : (t.auth_welcome_back as string)}</CardTitle>
+            <CardTitle className="text-xl">
+              {forgotPassword ? (t.auth_reset_send_title as string) : isSignUp ? (t.auth_create_account as string) : (t.auth_welcome_back as string)}
+            </CardTitle>
             <CardDescription>
-              {isSignUp ? (t.auth_join as string) : (t.auth_sign_in_desc as string)}
+              {forgotPassword
+                ? (t.auth_reset_send_desc as string)
+                : isSignUp
+                  ? (t.auth_join as string)
+                  : (t.auth_sign_in_desc as string)}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                type="email"
-                placeholder={t.auth_email as string}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-secondary/50"
-              />
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder={t.auth_password as string}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  className="bg-secondary/50 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+            {resetEmailSent ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">{t.auth_reset_sent as string}</p>
+                <Button variant="outline" className="w-full" onClick={() => { setForgotPassword(false); setResetEmailSent(false); }}>
+                  {t.back as string}
+                </Button>
               </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Input
+                  type="email"
+                  placeholder={t.auth_email as string}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-secondary/50"
+                />
+                {!forgotPassword && (
+                  <>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder={t.auth_password as string}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={8}
+                        className="bg-secondary/50 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
 
-              {isSignUp && password.length > 0 && (
-                <ul className="space-y-1 text-xs">
-                  {pwdRules.map((r) => (
-                    <li key={r.key} className={`flex items-center gap-1.5 ${r.test ? "text-green-500" : "text-muted-foreground"}`}>
-                      {r.test ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                      {t[r.key] as string}
-                    </li>
-                  ))}
-                </ul>
-              )}
+                    {isSignUp && password.length > 0 && (
+                      <ul className="space-y-1 text-xs">
+                        {pwdRules.map((r) => (
+                          <li key={r.key} className={`flex items-center gap-1.5 ${r.test ? "text-green-500" : "text-muted-foreground"}`}>
+                            {r.test ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                            {t[r.key] as string}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
 
-              {isSignUp && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Globe className="h-4 w-4" />
-                    {t.auth_choose_language as string}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
+                    {isSignUp && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                          <Globe className="h-4 w-4" />
+                          {t.auth_choose_language as string}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSignUpLanguage("fr")}
+                            className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
+                              signUpLanguage === "fr"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border bg-secondary/30 hover:border-primary/40"
+                            }`}
+                          >
+                            🇫🇷 {t.auth_language_fr as string}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSignUpLanguage("en")}
+                            className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
+                              signUpLanguage === "en"
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border bg-secondary/30 hover:border-primary/40"
+                            }`}
+                          >
+                            🇬🇧 {t.auth_language_en as string}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <Button type="submit" className="w-full font-semibold" disabled={loading}>
+                  {loading
+                    ? (t.loading as string)
+                    : forgotPassword
+                      ? (t.auth_reset_send_btn as string)
+                      : isSignUp
+                        ? (t.auth_sign_up as string)
+                        : (t.auth_sign_in as string)}
+                </Button>
+              </form>
+            )}
+            {!resetEmailSent && (
+              <div className="mt-4 text-center space-y-2">
+                {!forgotPassword && !isSignUp && (
+                  <div>
                     <button
                       type="button"
-                      onClick={() => setSignUpLanguage("fr")}
-                      className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
-                        signUpLanguage === "fr"
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-secondary/30 hover:border-primary/40"
-                      }`}
+                      onClick={() => setForgotPassword(true)}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
-                      🇫🇷 {t.auth_language_fr as string}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSignUpLanguage("en")}
-                      className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
-                        signUpLanguage === "en"
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-secondary/30 hover:border-primary/40"
-                      }`}
-                    >
-                      🇬🇧 {t.auth_language_en as string}
+                      {t.auth_forgot_password as string}
                     </button>
                   </div>
-                </div>
-              )}
-
-              <Button type="submit" className="w-full font-semibold" disabled={loading}>
-                {loading ? (t.loading as string) : isSignUp ? (t.auth_sign_up as string) : (t.auth_sign_in as string)}
-              </Button>
-            </form>
-            <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {isSignUp ? (t.auth_switch_to_login as string) : (t.auth_switch_to_signup as string)}
-              </button>
-            </div>
+                )}
+                {forgotPassword ? (
+                  <button
+                    type="button"
+                    onClick={() => setForgotPassword(false)}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {t.back as string}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {isSignUp ? (t.auth_switch_to_login as string) : (t.auth_switch_to_signup as string)}
+                  </button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
