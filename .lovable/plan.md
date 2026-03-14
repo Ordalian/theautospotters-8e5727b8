@@ -1,33 +1,34 @@
 
 
-## Problem
+# Fix Build Errors + Add React Query Persistence (Local Caching)
 
-The friend's garage page (`FriendGarage.tsx`) displays car photos using raw storage URLs without any optimization. On weak mobile networks, these full-resolution images fail to load (as shown in the screenshot where only alt text appears). The same optimization already applied to the friends carousel in `FriendsGarages.tsx` is missing here.
+## 1. Fix Build Errors
 
-There are 3 places in `FriendGarage.tsx` where images are rendered without optimization:
-1. **Car list items** (line 174) -- the main car grid when viewing a type filter
-2. **"All" tile background** (line 220) -- the vehicle type menu
-3. **Vehicle type tile backgrounds** (line 251) -- each category tile
+**Problem**: The `CardCondition` type includes `"destroyed"` but several `Record<CardCondition, ...>` objects are missing the `destroyed` key.
 
-## Plan
+**Files to fix** (add `destroyed` entry to each Record):
 
-### 1. Add image optimization helper
+- **`src/lib/boardMovement.ts`** — Two records (`BOARD_CONDITION_MODIFIERS` line 13, `mod` line 30): add `destroyed: 0`
+- **`src/lib/cardImageUtils.ts`** — `CONDITION_IMAGE_FILTERS` line 33: add `destroyed: "saturate(0) brightness(0.5)"`
+- **`src/pages/CardGame.tsx`** — `CONDITION_RANK` line 76: add `destroyed: -1`
+- **`src/hooks/useUserRole.ts`** — line 39 compares `data?.role` to `"map_marker"` but `UserRole` type doesn't include it. Fix: cast or widen the comparison to avoid TS2367 (e.g. `(data?.role as string) === "map_marker"`)
 
-Create a small utility function (or inline) that converts raw Supabase storage URLs to the render/transform endpoint with appropriate size and quality parameters:
-- Car list thumbnails: `width=600&quality=60`
-- Menu tile backgrounds: `width=400&quality=50`
+## 2. Add Local Data Caching via React Query Persistence
 
-### 2. Apply to all 3 image locations in FriendGarage.tsx
+**Goal**: Cache query data in IndexedDB so the app renders instantly from local cache on repeat visits, then revalidates in the background.
 
-For each `<img>` tag:
-- Use the transform URL instead of raw `image_url`
-- Add `loading="lazy"`
-- Add `onError` fallback handler (hide image, show fallback icon)
-- Add `bg-muted` class for loading state
+**Steps**:
 
-### 3. Add fallback elements
+1. **Install packages**: `@tanstack/react-query-persist-client` and `idb-keyval` (lightweight IndexedDB wrapper)
 
-For the car list view (line 173-179), add a hidden fallback `<div>` with `img-fallback` class that becomes visible on image error -- same pattern already used in `FriendsGarages.tsx`.
+2. **Create `src/lib/queryPersistence.ts`**:
+   - Create an IndexedDB-based persister using `createSyncStoragePersister` or the async `experimental_createPersister` with `idb-keyval`
+   - Export the persister instance
 
-For tile backgrounds, on error hide the image so the gradient+icon fallback shows through.
+3. **Update `src/App.tsx`**:
+   - Wrap `QueryClientProvider` with `PersistQueryClientProvider` from `@tanstack/react-query-persist-client`
+   - Set `QueryClient` default `gcTime` to 24 hours (so cached data survives across sessions)
+   - Pass the persister to the provider
+
+This means all existing `useQuery` calls (garage, cards, profiles, leaderboard, etc.) will automatically be cached locally with zero changes to individual components.
 
