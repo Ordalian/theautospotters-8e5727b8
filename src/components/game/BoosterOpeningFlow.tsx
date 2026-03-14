@@ -8,7 +8,7 @@ import { Package, Zap, Shield, Brain, Sword } from "lucide-react";
 import type { GameCardDef } from "@/data/gameCards";
 import type { CardCondition } from "@/data/gameCards";
 
-export type Phase = "pick" | "anticipation" | "tear" | "reveal_all" | "summary" | "back";
+export type Phase = "pick" | "anticipation" | "tear" | "reveal_all" | "back";
 
 export interface Pack {
   id: string;
@@ -31,7 +31,6 @@ type Action =
   | { type: "SELECT_PACK"; pack: Pack }
   | { type: "START_TEAR" }
   | { type: "TEAR_DONE"; cards: DrawnCard[] }
-  | { type: "GO_SUMMARY" }
   | { type: "GO_BACK" };
 
 const initialState: BoosterOpeningState = {
@@ -48,8 +47,6 @@ function reducer(state: BoosterOpeningState, action: Action): BoosterOpeningStat
       return { ...state, phase: "tear" };
     case "TEAR_DONE":
       return { ...state, phase: "reveal_all", drawnCards: action.cards };
-    case "GO_SUMMARY":
-      return { ...state, phase: "summary" };
     case "GO_BACK":
       return { ...state, phase: "back" };
     default:
@@ -248,58 +245,13 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
               transition={{ delay: 0.8 }}
               className="mt-4"
             >
-              <Button onClick={() => dispatch({ type: "GO_SUMMARY" })} size="lg" className="font-heading font-bold tracking-tight rounded-xl px-8">
+              <Button onClick={handleContinue} size="lg" className="font-heading font-bold tracking-tight rounded-xl px-8">
                 {typeof tx.booster_tap_to_continue === "string" ? tx.booster_tap_to_continue : "Continuer"}
               </Button>
             </motion.div>
           </motion.div>
         )}
 
-        {/* Phase 5 — Summary */}
-        {state.phase === "summary" && (
-          <motion.div
-            key="summary"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="px-4 py-6 pb-24 w-full max-w-2xl overflow-y-auto max-h-screen"
-          >
-            <h2 className="font-heading text-xl font-bold text-foreground text-center mb-1 tracking-tight">
-              {typeof tx.booster_summary_title === "string" ? tx.booster_summary_title : "Tes nouvelles cartes !"}
-            </h2>
-            <p className="text-sm text-muted-foreground text-center mb-6">
-              {typeof tx.booster_summary_subtitle === "function" &&
-                tx.booster_summary_subtitle(
-                  state.drawnCards.filter((c) => c.rarity === "common").length,
-                  state.drawnCards.filter((c) => c.rarity === "uncommon").length,
-                  state.drawnCards.filter((c) => c.rarity === "rare").length,
-                  state.drawnCards.filter((c) => c.rarity === "mythic").length
-                )}
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {state.drawnCards.map((card, i) => (
-                <motion.div
-                  key={card.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08, duration: 0.3 }}
-                >
-                  <GameCard {...card} condition={card.condition} />
-                </motion.div>
-              ))}
-            </div>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex justify-center mt-8"
-            >
-              <Button onClick={handleContinue} size="lg" className="font-heading font-bold tracking-tight rounded-xl px-8">
-                {typeof tx.booster_continue === "string" ? tx.booster_continue : "Continuer"}
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
       </AnimatePresence>
     </div>
   );
