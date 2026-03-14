@@ -16,7 +16,7 @@ const TEAM_COLORS: Record<string, string> = {
   blue: "#3b82f6",
   red: "#ef4444",
   green: "#22c55e",
-  black: "#1e1e1e",
+  black: "#a0a0a0",
 };
 
 const SAINT_AMAND_CENTER = { lat: 50.4478, lng: 3.4340 };
@@ -25,12 +25,7 @@ const ZOOM_3D_THRESHOLD = 17;
 const ZOOM_LABELS_VISIBLE = 14;
 const ZOOM_ROAD_VS_AREA = 14;
 
-function haversineMeters(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
@@ -42,7 +37,6 @@ function haversineMeters(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** Build undirected edges (poi id pairs) between nearest neighbours (each POI to its 2 nearest). */
 function buildEdges(pois: POI[]): [POI, POI][] {
   const edges: [POI, POI][] = [];
   const seen = new Set<string>();
@@ -89,8 +83,9 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
       attributionControl: false,
     });
 
+    // Dark map tiles
     L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
     ).addTo(map);
 
     map.on("zoomend", () => setZoom(map.getZoom()));
@@ -103,7 +98,7 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     mapRef.current = el;
   }, []);
 
-  // Area of control: segments between POIs, colored by team, halfway to next point
+  // Area of control segments
   useEffect(() => {
     const map = mapInstance.current;
     if (!map) return;
@@ -114,27 +109,21 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     const zoomLevel = map.getZoom();
     const isZoomedIn = zoomLevel >= ZOOM_ROAD_VS_AREA;
     const weight = isZoomedIn ? 18 : 32;
-    const opacity = isZoomedIn ? 0.88 : 0.5;
+    const opacity = isZoomedIn ? 0.7 : 0.4;
 
     const edges = buildEdges(pois);
     for (const [a, b] of edges) {
       const midLat = (a.latitude + b.latitude) / 2;
       const midLng = (a.longitude + b.longitude) / 2;
-      const colorA = a.owner_team ? TEAM_COLORS[a.owner_team] ?? "#888" : "#aaa";
-      const colorB = b.owner_team ? TEAM_COLORS[b.owner_team] ?? "#888" : "#aaa";
+      const colorA = a.owner_team ? TEAM_COLORS[a.owner_team] ?? "#888" : "#444";
+      const colorB = b.owner_team ? TEAM_COLORS[b.owner_team] ?? "#888" : "#444";
 
       const lineA = L.polyline(
-        [
-          [a.latitude, a.longitude],
-          [midLat, midLng],
-        ],
+        [[a.latitude, a.longitude], [midLat, midLng]],
         { color: colorA, weight, opacity, lineCap: "round", lineJoin: "round", pane: "controlArea" }
       );
       const lineB = L.polyline(
-        [
-          [midLat, midLng],
-          [b.latitude, b.longitude],
-        ],
+        [[midLat, midLng], [b.latitude, b.longitude]],
         { color: colorB, weight, opacity, lineCap: "round", lineJoin: "round", pane: "controlArea" }
       );
       lineA.addTo(map);
@@ -143,7 +132,7 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     }
   }, [pois, zoom]);
 
-  // Update POI markers (labels hidden when zoomed out for clarity)
+  // POI markers
   useEffect(() => {
     const map = mapInstance.current;
     if (!map) return;
@@ -154,7 +143,7 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     const showLabels = zoom >= ZOOM_LABELS_VISIBLE;
 
     pois.forEach((poi) => {
-      const color = poi.owner_team ? TEAM_COLORS[poi.owner_team] ?? "#888" : "#888";
+      const color = poi.owner_team ? TEAM_COLORS[poi.owner_team] ?? "#888" : "#666";
       const isInvulnerable = poi.invulnerable_until && new Date(poi.invulnerable_until) > new Date();
 
       const marker = L.circleMarker([poi.latitude, poi.longitude], {
@@ -191,9 +180,7 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     });
     userMarker.bindTooltip("You", { direction: "top", offset: [0, -8] });
     userMarker.addTo(map);
-    return () => {
-      userMarker.remove();
-    };
+    return () => { userMarker.remove(); };
   }, [userPosition, userTeam]);
 
   const isMaxZoom = zoom >= ZOOM_3D_THRESHOLD;
@@ -207,7 +194,7 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
       ? "rotateX(42deg) scale(1.12)"
       : "rotateX(15deg) scale(1.05)",
     transformOrigin: "center bottom",
-    transition: "transform 0.3s ease-out, perspective 0.3s ease-out",
+    transition: "transform 0.5s ease-out, perspective 0.5s ease-out",
   };
 
   return (
@@ -215,19 +202,24 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
       <div style={mapWrapperStyle}>
         <div
           ref={initMap}
-          className="w-full h-full rounded-xl border border-border/50"
+          className="w-full h-full rounded-xl"
         />
       </div>
       <style>{`
         .poi-tooltip {
-          background: hsl(var(--card)) !important;
-          border: 1px solid hsl(var(--border)) !important;
+          background: hsl(var(--glass)) !important;
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
+          border: 1px solid hsl(var(--glass-border)) !important;
           color: hsl(var(--foreground)) !important;
-          font-size: 10px !important;
+          font-family: 'Barlow Condensed', sans-serif !important;
+          font-size: 11px !important;
           font-weight: 700 !important;
-          padding: 2px 6px !important;
-          border-radius: 6px !important;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.05em !important;
+          padding: 3px 8px !important;
+          border-radius: 8px !important;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
         }
         .poi-tooltip::before { display: none !important; }
       `}</style>
