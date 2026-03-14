@@ -760,6 +760,8 @@ const en: Translations = {
   wdom_card_placed: "Card placed!",
   wdom_card_destroyed: "This card is destroyed. Repair it (50 coins) to use it again.",
   wdom_no_available_cards: "No cards available.",
+  wdom_one_card_per_poi: "You can only place one card per POI.",
+  wdom_card_in_another_poi: "This card is already committed to another POI.",
   wdom_battle_resolved: "Battle resolved! Winner",
   wdom_battle_ended: "Ended",
   wdom_gps_active: "GPS active",

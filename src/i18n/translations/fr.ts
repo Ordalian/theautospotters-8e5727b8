@@ -762,6 +762,8 @@ const fr: Translations = {
   wdom_card_placed: "Carte placée !",
   wdom_card_destroyed: "Cette carte est détruite. Répare-la (50 pièces) pour la réutiliser.",
   wdom_no_available_cards: "Aucune carte disponible.",
+  wdom_one_card_per_poi: "Tu ne peux placer qu'une seule carte par point.",
+  wdom_card_in_another_poi: "Cette carte est déjà engagée sur un autre point.",
   wdom_battle_resolved: "Bataille terminée ! Vainqueur",
   wdom_battle_ended: "Terminé",
   wdom_gps_active: "GPS actif",

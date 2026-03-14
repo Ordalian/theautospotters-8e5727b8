@@ -69,6 +69,7 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh,
   const [battle, setBattle] = useState<BattleRow | null>(null);
   const [battleCards, setBattleCards] = useState<BattleCardRow[]>([]);
   const [ownedCards, setOwnedCards] = useState<OwnedCard[]>([]);
+  const [cardsInOtherUnresolvedBattles, setCardsInOtherUnresolvedBattles] = useState<{ user_game_card_id: string; battle_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [countdown, setCountdown] = useState("");
@@ -119,6 +120,23 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh,
         .select("id, card_id, condition, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)")
         .eq("user_id", userId) as any;
       setOwnedCards((owned as OwnedCard[] | null) ?? []);
+
+      // Load all battle cards in unresolved battles (to exclude cards already in another POI)
+      const { data: unresolvedBattles } = await supabase
+        .from("poi_battles")
+        .select("id")
+        .eq("resolved", false) as any;
+      const unresolvedIds = (unresolvedBattles as { id: string }[] | null)?.map((b) => b.id) ?? [];
+      if (unresolvedIds.length > 0) {
+        const { data: allUnresolvedCards } = await supabase
+          .from("poi_battle_cards")
+          .select("user_game_card_id, battle_id")
+          .in("battle_id", unresolvedIds) as any;
+        setCardsInOtherUnresolvedBattles((allUnresolvedCards as { user_game_card_id: string; battle_id: string }[] | null) ?? []);
+      } else {
+        setCardsInOtherUnresolvedBattles([]);
+      }
+
       setLoading(false);
     })();
   }, [poi.id, userId]);
@@ -139,28 +157,30 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh,
     return () => clearInterval(iv);
   }, [battle]);
 
-  // Cards already placed by user's team in current battle
-  const teamCardsPlaced = useMemo(() =>
-    battleCards.filter((c) => c.team_color === userTeam),
-    [battleCards, userTeam]
-  );
   const userCardsPlaced = useMemo(() =>
     battleCards.filter((c) => c.user_id === userId),
     [battleCards, userId]
   );
 
-  // Calculate limits
-  const phase = battle?.phase ?? "capture";
-  const maxPerTeam = phase === "capture" ? 30 : (isOwnTeam ? 30 : 8);
-  const canPlace = isNearby && battle && teamCardsPlaced.length < maxPerTeam;
+  // Limit: 1 card per user per POI
+  const canPlace = isNearby && battle && userCardsPlaced.length < 1;
 
-  // Cards not already in this battle, and not destroyed
+  // Cards not already in this battle, not in another POI, and not destroyed
   const availableCards = useMemo(() => {
     const placedIds = new Set(battleCards.map((c) => c.user_game_card_id));
-    return ownedCards.filter(
-      (c) => c.game_cards && !placedIds.has(c.id) && (c.condition ?? "good") !== "destroyed"
+    const lockedInOtherPois = new Set(
+      cardsInOtherUnresolvedBattles
+        .filter((r) => r.battle_id !== battle?.id)
+        .map((r) => r.user_game_card_id)
     );
-  }, [ownedCards, battleCards]);
+    return ownedCards.filter(
+      (c) =>
+        c.game_cards &&
+        !placedIds.has(c.id) &&
+        !lockedInOtherPois.has(c.id) &&
+        (c.condition ?? "good") !== "destroyed"
+    );
+  }, [ownedCards, battleCards, battle?.id, cardsInOtherUnresolvedBattles]);
 
   const startBattle = async (battlePhase: "capture" | "attack") => {
     setPlacing(true);
@@ -220,8 +240,15 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh,
       toast.success(t.wdom_card_placed as string);
     } catch (e: any) {
       const msg = e?.message ?? "Error";
-      const isDestroyed = /card_destroyed|destroyed/i.test(String(msg));
-      toast.error(isDestroyed ? (t.wdom_card_destroyed as string) : msg);
+      if (/card_destroyed|destroyed/i.test(String(msg))) {
+        toast.error(t.wdom_card_destroyed as string);
+      } else if (/one_card_per_user_per_poi/i.test(String(msg))) {
+        toast.error(t.wdom_one_card_per_poi as string);
+      } else if (/card_already_in_another_poi/i.test(String(msg))) {
+        toast.error(t.wdom_card_in_another_poi as string);
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setPlacing(false);
     }
@@ -364,7 +391,7 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh,
             {canPlace && (
               <div className="space-y-2">
                 <h3 className="text-xs font-bold text-foreground uppercase tracking-wide">
-                  {t.wdom_place_card as string} ({teamCardsPlaced.length}/{maxPerTeam})
+                  {t.wdom_place_card as string} ({userCardsPlaced.length}/1)
                 </h3>
                 <p className="text-[10px] text-muted-foreground">
                   {battle.phase === "capture"
