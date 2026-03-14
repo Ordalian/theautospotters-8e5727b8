@@ -251,7 +251,7 @@ function UsersTab() {
       const data = await rpcAny<AdminUser[]>("get_users_search", { p_query: searchDebounce });
       return (data ?? []).map((u) => ({ ...u, is_map_marker: u.is_map_marker ?? false }));
     },
-    enabled: searchDebounce.length >= 2,
+    enabled: searchDebounce.length >= 3,
     staleTime: 10_000,
   });
 
@@ -353,12 +353,12 @@ function UsersTab() {
             setSearchQuery(e.target.value);
             setDropdownOpen(true);
           }}
-          onFocus={() => searchDebounce.length >= 2 && setDropdownOpen(true)}
+          onFocus={() => searchDebounce.length >= 3 && setDropdownOpen(true)}
           onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
           className="pl-9"
         />
         {/* Search results dropdown */}
-        {dropdownOpen && searchDebounce.length >= 2 && (
+        {dropdownOpen && searchDebounce.length >= 3 && (
           <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg z-50 max-h-64 overflow-y-auto">
             {searchLoading ? (
               <div className="p-4 flex justify-center">
