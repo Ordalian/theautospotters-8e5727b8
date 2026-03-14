@@ -257,9 +257,8 @@ const FriendsGarages = () => {
         .select("id, brand, model, year, generation, engine, image_url, created_at, user_id, garage_group_id")
         .in("user_id", friendUserIds)
         .neq("vehicle_type", "hot_wheels")
-        .gte("created_at", sevenDaysAgo)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(5);
 
       if (spots) {
         setRecentSpots(
