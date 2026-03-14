@@ -21,7 +21,6 @@ const TEAM_COLORS: Record<string, string> = {
 
 const SAINT_AMAND_CENTER = { lat: 50.4478, lng: 3.4340 };
 
-const ZOOM_3D_THRESHOLD = 17;
 const ZOOM_LABELS_VISIBLE = 14;
 const ZOOM_ROAD_VS_AREA = 14;
 
@@ -59,6 +58,51 @@ function buildEdges(pois: POI[]): [POI, POI][] {
   return edges;
 }
 
+const OSRM_BASE = "https://router.project-osrm.org/route/v1/driving";
+
+/** Fetch road geometry between two points (coordinates as [lat, lng]). Returns Leaflet [lat, lng][] or null. */
+async function fetchRouteGeometry(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): Promise<[number, number][] | null> {
+  const coords = `${lng1},${lat1};${lng2},${lat2}`;
+  const url = `${OSRM_BASE}/${coords}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const coordsGeo = data?.routes?.[0]?.geometry?.coordinates;
+    if (!Array.isArray(coordsGeo) || coordsGeo.length < 2) return null;
+    return coordsGeo.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number]);
+  } catch {
+    return null;
+  }
+}
+
+/** Split path at midpoint by distance; returns two segments for team coloring. */
+function splitPathAtMidpoint(path: [number, number][]): { first: [number, number][]; second: [number, number][] } {
+  if (path.length <= 2) {
+    const mid = Math.floor(path.length / 2);
+    return { first: path.slice(0, mid + 1), second: path.slice(mid) };
+  }
+  const dists: number[] = [0];
+  for (let i = 1; i < path.length; i++) {
+    const [latA, lngA] = path[i - 1]!;
+    const [latB, lngB] = path[i]!;
+    dists.push(dists[i - 1]! + haversineMeters(latA, lngA, latB, lngB));
+  }
+  const total = dists[dists.length - 1] ?? 0;
+  const half = total / 2;
+  let idx = 0;
+  while (idx < dists.length - 1 && (dists[idx + 1] ?? 0) < half) idx++;
+  return {
+    first: path.slice(0, idx + 1),
+    second: path.slice(idx),
+  };
+}
+
 interface WorldMapProps {
   pois: POI[];
   userTeam: TeamColor;
@@ -66,12 +110,19 @@ interface WorldMapProps {
   userPosition?: { lat: number; lng: number } | null;
 }
 
+function edgeKey(a: POI, b: POI): string {
+  return [a.id, b.id].sort().join("-");
+}
+
 export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
   const controlLayersRef = useRef<L.Polyline[]>([]);
+  const roadGeometriesRef = useRef<Map<string, [number, number][]>>(new Map());
+  const fetchGenerationRef = useRef(0);
   const [zoom, setZoom] = useState(14);
+  const [roadGeometriesVersion, setRoadGeometriesVersion] = useState(0);
 
   const initMap = useCallback((el: HTMLDivElement | null) => {
     if (!el || mapInstance.current) return;
@@ -98,7 +149,7 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     mapRef.current = el;
   }, []);
 
-  // Area of control segments
+  // Area of control segments (straight or road-following)
   useEffect(() => {
     const map = mapInstance.current;
     if (!map) return;
@@ -110,27 +161,52 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     const isZoomedIn = zoomLevel >= ZOOM_ROAD_VS_AREA;
     const weight = isZoomedIn ? 18 : 32;
     const opacity = isZoomedIn ? 0.7 : 0.4;
+    const opts = { weight, opacity, lineCap: "round" as const, lineJoin: "round" as const, pane: "controlArea" };
 
     const edges = buildEdges(pois);
     for (const [a, b] of edges) {
-      const midLat = (a.latitude + b.latitude) / 2;
-      const midLng = (a.longitude + b.longitude) / 2;
       const colorA = a.owner_team ? TEAM_COLORS[a.owner_team] ?? "#888" : "#444";
       const colorB = b.owner_team ? TEAM_COLORS[b.owner_team] ?? "#888" : "#444";
+      const key = edgeKey(a, b);
+      const roadPath = roadGeometriesRef.current.get(key);
 
-      const lineA = L.polyline(
-        [[a.latitude, a.longitude], [midLat, midLng]],
-        { color: colorA, weight, opacity, lineCap: "round", lineJoin: "round", pane: "controlArea" }
-      );
-      const lineB = L.polyline(
-        [[midLat, midLng], [b.latitude, b.longitude]],
-        { color: colorB, weight, opacity, lineCap: "round", lineJoin: "round", pane: "controlArea" }
-      );
-      lineA.addTo(map);
-      lineB.addTo(map);
-      controlLayersRef.current.push(lineA, lineB);
+      if (roadPath && roadPath.length >= 2) {
+        const { first, second } = splitPathAtMidpoint(roadPath);
+        const lineA = L.polyline(first, { ...opts, color: colorA });
+        const lineB = L.polyline(second, { ...opts, color: colorB });
+        lineA.addTo(map);
+        lineB.addTo(map);
+        controlLayersRef.current.push(lineA, lineB);
+      } else {
+        const midLat = (a.latitude + b.latitude) / 2;
+        const midLng = (a.longitude + b.longitude) / 2;
+        const lineA = L.polyline([[a.latitude, a.longitude], [midLat, midLng]], { ...opts, color: colorA });
+        const lineB = L.polyline([[midLat, midLng], [b.latitude, b.longitude]], { ...opts, color: colorB });
+        lineA.addTo(map);
+        lineB.addTo(map);
+        controlLayersRef.current.push(lineA, lineB);
+      }
     }
-  }, [pois, zoom]);
+
+    // Fetch road geometries (OSRM, ~1 req/s) and redraw when ready
+    if (edges.length === 0) return;
+    fetchGenerationRef.current += 1;
+    const gen = fetchGenerationRef.current;
+    (async () => {
+      const next = new Map(roadGeometriesRef.current);
+      for (const [a, b] of edges) {
+        if (gen !== fetchGenerationRef.current) return;
+        const key = edgeKey(a, b);
+        const geom = await fetchRouteGeometry(a.latitude, a.longitude, b.latitude, b.longitude);
+        if (gen !== fetchGenerationRef.current) return;
+        if (geom) next.set(key, geom);
+        await new Promise((r) => setTimeout(r, 1100));
+      }
+      if (gen !== fetchGenerationRef.current) return;
+      roadGeometriesRef.current = next;
+      setRoadGeometriesVersion((v) => v + 1);
+    })();
+  }, [pois, zoom, roadGeometriesVersion]);
 
   // POI markers
   useEffect(() => {
@@ -183,18 +259,11 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
     return () => { userMarker.remove(); };
   }, [userPosition, userTeam]);
 
-  const isMaxZoom = zoom >= ZOOM_3D_THRESHOLD;
   const mapWrapperStyle: React.CSSProperties = {
     width: "100%",
     height: "100%",
     borderRadius: "inherit",
     overflow: "hidden",
-    perspective: isMaxZoom ? "550px" : "1200px",
-    transform: isMaxZoom
-      ? "rotateX(42deg) scale(1.12)"
-      : "rotateX(15deg) scale(1.05)",
-    transformOrigin: "center bottom",
-    transition: "transform 0.5s ease-out, perspective 0.5s ease-out",
   };
 
   return (
