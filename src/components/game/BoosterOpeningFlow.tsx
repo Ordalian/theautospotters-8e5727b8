@@ -1,6 +1,7 @@
 import { useReducer, useEffect, useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameCard } from "./GameCard";
+import { CardImage } from "./CardImage";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Package, Zap, Shield, Brain, Sword } from "lucide-react";
@@ -218,18 +219,26 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
             exit={{ opacity: 0 }}
             className="absolute inset-0 flex flex-col items-center justify-center px-4"
           >
-            {/* Cards grid — fits all 5 on mobile */}
-            <div className="grid grid-cols-3 gap-2 mb-4 px-2 w-full max-w-xs mx-auto">
+            {/* Cards list — 5 horizontal tiles */}
+            <div className="flex flex-col gap-2 w-full max-w-sm mx-auto mb-4 px-4">
               {state.drawnCards.map((card, i) => (
                 <motion.div
                   key={card.id}
-                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 0.1 * i, duration: 0.35, ease: "easeOut" }}
-                  className={i >= 3 ? "col-span-1 justify-self-center" : ""}
-                  style={i === 3 ? { gridColumn: "1 / 2", justifySelf: "end", marginRight: "0.25rem" } : i === 4 ? { gridColumn: "2 / 3", justifySelf: "start", marginLeft: "0.25rem" } : {}}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.08 * i, duration: 0.3, ease: "easeOut" }}
+                  className="flex items-center gap-3 rounded-xl border border-border bg-card p-2"
                 >
-                  <GameCard {...card} condition={card.condition} />
+                  <div className="w-14 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                    <CardImage brand={card.brand} model={card.model} archetype={card.archetype} condition={card.condition} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-heading text-sm font-bold text-foreground truncate">{card.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{card.rarity} · {card.archetype}</p>
+                  </div>
+                  <div className="flex-shrink-0 text-xs font-mono text-muted-foreground pr-1">
+                    {card.condition}
+                  </div>
                 </motion.div>
               ))}
             </div>
