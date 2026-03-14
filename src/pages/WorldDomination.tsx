@@ -87,8 +87,8 @@ export default function WorldDomination() {
           <h1 className="text-lg font-heading text-foreground truncate">{t.wdom_title as string}</h1>
           <div className="flex items-center justify-center gap-1.5 mt-0.5">
             <div className="h-2.5 w-2.5 rounded-full shadow-sm" style={{
-              background: teamColor === "blue" ? "#3b82f6" : teamColor === "red" ? "#ef4444" : teamColor === "green" ? "#22c55e" : "#a0a0a0",
-              boxShadow: `0 0 8px ${teamColor === "blue" ? "#3b82f640" : teamColor === "red" ? "#ef444440" : teamColor === "green" ? "#22c55e40" : "#a0a0a040"}`
+              background: teamColor === "blue" ? "#3b82f6" : teamColor === "red" ? "#ef4444" : teamColor === "green" ? "#22c55e" : "#a855f7",
+              boxShadow: `0 0 8px ${teamColor === "blue" ? "#3b82f640" : teamColor === "red" ? "#ef444440" : teamColor === "green" ? "#22c55e40" : "#a855f740"}`
             }} />
             <span className="text-[10px] font-heading uppercase text-muted-foreground">{teamColor}</span>
           </div>
@@ -138,10 +138,10 @@ export default function WorldDomination() {
 
       {/* Legend — glass strip */}
       <div className="px-4 py-3 flex items-center justify-center gap-4 text-[10px]">
-        {["blue", "red", "green", "black"].map((c) => (
+        {["blue", "red", "green", "purple"].map((c) => (
           <div key={c} className="flex items-center gap-1">
             <div className="h-2.5 w-2.5 rounded-full" style={{
-              background: c === "blue" ? "#3b82f6" : c === "red" ? "#ef4444" : c === "green" ? "#22c55e" : "#a0a0a0"
+              background: c === "blue" ? "#3b82f6" : c === "red" ? "#ef4444" : c === "green" ? "#22c55e" : "#a855f7"
             }} />
             <span className="uppercase font-heading text-muted-foreground">{c}</span>
           </div>

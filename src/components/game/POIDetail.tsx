@@ -62,7 +62,7 @@ interface OwnedCard {
   } | null;
 }
 
-const TEAM_HEX: Record<string, string> = { blue: "#3b82f6", red: "#ef4444", green: "#22c55e", black: "#1e1e1e" };
+const TEAM_HEX: Record<string, string> = { blue: "#3b82f6", red: "#ef4444", green: "#22c55e", purple: "#a855f7" };
 
 export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh, asPage }: POIDetailProps) {
   const { t } = useLanguage();

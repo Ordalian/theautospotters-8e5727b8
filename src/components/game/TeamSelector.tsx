@@ -8,10 +8,10 @@ const TEAMS = [
   { color: "blue", label: "Blue", hex: "#3b82f6", bg: "bg-blue-500", ring: "ring-blue-400" },
   { color: "red", label: "Red", hex: "#ef4444", bg: "bg-red-500", ring: "ring-red-400" },
   { color: "green", label: "Green", hex: "#22c55e", bg: "bg-green-500", ring: "ring-green-400" },
-  { color: "black", label: "Black", hex: "#a0a0a0", bg: "bg-zinc-600", ring: "ring-zinc-400" },
+  { color: "purple", label: "Purple", hex: "#a855f7", bg: "bg-purple-500", ring: "ring-purple-400" },
 ] as const;
 
-export type TeamColor = "blue" | "red" | "green" | "black";
+export type TeamColor = "blue" | "red" | "green" | "purple";
 
 interface TeamSelectorProps {
   userId: string;

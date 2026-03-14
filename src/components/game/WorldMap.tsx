@@ -17,7 +17,7 @@ const TEAM_COLORS: Record<string, string> = {
   blue: "#3b82f6",
   red: "#ef4444",
   green: "#22c55e",
-  black: "#a0a0a0",
+  purple: "#a855f7",
 };
 
 const SAINT_AMAND_CENTER = { lat: 50.4478, lng: 3.4340 };
