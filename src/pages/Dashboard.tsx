@@ -5,6 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loader2, ChevronRight } from "lucide-react";
 import { CardImage } from "@/components/game/CardImage";
+import storeBg from "@/assets/store-bg.png";
 import type { CardCondition, CardArchetype } from "@/data/gameCards";
 import { Button } from "@/components/ui/button";
 import { useUnreadDMs } from "@/hooks/useUnreadDMs";
@@ -435,6 +436,7 @@ const Dashboard = () => {
             title={t.dash_shop as string}
             subtitle={t.dash_shop_sub as string}
             icon={Store}
+            image={storeBg}
             onClick={() => navigate("/store")}
             className="aspect-square"
           />
