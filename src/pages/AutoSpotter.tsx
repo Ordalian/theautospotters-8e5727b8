@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Camera, Brain, Plus, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Camera, Brain, Plus, X, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
