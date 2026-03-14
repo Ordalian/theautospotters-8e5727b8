@@ -54,6 +54,7 @@ export default function CardGame() {
   const [masterCards, setMasterCards] = useState<MasterCard[]>([]);
   const [ownedCounts, setOwnedCounts] = useState<Map<string, number>>(new Map());
   const [ownedBestCondition, setOwnedBestCondition] = useState<Map<string, CardCondition>>(new Map());
+  const [topCards, setTopCards] = useState<{ id: string; condition: string | null; obtained_at: string; game_cards: MasterCard }[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterArch, setFilterArch] = useState<FilterArch>("all");
   const [filterRarity, setFilterRarity] = useState<FilterRarity>("all");
@@ -85,9 +86,10 @@ export default function CardGame() {
     (async () => {
       setLoading(true);
       await (supabase.rpc as any)("claim_daily_boosters");
-      const [{ data: master }, { data: owned }, { data: cd }, { data: purchased }] = await Promise.all([
+      const [{ data: master }, { data: owned }, { data: ownedInstances }, { data: cd }, { data: purchased }] = await Promise.all([
         supabase.from("game_cards").select("*").order("rarity").order("archetype").order("name"),
         supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id),
+        supabase.from("user_game_cards").select("id, condition, obtained_at, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)").eq("user_id", user.id),
         supabase.from("user_booster_cooldown").select("stored_count, next_available_at").eq("user_id", user.id).maybeSingle(),
         supabase.from("user_purchased_boosters").select("pending_count").eq("user_id", user.id).maybeSingle(),
       ]);
@@ -106,6 +108,17 @@ export default function CardGame() {
       const best = new Map<string, CardCondition>();
       byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
       setOwnedBestCondition(best);
+
+      const RARITY_RANK: Record<string, number> = { mythic: 4, rare: 3, uncommon: 2, common: 1 };
+      const instances = (ownedInstances as { id: string; condition: string | null; obtained_at: string; game_cards: MasterCard | null }[] | null) ?? [];
+      const withRarity = instances.filter((i) => i.game_cards);
+      withRarity.sort((a, b) => {
+        const rA = RARITY_RANK[(a.game_cards as MasterCard).rarity] ?? 0;
+        const rB = RARITY_RANK[(b.game_cards as MasterCard).rarity] ?? 0;
+        if (rB !== rA) return rB - rA;
+        return new Date(b.obtained_at).getTime() - new Date(a.obtained_at).getTime();
+      });
+      setTopCards(withRarity.slice(0, 5) as { id: string; condition: string | null; obtained_at: string; game_cards: MasterCard }[]);
 
       const cdRow = cd as { stored_count?: number; next_available_at?: string | null } | null;
       setDailyStoredCount(cdRow?.stored_count ?? 0);
@@ -269,15 +282,33 @@ export default function CardGame() {
     setTab("collection");
     if (!user) return;
     (async () => {
-      const { data: owned } = await supabase.from("user_game_cards").select("card_id").eq("user_id", user.id);
+      const [{ data: owned }, { data: instances }] = await Promise.all([
+        supabase.from("user_game_cards").select("card_id, condition").eq("user_id", user.id),
+        supabase.from("user_game_cards").select("id, condition, obtained_at, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)").eq("user_id", user.id),
+      ]);
       const counts = new Map<string, number>();
-      (owned as any[] || []).forEach((o: any) => {
+      const byCard = new Map<string, CardCondition[]>();
+      (owned as { card_id: string; condition?: string | null }[] || []).forEach((o) => {
         counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
+        const cond = (o.condition ?? "good") as CardCondition;
+        if (!byCard.has(o.card_id)) byCard.set(o.card_id, []);
+        byCard.get(o.card_id)!.push(cond);
       });
       setOwnedCounts(counts);
-      setOwnedBestCondition(new Map<string, CardCondition>());
+      const best = new Map<string, CardCondition>();
+      byCard.forEach((conds, cardId) => best.set(cardId, bestCondition(conds)));
+      setOwnedBestCondition(best);
+      const RARITY_RANK: Record<string, number> = { mythic: 4, rare: 3, uncommon: 2, common: 1 };
+      const list = (instances as { id: string; condition: string | null; obtained_at: string; game_cards: MasterCard | null }[] | null) ?? [];
+      const sorted = list.filter((i) => i.game_cards).sort((a, b) => {
+        const rA = RARITY_RANK[(a.game_cards as MasterCard).rarity] ?? 0;
+        const rB = RARITY_RANK[(b.game_cards as MasterCard).rarity] ?? 0;
+        if (rB !== rA) return rB - rA;
+        return new Date(b.obtained_at).getTime() - new Date(a.obtained_at).getTime();
+      });
+      setTopCards(sorted.slice(0, 5) as { id: string; condition: string | null; obtained_at: string; game_cards: MasterCard }[]);
     })();
-  }, [user]);
+  }, [user, bestCondition]);
 
   const handleBoosterComplete = useCallback(
     async (drawnCards: DrawnCard[]) => {
@@ -305,6 +336,16 @@ export default function CardGame() {
         const { error } = await supabase.from("user_game_cards").insert(inserts);
         if (error) throw error;
         trackFeature("booster_opened");
+        const { data: instances } = await supabase.from("user_game_cards").select("id, condition, obtained_at, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)").eq("user_id", user.id);
+        const RARITY_RANK: Record<string, number> = { mythic: 4, rare: 3, uncommon: 2, common: 1 };
+        const list = (instances as { id: string; condition: string | null; obtained_at: string; game_cards: MasterCard | null }[] | null) ?? [];
+        const sorted = list.filter((i) => i.game_cards).sort((a, b) => {
+          const rA = RARITY_RANK[(a.game_cards as MasterCard).rarity] ?? 0;
+          const rB = RARITY_RANK[(b.game_cards as MasterCard).rarity] ?? 0;
+          if (rB !== rA) return rB - rA;
+          return new Date(b.obtained_at).getTime() - new Date(a.obtained_at).getTime();
+        });
+        setTopCards(sorted.slice(0, 5) as { id: string; condition: string | null; obtained_at: string; game_cards: MasterCard }[]);
         if (!isPurchased) {
           const { data: consumed } = await (supabase.rpc as any)("consume_daily_booster");
           if (consumed && (consumed as { ok?: boolean }).ok !== false) {
@@ -586,8 +627,34 @@ export default function CardGame() {
               className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] aspect-square shadow-lg shadow-black/20 w-full"
             >
               <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
-                <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-violet-500/20 to-violet-500/5 rounded-lg relative">
-                  <LayoutGrid className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+                <div className="flex flex-1 min-h-0 flex-col justify-center bg-gradient-to-br from-violet-500/20 to-violet-500/5 rounded-lg relative overflow-hidden">
+                  {topCards.length > 0 ? (
+                    <div className="flex gap-1.5 overflow-x-auto snap-x snap-mandatory pb-0.5 scrollbar-none">
+                      {topCards.map((item) => {
+                        const gc = item.game_cards;
+                        return (
+                          <div key={item.id} className="shrink-0 snap-center">
+                            <GameCard
+                              name={gc.name}
+                              brand={gc.brand}
+                              model={gc.model}
+                              rarity={gc.rarity as CardRarity}
+                              archetype={gc.archetype as CardArchetype}
+                              speed={gc.speed}
+                              resilience={gc.resilience}
+                              adaptability={gc.adaptability}
+                              power={gc.power}
+                              hp={gc.hp}
+                              condition={(item.condition ?? "good") as CardCondition}
+                              className="w-[72px] h-[112px] text-[5px]"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <LayoutGrid className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors mx-auto" />
+                  )}
                   {menuStats.mythicCount > 0 && typeof tx.menu_badge_mythic === "function" && (
                     <span className="absolute top-1.5 right-1.5 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40">
                       {tx.menu_badge_mythic(menuStats.mythicCount)}
