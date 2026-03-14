@@ -473,21 +473,30 @@ const Messaging = () => {
             <p className="text-xs text-muted-foreground">{t.msg_messages_desc as string}</p>
           </div>
         </button>
-        {channels.map((ch) => (
-          <button
-            key={ch.id}
-            onClick={() => setSelectedChannel(ch)}
-            className="w-full text-left rounded-xl border border-border/50 bg-card/80 p-4 hover:border-primary/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-3"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 shrink-0">
-              <Hash className="h-5 w-5 text-primary" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-sm">{ch.name}</h3>
-              {ch.description && <p className="text-xs text-muted-foreground truncate">{ch.description}</p>}
-            </div>
-          </button>
-        ))}
+        {channels.map((ch) => {
+          const slugKey = ch.slug.replace(/-/g, "_");
+          const nameKey = `channel_${slugKey}_name` as keyof typeof t;
+          const descKey = `channel_${slugKey}_desc` as keyof typeof t;
+          const displayName = typeof t[nameKey] === "string" ? (t[nameKey] as string) : ch.name;
+          const displayDesc = typeof t[descKey] === "string" ? (t[descKey] as string) : ch.description;
+          return (
+            <button
+              key={ch.id}
+              onClick={() => setSelectedChannel(ch)}
+              className="w-full text-left rounded-xl border border-border/50 bg-card/80 p-4 hover:border-primary/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-3"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 shrink-0">
+                <Hash className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-sm">{displayName}</h3>
+                {(displayDesc ?? ch.description) && (
+                  <p className="text-xs text-muted-foreground truncate">{displayDesc ?? ch.description ?? ""}</p>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

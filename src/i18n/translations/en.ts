@@ -615,6 +615,14 @@ const en: Translations = {
   msg_messages: "Messages",
   msg_messages_desc: "Chat with your friends",
 
+  // Channel names and descriptions (by slug: general, mecanique, confirmation-spots)
+  channel_general_name: "General",
+  channel_general_desc: "General discussions",
+  channel_mecanique_name: "The Mechanics",
+  channel_mecanique_desc: "Let's talk car mechanics",
+  channel_confirmation_spots_name: "Spot confirmation",
+  channel_confirmation_spots_desc: "Confirm your spots with fellow enthusiasts",
+
   // Direct Messages
   dm_title: "Messages",
   dm_placeholder: "Write a message...",
