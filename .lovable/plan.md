@@ -1,33 +1,20 @@
 
 
-## Problem
+## Current State
 
-The friend's garage page (`FriendGarage.tsx`) displays car photos using raw storage URLs without any optimization. On weak mobile networks, these full-resolution images fail to load (as shown in the screenshot where only alt text appears). The same optimization already applied to the friends carousel in `FriendsGarages.tsx` is missing here.
+The founder role does **not** automatically get premium benefits. All premium checks (AutoSpotter limits, booster cooldowns) only look at `is_premium` and `premium_until` columns — they ignore the `role` column entirely.
 
-There are 3 places in `FriendGarage.tsx` where images are rendered without optimization:
-1. **Car list items** (line 174) -- the main car grid when viewing a type filter
-2. **"All" tile background** (line 220) -- the vehicle type menu
-3. **Vehicle type tile backgrounds** (line 251) -- each category tile
+## Proposed Fix
 
-## Plan
+Update the three database functions that check premium status to also treat `founder` (and optionally `admin`) as premium:
 
-### 1. Add image optimization helper
+1. **`use_autospotter()`** — Add: `IF role = 'founder' OR (p_premium AND ...)` → unlimited usage
+2. **`get_autospotter_status()`** — Same logic so the UI shows "Premium" for founders
+3. **`claim_daily_boosters()`** — Founders get the 4h cooldown / 5 max stored
 
-Create a small utility function (or inline) that converts raw Supabase storage URLs to the render/transform endpoint with appropriate size and quality parameters:
-- Car list thumbnails: `width=600&quality=60`
-- Menu tile backgrounds: `width=400&quality=50`
+This is a single SQL migration updating these 3 functions. No frontend changes needed since the UI already reads the `is_premium` flag from these RPCs.
 
-### 2. Apply to all 3 image locations in FriendGarage.tsx
+Alternatively, we could just set `is_premium = true` and `premium_until = NULL` (permanent) on the founder's profile row. This is simpler but less automatic if the founder account changes.
 
-For each `<img>` tag:
-- Use the transform URL instead of raw `image_url`
-- Add `loading="lazy"`
-- Add `onError` fallback handler (hide image, show fallback icon)
-- Add `bg-muted` class for loading state
-
-### 3. Add fallback elements
-
-For the car list view (line 173-179), add a hidden fallback `<div>` with `img-fallback` class that becomes visible on image error -- same pattern already used in `FriendsGarages.tsx`.
-
-For tile backgrounds, on error hide the image so the gradient+icon fallback shows through.
+**Recommended approach**: Update the 3 RPCs to treat `role = 'founder'` as always-premium. This way it's automatic and doesn't depend on manually toggling a flag.
 
