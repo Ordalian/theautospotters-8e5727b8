@@ -171,7 +171,7 @@ const Dashboard = () => {
           .in("user_id", friendIds)
           .neq("vehicle_type", "hot_wheels")
           .order("created_at", { ascending: false })
-          .limit(10);
+          .limit(5);
         friendSpots = (friendCars || []).map((c) => ({
           id: c.id,
           brand: c.brand,
@@ -209,7 +209,7 @@ const Dashboard = () => {
     if (friendSpots.length <= 1) return;
     const timer = setInterval(() => {
       setFriendsTileIndex((i) => (i + 1) % friendSpots.length);
-    }, 5000);
+    }, 3500);
     return () => clearInterval(timer);
   }, [friendSpots.length]);
 
@@ -330,10 +330,13 @@ const Dashboard = () => {
             <div className="flex flex-col h-full">
               {/* Carousel of friend spots */}
               <div className="flex-1 overflow-hidden rounded-xl relative min-h-0">
-                {friendSpots.length > 0 ? (
-                  <div className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">
-                    {friendSpots.map((spot) => (
-                      <div key={spot.id} className="snap-center shrink-0 w-full h-full relative">
+              {friendSpots.length > 0 ? (
+                  <div className="relative h-full w-full">
+                    {friendSpots.map((spot, idx) => (
+                      <div
+                        key={spot.id}
+                        className={`absolute inset-0 transition-opacity duration-700 ${idx === friendsTileIndex ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                      >
                         {spot.image_url ? (
                           <img src={spot.image_url} alt={`${spot.brand} ${spot.model}`} className="h-full w-full object-cover rounded-xl" loading="lazy" />
                         ) : (
@@ -342,9 +345,12 @@ const Dashboard = () => {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
-                        {spot.username && (
-                          <p className="absolute bottom-2 left-2.5 text-[10px] text-muted-foreground truncate">by {spot.username}</p>
-                        )}
+                        <div className="absolute bottom-2 left-2.5 right-2.5">
+                          <p className="text-[11px] font-semibold text-foreground truncate">{spot.brand} {spot.model}</p>
+                          {spot.username && (
+                            <p className="text-[9px] text-muted-foreground truncate">by {spot.username}</p>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

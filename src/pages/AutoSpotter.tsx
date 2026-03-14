@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Camera, Brain, Plus, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Camera, Brain, Plus, X, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { callCarApi } from "@/lib/carApi";
@@ -55,6 +55,16 @@ const AutoSpotter = () => {
   const [primaryPhotoSourceType, setPrimaryPhotoSourceType] = useState<PhotoSourceType | null>(null);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const [savingOwned, setSavingOwned] = useState(false);
+  const [spotterStatus, setSpotterStatus] = useState<{ uses_today: number; is_premium: boolean; coins: number } | null>(null);
+
+  // Fetch spotter status on mount
+  useState(() => {
+    if (user) {
+      supabase.rpc("get_autospotter_status").then(({ data }) => {
+        if (data) setSpotterStatus(data as any);
+      });
+    }
+  });
 
   const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
     if (images.length >= 8) {
@@ -82,6 +92,37 @@ const AutoSpotter = () => {
       toast.error(t.autospotter_add_photos as string);
       return;
     }
+
+    // Check usage limit via RPC
+    try {
+      const { data: useResult } = await supabase.rpc("use_autospotter");
+      const res = useResult as { ok?: boolean; error?: string; cost?: number; free?: boolean; remaining?: number } | null;
+      if (!res?.ok) {
+        if (res?.error === "insufficient_coins") {
+          toast.error(
+            typeof t.autospotter_needs_coins === "function"
+              ? (t.autospotter_needs_coins as (n: number) => string)(res?.cost ?? 30)
+              : `${t.store_insufficient_coins as string} (${res?.cost ?? 30} coins)`
+          );
+        } else {
+          toast.error(res?.error ?? "Error");
+        }
+        return;
+      }
+      if (res.free === false) {
+        toast.info(
+          typeof t.autospotter_coin_deducted === "function"
+            ? (t.autospotter_coin_deducted as (n: number) => string)(res.cost ?? 30)
+            : `${res.cost ?? 30} coins déduits`
+        );
+      }
+      // Update local status
+      setSpotterStatus((prev) => prev ? { ...prev, uses_today: prev.uses_today + 1, coins: res.free ? prev.coins : prev.coins - (res.cost ?? 30) } : prev);
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Error");
+      return;
+    }
+
     setAnalyzing(true);
     setResult(null);
     setExtractedPlate(null);
@@ -217,6 +258,27 @@ const AutoSpotter = () => {
           <Brain className="h-8 w-8 text-accent shrink-0" />
           <p className="text-sm text-muted-foreground">{t.autospotter_info as string}</p>
         </div>
+
+        {/* Usage status */}
+        {spotterStatus && !spotterStatus.is_premium && (
+          <div className="flex items-center justify-between rounded-xl bg-secondary/30 border border-border px-4 py-2.5">
+            <p className="text-xs text-muted-foreground">
+              {typeof t.autospotter_uses_today === "function"
+                ? (t.autospotter_uses_today as (used: number, max: number) => string)(spotterStatus.uses_today, 5)
+                : `${spotterStatus.uses_today}/5 ${t.autospotter_free_uses as string ?? "utilisations gratuites"}`}
+            </p>
+            {spotterStatus.uses_today >= 5 && (
+              <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+                <Coins className="h-3.5 w-3.5" /> 30 / {t.autospotter_per_use as string ?? "analyse"}
+              </span>
+            )}
+          </div>
+        )}
+        {spotterStatus?.is_premium && (
+          <div className="rounded-xl bg-primary/10 border border-primary/20 px-4 py-2.5 text-center">
+            <p className="text-xs font-semibold text-primary">✦ Premium — {t.autospotter_unlimited as string ?? "analyses illimitées"}</p>
+          </div>
+        )}
 
         {/* Image Grid */}
         <div className="grid grid-cols-2 gap-3">

@@ -745,6 +745,7 @@ export type Database = {
           notify_channels: boolean
           notify_dms: boolean
           pinned_car_id: string | null
+          premium_until: string | null
           role: string
           team_color: string | null
           theme: string | null
@@ -768,6 +769,7 @@ export type Database = {
           notify_channels?: boolean
           notify_dms?: boolean
           pinned_car_id?: string | null
+          premium_until?: string | null
           role?: string
           team_color?: string | null
           theme?: string | null
@@ -791,6 +793,7 @@ export type Database = {
           notify_channels?: boolean
           notify_dms?: boolean
           pinned_car_id?: string | null
+          premium_until?: string | null
           role?: string
           team_color?: string | null
           theme?: string | null
@@ -798,6 +801,27 @@ export type Database = {
           user_id?: string
           username?: string | null
           username_locked?: boolean
+        }
+        Relationships: []
+      }
+      spotter_usage: {
+        Row: {
+          id: string
+          usage_date: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          usage_date?: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          usage_date?: string
+          used_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1034,6 +1058,7 @@ export type Database = {
       achievement_xp_for_level: { Args: { p_level: number }; Returns: number }
       add_coins: { Args: { p_amount: number }; Returns: undefined }
       add_purchased_boosters: { Args: { pack_size: number }; Returns: Json }
+      buy_premium_coins: { Args: { p_plan: string }; Returns: Json }
       claim_daily_boosters: { Args: never; Returns: Json }
       consume_daily_booster: { Args: never; Returns: Json }
       consume_purchased_booster: { Args: never; Returns: boolean }
@@ -1050,6 +1075,7 @@ export type Database = {
           total_users: number
         }[]
       }
+      get_autospotter_status: { Args: never; Returns: Json }
       get_leaderboard: {
         Args: never
         Returns: {
@@ -1120,6 +1146,7 @@ export type Database = {
         Args: { p_friendship_id: string; p_new_status: string }
         Returns: undefined
       }
+      use_autospotter: { Args: never; Returns: Json }
       xp_for_car: {
         Args: {
           p_photo_source: string

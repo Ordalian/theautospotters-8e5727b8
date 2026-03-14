@@ -251,6 +251,28 @@ function UsersTab() {
     }
   };
 
+  const togglePremium = async (targetUserId: string, currentPremium: boolean) => {
+    if (!isFounder) return;
+    setUpdating(targetUserId);
+    try {
+      const updates: any = { is_premium: !currentPremium };
+      if (!currentPremium) {
+        // Grant 1 year of premium
+        updates.premium_until = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      } else {
+        updates.premium_until = null;
+      }
+      const { error } = await supabase.from("profiles").update(updates).eq("user_id", targetUserId);
+      if (error) throw error;
+      toast.success(!currentPremium ? "Premium accordé" : "Premium retiré");
+      qc.invalidateQueries({ queryKey: ["admin-users-full"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="relative">
@@ -278,21 +300,32 @@ function UsersTab() {
                   </p>
                 </div>
                 {isFounder && u.role !== "founder" && (
-                  <Button
-                    size="sm"
-                    variant={u.role === "admin" ? "destructive" : "outline"}
-                    className="shrink-0 gap-1"
-                    disabled={updating === u.user_id}
-                    onClick={() => toggleAdmin(u.user_id, u.role)}
-                  >
-                    {updating === u.user_id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : u.role === "admin" ? (
-                      <><ShieldOff className="h-3.5 w-3.5" /> Retirer</>
-                    ) : (
-                      <><Shield className="h-3.5 w-3.5" /> Admin</>
-                    )}
-                  </Button>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      size="sm"
+                      variant={u.role === "admin" ? "destructive" : "outline"}
+                      className="gap-1"
+                      disabled={updating === u.user_id}
+                      onClick={() => toggleAdmin(u.user_id, u.role)}
+                    >
+                      {updating === u.user_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : u.role === "admin" ? (
+                        <><ShieldOff className="h-3.5 w-3.5" /> Retirer</>
+                      ) : (
+                        <><Shield className="h-3.5 w-3.5" /> Admin</>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={u.is_premium ? "destructive" : "outline"}
+                      className="gap-1"
+                      disabled={updating === u.user_id}
+                      onClick={() => togglePremium(u.user_id, u.is_premium)}
+                    >
+                      {u.is_premium ? "- Premium" : "+ Premium"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
