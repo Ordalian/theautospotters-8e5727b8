@@ -218,30 +218,20 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
             exit={{ opacity: 0 }}
             className="absolute inset-0 flex flex-col items-center justify-center px-4"
           >
-            {/* Cards fanned out — scaled down to fit mobile */}
-            <div className="flex justify-center items-end gap-0.5 mb-4 scale-[0.7] sm:scale-[0.85] origin-bottom" style={{ perspective: "800px" }}>
-              {state.drawnCards.map((card, i) => {
-                const n = state.drawnCards.length;
-                const spread = 18;
-                const baseRotate = (i - (n - 1) / 2) * spread;
-                const yOffset = Math.abs(i - (n - 1) / 2) * 8;
-                return (
-                  <motion.div
-                    key={card.id}
-                    initial={{ opacity: 0, y: 60, rotateY: -30 }}
-                    animate={{ opacity: 1, y: 0, rotateY: 0 }}
-                    transition={{ delay: 0.12 * i, duration: 0.4, ease: "easeOut" }}
-                    style={{
-                      transform: `translateY(${-yOffset}px) rotate(${baseRotate}deg)`,
-                      transformStyle: "preserve-3d",
-                      marginLeft: i > 0 ? "-16px" : "0",
-                    }}
-                    className="origin-bottom"
-                  >
-                    <GameCard {...card} condition={card.condition} />
-                  </motion.div>
-                );
-              })}
+            {/* Cards grid — fits all 5 on mobile */}
+            <div className="grid grid-cols-3 gap-2 mb-4 px-2 w-full max-w-xs mx-auto">
+              {state.drawnCards.map((card, i) => (
+                <motion.div
+                  key={card.id}
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.1 * i, duration: 0.35, ease: "easeOut" }}
+                  className={i >= 3 ? "col-span-1 justify-self-center" : ""}
+                  style={i === 3 ? { gridColumn: "1 / 2", justifySelf: "end", marginRight: "0.25rem" } : i === 4 ? { gridColumn: "2 / 3", justifySelf: "start", marginLeft: "0.25rem" } : {}}
+                >
+                  <GameCard {...card} condition={card.condition} />
+                </motion.div>
+              ))}
             </div>
             <motion.div
               initial={{ opacity: 0 }}
