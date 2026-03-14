@@ -684,6 +684,7 @@ const fr: Translations = {
   game_mythic: "Mythique",
   game_no_cards: "Aucune carte. Ouvre un booster pour commencer !",
   game_booster_desc: "Ouvre un booster pour obtenir 5 nouvelles cartes ! Disponible toutes les 12 heures.",
+  game_booster_desc_premium: "Ouvre un booster pour obtenir 5 nouvelles cartes ! Disponible toutes les 4 heures.",
   game_open_booster: "Ouvrir un booster",
   game_open_free_booster: "Booster gratuit",
   game_open_purchased_booster: (n: number) => `Booster acheté (${n})`,

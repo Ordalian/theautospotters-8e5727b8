@@ -29,20 +29,31 @@ const ResetPassword = () => {
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
 
   useEffect(() => {
-    const check = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setHasRecoverySession(true);
-        setCheckingSession(false);
-        return;
-      }
-      // Quand on arrive depuis l’email, le hash est traité de façon asynchrone : on réessaie après un court délai.
-      await new Promise((r) => setTimeout(r, 1500));
-      const { data: { session: sessionRetry } } = await supabase.auth.getSession();
-      setHasRecoverySession(!!sessionRetry?.user);
+    let resolved = false;
+    const done = (hasSession: boolean) => {
+      if (resolved) return;
+      resolved = true;
+      setHasRecoverySession(hasSession);
       setCheckingSession(false);
     };
-    check();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "INITIAL_SESSION" && session?.user)) {
+        done(!!session?.user);
+      }
+    });
+
+    const timeoutId = setTimeout(() => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) done(true);
+        else done(false);
+      });
+    }, 4000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const pwdValid = PWD_RULES.every((r) => r.test(password));

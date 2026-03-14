@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
@@ -48,6 +49,7 @@ interface FriendProfile {
 
 export default function CardGame() {
   const { user } = useAuth();
+  const { is_premium } = useUserRole();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -783,7 +785,7 @@ export default function CardGame() {
       ) : (
         <div className="flex flex-col py-8 px-4 gap-6 max-w-md mx-auto">
           <p className="text-center text-muted-foreground text-sm max-w-xs mx-auto">
-            {t.game_booster_desc as string}
+            {(is_premium ? t.game_booster_desc_premium : t.game_booster_desc) as string}
           </p>
 
           {/* Daily boosters */}
