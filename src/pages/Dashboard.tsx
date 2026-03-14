@@ -319,7 +319,7 @@ const Dashboard = () => {
 
         {/* Row 2: Garages d'Amis + Magasin */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <GlassTile
+          <DashTile
             title={t.dash_friends as string}
             subtitle={t.dash_friends_sub as string}
             icon={Users}
@@ -327,37 +327,45 @@ const Dashboard = () => {
             notificationCount={friendNotificationCount}
             className="aspect-square"
           >
-            {currentFriendSpot ? (
+            <div className="flex flex-col h-full">
+              {/* Carousel of friend spots */}
               <div className="flex-1 overflow-hidden rounded-xl relative min-h-0">
-                {currentFriendSpot.image_url ? (
-                  <img
-                    key={currentFriendSpot.id}
-                    src={currentFriendSpot.image_url}
-                    alt={`${currentFriendSpot.brand} ${currentFriendSpot.model}`}
-                    className="h-full w-full object-cover rounded-xl transition-opacity duration-500"
-                    loading="lazy"
-                  />
+                {friendSpots.length > 0 ? (
+                  <div className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                    {friendSpots.map((spot) => (
+                      <div key={spot.id} className="snap-center shrink-0 w-full h-full relative">
+                        {spot.image_url ? (
+                          <img src={spot.image_url} alt={`${spot.brand} ${spot.model}`} className="h-full w-full object-cover rounded-xl" loading="lazy" />
+                        ) : (
+                          <div className="h-full w-full rounded-xl bg-secondary/30 flex items-center justify-center">
+                            <Car className="h-10 w-10 text-muted-foreground/30" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
+                        {spot.username && (
+                          <p className="absolute bottom-2 left-2.5 text-[10px] text-muted-foreground truncate">by {spot.username}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="h-full w-full rounded-xl bg-secondary/30 flex items-center justify-center">
-                    <Car className="h-10 w-10 text-muted-foreground/30" />
+                    <Users className="h-10 w-10 text-muted-foreground/20" />
                   </div>
                 )}
                 {friendNotificationCount > 0 && (
-                  <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
+                  <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg z-10">
                     {friendNotificationCount > 99 ? "99+" : friendNotificationCount}
                   </span>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
-                <div className="absolute bottom-0 inset-x-0 p-2.5">
-                  <h3 className="font-heading text-sm leading-tight">{t.dash_friends as string}</h3>
-                  {currentFriendSpot.username && (
-                    <p className="text-[10px] text-muted-foreground truncate font-sans normal-case">by {currentFriendSpot.username}</p>
-                  )}
-                </div>
               </div>
-            ) : undefined}
-          </GlassTile>
-          <GlassTile
+              <div className="mt-2">
+                <h3 className="font-heading text-sm leading-tight">{t.dash_friends as string}</h3>
+                <p className="text-[10px] text-muted-foreground">{t.dash_friends_sub as string}</p>
+              </div>
+            </div>
+          </DashTile>
+          <DashTile
             title={t.dash_shop as string}
             subtitle={t.dash_shop_sub as string}
             icon={Store}
