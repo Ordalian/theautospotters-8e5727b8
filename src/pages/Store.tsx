@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Check, Coins, Crown, Loader2, Package, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
+import storeBg from "@/assets/store-bg.png";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
