@@ -914,6 +914,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_xp_gains: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          source: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount: number
+          source?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount?: number
+          source?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       user_deck: {
         Row: {
           card_ids: string[]
@@ -1151,7 +1175,7 @@ export type Database = {
         Args: { p_rarity_rating: number }
         Returns: undefined
       }
-      increment_total_xp: { Args: { amount?: number }; Returns: undefined }
+      increment_total_xp: { Args: { amount?: number; source?: string | null }; Returns: undefined }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
       process_booster_style_drop: { Args: never; Returns: Json }
       recompute_user_total_xp: {

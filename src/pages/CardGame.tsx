@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { getLevelProgress } from "@/lib/leveling";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
 import { pickWeightedRarity } from "@/data/gameCards";
@@ -49,7 +50,7 @@ interface FriendProfile {
 
 export default function CardGame() {
   const { user } = useAuth();
-  const { is_premium } = useUserRole();
+  const { is_premium, role } = useUserRole();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,6 +78,9 @@ export default function CardGame() {
   const [friendCounts, setFriendCounts] = useState<Map<string, number>>(new Map());
   const [friendBestCondition, setFriendBestCondition] = useState<Map<string, CardCondition>>(new Map());
   const [friendLoading, setFriendLoading] = useState(false);
+  // Game zone profile tile: name + XP bar + last 6 XP gains
+  const [gameZoneProfile, setGameZoneProfile] = useState<{ username: string | null; total_xp: number } | null>(null);
+  const [xpGains, setXpGains] = useState<{ amount: number; source: string | null; created_at: string }[]>([]);
 
   const CONDITION_RANK: Record<CardCondition, number> = { destroyed: -1, damaged: 0, average: 1, good: 2, perfect: 3 };
   const bestCondition = useCallback((conditions: CardCondition[]): CardCondition => {
@@ -160,6 +164,33 @@ export default function CardGame() {
         role: p.role ?? null,
         is_premium: p.is_premium ?? false,
       })));
+    })();
+  }, [user]);
+
+  // Load profile (username, total_xp) and last 6 XP gains for game zone tile
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username, total_xp")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setGameZoneProfile({
+        username: (profile as any)?.username ?? null,
+        total_xp: Number((profile as any)?.total_xp ?? 0),
+      });
+      try {
+        const { data: gains } = await supabase
+          .from("user_xp_gains")
+          .select("amount, source, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(6);
+        setXpGains((gains as { amount: number; source: string | null; created_at: string }[]) ?? []);
+      } catch {
+        setXpGains([]);
+      }
     })();
   }, [user]);
 
@@ -609,6 +640,65 @@ export default function CardGame() {
         </div>
       ) : tab === "menu" ? (
         <div className="px-4 py-6 pb-32">
+          {/* Top tile 2x2: row 1 = name + XP bar, row 2 = last 6 XP gains (2x3 grid) */}
+          <div className="rounded-2xl border border-border/60 bg-card/80 p-4 mb-3 shadow-lg shadow-black/20">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                  <span className="text-sm font-medium text-foreground truncate">
+                    {gameZoneProfile?.username ?? (user?.email ?? "—")}
+                  </span>
+                  <UserRoleBadge role={role} isPremium={is_premium} />
+                </div>
+                {gameZoneProfile && (
+                  <>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-semibold text-foreground">
+                        {(t.level_label as string)} {getLevelProgress(gameZoneProfile.total_xp).level}
+                        {getLevelProgress(gameZoneProfile.total_xp).level >= 100 ? ` (${t.level_max as string})` : ""}
+                      </span>
+                      {getLevelProgress(gameZoneProfile.total_xp).level < 100 && (
+                        <span className="text-muted-foreground tabular-nums">
+                          {getLevelProgress(gameZoneProfile.total_xp).xpInCurrentLevel.toLocaleString()} / {getLevelProgress(gameZoneProfile.total_xp).xpRequiredForCurrentLevel.toLocaleString()} XP
+                        </span>
+                      )}
+                    </div>
+                    <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-300"
+                        style={{ width: `${getLevelProgress(gameZoneProfile.total_xp).progressFraction * 100}%` }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              <div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {Array.from({ length: 6 }, (_, i) => {
+                    const gain = xpGains[i];
+                    return (
+                      <div
+                        key={i}
+                        className="rounded-lg bg-muted/60 border border-border/50 px-2 py-1.5 text-center min-h-[36px] flex items-center justify-center"
+                      >
+                        {gain ? (
+                          <span className="text-xs font-semibold text-primary truncate" title={gain.source ?? undefined}>
+                            +{gain.amount}
+                            {gain.source ? (
+                              <span className="block text-[10px] text-muted-foreground truncate">{gain.source}</span>
+                            ) : null}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/50">—</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Boosters — full width */}
           <div className="mb-3">
             <button
