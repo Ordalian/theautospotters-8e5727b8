@@ -23,6 +23,56 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+
+/* Auto-scrolling carousel for friend spots */
+function FriendSpotsAutoCarousel({ spots }: { spots: FriendCar[] }) {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (spots.length <= 1) return;
+    const timer = setInterval(() => setIdx((i) => (i + 1) % spots.length), 4000);
+    return () => clearInterval(timer);
+  }, [spots.length]);
+
+  return (
+    <div className="relative h-44 w-full rounded-xl overflow-hidden border border-border bg-card">
+      {spots.map((spot, i) => (
+        <div
+          key={spot.id}
+          className={`absolute inset-0 transition-opacity duration-700 ${i === idx ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        >
+          {spot.image_url ? (
+            <img
+              src={spot.image_url.includes('/storage/v1/object/public/')
+                ? spot.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
+                : spot.image_url}
+              alt={`${spot.brand} ${spot.model}`}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center bg-muted">
+              <Car className="h-8 w-8 text-muted-foreground/40" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          <div className="absolute bottom-3 left-3 right-3">
+            <p className="font-bold text-sm text-foreground">{spot.brand} {spot.model}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              {spot.username || "Ami"} <UserRoleBadge role={spot.role} isPremium={spot.is_premium} /> • {spot.year}
+            </p>
+          </div>
+        </div>
+      ))}
+      {/* Dots */}
+      <div className="absolute top-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+        {spots.map((_, i) => (
+          <div key={i} className={`rounded-full transition-all duration-300 ${i === idx ? "w-4 h-1.5 bg-primary" : "w-1.5 h-1.5 bg-foreground/30"}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface Friend {
   user_id: string;
   username: string | null;
