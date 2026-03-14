@@ -38,7 +38,7 @@ const MessagingArrow = ({ displayName }: { displayName: string }) => {
   );
 };
 
-/* ——— Glass Tile ——— */
+/* ——— Solid Tile ——— */
 interface TileProps {
   title: string;
   subtitle: string;
@@ -50,11 +50,11 @@ interface TileProps {
   children?: React.ReactNode;
 }
 
-function GlassTile({ title, subtitle, icon: Icon, image, onClick, notificationCount = 0, className = "", children }: TileProps) {
+function DashTile({ title, subtitle, icon: Icon, image, onClick, notificationCount = 0, className = "", children }: TileProps) {
   return (
     <button
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl glass-panel text-left transition-all duration-300 hover:scale-[1.02] hover:glass-glow-sm active:scale-[0.98] ${className}`}
+      className={`group relative overflow-hidden rounded-2xl bg-card border border-border text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${className}`}
     >
       <div className="flex h-full w-full flex-col justify-between p-3">
         {children ?? (
@@ -64,7 +64,7 @@ function GlassTile({ title, subtitle, icon: Icon, image, onClick, notificationCo
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
               <div className="absolute bottom-0 inset-x-0 p-2.5">
                 <h3 className="font-heading text-sm leading-tight text-foreground">{title}</h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5 font-sans normal-case">{subtitle}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>
               </div>
               {notificationCount > 0 && (
                 <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
@@ -84,7 +84,7 @@ function GlassTile({ title, subtitle, icon: Icon, image, onClick, notificationCo
               </div>
               <div className="mt-2">
                 <h3 className="font-heading text-sm leading-tight">{title}</h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5 font-sans normal-case">{subtitle}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>
               </div>
             </>
           )
@@ -95,17 +95,17 @@ function GlassTile({ title, subtitle, icon: Icon, image, onClick, notificationCo
 }
 
 /* ——— Small tile ——— */
-function SmallGlassTile({ title, subtitle, icon: Icon, onClick }: Omit<TileProps, "className">) {
+function SmallDashTile({ title, subtitle, icon: Icon, onClick }: Omit<TileProps, "className">) {
   return (
     <button
       onClick={onClick}
-      className="group glass-panel-sm overflow-hidden rounded-xl text-left transition-all duration-300 hover:scale-[1.02] hover:glass-glow-sm active:scale-[0.98] h-20"
+      className="group overflow-hidden rounded-xl bg-card border border-border text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-20"
     >
       <div className="flex h-full w-full flex-row items-center gap-3 p-3">
         <Icon className="h-7 w-7 shrink-0 text-muted-foreground/30 group-hover:text-primary/50 transition-colors duration-300" />
         <div className="min-w-0 flex-1">
           <h3 className="font-heading text-sm leading-tight truncate">{title}</h3>
-          <p className="text-[10px] text-muted-foreground truncate font-sans normal-case">{subtitle}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{subtitle}</p>
         </div>
       </div>
     </button>
