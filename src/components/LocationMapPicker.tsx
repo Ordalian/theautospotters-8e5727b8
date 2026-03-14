@@ -43,6 +43,7 @@ export function LocationMapPicker({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const initRafRef = useRef<number | null>(null);
   const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
 
@@ -64,44 +65,66 @@ export function LocationMapPicker({
       ? [initialCenter.lat, initialCenter.lng]
       : DEFAULT_CENTER;
 
-    const map = L.map(node, {
-      center: [lat, lng],
-      zoom: DEFAULT_ZOOM,
+    const createMap = () => {
+      initRafRef.current = null;
+      if (!node.isConnected) return;
+      const map = L.map(node, {
+        center: [lat, lng],
+        zoom: DEFAULT_ZOOM,
+      });
+
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: "© CARTO",
+      }).addTo(map);
+
+      map.on("click", (e: L.LeafletMouseEvent) => {
+        const { lat: clickLat, lng: clickLng } = e.latlng;
+        markerRef.current?.remove();
+        markerRef.current = L.marker([clickLat, clickLng]).addTo(map);
+        setSelected({ lat: clickLat, lng: clickLng });
+      });
+
+      // Ensure Leaflet container receives clicks (Radix Dialog can set pointer-events: none on ancestors)
+      const container = map.getContainer();
+      if (container) {
+        container.style.pointerEvents = "auto";
+        container.style.touchAction = "manipulation";
+      }
+
+      mapInstance.current = map;
+
+      if (initialCenter) {
+        setSelected(initialCenter);
+        markerRef.current = L.marker([initialCenter.lat, initialCenter.lng]).addTo(map);
+      } else {
+        setSelected(null);
+      }
+
+      // Leaflet needs size recalc after the dialog finishes its animation
+      setTimeout(() => map.invalidateSize(), 50);
+      setTimeout(() => map.invalidateSize(), 300);
+    };
+
+    // Defer so the dialog layout and pointer-events are fully applied
+    initRafRef.current = requestAnimationFrame(() => {
+      initRafRef.current = requestAnimationFrame(createMap);
     });
-
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      attribution: "© CARTO",
-    }).addTo(map);
-
-    map.on("click", (e: L.LeafletMouseEvent) => {
-      const { lat: clickLat, lng: clickLng } = e.latlng;
-      markerRef.current?.remove();
-      markerRef.current = L.marker([clickLat, clickLng]).addTo(map);
-      setSelected({ lat: clickLat, lng: clickLng });
-    });
-
-    mapInstance.current = map;
-
-    if (initialCenter) {
-      setSelected(initialCenter);
-      markerRef.current = L.marker([initialCenter.lat, initialCenter.lng]).addTo(map);
-    } else {
-      setSelected(null);
-    }
-
-    // Leaflet needs size recalc after the dialog finishes its animation
-    setTimeout(() => map.invalidateSize(), 50);
-    setTimeout(() => map.invalidateSize(), 300);
   }, [open, initialCenter?.lat, initialCenter?.lng]);
 
   // Cleanup on unmount or close
   useEffect(() => {
-    if (!open && mapInstance.current) {
-      markerRef.current?.remove();
-      markerRef.current = null;
-      mapInstance.current.remove();
-      mapInstance.current = null;
-      setSelected(null);
+    if (!open) {
+      if (initRafRef.current != null) {
+        cancelAnimationFrame(initRafRef.current);
+        initRafRef.current = null;
+      }
+      if (mapInstance.current) {
+        markerRef.current?.remove();
+        markerRef.current = null;
+        mapInstance.current.remove();
+        mapInstance.current = null;
+        setSelected(null);
+      }
     }
   }, [open]);
 
@@ -134,11 +157,11 @@ export function LocationMapPicker({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-lg p-0 gap-0 overflow-hidden z-[100]"
+        className="sm:max-w-lg p-0 gap-0 overflow-hidden z-[100] pointer-events-auto"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader className="p-4 pb-0 flex flex-row items-center justify-between gap-2">
+        <DialogHeader className="p-4 pb-0 flex flex-row items-center justify-between gap-2 pointer-events-auto">
           <DialogTitle className="text-base">{t.location_choose_title as string}</DialogTitle>
           <Button
             type="button"
@@ -159,11 +182,11 @@ export function LocationMapPicker({
         {open && (
           <div
             ref={initMap}
-            className="w-full h-[320px] rounded-b-lg relative z-[60] cursor-crosshair"
+            className="w-full h-[320px] min-h-[320px] rounded-b-lg relative z-[60] cursor-crosshair isolate"
             style={{ pointerEvents: "auto" }}
           />
         )}
-        <div className="p-4 flex flex-wrap items-center justify-between gap-2 border-t">
+        <div className="p-4 flex flex-wrap items-center justify-between gap-2 border-t pointer-events-auto">
           <span className="text-sm text-muted-foreground">
             {selected
               ? `${selected.lat.toFixed(4)}, ${selected.lng.toFixed(4)}`
