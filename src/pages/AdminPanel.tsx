@@ -251,6 +251,28 @@ function UsersTab() {
     }
   };
 
+  const togglePremium = async (targetUserId: string, currentPremium: boolean) => {
+    if (!isFounder) return;
+    setUpdating(targetUserId);
+    try {
+      const updates: any = { is_premium: !currentPremium };
+      if (!currentPremium) {
+        // Grant 1 year of premium
+        updates.premium_until = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      } else {
+        updates.premium_until = null;
+      }
+      const { error } = await supabase.from("profiles").update(updates).eq("user_id", targetUserId);
+      if (error) throw error;
+      toast.success(!currentPremium ? "Premium accordé" : "Premium retiré");
+      qc.invalidateQueries({ queryKey: ["admin-users-full"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="relative">
