@@ -741,6 +741,7 @@ export type Database = {
           emblem_slot_2: string | null
           emblem_slot_3: string | null
           id: string
+          is_map_marker: boolean
           is_premium: boolean
           language: string
           last_coin_sent_at: string | null
@@ -765,6 +766,7 @@ export type Database = {
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
           id?: string
+          is_map_marker?: boolean
           is_premium?: boolean
           language?: string
           last_coin_sent_at?: string | null
@@ -789,6 +791,7 @@ export type Database = {
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
           id?: string
+          is_map_marker?: boolean
           is_premium?: boolean
           language?: string
           last_coin_sent_at?: string | null
@@ -939,6 +942,7 @@ export type Database = {
         Row: {
           card_id: string
           condition: string | null
+          damaged_uses_remaining: number
           id: string
           obtained_at: string
           user_id: string
@@ -946,6 +950,7 @@ export type Database = {
         Insert: {
           card_id: string
           condition?: string | null
+          damaged_uses_remaining?: number
           id?: string
           obtained_at?: string
           user_id: string
@@ -953,6 +958,7 @@ export type Database = {
         Update: {
           card_id?: string
           condition?: string | null
+          damaged_uses_remaining?: number
           id?: string
           obtained_at?: string
           user_id?: string
@@ -1021,7 +1027,6 @@ export type Database = {
           emblem_slot_1: string | null
           emblem_slot_2: string | null
           emblem_slot_3: string | null
-          is_map_marker: boolean | null
           is_premium: boolean | null
           pinned_car_id: string | null
           role: string | null
@@ -1035,7 +1040,6 @@ export type Database = {
           emblem_slot_1?: string | null
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
-          is_map_marker?: boolean | null
           is_premium?: boolean | null
           pinned_car_id?: string | null
           role?: string | null
@@ -1049,7 +1053,6 @@ export type Database = {
           emblem_slot_1?: string | null
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
-          is_map_marker?: boolean | null
           is_premium?: boolean | null
           pinned_car_id?: string | null
           role?: string | null
@@ -1068,6 +1071,14 @@ export type Database = {
       claim_daily_boosters: { Args: never; Returns: Json }
       consume_daily_booster: { Args: never; Returns: Json }
       consume_purchased_booster: { Args: never; Returns: boolean }
+      get_admin_role_counts: {
+        Args: never
+        Returns: {
+          admin_count: number
+          map_marker_count: number
+          premium_count: number
+        }[]
+      }
       get_admin_stats: {
         Args: never
         Returns: {
@@ -1134,14 +1145,6 @@ export type Database = {
           role: string
           user_id: string
           username: string
-        }[]
-      }
-      get_admin_role_counts: {
-        Args: never
-        Returns: {
-          admin_count: number
-          map_marker_count: number
-          premium_count: number
         }[]
       }
       grant_coins_for_spot: {
