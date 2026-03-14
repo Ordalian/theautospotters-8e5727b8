@@ -10,6 +10,7 @@ import type { CardRarity } from "@/data/gameCards";
 import { CONDITION_META, CONDITION_MODIFIERS } from "@/data/gameCards";
 import { rollCondition } from "@/components/game/BoosterPack";
 import { GameCard } from "@/components/game/GameCard";
+import { CardImage } from "@/components/game/CardImage";
 import { BoosterOpeningFlow } from "@/components/game/BoosterOpeningFlow";
 import type { DrawnCard } from "@/components/game/BoosterOpeningFlow";
 import { Button } from "@/components/ui/button";
@@ -641,7 +642,7 @@ export default function CardGame() {
                 <div className="flex flex-1 min-h-0 flex-col justify-center bg-gradient-to-br from-violet-500/20 to-violet-500/5 rounded-lg relative overflow-hidden">
                   {topCards.length > 0 ? (
                     <>
-                      <div className="relative w-full flex items-center justify-center min-h-[116px]">
+                      <div className="relative w-full flex items-center justify-center min-h-[90px] flex-1">
                         {topCards.map((item, i) => {
                           const gc = item.game_cards;
                           return (
@@ -649,19 +650,12 @@ export default function CardGame() {
                               key={item.id}
                               className={`absolute inset-0 flex items-center justify-center transition-opacity duration-700 ${i === topCardsIndex ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                             >
-                              <GameCard
-                                name={gc.name}
+                              <CardImage
                                 brand={gc.brand}
                                 model={gc.model}
-                                rarity={gc.rarity as CardRarity}
                                 archetype={gc.archetype as CardArchetype}
-                                speed={gc.speed}
-                                resilience={gc.resilience}
-                                adaptability={gc.adaptability}
-                                power={gc.power}
-                                hp={gc.hp}
                                 condition={(item.condition ?? "good") as CardCondition}
-                                className="w-[72px] h-[112px] text-[5px]"
+                                className="w-full max-w-[140px] rounded-lg overflow-hidden"
                               />
                             </div>
                           );
@@ -680,11 +674,6 @@ export default function CardGame() {
                     </>
                   ) : (
                     <LayoutGrid className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors mx-auto" />
-                  )}
-                  {menuStats.mythicCount > 0 && typeof tx.menu_badge_mythic === "function" && (
-                    <span className="absolute top-1.5 right-1.5 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40">
-                      {tx.menu_badge_mythic(menuStats.mythicCount)}
-                    </span>
                   )}
                 </div>
                 <div className="mt-2">

@@ -15,6 +15,8 @@ export interface CardImageProps {
   archetype: CardArchetype;
   condition: CardCondition;
   className?: string;
+  /** When true, container uses h-full instead of fixed 90px (e.g. for dash tile) */
+  fillHeight?: boolean;
 }
 
 function FallbackImage({ archetype }: { archetype: CardArchetype }) {
@@ -29,7 +31,7 @@ function FallbackImage({ archetype }: { archetype: CardArchetype }) {
   );
 }
 
-export function CardImage({ brand, model, archetype, condition, className = "" }: CardImageProps) {
+export function CardImage({ brand, model, archetype, condition, className = "", fillHeight = false }: CardImageProps) {
   const key = getCardImageKey(brand, model);
   const { url, loaded, error } = useCardImage(key);
   const filter = CONDITION_IMAGE_FILTERS[condition];
@@ -37,8 +39,8 @@ export function CardImage({ brand, model, archetype, condition, className = "" }
 
   return (
     <div
-      className={`relative w-full rounded-lg overflow-hidden ${className}`}
-      style={{ height: "90px" }}
+      className={`relative w-full rounded-lg overflow-hidden ${fillHeight ? "h-full" : ""} ${className}`}
+      style={fillHeight ? undefined : { height: "90px" }}
     >
       {showImage ? (
         <img

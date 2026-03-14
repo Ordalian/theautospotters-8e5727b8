@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loader2, ChevronRight } from "lucide-react";
+import { CardImage } from "@/components/game/CardImage";
+import type { CardCondition, CardArchetype } from "@/data/gameCards";
 import { Button } from "@/components/ui/button";
 import { useUnreadDMs } from "@/hooks/useUnreadDMs";
 import { useQuery } from "@tanstack/react-query";
@@ -154,6 +156,20 @@ const Dashboard = () => {
         ? { lat: lastPosition.latitude!, lng: lastPosition.longitude! }
         : null;
 
+      const { data: ownedInstances } = await supabase
+        .from("user_game_cards")
+        .select("id, condition, obtained_at, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)")
+        .eq("user_id", user!.id);
+      const RARITY_RANK: Record<string, number> = { mythic: 4, rare: 3, uncommon: 2, common: 1 };
+      const instances = (ownedInstances || []).filter((i: any) => i.game_cards);
+      instances.sort((a: any, b: any) => {
+        const rA = RARITY_RANK[a.game_cards?.rarity] ?? 0;
+        const rB = RARITY_RANK[b.game_cards?.rarity] ?? 0;
+        if (rB !== rA) return rB - rA;
+        return new Date(b.obtained_at).getTime() - new Date(a.obtained_at).getTime();
+      });
+      const topCards = instances.slice(0, 5);
+
       let friendSpots: { id: string; brand: string; model: string; year: number; image_url: string | null; username: string | null }[] = [];
       const friendships = friendshipsRes.data || [];
       if (friendships.length > 0) {
@@ -190,6 +206,7 @@ const Dashboard = () => {
         username: profileRes.data?.username ?? null,
         friendNotificationCount: friendsPendingRes.count ?? 0,
         friendSpots,
+        topCards,
       };
     },
     enabled: !!user,
@@ -203,8 +220,10 @@ const Dashboard = () => {
   const displayName = data?.username?.trim() || user?.email?.split("@")[0] || "Spotter";
   const friendNotificationCount = data?.friendNotificationCount ?? 0;
   const friendSpots = data?.friendSpots ?? [];
+  const topCards = data?.topCards ?? [];
 
   const [friendsTileIndex, setFriendsTileIndex] = useState(0);
+  const [zoneJeuCardIndex, setZoneJeuCardIndex] = useState(0);
   useEffect(() => {
     if (friendSpots.length <= 1) return;
     const timer = setInterval(() => {
@@ -212,6 +231,15 @@ const Dashboard = () => {
     }, 3500);
     return () => clearInterval(timer);
   }, [friendSpots.length]);
+
+  useEffect(() => {
+    setZoneJeuCardIndex(0);
+  }, [topCards.length]);
+  useEffect(() => {
+    if (topCards.length <= 1) return;
+    const timer = setInterval(() => setZoneJeuCardIndex((i) => (i + 1) % topCards.length), 5000);
+    return () => clearInterval(timer);
+  }, [topCards.length]);
 
   const currentFriendSpot = friendSpots[friendsTileIndex] ?? null;
 
@@ -314,7 +342,39 @@ const Dashboard = () => {
             icon={Gamepad2}
             onClick={() => navigate("/card-game")}
             className="aspect-square w-full"
-          />
+          >
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-hidden rounded-xl relative min-h-0 flex items-center justify-center bg-secondary/30">
+                {topCards.length > 0 ? (
+                  topCards.map((item: any, i: number) => {
+                    const gc = item.game_cards;
+                    if (!gc) return null;
+                    return (
+                      <div
+                        key={item.id}
+                        className={`absolute inset-0 flex items-center justify-center transition-opacity duration-700 ${i === zoneJeuCardIndex ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                      >
+                        <CardImage
+                          brand={gc.brand}
+                          model={gc.model}
+                          archetype={gc.archetype as CardArchetype}
+                          condition={(item.condition ?? "good") as CardCondition}
+                          fillHeight
+                          className="w-full h-full rounded-xl"
+                        />
+                      </div>
+                    );
+                  })
+                ) : (
+                  <Gamepad2 className="h-10 w-10 text-muted-foreground/20" />
+                )}
+              </div>
+              <div className="mt-2">
+                <h3 className="font-heading text-sm leading-tight">{t.dash_zone_jeu as string}</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{t.dash_zone_jeu_sub as string}</p>
+              </div>
+            </div>
+          </DashTile>
         </div>
 
         {/* Row 2: Garages d'Amis + Magasin */}
