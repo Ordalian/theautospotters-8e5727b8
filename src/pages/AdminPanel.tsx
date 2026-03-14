@@ -244,10 +244,10 @@ function UsersTab() {
     staleTime: 60_000,
   });
 
-  const { data: searchResults = [], isLoading: searchLoading } = useQuery({
+  const { data: searchResults = [], isLoading: searchLoading, isError: searchError } = useQuery({
     queryKey: ["admin-users-search", searchDebounce],
     queryFn: async () => {
-      if (!searchDebounce || searchDebounce.length < 2) return [];
+      if (!searchDebounce || searchDebounce.length < 3) return [];
       const data = await rpcAny<AdminUser[]>("get_users_search", { p_query: searchDebounce });
       return (data ?? []).map((u) => ({ ...u, is_map_marker: u.is_map_marker ?? false }));
     },
@@ -364,6 +364,8 @@ function UsersTab() {
               <div className="p-4 flex justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
+            ) : searchError ? (
+              <p className="p-4 text-sm text-destructive text-center">Erreur de recherche. Vérifie que la migration a bien été appliquée.</p>
             ) : searchResults.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground text-center">Aucun utilisateur trouvé.</p>
             ) : (
