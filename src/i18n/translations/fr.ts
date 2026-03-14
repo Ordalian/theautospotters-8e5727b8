@@ -45,6 +45,7 @@ const fr: Translations = {
   landing_feature_profile_desc: "XP, emblèmes, succès et boutique in-app pour les pièces et les boosters.",
   landing_legal: "Mentions légales",
   landing_app_preview: "Dans l'app",
+  landing_scroll_hint: "Défiler pour voir toutes les fonctionnalités",
 
   // Legal
   legal_title: "Mentions légales",

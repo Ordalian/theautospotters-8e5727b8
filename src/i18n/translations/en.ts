@@ -43,6 +43,7 @@ const en: Translations = {
   landing_feature_profile_desc: "XP, emblems, achievements, and the in-app store for coins and boosters.",
   landing_legal: "Legal",
   landing_app_preview: "In the app",
+  landing_scroll_hint: "Scroll to see all features",
 
   // Legal
   legal_title: "Legal",

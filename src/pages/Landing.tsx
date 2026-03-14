@@ -42,8 +42,8 @@ const Landing = () => {
       <BlackGoldBg />
 
       <div className="relative z-10 flex flex-col min-h-viewport w-full max-w-full overflow-x-hidden">
-        {/* Sticky language switcher — top */}
-        <header className="sticky top-0 z-50 flex items-center justify-end gap-1 px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+        {/* Sticky language switcher — always visible at top */}
+        <header className="sticky top-0 z-50 flex items-center justify-end gap-1 px-4 py-3 border-b border-border/50 bg-background/95 backdrop-blur shadow-sm" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <button
             type="button"
             onClick={() => setLanguage("fr")}
@@ -72,8 +72,8 @@ const Landing = () => {
           </Button>
         </div>
 
-        {/* Hero */}
-        <section className="flex min-h-[60vh] flex-col items-center justify-center px-4 pt-8 pb-16">
+        {/* Hero — keep compact so features section is visible after a short scroll */}
+        <section className="flex min-h-[50vh] flex-col items-center justify-center px-4 pt-6 pb-10">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 mb-6 border border-primary/20">
             <Car className="h-10 w-10 text-primary" />
           </div>
@@ -83,9 +83,12 @@ const Landing = () => {
           <p className="mt-3 text-muted-foreground text-center max-w-md text-lg slogan-tagline">
             {t.landing_tagline as string}
           </p>
-          <Button asChild size="lg" className="mt-10 gap-2">
+          <Button asChild size="lg" className="mt-8 gap-2">
             <Link to="/auth">{t.landing_connect as string}</Link>
           </Button>
+          <p className="mt-6 text-xs text-muted-foreground/80">
+            {t.landing_scroll_hint as string}
+          </p>
         </section>
 
         {/* Feature sections with 2–3 screenshots per category */}
