@@ -259,6 +259,27 @@ const AutoSpotter = () => {
           <p className="text-sm text-muted-foreground">{t.autospotter_info as string}</p>
         </div>
 
+        {/* Usage status */}
+        {spotterStatus && !spotterStatus.is_premium && (
+          <div className="flex items-center justify-between rounded-xl bg-secondary/30 border border-border px-4 py-2.5">
+            <p className="text-xs text-muted-foreground">
+              {typeof t.autospotter_uses_today === "function"
+                ? (t.autospotter_uses_today as (used: number, max: number) => string)(spotterStatus.uses_today, 5)
+                : `${spotterStatus.uses_today}/5 ${t.autospotter_free_uses as string ?? "utilisations gratuites"}`}
+            </p>
+            {spotterStatus.uses_today >= 5 && (
+              <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+                <Coins className="h-3.5 w-3.5" /> 30 / {t.autospotter_per_use as string ?? "analyse"}
+              </span>
+            )}
+          </div>
+        )}
+        {spotterStatus?.is_premium && (
+          <div className="rounded-xl bg-primary/10 border border-primary/20 px-4 py-2.5 text-center">
+            <p className="text-xs font-semibold text-primary">✦ Premium — {t.autospotter_unlimited as string ?? "analyses illimitées"}</p>
+          </div>
+        )}
+
         {/* Image Grid */}
         <div className="grid grid-cols-2 gap-3">
           {images.map((img, i) => (
