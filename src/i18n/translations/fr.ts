@@ -769,6 +769,22 @@ const fr: Translations = {
   tab_game: "Jeu",
   tab_friends: "Amis",
   tab_profile: "Profil",
+
+  // Premium & AutoSpotter limits
+  store_premium_title: "Premium",
+  store_premium_week: "1 semaine",
+  store_premium_month: "1 mois",
+  store_premium_year: "1 an",
+  store_premium_desc: "AutoSpotter illimité, boosters toutes les 4h (max 5), badge premium.",
+  store_premium_activated: "Premium activé !",
+  store_premium_active: "actif",
+  store_premium_until: "jusqu'au",
+  autospotter_uses_today: (used: number, max: number) => `${used}/${max} utilisations gratuites aujourd'hui`,
+  autospotter_free_uses: "utilisations gratuites",
+  autospotter_per_use: "par analyse",
+  autospotter_unlimited: "analyses illimitées",
+  autospotter_needs_coins: (n: number) => `${n} pièces nécessaires pour cette analyse`,
+  autospotter_coin_deducted: (n: number) => `${n} pièces déduites`,
 };
 
 export default fr;
