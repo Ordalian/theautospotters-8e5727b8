@@ -209,7 +209,7 @@ const Dashboard = () => {
     if (friendSpots.length <= 1) return;
     const timer = setInterval(() => {
       setFriendsTileIndex((i) => (i + 1) % friendSpots.length);
-    }, 5000);
+    }, 3500);
     return () => clearInterval(timer);
   }, [friendSpots.length]);
 

@@ -563,44 +563,13 @@ const FriendsGarages = () => {
               </div>
             )}
 
-            {/* Recent Spots Carousel */}
+            {/* Recent Spots — Auto-scroll */}
             {recentSpots.length > 0 && (
               <div className="space-y-2">
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  Spots récents de vos amis
+                  {t.friends_recent_spots as string}
                 </h2>
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {recentSpots.map((spot) => (
-                      <CarouselItem key={spot.id} className="basis-2/3 md:basis-1/3">
-                        <div className="rounded-xl border border-border bg-card overflow-hidden">
-                          {spot.image_url ? (
-                            <img
-                              src={spot.image_url.includes('/storage/v1/object/public/')
-                                ? spot.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
-                                : spot.image_url}
-                              alt={(spot as { generation?: string | null }).generation ? `${spot.brand} ${spot.model} ${(spot as { generation?: string | null }).generation}` : `${spot.brand} ${spot.model}`}
-                              className="h-28 w-full object-cover bg-muted"
-                              loading="lazy"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.querySelector('.img-fallback')?.classList.remove('hidden'); }}
-                            />
-                          ) : null}
-                          {!spot.image_url || true ? (
-                            <div className={`h-28 flex items-center justify-center bg-muted img-fallback ${spot.image_url ? 'hidden' : ''}`}>
-                              <Car className="h-8 w-8 text-muted-foreground/40" />
-                            </div>
-                          ) : null}
-                          <div className="p-2">
-                            <p className="font-bold text-sm">{spot.brand} {spot.model}{(spot as { generation?: string | null }).generation ? ` ${(spot as { generation?: string | null }).generation}` : ""}</p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              {spot.username || "Ami"} <UserRoleBadge role={spot.role} isPremium={spot.is_premium} /> • {spot.year}
-                            </p>
-                          </div>
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                </Carousel>
+                <FriendSpotsAutoCarousel spots={recentSpots} />
               </div>
             )}
 
