@@ -238,8 +238,9 @@ function UsersTab() {
   const { data: roleCounts } = useQuery({
     queryKey: ["admin-role-counts"],
     queryFn: async () => {
-      const data = await rpcAny<{ admin_count: number; map_marker_count: number; premium_count: number }[]>("get_admin_role_counts");
-      return data?.[0] ?? { admin_count: 0, map_marker_count: 0, premium_count: 0 };
+      const data = await rpcAny<{ admin_count: number; map_marker_count: number; premium_count: number } | { admin_count: number; map_marker_count: number; premium_count: number }[]>("get_admin_role_counts");
+      const row = Array.isArray(data) ? data[0] : data;
+      return row ?? { admin_count: 0, map_marker_count: 0, premium_count: 0 };
     },
     staleTime: 60_000,
   });
