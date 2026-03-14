@@ -699,55 +699,78 @@ export default function CardGame() {
           onComplete={handleBoosterComplete}
         />
       ) : (
-        <div className="flex flex-col py-8 px-4 gap-8 max-w-md mx-auto">
-          <p className="text-center text-muted-foreground text-sm">
+        <div className="flex flex-col py-8 px-4 gap-6 max-w-md mx-auto">
+          <p className="text-center text-muted-foreground text-sm max-w-xs mx-auto">
             {t.game_booster_desc as string}
           </p>
 
-          {/* Boosters quotidiens */}
-          <div className="rounded-2xl border border-border/60 bg-card/80 p-4 space-y-3">
-            <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-              <span className="text-lg">📅</span>
-              {typeof tx.game_daily_boosters === "string" ? tx.game_daily_boosters : "Boosters quotidiens"}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {dailyAvailable > 0
-                ? (typeof tx.game_daily_boosters_available === "function" ? (tx.game_daily_boosters_available as (n: number) => string)(dailyAvailable) : `${dailyAvailable} à ouvrir`)
-                : (typeof tx.game_daily_boosters_stored === "function" ? (tx.game_daily_boosters_stored as (n: number) => string)(dailyStoredCount) : `${dailyStoredCount}/3 stockés`)}
-            </p>
+          {/* Daily boosters */}
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5">
+                <Package className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-heading font-bold text-sm text-foreground tracking-tight">
+                  {typeof tx.game_daily_boosters === "string" ? tx.game_daily_boosters : "Boosters quotidiens"}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {dailyAvailable > 0
+                    ? (typeof tx.game_daily_boosters_available === "function" ? (tx.game_daily_boosters_available as (n: number) => string)(dailyAvailable) : `${dailyAvailable} à ouvrir`)
+                    : (typeof tx.game_daily_boosters_stored === "function" ? (tx.game_daily_boosters_stored as (n: number) => string)(dailyStoredCount) : `${dailyStoredCount}/3 stockés`)}
+                </p>
+              </div>
+              {dailyAvailable > 0 && (
+                <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  {dailyAvailable}
+                </span>
+              )}
+            </div>
             {dailyStoredCount < 3 && nextDailyAt && nextDailyAt.getTime() > Date.now() && (
               <p className="text-xs text-muted-foreground">
-                {t.game_next_booster as string} <span className="font-mono font-semibold text-primary">{dailyCountdown}</span>
+                {t.game_next_booster as string}{" "}
+                <span className="font-mono font-semibold text-primary">{dailyCountdown}</span>
               </p>
             )}
             <Button
               onClick={() => startBoosterFlow(false)}
               disabled={opening || dailyAvailable <= 0}
               size="lg"
-              className="w-full gap-2"
+              className="w-full gap-2 font-heading font-bold tracking-tight rounded-xl"
             >
               <Package className="h-5 w-5" />
               {opening ? (t.loading as string) : (t.game_open_free_booster as string)}
             </Button>
           </div>
 
-          {/* Boosters premium */}
-          <div className="rounded-2xl border border-border/60 bg-card/80 p-4 space-y-3">
-            <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-              <span className="text-lg">⭐</span>
-              {typeof tx.game_premium_boosters === "string" ? tx.game_premium_boosters : "Boosters premium"}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {typeof tx.game_premium_boosters_count === "function"
-                ? (tx.game_premium_boosters_count as (n: number) => string)(purchasedBoosterCount)
-                : `${purchasedBoosterCount} à ouvrir`}
-            </p>
+          {/* Purchased boosters */}
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/15 to-amber-500/5">
+                <Package className="h-5 w-5 text-amber-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-heading font-bold text-sm text-foreground tracking-tight">
+                  {typeof tx.game_premium_boosters === "string" ? tx.game_premium_boosters : "Boosters premium"}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {typeof tx.game_premium_boosters_count === "function"
+                    ? (tx.game_premium_boosters_count as (n: number) => string)(purchasedBoosterCount)
+                    : `${purchasedBoosterCount} à ouvrir`}
+                </p>
+              </div>
+              {purchasedBoosterCount > 0 && (
+                <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                  {purchasedBoosterCount}
+                </span>
+              )}
+            </div>
             <Button
               onClick={() => startBoosterFlow(true)}
               disabled={opening || purchasedBoosterCount <= 0}
               variant="secondary"
               size="lg"
-              className="w-full gap-2"
+              className="w-full gap-2 font-heading font-bold tracking-tight rounded-xl"
             >
               <Package className="h-5 w-5" />
               {opening ? (t.loading as string) : (typeof t.game_open_purchased_booster === "function" ? (t.game_open_purchased_booster as (n: number) => string)(purchasedBoosterCount) : `${t.game_open_booster} (${purchasedBoosterCount})`)}
