@@ -1150,6 +1150,7 @@ export type Database = {
         Returns: undefined
       }
       use_autospotter: { Args: never; Returns: Json }
+      user_can_manage_pois: { Args: never; Returns: boolean }
       xp_for_car: {
         Args: {
           p_photo_source: string
