@@ -55,12 +55,14 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 min cache
-      gcTime: 10 * 60 * 1000,
+      gcTime: 24 * 60 * 60 * 1000, // 24h — keep in IndexedDB across sessions
       retry: 1,
       refetchOnWindowFocus: false,
     },
   },
 });
+
+const persister = createIDBPersister();
 
 const PageLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-background">
