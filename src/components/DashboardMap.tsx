@@ -35,8 +35,8 @@ const DashboardMap = ({ spots, center }: DashboardMapProps) => {
       attributionControl: false,
     });
 
-    // Dark map tiles
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png").addTo(map);
+    // Light map tiles
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png").addTo(map);
     mapInstance.current = map;
 
     return () => {

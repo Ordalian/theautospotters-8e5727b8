@@ -8,7 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
-import { BottomTabBar } from "@/components/BottomTabBar";
+// BottomTabBar removed
 import ThemeParticles from "@/components/ThemeParticles";
 import { Loader2 } from "lucide-react";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -78,14 +78,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function ShowTabBar() {
-  const { user } = useAuth();
-  const location = useLocation();
-  // Hide tab bar on auth, landing, and fullscreen pages
-  const hideOn = ["/auth", "/", "/card-game/world-domination"];
-  if (!user || hideOn.includes(location.pathname)) return null;
-  return <BottomTabBar />;
-}
+// Tab bar removed
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -131,7 +124,7 @@ function AnimatedRoutes() {
           </Routes>
         </Suspense>
       </AnimatePresence>
-      <ShowTabBar />
+      {/* tab bar removed */}
     </>
   );
 }

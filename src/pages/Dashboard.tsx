@@ -38,7 +38,7 @@ const MessagingArrow = ({ displayName }: { displayName: string }) => {
   );
 };
 
-/* ——— Glass Tile ——— */
+/* ——— Solid Tile ——— */
 interface TileProps {
   title: string;
   subtitle: string;
@@ -50,11 +50,11 @@ interface TileProps {
   children?: React.ReactNode;
 }
 
-function GlassTile({ title, subtitle, icon: Icon, image, onClick, notificationCount = 0, className = "", children }: TileProps) {
+function DashTile({ title, subtitle, icon: Icon, image, onClick, notificationCount = 0, className = "", children }: TileProps) {
   return (
     <button
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl glass-panel text-left transition-all duration-300 hover:scale-[1.02] hover:glass-glow-sm active:scale-[0.98] ${className}`}
+      className={`group relative overflow-hidden rounded-2xl bg-card border border-border text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${className}`}
     >
       <div className="flex h-full w-full flex-col justify-between p-3">
         {children ?? (
@@ -64,7 +64,7 @@ function GlassTile({ title, subtitle, icon: Icon, image, onClick, notificationCo
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
               <div className="absolute bottom-0 inset-x-0 p-2.5">
                 <h3 className="font-heading text-sm leading-tight text-foreground">{title}</h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5 font-sans normal-case">{subtitle}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>
               </div>
               {notificationCount > 0 && (
                 <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
@@ -84,7 +84,7 @@ function GlassTile({ title, subtitle, icon: Icon, image, onClick, notificationCo
               </div>
               <div className="mt-2">
                 <h3 className="font-heading text-sm leading-tight">{title}</h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5 font-sans normal-case">{subtitle}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>
               </div>
             </>
           )
@@ -95,17 +95,17 @@ function GlassTile({ title, subtitle, icon: Icon, image, onClick, notificationCo
 }
 
 /* ——— Small tile ——— */
-function SmallGlassTile({ title, subtitle, icon: Icon, onClick }: Omit<TileProps, "className">) {
+function SmallDashTile({ title, subtitle, icon: Icon, onClick }: Omit<TileProps, "className">) {
   return (
     <button
       onClick={onClick}
-      className="group glass-panel-sm overflow-hidden rounded-xl text-left transition-all duration-300 hover:scale-[1.02] hover:glass-glow-sm active:scale-[0.98] h-20"
+      className="group overflow-hidden rounded-xl bg-card border border-border text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] h-20"
     >
       <div className="flex h-full w-full flex-row items-center gap-3 p-3">
         <Icon className="h-7 w-7 shrink-0 text-muted-foreground/30 group-hover:text-primary/50 transition-colors duration-300" />
         <div className="min-w-0 flex-1">
           <h3 className="font-heading text-sm leading-tight truncate">{title}</h3>
-          <p className="text-[10px] text-muted-foreground truncate font-sans normal-case">{subtitle}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{subtitle}</p>
         </div>
       </div>
     </button>
@@ -249,7 +249,7 @@ const Dashboard = () => {
   const carsSpottedText = typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
 
   return (
-    <div className="min-h-screen relative pb-24">
+    <div className="min-h-screen relative pb-6">
       {/* Glass Header */}
       <header className="glass-header sticky top-0 z-20 px-6 py-3">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
@@ -300,7 +300,7 @@ const Dashboard = () => {
 
         {/* Row 1: Mon Garage + Zone de Jeu */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <GlassTile
+          <DashTile
             title={t.dash_my_garage as string}
             subtitle={carsSpottedText}
             icon={Car}
@@ -308,7 +308,7 @@ const Dashboard = () => {
             onClick={() => navigate("/garage-menu")}
             className="aspect-square w-full"
           />
-          <GlassTile
+          <DashTile
             title={t.dash_zone_jeu as string}
             subtitle={t.dash_zone_jeu_sub as string}
             icon={Gamepad2}
@@ -319,7 +319,7 @@ const Dashboard = () => {
 
         {/* Row 2: Garages d'Amis + Magasin */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <GlassTile
+          <DashTile
             title={t.dash_friends as string}
             subtitle={t.dash_friends_sub as string}
             icon={Users}
@@ -327,37 +327,45 @@ const Dashboard = () => {
             notificationCount={friendNotificationCount}
             className="aspect-square"
           >
-            {currentFriendSpot ? (
+            <div className="flex flex-col h-full">
+              {/* Carousel of friend spots */}
               <div className="flex-1 overflow-hidden rounded-xl relative min-h-0">
-                {currentFriendSpot.image_url ? (
-                  <img
-                    key={currentFriendSpot.id}
-                    src={currentFriendSpot.image_url}
-                    alt={`${currentFriendSpot.brand} ${currentFriendSpot.model}`}
-                    className="h-full w-full object-cover rounded-xl transition-opacity duration-500"
-                    loading="lazy"
-                  />
+                {friendSpots.length > 0 ? (
+                  <div className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                    {friendSpots.map((spot) => (
+                      <div key={spot.id} className="snap-center shrink-0 w-full h-full relative">
+                        {spot.image_url ? (
+                          <img src={spot.image_url} alt={`${spot.brand} ${spot.model}`} className="h-full w-full object-cover rounded-xl" loading="lazy" />
+                        ) : (
+                          <div className="h-full w-full rounded-xl bg-secondary/30 flex items-center justify-center">
+                            <Car className="h-10 w-10 text-muted-foreground/30" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
+                        {spot.username && (
+                          <p className="absolute bottom-2 left-2.5 text-[10px] text-muted-foreground truncate">by {spot.username}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="h-full w-full rounded-xl bg-secondary/30 flex items-center justify-center">
-                    <Car className="h-10 w-10 text-muted-foreground/30" />
+                    <Users className="h-10 w-10 text-muted-foreground/20" />
                   </div>
                 )}
                 {friendNotificationCount > 0 && (
-                  <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg">
+                  <span className="absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shadow-lg z-10">
                     {friendNotificationCount > 99 ? "99+" : friendNotificationCount}
                   </span>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
-                <div className="absolute bottom-0 inset-x-0 p-2.5">
-                  <h3 className="font-heading text-sm leading-tight">{t.dash_friends as string}</h3>
-                  {currentFriendSpot.username && (
-                    <p className="text-[10px] text-muted-foreground truncate font-sans normal-case">by {currentFriendSpot.username}</p>
-                  )}
-                </div>
               </div>
-            ) : undefined}
-          </GlassTile>
-          <GlassTile
+              <div className="mt-2">
+                <h3 className="font-heading text-sm leading-tight">{t.dash_friends as string}</h3>
+                <p className="text-[10px] text-muted-foreground">{t.dash_friends_sub as string}</p>
+              </div>
+            </div>
+          </DashTile>
+          <DashTile
             title={t.dash_shop as string}
             subtitle={t.dash_shop_sub as string}
             icon={Store}
@@ -368,13 +376,13 @@ const Dashboard = () => {
 
         {/* AutoSpotter + Leaderboard — compact tiles */}
         <div className="grid grid-cols-2 gap-3">
-          <SmallGlassTile
+          <SmallDashTile
             title={t.dash_autospotter as string}
             subtitle={t.dash_autospotter_sub as string}
             icon={Brain}
             onClick={() => navigate("/autospotter")}
           />
-          <SmallGlassTile
+          <SmallDashTile
             title={t.dash_leaderboard as string}
             subtitle={t.dash_leaderboard_sub as string}
             icon={Trophy}
@@ -385,7 +393,7 @@ const Dashboard = () => {
         {/* Map preview */}
         <button
           onClick={() => navigate("/map", { state: { mapCenter } })}
-          className="mt-3 w-full rounded-2xl glass-panel overflow-hidden text-left transition-all duration-300 hover:scale-[1.01] hover:glass-glow-sm active:scale-[0.99]"
+          className="mt-3 w-full rounded-2xl bg-card border border-border overflow-hidden text-left transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
         >
           <div className="h-40 relative">
             <Suspense fallback={<div className="h-full w-full bg-secondary/20 animate-pulse rounded-2xl" />}>

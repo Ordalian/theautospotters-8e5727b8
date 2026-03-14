@@ -83,9 +83,9 @@ export function WorldMap({ pois, userTeam, onPOIClick, userPosition }: WorldMapP
       attributionControl: false,
     });
 
-    // Dark map tiles
+    // Light map tiles
     L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
     ).addTo(map);
 
     map.on("zoomend", () => setZoom(map.getZoom()));
