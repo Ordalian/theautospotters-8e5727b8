@@ -216,14 +216,15 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 flex flex-col items-center justify-end pb-10 px-4"
+            className="absolute inset-0 flex flex-col items-center justify-center px-4"
           >
-            <div className="flex justify-center items-end gap-1 mb-6" style={{ perspective: "800px" }}>
+            {/* Cards fanned out — scaled down to fit mobile */}
+            <div className="flex justify-center items-end gap-0.5 mb-4 scale-[0.7] sm:scale-[0.85] origin-bottom" style={{ perspective: "800px" }}>
               {state.drawnCards.map((card, i) => {
                 const n = state.drawnCards.length;
-                const spread = 24;
+                const spread = 18;
                 const baseRotate = (i - (n - 1) / 2) * spread;
-                const yOffset = Math.abs(i - (n - 1) / 2) * 10;
+                const yOffset = Math.abs(i - (n - 1) / 2) * 8;
                 return (
                   <motion.div
                     key={card.id}
@@ -233,6 +234,7 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
                     style={{
                       transform: `translateY(${-yOffset}px) rotate(${baseRotate}deg)`,
                       transformStyle: "preserve-3d",
+                      marginLeft: i > 0 ? "-16px" : "0",
                     }}
                     className="origin-bottom"
                   >
@@ -241,19 +243,11 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
                 );
               })}
             </div>
-            {/* Mini pack icon below */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 0.5 }}
-              transition={{ delay: 0.5 }}
-              className="mb-4"
-            >
-              <PackIcon className="h-8 w-8 text-muted-foreground" />
-            </motion.div>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
+              className="mt-4"
             >
               <Button onClick={() => dispatch({ type: "GO_SUMMARY" })} size="lg" className="font-heading font-bold tracking-tight rounded-xl px-8">
                 {typeof tx.booster_tap_to_continue === "string" ? tx.booster_tap_to_continue : "Continuer"}
