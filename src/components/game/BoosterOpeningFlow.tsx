@@ -228,8 +228,8 @@ export function BoosterOpeningFlow({ packs, onOpenPack, onComplete }: BoosterOpe
                   transition={{ delay: 0.08 * i, duration: 0.3, ease: "easeOut" }}
                   className="flex items-center gap-3 rounded-xl border border-border bg-card p-2"
                 >
-                  <div className="w-14 h-20 flex-shrink-0 rounded-lg overflow-hidden">
-                    <GameCard {...card} condition={card.condition} mini />
+                  <div className="w-14 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                    <CardImage brand={card.brand} model={card.model} archetype={card.archetype} condition={card.condition} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-heading text-sm font-bold text-foreground truncate">{card.name}</p>
