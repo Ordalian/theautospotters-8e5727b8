@@ -8,8 +8,8 @@ const Legal = () => {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/50 bg-background/95 backdrop-blur px-4 py-4">
+    <div className="min-h-viewport bg-background w-full max-w-full overflow-x-hidden">
+      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/50 bg-background/95 backdrop-blur px-4 py-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t.back as string}>
           <ArrowLeft className="h-5 w-5" />
         </Button>

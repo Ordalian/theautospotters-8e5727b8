@@ -372,7 +372,7 @@ const SpotMap = () => {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 relative" style={{ minHeight: "calc(100vh - 120px)" }}>
+      <div className="flex-1 min-h-0 relative min-h-map-area">
         {loading ? (
           <div className="flex items-center justify-center h-full py-20">
             <div className="animate-pulse text-muted-foreground">{t.map_loading as string}</div>

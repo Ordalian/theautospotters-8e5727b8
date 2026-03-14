@@ -277,10 +277,10 @@ const Dashboard = () => {
   const carsSpottedText = typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
 
   return (
-    <div className="min-h-screen relative pb-6">
+    <div className="min-h-full relative pb-6 overflow-x-hidden">
       {/* Glass Header */}
-      <header className="glass-header sticky top-0 z-20 px-6 py-3">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
+      <header className="glass-header sticky top-0 z-20 px-4 py-3 sm:px-6" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+        <div className="flex items-center justify-between max-w-2xl mx-auto w-full min-w-0">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 ring-1 ring-primary/20">
               <Car className="h-4.5 w-4.5 text-primary" />
@@ -323,7 +323,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="p-5 max-w-2xl mx-auto relative z-10">
+      <main className="p-4 sm:p-5 max-w-2xl mx-auto relative z-10 w-full min-w-0">
         <MessagingArrow displayName={displayName} />
 
         {/* Row 1: Mon Garage + Zone de Jeu */}

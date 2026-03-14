@@ -38,12 +38,12 @@ const Landing = () => {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-viewport w-full max-w-full overflow-x-hidden relative">
       <BlackGoldBg />
 
-      <div className="relative z-10 flex flex-col min-h-screen">
+      <div className="relative z-10 flex flex-col min-h-viewport w-full max-w-full overflow-x-hidden">
         {/* Sticky language switcher — top */}
-        <header className="sticky top-0 z-50 flex items-center justify-end gap-1 px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur">
+        <header className="sticky top-0 z-50 flex items-center justify-end gap-1 px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <button
             type="button"
             onClick={() => setLanguage("fr")}
@@ -65,8 +65,8 @@ const Landing = () => {
           </button>
         </header>
 
-        {/* Sticky CTA — bottom */}
-        <div className="fixed bottom-6 right-6 z-50">
+        {/* Sticky CTA — bottom (respects safe area on notched devices) */}
+        <div className="fixed z-50 right-4 md:right-6" style={{ bottom: 'max(1rem, calc(1rem + env(safe-area-inset-bottom)))' }}>
           <Button asChild size="lg" className="shadow-lg ring-2 ring-primary/20">
             <Link to="/auth">{t.landing_try_me as string}</Link>
           </Button>

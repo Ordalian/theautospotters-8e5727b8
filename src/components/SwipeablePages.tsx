@@ -81,8 +81,8 @@ const SwipeablePages = ({ pages, initialPage = 0, onPageChange }: SwipeablePages
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Dots indicator */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center gap-2 pt-2 pb-0 pointer-events-none">
+      {/* Dots indicator (safe area for notch) */}
+      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center gap-2 pb-0 pointer-events-none" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
         {pages.map((_, i) => (
           <div
             key={i}
@@ -103,7 +103,7 @@ const SwipeablePages = ({ pages, initialPage = 0, onPageChange }: SwipeablePages
         }}
       >
         {pages.map((page, i) => (
-          <div key={i} className="w-full h-full overflow-y-auto" style={{ flex: `0 0 ${100 / pages.length}%`, isolation: "isolate" }}>
+          <div key={i} className="w-full h-full min-w-0 min-h-0 overflow-y-auto overflow-x-hidden" style={{ flex: `0 0 ${100 / pages.length}%`, isolation: "isolate" }}>
             {page}
           </div>
         ))}
