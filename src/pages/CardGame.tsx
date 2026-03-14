@@ -55,6 +55,7 @@ export default function CardGame() {
   const [ownedCounts, setOwnedCounts] = useState<Map<string, number>>(new Map());
   const [ownedBestCondition, setOwnedBestCondition] = useState<Map<string, CardCondition>>(new Map());
   const [topCards, setTopCards] = useState<{ id: string; condition: string | null; obtained_at: string; game_cards: MasterCard }[]>([]);
+  const [topCardsIndex, setTopCardsIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filterArch, setFilterArch] = useState<FilterArch>("all");
   const [filterRarity, setFilterRarity] = useState<FilterRarity>("all");
@@ -229,6 +230,16 @@ export default function CardGame() {
   }, [dailyStoredCount, nextDailyAt]);
 
   // Stats for menu tiles (same as HomeMenu)
+  // Auto-rotate top cards carousel every 5s (one card visible at a time, like friend garage)
+  useEffect(() => {
+    setTopCardsIndex(0);
+  }, [topCards.length]);
+  useEffect(() => {
+    if (topCards.length <= 1) return;
+    const timer = setInterval(() => setTopCardsIndex((i) => (i + 1) % topCards.length), 5000);
+    return () => clearInterval(timer);
+  }, [topCards.length]);
+
   const menuStats = useMemo(() => {
     const now = Date.now();
     const remainingMs = nextDailyAt && dailyStoredCount < 3 ? Math.max(0, nextDailyAt.getTime() - now) : 0;
@@ -629,29 +640,44 @@ export default function CardGame() {
               <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-3">
                 <div className="flex flex-1 min-h-0 flex-col justify-center bg-gradient-to-br from-violet-500/20 to-violet-500/5 rounded-lg relative overflow-hidden">
                   {topCards.length > 0 ? (
-                    <div className="flex gap-1.5 overflow-x-auto snap-x snap-mandatory pb-0.5 scrollbar-none">
-                      {topCards.map((item) => {
-                        const gc = item.game_cards;
-                        return (
-                          <div key={item.id} className="shrink-0 snap-center">
-                            <GameCard
-                              name={gc.name}
-                              brand={gc.brand}
-                              model={gc.model}
-                              rarity={gc.rarity as CardRarity}
-                              archetype={gc.archetype as CardArchetype}
-                              speed={gc.speed}
-                              resilience={gc.resilience}
-                              adaptability={gc.adaptability}
-                              power={gc.power}
-                              hp={gc.hp}
-                              condition={(item.condition ?? "good") as CardCondition}
-                              className="w-[72px] h-[112px] text-[5px]"
+                    <>
+                      <div className="relative w-full flex items-center justify-center min-h-[116px]">
+                        {topCards.map((item, i) => {
+                          const gc = item.game_cards;
+                          return (
+                            <div
+                              key={item.id}
+                              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-700 ${i === topCardsIndex ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                            >
+                              <GameCard
+                                name={gc.name}
+                                brand={gc.brand}
+                                model={gc.model}
+                                rarity={gc.rarity as CardRarity}
+                                archetype={gc.archetype as CardArchetype}
+                                speed={gc.speed}
+                                resilience={gc.resilience}
+                                adaptability={gc.adaptability}
+                                power={gc.power}
+                                hp={gc.hp}
+                                condition={(item.condition ?? "good") as CardCondition}
+                                className="w-[72px] h-[112px] text-[5px]"
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {topCards.length > 1 && (
+                        <div className="flex justify-center gap-1.5 mt-1">
+                          {topCards.map((_, i) => (
+                            <div
+                              key={i}
+                              className={`rounded-full transition-all duration-300 ${i === topCardsIndex ? "w-4 h-1.5 bg-primary" : "w-1.5 h-1.5 bg-foreground/30"}`}
                             />
-                          </div>
-                        );
-                      })}
-                    </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <LayoutGrid className="h-11 w-11 text-muted-foreground/30 group-hover:text-primary/50 transition-colors mx-auto" />
                   )}
