@@ -300,21 +300,32 @@ function UsersTab() {
                   </p>
                 </div>
                 {isFounder && u.role !== "founder" && (
-                  <Button
-                    size="sm"
-                    variant={u.role === "admin" ? "destructive" : "outline"}
-                    className="shrink-0 gap-1"
-                    disabled={updating === u.user_id}
-                    onClick={() => toggleAdmin(u.user_id, u.role)}
-                  >
-                    {updating === u.user_id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : u.role === "admin" ? (
-                      <><ShieldOff className="h-3.5 w-3.5" /> Retirer</>
-                    ) : (
-                      <><Shield className="h-3.5 w-3.5" /> Admin</>
-                    )}
-                  </Button>
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      size="sm"
+                      variant={u.role === "admin" ? "destructive" : "outline"}
+                      className="gap-1"
+                      disabled={updating === u.user_id}
+                      onClick={() => toggleAdmin(u.user_id, u.role)}
+                    >
+                      {updating === u.user_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : u.role === "admin" ? (
+                        <><ShieldOff className="h-3.5 w-3.5" /> Retirer</>
+                      ) : (
+                        <><Shield className="h-3.5 w-3.5" /> Admin</>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={u.is_premium ? "destructive" : "outline"}
+                      className="gap-1"
+                      disabled={updating === u.user_id}
+                      onClick={() => togglePremium(u.user_id, u.is_premium)}
+                    >
+                      {u.is_premium ? "- Premium" : "+ Premium"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>

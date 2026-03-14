@@ -5,7 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme, PAID_STYLES, type ThemeId } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, Coins, Loader2, Package, Palette } from "lucide-react";
+import { ArrowLeft, Check, Coins, Crown, Loader2, Package, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { toast } from "sonner";
@@ -23,6 +23,12 @@ const BOOSTER_PACKS = [
   { count: 10, cost: 900 },
 ] as const;
 
+const PREMIUM_PLANS = [
+  { plan: "week", labelKey: "store_premium_week", priceLabel: "1,99 €", coinCost: 199 },
+  { plan: "month", labelKey: "store_premium_month", priceLabel: "6,99 €", coinCost: 699 },
+  { plan: "year", labelKey: "store_premium_year", priceLabel: "78,99 €", coinCost: 7899 },
+] as const;
+
 export default function Store() {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -30,21 +36,24 @@ export default function Store() {
   const queryClient = useQueryClient();
   const { ownedStyleIds, refetchOwned, setTheme } = useTheme();
   const [unlockingStyleId, setUnlockingStyleId] = useState<string | null>(null);
+  const [buyingPremium, setBuyingPremium] = useState<string | null>(null);
 
   const { data: profile, isLoading: loadingCoins } = useQuery({
     queryKey: ["profile-coins", user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("coins")
+        .select("coins, is_premium, premium_until")
         .eq("user_id", user!.id)
         .maybeSingle();
-      return data as { coins: number } | null;
+      return data as { coins: number; is_premium: boolean; premium_until: string | null } | null;
     },
     enabled: !!user?.id,
   });
 
   const coins = profile?.coins ?? 0;
+  const isPremiumActive = profile?.is_premium && (!profile.premium_until || new Date(profile.premium_until) > new Date());
+  const premiumUntilLabel = profile?.premium_until ? new Date(profile.premium_until).toLocaleDateString() : null;
 
   const handleAddCoins = async (amount: number) => {
     if (!user) return;
@@ -107,6 +116,29 @@ export default function Store() {
     }
   };
 
+  const handleBuyPremium = async (plan: string, coinCost: number) => {
+    if (!user) return;
+    if (coins < coinCost) {
+      toast.error(t.store_insufficient_coins as string);
+      return;
+    }
+    setBuyingPremium(plan);
+    try {
+      const { data } = await supabase.rpc("buy_premium_coins", { p_plan: plan });
+      const result = data as { ok?: boolean; error?: string; premium_until?: string } | null;
+      if (result?.ok) {
+        await queryClient.invalidateQueries({ queryKey: ["profile-coins", user.id] });
+        toast.success(t.store_premium_activated as string ?? "Premium activé !");
+      } else {
+        toast.error(result?.error ?? "Error");
+      }
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Error");
+    } finally {
+      setBuyingPremium(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
@@ -128,6 +160,48 @@ export default function Store() {
       </header>
 
       <div className="p-4 max-w-lg mx-auto space-y-8 relative z-10">
+        {/* Premium Time */}
+        <section>
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <Crown className="h-5 w-5 text-primary" />
+            {t.store_premium_title as string ?? "Premium"}
+          </h2>
+          {isPremiumActive && (
+            <div className="rounded-xl bg-primary/10 border border-primary/20 p-3 mb-3 text-center">
+              <p className="text-sm font-semibold text-primary">
+                ✦ Premium {t.store_premium_active as string ?? "actif"}{premiumUntilLabel ? ` — ${t.store_premium_until as string ?? "jusqu'au"} ${premiumUntilLabel}` : ""}
+              </p>
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground mb-4">{t.store_premium_desc as string ?? "AutoSpotter illimité, boosters toutes les 4h (max 5), badge premium."}</p>
+          <div className="space-y-2">
+            {PREMIUM_PLANS.map(({ plan, labelKey, priceLabel, coinCost }) => (
+              <div key={plan} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                <div>
+                  <p className="font-semibold text-sm">{t[labelKey] as string ?? plan}</p>
+                  <p className="text-xs text-muted-foreground">{priceLabel}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-8 text-xs gap-1"
+                  disabled={buyingPremium === plan || coins < coinCost}
+                  onClick={() => handleBuyPremium(plan, coinCost)}
+                >
+                  {buyingPremium === plan ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      <Coins className="h-3.5 w-3.5" />
+                      {coinCost}
+                    </>
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Buy coins (free for now) */}
         <section>
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
