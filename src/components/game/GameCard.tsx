@@ -78,22 +78,20 @@ export function GameCard({ name, brand, model: modelProp, rarity, archetype, spe
       onClick={onClick}
       className={`relative w-[160px] h-[260px] rounded-xl border-2 ${style.border} bg-gradient-to-br ${style.bg} shadow-lg ${style.glow} cursor-pointer transition-transform hover:scale-105 flex flex-col overflow-hidden ${greyed ? "grayscale opacity-40" : ""} ${className}`}
     >
-      {/* Count badge */}
-      {count && count > 1 && !greyed && (
-        <div className="absolute -top-1.5 -right-1.5 z-10 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow">
-          ×{count}
-        </div>
-      )}
-
       {/* Header */}
       <div className="px-2 pt-2 pb-1 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1">
           <ArchIcon className="h-3 w-3 text-foreground/70" />
           <span className="text-[9px] uppercase font-bold tracking-wider text-foreground/70">{style.label}</span>
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1.5">
           <Heart className="h-3 w-3 text-red-500 fill-red-500" />
           <span className="text-[11px] font-bold text-red-400">{hp}</span>
+          {count !== undefined && count >= 1 && !greyed && (
+            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/15 px-1.5 py-0.5 rounded" title={(t as Record<string, string>).card_copies ?? "Copies"}>
+              ×{count}
+            </span>
+          )}
         </div>
       </div>
 

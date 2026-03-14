@@ -658,6 +658,7 @@ const en: Translations = {
   card_stats_zone: "Stats",
   card_stats_best_condition: "Stats (best condition: {})",
   card_state_zone: "Condition",
+  card_copies: "Copies",
   card_no_copies: "You don't own this card.",
   card_repair_insufficient: "Insufficient coins",
   card_repair_success: "Card repaired",

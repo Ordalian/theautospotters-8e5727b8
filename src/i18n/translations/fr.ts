@@ -660,6 +660,7 @@ const fr: Translations = {
   card_stats_zone: "Stats",
   card_stats_best_condition: "Stats (meilleure condition : {})",
   card_state_zone: "État",
+  card_copies: "Exemplaires",
   card_no_copies: "Tu ne possèdes pas cette carte.",
   card_repair_insufficient: "Pièces insuffisantes",
   card_repair_success: "Carte réparée",
