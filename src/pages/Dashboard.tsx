@@ -249,7 +249,7 @@ const Dashboard = () => {
   const carsSpottedText = typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
 
   return (
-    <div className="min-h-screen relative pb-24">
+    <div className="min-h-screen relative pb-6">
       {/* Glass Header */}
       <header className="glass-header sticky top-0 z-20 px-6 py-3">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
