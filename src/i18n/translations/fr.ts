@@ -132,7 +132,7 @@ const fr: Translations = {
   send_coin_success: "Pièces envoyées",
   send_coin_cooldown: "Attendez 24h entre chaque envoi",
   send_coin_insufficient: "Solde insuffisant",
-  dash_autospotter: "L'esprit de la machine",
+  dash_autospotter: "Autospotter",
   dash_autospotter_sub: "Reconnaissance IA",
   dash_leaderboard: "Leaderboard",
   dash_leaderboard_sub: "Top spotters",
@@ -293,8 +293,8 @@ const fr: Translations = {
   add_miniature_fill_required: "Remplis fabricant, marque, modèle et année",
   add_miniature_photo_required_validation: "La photo est obligatoire pour une miniature",
 
-  // L'esprit de la machine (ex AutoSpotter)
-  autospotter_title: "L'esprit de la machine",
+  // Autospotter
+  autospotter_title: "Autospotter",
   autospotter_my_vehicle: "Mon véhicule",
   autospotter_info: "Ajoutez jusqu'à 8 photos : l'IA identifiera la voiture (marque, modèle, année).",
   autospotter_add_photo: "Ajouter une photo",
@@ -434,7 +434,7 @@ const fr: Translations = {
   profile_add_vehicle_title: "Ajouter un véhicule en possession",
   profile_add_vehicle_desc: "Prenez une photo de votre véhicule (avec la plaque visible). L'analyse est confidentielle et aucune donnée de plaque n'est affichée.",
   profile_take_photo: "Prendre une photo",
-  profile_open_autospotter: "Ouvrir L'esprit de la machine (photo + identification)",
+  profile_open_autospotter: "Ouvrir Autospotter (photo + identification)",
   profile_vehicle_registered: "Véhicule enregistré. Vous serez notifié s'il est spotté.",
   profile_no_plate: "Aucune plaque lisible sur la photo. Prenez une photo où la plaque est visible.",
   profile_remove_vehicle: "Retirer ce véhicule de la liste ?",
@@ -535,7 +535,7 @@ const fr: Translations = {
   // Deliver
   deliver_title: "Livrer un véhicule",
   deliver_desc: "Choisis comment ajouter le véhicule à livrer. La photo (caméra ou galerie) est obligatoire.",
-  deliver_autospotter: "L'esprit de la machine",
+  deliver_autospotter: "Autospotter",
   deliver_autospotter_desc: "Photo → l'IA identifie le véhicule",
   deliver_manual: "Ajout manuel",
   deliver_manual_desc: "Saisir marque, modèle, année, photo",
