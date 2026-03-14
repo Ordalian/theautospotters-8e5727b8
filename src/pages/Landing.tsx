@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -15,9 +16,11 @@ const FEATURES = [
   { key: "profile", icon: User },
 ] as const;
 
+const SCREENSHOT_PATH = "/landing/preview.png";
+
 const Landing = () => {
   const { user, loading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
 
   if (loading) {
     return (
@@ -39,7 +42,30 @@ const Landing = () => {
       <BlackGoldBg />
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Sticky CTA */}
+        {/* Sticky language switcher — top */}
+        <header className="sticky top-0 z-50 flex items-center justify-end gap-1 px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setLanguage("fr")}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              language === "fr" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.auth_language_fr as string}
+          </button>
+          <span className="text-muted-foreground/50 text-sm">|</span>
+          <button
+            type="button"
+            onClick={() => setLanguage("en")}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              language === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.auth_language_en as string}
+          </button>
+        </header>
+
+        {/* Sticky CTA — bottom */}
         <div className="fixed bottom-6 right-6 z-50">
           <Button asChild size="lg" className="shadow-lg ring-2 ring-primary/20">
             <Link to="/auth">{t.landing_try_me as string}</Link>
@@ -47,19 +73,29 @@ const Landing = () => {
         </div>
 
         {/* Hero */}
-        <section className="flex min-h-[70vh] flex-col items-center justify-center px-4 pt-16 pb-20">
+        <section className="flex min-h-[60vh] flex-col items-center justify-center px-4 pt-8 pb-16">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 mb-6 border border-primary/20">
             <Car className="h-10 w-10 text-primary" />
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-center text-foreground">
             {t.landing_welcome as string}
           </h1>
-          <p className="mt-3 text-muted-foreground text-center max-w-md">
+          <p className="mt-3 text-muted-foreground text-center max-w-md text-lg">
             {t.landing_tagline as string}
           </p>
           <Button asChild size="lg" className="mt-10 gap-2">
             <Link to="/auth">{t.landing_connect as string}</Link>
           </Button>
+        </section>
+
+        {/* App screenshot — add public/landing/preview.png to show a screenshot from the app */}
+        <section className="border-t border-border/50 px-4 py-10">
+          <h2 className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
+            {t.landing_app_preview as string}
+          </h2>
+          <div className="mx-auto max-w-2xl">
+            <AppScreenshot src={SCREENSHOT_PATH} alt={t.landing_app_preview as string} tagline={t.landing_tagline as string} />
+          </div>
         </section>
 
         {/* Feature sections — same tile style as Dashboard */}
@@ -109,5 +145,31 @@ const Landing = () => {
     </div>
   );
 };
+
+/** Shows an app screenshot; if the image fails to load, shows the tagline in app style instead. */
+function AppScreenshot({ src, alt, tagline }: { src: string; alt: string; tagline: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <Card className="rounded-2xl border-border bg-card/80 overflow-hidden">
+        <CardContent className="flex items-center justify-center min-h-[200px] p-6">
+          <p className="text-muted-foreground text-center text-lg font-medium">{tagline}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="rounded-2xl border-border bg-card overflow-hidden">
+      <img
+        src={src}
+        alt={alt}
+        className="w-full object-contain bg-muted/20"
+        onError={() => setFailed(true)}
+      />
+    </Card>
+  );
+}
 
 export default Landing;
