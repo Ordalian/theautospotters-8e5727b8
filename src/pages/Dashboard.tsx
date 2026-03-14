@@ -376,13 +376,13 @@ const Dashboard = () => {
 
         {/* AutoSpotter + Leaderboard — compact tiles */}
         <div className="grid grid-cols-2 gap-3">
-          <SmallGlassTile
+          <SmallDashTile
             title={t.dash_autospotter as string}
             subtitle={t.dash_autospotter_sub as string}
             icon={Brain}
             onClick={() => navigate("/autospotter")}
           />
-          <SmallGlassTile
+          <SmallDashTile
             title={t.dash_leaderboard as string}
             subtitle={t.dash_leaderboard_sub as string}
             icon={Trophy}
