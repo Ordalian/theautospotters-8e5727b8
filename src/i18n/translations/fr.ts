@@ -28,7 +28,7 @@ const fr: Translations = {
 
   // Landing
   landing_welcome: "Bienvenue sur La Machinerie",
-  landing_tagline: "Spot. Collecte. Compétition.",
+  landing_tagline: "Spottez. Collectionnez. Défiez-vous.",
   landing_connect: "Se connecter",
   landing_try_me: "Essayer",
   landing_feature_garage_title: "Garage",
@@ -58,7 +58,7 @@ const fr: Translations = {
 
   // Auth
   auth_title: "La Machinerie",
-  auth_subtitle: "Spot. Collect. Compete.",
+  auth_subtitle: "Spottez. Collectionnez. Défiez-vous.",
   auth_create_account: "Créer un compte",
   auth_welcome_back: "Bon retour",
   auth_join: "Rejoins la communauté de car spotting",

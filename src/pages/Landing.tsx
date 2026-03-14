@@ -16,7 +16,7 @@ const FEATURES = [
   { key: "profile", icon: User },
 ] as const;
 
-const SCREENSHOT_PATH = "/landing/preview.png";
+const SCREENSHOTS_PER_CATEGORY = 3;
 
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -80,7 +80,7 @@ const Landing = () => {
           <h1 className="text-4xl font-bold tracking-tight text-center text-foreground">
             {t.landing_welcome as string}
           </h1>
-          <p className="mt-3 text-muted-foreground text-center max-w-md text-lg">
+          <p className="mt-3 text-muted-foreground text-center max-w-md text-lg slogan-tagline">
             {t.landing_tagline as string}
           </p>
           <Button asChild size="lg" className="mt-10 gap-2">
@@ -88,37 +88,37 @@ const Landing = () => {
           </Button>
         </section>
 
-        {/* App screenshot — add public/landing/preview.png to show a screenshot from the app */}
-        <section className="border-t border-border/50 px-4 py-10">
-          <h2 className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
-            {t.landing_app_preview as string}
-          </h2>
-          <div className="mx-auto max-w-2xl">
-            <AppScreenshot src={SCREENSHOT_PATH} alt={t.landing_app_preview as string} tagline={t.landing_tagline as string} />
-          </div>
-        </section>
-
-        {/* Feature sections — same tile style as Dashboard */}
+        {/* Feature sections with 2–3 screenshots per category */}
         <section className="border-t border-border/50">
-          <div className="mx-auto max-w-2xl px-4 py-12 space-y-4">
-            {FEATURES.map(({ key, icon: Icon }) => (
+          <div className="mx-auto max-w-2xl px-4 py-12 space-y-6">
+            {FEATURES.map(({ key: featureKey, icon: Icon }) => (
               <Card
-                key={key}
+                key={featureKey}
                 className="rounded-2xl border-border bg-card overflow-hidden transition-all duration-300 hover:scale-[1.01]"
               >
-                <CardContent className="p-4 pt-4">
-                  <div className="flex items-center gap-4">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4 mb-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary/30 border border-border/50">
                       <Icon className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <div className="min-w-0 flex-1 text-left">
                       <h2 className="font-heading text-base font-semibold text-foreground">
-                        {t[`landing_feature_${key}_title`] as string}
+                        {t[`landing_feature_${featureKey}_title`] as string}
                       </h2>
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        {t[`landing_feature_${key}_desc`] as string}
+                        {t[`landing_feature_${featureKey}_desc`] as string}
                       </p>
                     </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Array.from({ length: SCREENSHOTS_PER_CATEGORY }, (_, i) => i + 1).map((n) => (
+                      <AppScreenshot
+                        key={`${featureKey}-${n}`}
+                        src={`/landing/${featureKey}-${n}.png`}
+                        alt={`${t[`landing_feature_${featureKey}_title`] as string} ${n}`}
+                        tagline={t.landing_tagline as string}
+                      />
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -128,7 +128,7 @@ const Landing = () => {
 
         {/* Bottom CTA + Legal */}
         <section className="border-t border-border/50 mt-auto px-4 py-10 flex flex-col items-center gap-4">
-          <p className="text-muted-foreground text-sm text-center max-w-sm">
+          <p className="text-muted-foreground text-sm text-center max-w-sm slogan-tagline">
             {t.landing_tagline as string}
           </p>
           <Button asChild size="lg">
@@ -152,23 +152,21 @@ function AppScreenshot({ src, alt, tagline }: { src: string; alt: string; taglin
 
   if (failed) {
     return (
-      <Card className="rounded-2xl border-border bg-card/80 overflow-hidden">
-        <CardContent className="flex items-center justify-center min-h-[200px] p-6">
-          <p className="text-muted-foreground text-center text-lg font-medium">{tagline}</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-border bg-card/60 overflow-hidden min-h-[100px] flex items-center justify-center p-3">
+        <p className="text-muted-foreground text-center text-xs font-medium slogan-tagline line-clamp-2">{tagline}</p>
+      </div>
     );
   }
 
   return (
-    <Card className="rounded-2xl border-border bg-card overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden aspect-[3/4] max-h-40">
       <img
         src={src}
         alt={alt}
-        className="w-full object-contain bg-muted/20"
+        className="w-full h-full object-cover"
         onError={() => setFailed(true)}
       />
-    </Card>
+    </div>
   );
 }
 

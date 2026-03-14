@@ -66,7 +66,7 @@ const Auth = () => {
             <Car className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-4xl font-bold tracking-tight">{t.auth_title as string}</h1>
-          <p className="mt-2 text-muted-foreground">{t.auth_subtitle as string}</p>
+          <p className="mt-2 text-muted-foreground slogan-tagline">{t.auth_subtitle as string}</p>
         </div>
 
         <Card className="border-border/50 bg-card/80 backdrop-blur">
