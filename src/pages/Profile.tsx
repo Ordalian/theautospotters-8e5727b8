@@ -12,7 +12,7 @@ const Profile = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const unreadNews = hasUnreadPatchNotes();
-  const { isFounder, isStaff, role, is_premium } = useUserRole();
+  const { isFounder, isStaff, role, is_premium, isMapMarker } = useUserRole();
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -30,7 +30,7 @@ const Profile = () => {
           </div>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             {user?.email}
-            <UserRoleBadge role={role} isPremium={is_premium} />
+            <UserRoleBadge role={role} isPremium={is_premium} isMapMarker={isMapMarker} />
           </p>
         </div>
 

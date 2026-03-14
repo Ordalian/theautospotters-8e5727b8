@@ -1,6 +1,7 @@
 interface UserRoleBadgeProps {
   role?: string | null;
   isPremium?: boolean | null;
+  isMapMarker?: boolean | null;
   size?: "sm" | "md";
   className?: string;
 }
@@ -126,11 +127,11 @@ function MapMarkerBadge({ s }: { s: number }) {
   );
 }
 
-const UserRoleBadge = ({ role, isPremium, size = "sm", className = "" }: UserRoleBadgeProps) => {
+const UserRoleBadge = ({ role, isPremium, isMapMarker, size = "sm", className = "" }: UserRoleBadgeProps) => {
   const s = sizeMap[size];
   const showFounder = role === "founder";
   const showAdmin = role === "admin";
-  const showMapMarker = role === "map_marker";
+  const showMapMarker = !!isMapMarker;
   const showPremium = !!isPremium;
 
   if (!showFounder && !showAdmin && !showMapMarker && !showPremium) return null;

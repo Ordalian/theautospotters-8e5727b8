@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -6,10 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Shield, ShieldOff, Loader2, Search, BarChart3,
-  Users, MessageSquare, Trash2, ChevronRight, Send, X,
+  Users, MessageSquare, Trash2, ChevronRight, Send, X, MapPin, Gem,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { toast } from "sonner";
 
@@ -21,6 +27,7 @@ interface AdminUser {
   username: string | null;
   role: string;
   is_premium: boolean;
+  is_map_marker: boolean;
   created_at: string;
   car_count: number;
 }
@@ -214,36 +221,74 @@ function StatsTab() {
 // ───── Users Tab ─────
 
 function UsersTab() {
-  const { isFounder } = useUserRole();
+  const { isFounder, isStaff } = useUserRole();
   const qc = useQueryClient();
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchDebounce, setSearchDebounce] = useState("");
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ["admin-users-full"],
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounce(searchQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const { data: roleCounts } = useQuery({
+    queryKey: ["admin-role-counts"],
     queryFn: async () => {
-      const data = await rpcAny<AdminUser[]>("get_users_for_admin");
-      return data ?? [];
+      const data = await rpcAny<{ admin_count: number; map_marker_count: number; premium_count: number }[]>("get_admin_role_counts");
+      return data?.[0] ?? { admin_count: 0, map_marker_count: 0, premium_count: 0 };
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 
-  const filtered = search.trim()
-    ? users.filter((u) =>
-        (u.username?.toLowerCase().includes(search.toLowerCase())) ||
-        u.email.toLowerCase().includes(search.toLowerCase())
-      )
-    : users;
+  const { data: searchResults = [], isLoading: searchLoading } = useQuery({
+    queryKey: ["admin-users-search", searchDebounce],
+    queryFn: async () => {
+      if (!searchDebounce || searchDebounce.length < 2) return [];
+      const data = await rpcAny<AdminUser[]>("get_users_search", { p_query: searchDebounce });
+      return (data ?? []).map((u) => ({ ...u, is_map_marker: u.is_map_marker ?? false }));
+    },
+    enabled: searchDebounce.length >= 2,
+    staleTime: 10_000,
+  });
 
-  const setUserRole = async (targetUserId: string, newRole: "user" | "admin" | "map_marker") => {
+  const canEditAdmin = isFounder;
+  const canEditMapMarkerOrPremium = isFounder || isStaff;
+
+  const setUserRole = async (targetUserId: string, newRole: "user" | "admin") => {
     if (!isFounder) return;
     setUpdating(targetUserId);
     try {
       const { error } = await supabase.from("profiles").update({ role: newRole } as any).eq("user_id", targetUserId);
       if (error) throw error;
-      const msg = newRole === "admin" ? "Admin accordé" : newRole === "map_marker" ? "Map marker accordé" : "Rôle utilisateur";
-      toast.success(msg);
-      qc.invalidateQueries({ queryKey: ["admin-users-full"] });
+      toast.success(newRole === "admin" ? "Admin accordé" : "Rôle utilisateur");
+      qc.invalidateQueries({ queryKey: ["admin-role-counts"] });
+      if (selectedUser?.user_id === targetUserId) {
+        setSelectedUser((prev) => prev ? { ...prev, role: newRole } : null);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const setMapMarker = async (targetUserId: string, value: boolean) => {
+    if (!canEditMapMarkerOrPremium) return;
+    const target = selectedUser?.user_id === targetUserId ? selectedUser : null;
+    if (target && target.role === "founder") return; // don't change founder
+    setUpdating(targetUserId);
+    try {
+      const { error } = await supabase.from("profiles").update({ is_map_marker: value } as any).eq("user_id", targetUserId);
+      if (error) throw error;
+      toast.success(value ? "Map maker accordé" : "Map maker retiré");
+      qc.invalidateQueries({ queryKey: ["admin-role-counts"] });
+      if (selectedUser?.user_id === targetUserId) {
+        setSelectedUser((prev) => prev ? { ...prev, is_map_marker: value } : null);
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Erreur");
     } finally {
@@ -252,12 +297,11 @@ function UsersTab() {
   };
 
   const togglePremium = async (targetUserId: string, currentPremium: boolean) => {
-    if (!isFounder) return;
+    if (!canEditMapMarkerOrPremium) return;
     setUpdating(targetUserId);
     try {
       const updates: any = { is_premium: !currentPremium };
       if (!currentPremium) {
-        // Grant 1 year of premium
         updates.premium_until = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
       } else {
         updates.premium_until = null;
@@ -265,7 +309,10 @@ function UsersTab() {
       const { error } = await supabase.from("profiles").update(updates).eq("user_id", targetUserId);
       if (error) throw error;
       toast.success(!currentPremium ? "Premium accordé" : "Premium retiré");
-      qc.invalidateQueries({ queryKey: ["admin-users-full"] });
+      qc.invalidateQueries({ queryKey: ["admin-role-counts"] });
+      if (selectedUser?.user_id === targetUserId) {
+        setSelectedUser((prev) => prev ? { ...prev, is_premium: !currentPremium } : null);
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Erreur");
     } finally {
@@ -273,80 +320,160 @@ function UsersTab() {
     }
   };
 
+  const counts = roleCounts ?? { admin_count: 0, map_marker_count: 0, premium_count: 0 };
+
   return (
-    <div className="space-y-3">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Rechercher par nom ou email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+    <div className="space-y-4">
+      {/* Three tiles */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <Shield className="h-6 w-6 mx-auto text-primary mb-1" />
+          <p className="text-2xl font-bold text-foreground">{Number(counts.admin_count)}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Admin</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <MapPin className="h-6 w-6 mx-auto text-emerald-500 mb-1" />
+          <p className="text-2xl font-bold text-foreground">{Number(counts.map_marker_count)}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Map maker</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <Gem className="h-6 w-6 mx-auto text-amber-500 mb-1" />
+          <p className="text-2xl font-bold text-foreground">{Number(counts.premium_count)}</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Premium</p>
+        </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">{filtered.length} utilisateur{filtered.length > 1 ? "s" : ""}</p>
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher par nom ou email..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setDropdownOpen(true);
+          }}
+          onFocus={() => searchDebounce.length >= 2 && setDropdownOpen(true)}
+          onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
+          className="pl-9"
+        />
+        {/* Search results dropdown */}
+        {dropdownOpen && searchDebounce.length >= 2 && (
+          <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg z-50 max-h-64 overflow-y-auto">
+            {searchLoading ? (
+              <div className="p-4 flex justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : searchResults.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground text-center">Aucun utilisateur trouvé.</p>
+            ) : (
+              searchResults.map((u) => (
+                <button
+                  key={u.user_id}
+                  type="button"
+                  className="w-full text-left px-4 py-3 hover:bg-muted/50 border-b border-border/50 last:border-0 flex items-center justify-between gap-2"
+                  onClick={() => {
+                    setSelectedUser({ ...u, is_map_marker: u.is_map_marker ?? false });
+                    setDropdownOpen(false);
+                    setSearchQuery("");
+                  }}
+                >
+                  <span className="font-medium text-sm truncate">{u.username || u.email || "—"}</span>
+                  <UserRoleBadge role={u.role} isPremium={u.is_premium} isMapMarker={u.is_map_marker} />
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((u) => (
-            <div key={u.user_id} className="rounded-xl border border-border/50 bg-card p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm flex items-center gap-1 truncate">
-                    {u.username || "—"}
-                    <UserRoleBadge role={u.role} isPremium={u.is_premium} />
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {u.car_count} spot{u.car_count > 1 ? "s" : ""} · inscrit le {new Date(u.created_at).toLocaleDateString("fr-FR")}
-                  </p>
-                </div>
-                {isFounder && u.role !== "founder" && (
-                  <div className="flex flex-wrap gap-1 shrink-0">
+      <p className="text-xs text-muted-foreground">Tape un nom ou un email puis sélectionne un utilisateur pour modifier ses rôles.</p>
+
+      {/* User profile modal */}
+      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rôles utilisateur</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div>
+                <p className="font-semibold text-foreground">{selectedUser.username || "—"}</p>
+                <p className="text-xs text-muted-foreground truncate">{selectedUser.email}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {selectedUser.car_count} spot{selectedUser.car_count !== 1 ? "s" : ""} · inscrit le {new Date(selectedUser.created_at).toLocaleDateString("fr-FR")}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 items-center">
+                <UserRoleBadge role={selectedUser.role} isPremium={selectedUser.is_premium} isMapMarker={selectedUser.is_map_marker} />
+              </div>
+              {(canEditAdmin || canEditMapMarkerOrPremium) && selectedUser.role !== "founder" && (
+                <div className="space-y-2 pt-2 border-t border-border">
+                  {canEditAdmin && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm">Admin</span>
+                      <Button
+                        size="sm"
+                        variant={selectedUser.role === "admin" ? "destructive" : "outline"}
+                        className="gap-1"
+                        disabled={updating === selectedUser.user_id}
+                        onClick={() => setUserRole(selectedUser.user_id, selectedUser.role === "admin" ? "user" : "admin")}
+                      >
+                        {updating === selectedUser.user_id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : selectedUser.role === "admin" ? (
+                          "Retirer"
+                        ) : (
+                          "Accorder"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm">Map maker</span>
                     <Button
                       size="sm"
-                      variant={u.role === "admin" ? "destructive" : "outline"}
+                      variant={selectedUser.is_map_marker ? "destructive" : "outline"}
                       className="gap-1"
-                      disabled={updating === u.user_id}
-                      onClick={() => setUserRole(u.user_id, u.role === "admin" ? "user" : "admin")}
+                      disabled={updating === selectedUser.user_id}
+                      onClick={() => setMapMarker(selectedUser.user_id, !selectedUser.is_map_marker)}
                     >
-                      {updating === u.user_id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : u.role === "admin" ? (
-                        <><ShieldOff className="h-3.5 w-3.5" /> Retirer admin</>
+                      {updating === selectedUser.user_id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : selectedUser.is_map_marker ? (
+                        "Retirer"
                       ) : (
-                        <><Shield className="h-3.5 w-3.5" /> Admin</>
+                        "Accorder"
                       )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={u.role === "map_marker" ? "destructive" : "outline"}
-                      className="gap-1"
-                      disabled={updating === u.user_id}
-                      onClick={() => setUserRole(u.user_id, u.role === "map_marker" ? "user" : "map_marker")}
-                    >
-                      {updating === u.user_id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : u.role === "map_marker" ? (
-                        "Retirer map"
-                      ) : (
-                        "Map marker"
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={u.is_premium ? "destructive" : "outline"}
-                      className="gap-1"
-                      disabled={updating === u.user_id}
-                      onClick={() => togglePremium(u.user_id, u.is_premium)}
-                    >
-                      {u.is_premium ? "- Premium" : "+ Premium"}
                     </Button>
                   </div>
-                )}
-              </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm">Premium</span>
+                    <Button
+                      size="sm"
+                      variant={selectedUser.is_premium ? "destructive" : "outline"}
+                      className="gap-1"
+                      disabled={updating === selectedUser.user_id}
+                      onClick={() => togglePremium(selectedUser.user_id, selectedUser.is_premium)}
+                    >
+                      {updating === selectedUser.user_id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : selectedUser.is_premium ? (
+                        "Retirer"
+                      ) : (
+                        "Accorder"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {selectedUser.role === "founder" && (
+                <p className="text-xs text-muted-foreground">Le fondateur a tous les rôles par défaut.</p>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -462,7 +589,7 @@ function SupportTab() {
                 <div key={r.id} className={`rounded-xl border p-3 ${isStaffReply ? "border-primary/30 bg-primary/5 ml-4" : "border-border/40 bg-card mr-4"}`}>
                   <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                     {r.username || "Anonyme"}
-                    <UserRoleBadge role={r.role} />
+                    <UserRoleBadge role={r.role} isMapMarker={(r as any).is_map_marker} />
                     · {formatDate(r.created_at)}
                   </p>
                   <p className="text-sm whitespace-pre-wrap">{r.body}</p>
