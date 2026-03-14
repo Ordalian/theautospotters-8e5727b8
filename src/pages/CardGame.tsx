@@ -264,6 +264,21 @@ export default function CardGame() {
     return picked;
   }, [masterCards]);
 
+  const handleBoosterDone = useCallback(() => {
+    setBoosterCards(null);
+    setTab("collection");
+    if (!user) return;
+    (async () => {
+      const { data: owned } = await supabase.from("user_game_cards").select("card_id").eq("user_id", user.id);
+      const counts = new Map<string, number>();
+      (owned as any[] || []).forEach((o: any) => {
+        counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
+      });
+      setOwnedCounts(counts);
+      setOwnedBestCondition(new Map<string, CardCondition>());
+    })();
+  }, [user]);
+
   const handleBoosterComplete = useCallback(
     async (drawnCards: DrawnCard[]) => {
       if (!user || drawnCards.length === 0) {
@@ -316,21 +331,6 @@ export default function CardGame() {
     },
     [user, handleBoosterDone, openingWithPurchased]
   );
-
-  function handleBoosterDone() {
-    setBoosterCards(null);
-    setTab("collection");
-    if (!user) return;
-    (async () => {
-      const { data: owned } = await supabase.from("user_game_cards").select("card_id").eq("user_id", user.id);
-      const counts = new Map<string, number>();
-      (owned as any[] || []).forEach((o: any) => {
-        counts.set(o.card_id, (counts.get(o.card_id) || 0) + 1);
-      });
-      setOwnedCounts(counts);
-      setOwnedBestCondition(new Map<string, CardCondition>());
-    })();
-  }
 
   const archOptions: { key: FilterArch; icon: typeof Zap; label: string }[] = [
     { key: "all", icon: LayoutGrid, label: t.game_all as string },
