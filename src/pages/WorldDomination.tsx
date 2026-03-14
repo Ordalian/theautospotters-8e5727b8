@@ -82,21 +82,22 @@ export default function WorldDomination() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between gap-3">
-        <button onClick={() => navigate("/card-game")} className="shrink-0 text-muted-foreground hover:text-foreground">
+      {/* Glass Header */}
+      <header className="glass-header sticky top-0 z-30 px-4 py-3 flex items-center justify-between gap-3">
+        <button onClick={() => navigate("/card-game")} className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1 text-center">
-          <h1 className="text-lg font-bold text-foreground truncate">{t.wdom_title as string}</h1>
+          <h1 className="text-lg font-heading text-foreground truncate">{t.wdom_title as string}</h1>
           <div className="flex items-center justify-center gap-1.5 mt-0.5">
-            <div className="h-2.5 w-2.5 rounded-full" style={{
-              background: teamColor === "blue" ? "#3b82f6" : teamColor === "red" ? "#ef4444" : teamColor === "green" ? "#22c55e" : "#1e1e1e"
+            <div className="h-2.5 w-2.5 rounded-full shadow-sm" style={{
+              background: teamColor === "blue" ? "#3b82f6" : teamColor === "red" ? "#ef4444" : teamColor === "green" ? "#22c55e" : "#a0a0a0",
+              boxShadow: `0 0 8px ${teamColor === "blue" ? "#3b82f640" : teamColor === "red" ? "#ef444440" : teamColor === "green" ? "#22c55e40" : "#a0a0a040"}`
             }} />
-            <span className="text-[10px] font-bold uppercase text-muted-foreground">{teamColor}</span>
+            <span className="text-[10px] font-heading uppercase text-muted-foreground">{teamColor}</span>
           </div>
         </div>
-        <Link to="/home" className="shrink-0 text-muted-foreground hover:text-primary">
+        <Link to="/home" className="shrink-0 text-muted-foreground hover:text-primary transition-colors">
           <Home className="h-5 w-5" />
         </Link>
       </header>
@@ -110,30 +111,30 @@ export default function WorldDomination() {
           userPosition={userPosition}
         />
 
-        {/* GPS status */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-card/90 border border-border text-[10px]">
+        {/* GPS status — glass pill */}
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-panel-sm text-[10px]">
           <MapPin className="h-3 w-3" />
           {userPosition ? (
-            <span className="text-green-400">{t.wdom_gps_active as string}</span>
+            <span className="text-primary font-semibold">{t.wdom_gps_active as string}</span>
           ) : (
             <span className="text-muted-foreground">{t.wdom_gps_waiting as string}</span>
           )}
         </div>
       </div>
 
-      {/* Legend */}
+      {/* Legend — glass strip */}
       <div className="px-4 py-3 flex items-center justify-center gap-4 text-[10px]">
         {["blue", "red", "green", "black"].map((c) => (
           <div key={c} className="flex items-center gap-1">
             <div className="h-2.5 w-2.5 rounded-full" style={{
-              background: c === "blue" ? "#3b82f6" : c === "red" ? "#ef4444" : c === "green" ? "#22c55e" : "#1e1e1e"
+              background: c === "blue" ? "#3b82f6" : c === "red" ? "#ef4444" : c === "green" ? "#22c55e" : "#a0a0a0"
             }} />
-            <span className="uppercase font-bold text-muted-foreground">{c}</span>
+            <span className="uppercase font-heading text-muted-foreground">{c}</span>
           </div>
         ))}
         <div className="flex items-center gap-1">
           <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/50" />
-          <span className="text-muted-foreground">{t.wdom_unowned as string}</span>
+          <span className="text-muted-foreground font-sans normal-case">{t.wdom_unowned as string}</span>
         </div>
       </div>
 

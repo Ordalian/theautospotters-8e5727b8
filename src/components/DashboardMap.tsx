@@ -35,7 +35,8 @@ const DashboardMap = ({ spots, center }: DashboardMapProps) => {
       attributionControl: false,
     });
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png").addTo(map);
+    // Dark map tiles
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png").addTo(map);
     mapInstance.current = map;
 
     return () => {
@@ -54,11 +55,11 @@ const DashboardMap = ({ spots, center }: DashboardMapProps) => {
     if (!mapInstance.current) return;
     spots.forEach((s) => {
       L.circleMarker([s.latitude, s.longitude], {
-        radius: 4,
-        color: "hsl(14, 100%, 55%)",
-        fillColor: "hsl(14, 100%, 55%)",
+        radius: 5,
+        color: "hsl(var(--primary))",
+        fillColor: "hsl(var(--primary))",
         fillOpacity: 0.9,
-        weight: 1,
+        weight: 2,
       }).addTo(mapInstance.current!);
     });
   }, [spots]);

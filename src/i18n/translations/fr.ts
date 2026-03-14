@@ -762,6 +762,13 @@ const fr: Translations = {
   wdom_battle_ended: "Terminé",
   wdom_gps_active: "GPS actif",
   wdom_gps_waiting: "GPS en attente...",
+
+  // Tab bar
+  tab_home: "Accueil",
+  tab_garage: "Garage",
+  tab_game: "Jeu",
+  tab_friends: "Amis",
+  tab_profile: "Profil",
 };
 
 export default fr;

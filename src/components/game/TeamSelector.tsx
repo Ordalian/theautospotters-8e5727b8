@@ -8,7 +8,7 @@ const TEAMS = [
   { color: "blue", label: "Blue", hex: "#3b82f6", bg: "bg-blue-500", ring: "ring-blue-400" },
   { color: "red", label: "Red", hex: "#ef4444", bg: "bg-red-500", ring: "ring-red-400" },
   { color: "green", label: "Green", hex: "#22c55e", bg: "bg-green-500", ring: "ring-green-400" },
-  { color: "black", label: "Black", hex: "#1e1e1e", bg: "bg-zinc-800", ring: "ring-zinc-500" },
+  { color: "black", label: "Black", hex: "#a0a0a0", bg: "bg-zinc-600", ring: "ring-zinc-400" },
 ] as const;
 
 export type TeamColor = "blue" | "red" | "green" | "black";
@@ -41,13 +41,13 @@ export function TeamSelector({ userId, onTeamSelected }: TeamSelectorProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
-      <div className="max-w-sm w-full rounded-2xl border border-border bg-card p-6 space-y-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-xl p-4">
+      <div className="max-w-sm w-full rounded-2xl glass-panel p-6 space-y-6 animate-scale-in">
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold text-foreground">
+          <h2 className="text-2xl font-heading text-foreground">
             {t.wdom_choose_team as string}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground font-sans normal-case">
             {t.wdom_choose_team_desc as string}
           </p>
         </div>
@@ -58,17 +58,22 @@ export function TeamSelector({ userId, onTeamSelected }: TeamSelectorProps) {
               key={team.color}
               type="button"
               onClick={() => setSelected(team.color)}
-              className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-5 transition-all ${
+              className={`relative flex flex-col items-center justify-center gap-3 rounded-xl glass-panel-sm p-5 transition-all duration-300 ${
                 selected === team.color
-                  ? `border-primary ${team.ring} ring-2 scale-105`
-                  : "border-border hover:border-muted-foreground/50"
+                  ? `ring-2 ${team.ring} scale-105 glass-glow-sm`
+                  : "hover:scale-[1.02]"
               }`}
             >
               <div
-                className={`h-12 w-12 rounded-full ${team.bg} shadow-lg`}
-                style={{ boxShadow: `0 0 20px ${team.hex}40` }}
+                className={`h-14 w-14 rounded-full shadow-lg`}
+                style={{
+                  background: team.hex,
+                  boxShadow: selected === team.color
+                    ? `0 0 24px ${team.hex}60`
+                    : `0 4px 12px ${team.hex}30`,
+                }}
               />
-              <span className="text-sm font-bold text-foreground">{team.label}</span>
+              <span className="text-sm font-heading text-foreground">{team.label}</span>
             </button>
           ))}
         </div>
@@ -81,7 +86,7 @@ export function TeamSelector({ userId, onTeamSelected }: TeamSelectorProps) {
           {saving ? (t.loading as string) : (t.confirm as string)}
         </Button>
 
-        <p className="text-[10px] text-muted-foreground text-center">
+        <p className="text-[10px] text-muted-foreground text-center font-sans normal-case">
           {t.wdom_choose_team_warning as string}
         </p>
       </div>
