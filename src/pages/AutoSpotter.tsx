@@ -55,6 +55,16 @@ const AutoSpotter = () => {
   const [primaryPhotoSourceType, setPrimaryPhotoSourceType] = useState<PhotoSourceType | null>(null);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const [savingOwned, setSavingOwned] = useState(false);
+  const [spotterStatus, setSpotterStatus] = useState<{ uses_today: number; is_premium: boolean; coins: number } | null>(null);
+
+  // Fetch spotter status on mount
+  useState(() => {
+    if (user) {
+      supabase.rpc("get_autospotter_status").then(({ data }) => {
+        if (data) setSpotterStatus(data as any);
+      });
+    }
+  });
 
   const handlePhotoSelect = (file: File, source: PhotoSourceType) => {
     if (images.length >= 8) {
