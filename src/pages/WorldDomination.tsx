@@ -9,6 +9,7 @@ import { WorldMap, type POI } from "@/components/game/WorldMap";
 import { POIDetail } from "@/components/game/POIDetail";
 import { ArrowLeft, Home, MapPin, MapPinned } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000;
@@ -116,7 +117,18 @@ export default function WorldDomination() {
         <WorldMap
           pois={pois}
           userTeam={teamColor}
-          onPOIClick={setSelectedPOI}
+          onPOIClick={(poi) => {
+            if (!userPosition) {
+              toast.error(t.wdom_gps_waiting as string);
+              return;
+            }
+            const dist = distanceMeters(userPosition.lat, userPosition.lng, poi.latitude, poi.longitude);
+            if (dist > NEARBY_RADIUS) {
+              toast.error(t.wdom_too_far as string);
+              return;
+            }
+            setSelectedPOI(poi);
+          }}
           userPosition={userPosition}
         />
 

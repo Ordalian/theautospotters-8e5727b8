@@ -3,7 +3,7 @@
 
 export type CardRarity = "common" | "uncommon" | "rare" | "mythic";
 export type CardArchetype = "speed" | "resilience" | "adaptability" | "power";
-export type CardCondition = "damaged" | "average" | "good" | "perfect";
+export type CardCondition = "damaged" | "average" | "good" | "perfect" | "destroyed";
 
 /** Deck builder: point value per rarity. Max 30 pts, max 12 cards per deck. */
 export const CARD_POINTS: Record<CardRarity, number> = {
@@ -35,6 +35,7 @@ export const CONDITION_MODIFIERS: Record<CardCondition, number> = {
   average: 0.9,
   good: 1.0,
   perfect: 1.15,
+  destroyed: 0,
 };
 
 export const CONDITION_META: Record<
@@ -68,6 +69,13 @@ export const CONDITION_META: Record<
     emoji: "⭐",
     overlayClass: "condition-perfect",
     badgeClass: "bg-amber-900/80 text-amber-300 border-amber-500",
+  },
+  destroyed: {
+    label: "Destroyed",
+    labelFr: "Détruite",
+    emoji: "💀",
+    overlayClass: "condition-damaged",
+    badgeClass: "bg-zinc-900/90 text-zinc-400 border-zinc-600",
   },
 };
 

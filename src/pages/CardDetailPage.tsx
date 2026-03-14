@@ -42,7 +42,7 @@ interface UserCardInstance {
   condition: string | null;
 }
 
-const CONDITION_ORDER: CardCondition[] = ["damaged", "average", "good", "perfect"];
+const CONDITION_ORDER: CardCondition[] = ["destroyed", "damaged", "average", "good", "perfect"];
 function bestCondition(conditions: (string | null)[]): CardCondition {
   let best: CardCondition = "good";
   for (const c of conditions) {
@@ -55,6 +55,7 @@ function bestCondition(conditions: (string | null)[]): CardCondition {
 
 function repairCost(current: CardCondition): number {
   switch (current) {
+    case "destroyed": return 50;
     case "damaged": return 10;
     case "average": return 10;
     case "good": return 15;
@@ -64,6 +65,7 @@ function repairCost(current: CardCondition): number {
 
 function nextCondition(current: CardCondition): CardCondition | null {
   switch (current) {
+    case "destroyed": return "good";
     case "damaged": return "average";
     case "average": return "good";
     case "good": return "perfect";

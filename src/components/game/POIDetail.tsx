@@ -152,10 +152,12 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh 
   const maxPerTeam = phase === "capture" ? 30 : (isOwnTeam ? 30 : 8);
   const canPlace = isNearby && battle && teamCardsPlaced.length < maxPerTeam;
 
-  // Cards not already in this battle
+  // Cards not already in this battle, and not destroyed
   const availableCards = useMemo(() => {
     const placedIds = new Set(battleCards.map((c) => c.user_game_card_id));
-    return ownedCards.filter((c) => c.game_cards && !placedIds.has(c.id));
+    return ownedCards.filter(
+      (c) => c.game_cards && !placedIds.has(c.id) && (c.condition ?? "good") !== "destroyed"
+    );
   }, [ownedCards, battleCards]);
 
   const startBattle = async (battlePhase: "capture" | "attack") => {
@@ -214,8 +216,10 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh 
         .eq("battle_id", battle.id) as any;
       setBattleCards((cards as BattleCardRow[] | null) ?? []);
       toast.success(t.wdom_card_placed as string);
-    } catch (e) {
-      toast.error((e as Error)?.message ?? "Error");
+    } catch (e: any) {
+      const msg = e?.message ?? "Error";
+      const isDestroyed = /card_destroyed|destroyed/i.test(String(msg));
+      toast.error(isDestroyed ? (t.wdom_card_destroyed as string) : msg);
     } finally {
       setPlacing(false);
     }

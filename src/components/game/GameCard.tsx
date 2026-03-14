@@ -116,7 +116,7 @@ export function GameCard({ name, brand, model: modelProp, rarity, archetype, spe
 
       {condition && (
         <div className={`mx-2 mb-2 px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-wide text-center ${CONDITION_META[condition].badgeClass}`}>
-          {CONDITION_META[condition].emoji} {(t as Record<string, string>)[`condition_${condition}`]}
+          {CONDITION_META[condition].emoji} {(t as Record<string, string>)[`card_condition_${condition}`] ?? (t as Record<string, string>)[`condition_${condition}`] ?? condition}
         </div>
       )}
     </div>
