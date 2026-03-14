@@ -1,6 +1,7 @@
 import { useReducer, useEffect, useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameCard } from "./GameCard";
+import { CardImage } from "./CardImage";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Package, Zap, Shield, Brain, Sword } from "lucide-react";
