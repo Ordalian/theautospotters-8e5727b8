@@ -766,6 +766,8 @@ const fr: Translations = {
   wdom_battle_ended: "Terminé",
   wdom_gps_active: "GPS actif",
   wdom_gps_waiting: "GPS en attente...",
+  wdom_poi_not_found: "POI introuvable.",
+  wdom_back_to_map: "Retour à la carte",
 
   // POI Manager (map marker role)
   poi_manager_title: "Gestion des points",

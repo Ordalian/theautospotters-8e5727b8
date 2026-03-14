@@ -6,7 +6,6 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamSelector, type TeamColor } from "@/components/game/TeamSelector";
 import { WorldMap, type POI } from "@/components/game/WorldMap";
-import { POIDetail } from "@/components/game/POIDetail";
 import { ArrowLeft, Home, MapPin, MapPinned } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -29,7 +28,6 @@ export default function WorldDomination() {
   const [teamColor, setTeamColor] = useState<TeamColor | null>(null);
   const [loading, setLoading] = useState(true);
   const [pois, setPois] = useState<POI[]>([]);
-  const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
 
   // Load user profile team + POIs
@@ -57,11 +55,6 @@ export default function WorldDomination() {
     );
     return () => navigator.geolocation.clearWatch(watcher);
   }, []);
-
-  const isNearPOI = useCallback((poi: POI) => {
-    if (!userPosition) return false;
-    return distanceMeters(userPosition.lat, userPosition.lng, poi.latitude, poi.longitude) <= NEARBY_RADIUS;
-  }, [userPosition]);
 
   if (!user) return null;
 
@@ -127,7 +120,7 @@ export default function WorldDomination() {
               toast.error(t.wdom_too_far as string);
               return;
             }
-            setSelectedPOI(poi);
+            navigate(`/card-game/poi/${poi.id}`);
           }}
           userPosition={userPosition}
         />
@@ -158,21 +151,6 @@ export default function WorldDomination() {
           <span className="text-muted-foreground font-sans normal-case">{t.wdom_unowned as string}</span>
         </div>
       </div>
-
-      {/* POI Detail overlay */}
-      {selectedPOI && (
-        <POIDetail
-          poi={selectedPOI}
-          userTeam={teamColor}
-          userId={user.id}
-          isNearby={isNearPOI(selectedPOI)}
-          onClose={() => setSelectedPOI(null)}
-          onRefresh={() => {
-            setSelectedPOI(null);
-            loadData();
-          }}
-        />
-      )}
     </div>
   );
 }

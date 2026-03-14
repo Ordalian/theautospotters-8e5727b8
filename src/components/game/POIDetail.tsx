@@ -6,7 +6,7 @@ import { GameCard } from "./GameCard";
 import type { CardRarity, CardCondition, CardArchetype } from "@/data/gameCards";
 import type { TeamColor } from "./TeamSelector";
 import { TEAMS } from "./TeamSelector";
-import { Shield, Sword, Brain, X, Clock, Lock } from "lucide-react";
+import { Shield, Sword, Brain, X, Clock, Lock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 interface POIDetailProps {
@@ -22,6 +22,8 @@ interface POIDetailProps {
   isNearby: boolean;
   onClose: () => void;
   onRefresh: () => void;
+  /** When true, render as full page (no modal overlay) with back button */
+  asPage?: boolean;
 }
 
 interface BattleRow {
@@ -62,7 +64,7 @@ interface OwnedCard {
 
 const TEAM_HEX: Record<string, string> = { blue: "#3b82f6", red: "#ef4444", green: "#22c55e", black: "#1e1e1e" };
 
-export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh }: POIDetailProps) {
+export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh, asPage }: POIDetailProps) {
   const { t } = useLanguage();
   const [battle, setBattle] = useState<BattleRow | null>(null);
   const [battleCards, setBattleCards] = useState<BattleCardRow[]>([]);
@@ -237,45 +239,56 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh 
   }, [battleCards]);
 
   if (loading) {
+    const Loader = () => (
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    );
+    if (asPage) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader />
+        </div>
+      );
+    }
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <Loader />
       </div>
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm" onClick={onClose}>
-      <div
-        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border bg-card p-4 space-y-4 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-foreground">{poi.name}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              {poi.owner_team ? (
-                <span
-                  className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
-                  style={{ background: TEAM_HEX[poi.owner_team] ?? "#888" }}
-                >
-                  {poi.owner_team.toUpperCase()}
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground">{t.wdom_unowned as string}</span>
-              )}
-              {isInvulnerable && (
-                <span className="text-xs text-amber-400 flex items-center gap-1">
-                  <Lock className="h-3 w-3" /> {t.wdom_invulnerable as string}
-                </span>
-              )}
-            </div>
-          </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="h-5 w-5" />
-          </button>
+  const header = (
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-lg font-bold text-foreground">{poi.name}</h2>
+        <div className="flex items-center gap-2 mt-1">
+          {poi.owner_team ? (
+            <span
+              className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+              style={{ background: TEAM_HEX[poi.owner_team] ?? "#888" }}
+            >
+              {poi.owner_team.toUpperCase()}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">{t.wdom_unowned as string}</span>
+          )}
+          {isInvulnerable && (
+            <span className="text-xs text-amber-400 flex items-center gap-1">
+              <Lock className="h-3 w-3" /> {t.wdom_invulnerable as string}
+            </span>
+          )}
         </div>
+      </div>
+      {!asPage && (
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <X className="h-5 w-5" />
+        </button>
+      )}
+    </div>
+  );
+
+  const content = (
+    <>
+        {header}
 
         {poi.image_url && (
           <div className="rounded-xl overflow-hidden border border-border bg-muted">
@@ -398,6 +411,32 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh 
             )}
           </div>
         )}
+    </>
+  );
+
+  if (asPage) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur px-4 py-3 flex items-center gap-3">
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <span className="font-heading text-foreground truncate">{poi.name}</span>
+        </header>
+        <div className="p-4 max-w-lg mx-auto space-y-4">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border bg-card p-4 space-y-4 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {content}
       </div>
     </div>
   );
