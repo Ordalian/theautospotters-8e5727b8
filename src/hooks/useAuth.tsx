@@ -34,6 +34,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Temp accounts: if expired, sign out and redirect
+  useEffect(() => {
+    if (!user?.id || loading) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("is_temp, temp_expires_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const isTemp = !!(data as { is_temp?: boolean }).is_temp;
+      const expiresAt = (data as { temp_expires_at?: string | null }).temp_expires_at;
+      if (isTemp && expiresAt && new Date(expiresAt) <= new Date()) {
+        await supabase.auth.signOut();
+        window.location.assign("/auth?expired=temp");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, loading]);
+
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
       email,

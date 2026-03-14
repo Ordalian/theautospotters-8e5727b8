@@ -743,7 +743,9 @@ export type Database = {
           id: string
           is_map_marker: boolean
           is_premium: boolean
+          is_temp: boolean
           language: string
+          temp_expires_at: string | null
           last_coin_sent_at: string | null
           last_delivery_at: string | null
           notify_channels: boolean
@@ -768,6 +770,7 @@ export type Database = {
           id?: string
           is_map_marker?: boolean
           is_premium?: boolean
+          is_temp?: boolean
           language?: string
           last_coin_sent_at?: string | null
           last_delivery_at?: string | null
@@ -777,6 +780,7 @@ export type Database = {
           premium_until?: string | null
           role?: string
           team_color?: string | null
+          temp_expires_at?: string | null
           theme?: string | null
           total_xp?: number
           user_id: string
@@ -793,6 +797,7 @@ export type Database = {
           id?: string
           is_map_marker?: boolean
           is_premium?: boolean
+          is_temp?: boolean
           language?: string
           last_coin_sent_at?: string | null
           last_delivery_at?: string | null
@@ -802,6 +807,7 @@ export type Database = {
           premium_until?: string | null
           role?: string
           team_color?: string | null
+          temp_expires_at?: string | null
           theme?: string | null
           total_xp?: number
           user_id?: string
@@ -828,6 +834,30 @@ export type Database = {
           usage_date?: string
           used_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      temp_access: {
+        Row: {
+          id: string
+          email: string
+          access_code: string
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          access_code: string
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          access_code?: string
+          expires_at?: string
+          created_at?: string
         }
         Relationships: []
       }
@@ -1117,6 +1147,7 @@ export type Database = {
         }[]
       }
       get_autospotter_status: { Args: never; Returns: Json }
+      get_temp_login: { Args: { p_code: string }; Returns: { email: string }[] }
       get_leaderboard: {
         Args: never
         Returns: {

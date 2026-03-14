@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage, type Language } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,9 +18,19 @@ const Auth = () => {
   const [signUpLanguage, setSignUpLanguage] = useState<Language | null>(null);
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [tempAccessMode, setTempAccessMode] = useState(false);
+  const [tempCode, setTempCode] = useState("");
   const { signIn, signUp } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("expired") === "temp") {
+      toast.error(t.auth_temp_expired as string);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, t.auth_temp_expired]);
 
   const pwdRules = [
     { key: "pwd_min_length", test: password.length >= 8 },
@@ -75,6 +85,30 @@ const Auth = () => {
     }
   };
 
+  const handleTempSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = tempCode.trim();
+    if (!code) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("get_temp_login", { p_code: code });
+      if (error) throw error;
+      const row = (data as { email: string }[] | null)?.[0];
+      if (!row?.email) {
+        toast.error(t.auth_temp_access_invalid as string);
+        setLoading(false);
+        return;
+      }
+      await signIn(row.email, code);
+      toast.success(t.auth_success_signin as string);
+      navigate("/home");
+    } catch (err: any) {
+      toast.error(err.message || (t.auth_temp_access_invalid as string));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-viewport items-center justify-center bg-background px-4 w-full max-w-full overflow-x-hidden">
       <div className="w-full max-w-md space-y-8">
@@ -89,18 +123,50 @@ const Auth = () => {
         <Card className="border-border/50 bg-card/80 backdrop-blur">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl">
-              {forgotPassword ? (t.auth_reset_send_title as string) : isSignUp ? (t.auth_create_account as string) : (t.auth_welcome_back as string)}
+              {tempAccessMode
+                ? (t.auth_temp_access_title as string)
+                : forgotPassword
+                  ? (t.auth_reset_send_title as string)
+                  : isSignUp
+                    ? (t.auth_create_account as string)
+                    : (t.auth_welcome_back as string)}
             </CardTitle>
             <CardDescription>
-              {forgotPassword
-                ? (t.auth_reset_send_desc as string)
-                : isSignUp
-                  ? (t.auth_join as string)
-                  : (t.auth_sign_in_desc as string)}
+              {tempAccessMode
+                ? (t.auth_temp_access_desc as string)
+                : forgotPassword
+                  ? (t.auth_reset_send_desc as string)
+                  : isSignUp
+                    ? (t.auth_join as string)
+                    : (t.auth_sign_in_desc as string)}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {resetEmailSent ? (
+            {tempAccessMode ? (
+              <form onSubmit={handleTempSubmit} className="space-y-4">
+                <Input
+                  type="password"
+                  placeholder={t.auth_temp_access_code_placeholder as string}
+                  value={tempCode}
+                  onChange={(e) => setTempCode(e.target.value)}
+                  required
+                  className="bg-secondary/50"
+                  autoComplete="one-time-code"
+                />
+                <Button type="submit" className="w-full font-semibold" disabled={loading}>
+                  {loading ? (t.loading as string) : (t.auth_sign_in as string)}
+                </Button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => { setTempAccessMode(false); setTempCode(""); }}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {t.back as string}
+                  </button>
+                </div>
+              </form>
+            ) : resetEmailSent ? (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">{t.auth_reset_sent as string}</p>
                 <Button variant="outline" className="w-full" onClick={() => { setForgotPassword(false); setResetEmailSent(false); }}>
@@ -196,18 +262,29 @@ const Auth = () => {
                 </Button>
               </form>
             )}
-            {!resetEmailSent && (
+            {!resetEmailSent && !tempAccessMode && (
               <div className="mt-4 text-center space-y-2">
                 {!forgotPassword && !isSignUp && (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setForgotPassword(true)}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {t.auth_forgot_password as string}
-                    </button>
-                  </div>
+                  <>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setForgotPassword(true)}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {t.auth_forgot_password as string}
+                      </button>
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setTempAccessMode(true)}
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        {t.auth_temp_access as string}
+                      </button>
+                    </div>
+                  </>
                 )}
                 {forgotPassword ? (
                   <button

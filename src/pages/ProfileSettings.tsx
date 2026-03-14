@@ -154,14 +154,14 @@ const ProfileSettings = () => {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("username, username_locked")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        .select("username, username_locked, is_temp")
+        .eq("user_id", user.id)
+        .maybeSingle();
         if (data?.username) {
           setUsername(data.username);
           setInitialUsername(data.username);
         }
-        setUsernameLocked(!!data?.username_locked);
+        setUsernameLocked(!!(data as any)?.username_locked || !!(data as any)?.is_temp);
       } catch {
         toast.error("Erreur lors du chargement");
       } finally {
