@@ -78,14 +78,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function ShowTabBar() {
-  const { user } = useAuth();
-  const location = useLocation();
-  // Hide tab bar on auth, landing, and fullscreen pages
-  const hideOn = ["/auth", "/", "/card-game/world-domination"];
-  if (!user || hideOn.includes(location.pathname)) return null;
-  return <BottomTabBar />;
-}
+// Tab bar removed
 
 function AnimatedRoutes() {
   const location = useLocation();
