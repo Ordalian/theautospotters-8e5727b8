@@ -5,6 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loader2, ChevronRight } from "lucide-react";
 import { CardImage } from "@/components/game/CardImage";
+import storeBg from "@/assets/store-bg.png";
 import type { CardCondition, CardArchetype } from "@/data/gameCards";
 import { Button } from "@/components/ui/button";
 import { useUnreadDMs } from "@/hooks/useUnreadDMs";
