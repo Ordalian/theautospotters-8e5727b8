@@ -574,6 +574,7 @@ const en: Translations = {
   // Location Map Picker
   location_choose_title: "Choose a location on the map",
   location_click_instruction: "Click on the map to place the marker",
+  location_use_my_position: "My location",
   location_validate: "Confirm",
 
   // Messaging

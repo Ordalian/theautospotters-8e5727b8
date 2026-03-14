@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { Locate } from "lucide-react";
 
 // Fix Leaflet default marker icon (broken in bundled environments)
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -43,6 +44,7 @@ export function LocationMapPicker({
   const mapInstance = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
 
   // Use a callback ref so we know when the DOM element is actually mounted
   const initMap = useCallback((node: HTMLDivElement | null) => {
@@ -65,8 +67,6 @@ export function LocationMapPicker({
     const map = L.map(node, {
       center: [lat, lng],
       zoom: DEFAULT_ZOOM,
-      // @ts-ignore - tap option exists in Leaflet but not in types
-      tap: false,
     });
 
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
@@ -112,24 +112,58 @@ export function LocationMapPicker({
     }
   };
 
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation || !mapInstance.current) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        markerRef.current?.remove();
+        markerRef.current = L.marker([latitude, longitude]).addTo(mapInstance.current!);
+        mapInstance.current?.setView([latitude, longitude], Math.max(mapInstance.current.getZoom(), 15));
+        setSelected({ lat: latitude, lng: longitude });
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-lg p-0 gap-0 overflow-hidden"
+        className="sm:max-w-lg p-0 gap-0 overflow-hidden z-[100]"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader className="p-4 pb-0">
-          <DialogTitle>{t.location_choose_title as string}</DialogTitle>
+        <DialogHeader className="p-4 pb-0 flex flex-row items-center justify-between gap-2">
+          <DialogTitle className="text-base">{t.location_choose_title as string}</DialogTitle>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5 shrink-0"
+            onClick={handleUseMyLocation}
+            disabled={locating}
+          >
+            {locating ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent block" />
+            ) : (
+              <Locate className="h-4 w-4" />
+            )}
+            {typeof t.location_use_my_position === "string" ? t.location_use_my_position : "Ma position"}
+          </Button>
         </DialogHeader>
         {open && (
           <div
             ref={initMap}
-            className="w-full h-[320px] rounded-b-lg relative z-[60]"
+            className="w-full h-[320px] rounded-b-lg relative z-[60] cursor-crosshair"
             style={{ pointerEvents: "auto" }}
           />
         )}
-        <div className="p-4 flex justify-between items-center border-t">
+        <div className="p-4 flex flex-wrap items-center justify-between gap-2 border-t">
           <span className="text-sm text-muted-foreground">
             {selected
               ? `${selected.lat.toFixed(4)}, ${selected.lng.toFixed(4)}`
