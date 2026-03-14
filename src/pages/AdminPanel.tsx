@@ -235,14 +235,14 @@ function UsersTab() {
       )
     : users;
 
-  const toggleAdmin = async (targetUserId: string, currentRole: string) => {
+  const setUserRole = async (targetUserId: string, newRole: "user" | "admin" | "map_marker") => {
     if (!isFounder) return;
-    const newRole = currentRole === "admin" ? "user" : "admin";
     setUpdating(targetUserId);
     try {
       const { error } = await supabase.from("profiles").update({ role: newRole } as any).eq("user_id", targetUserId);
       if (error) throw error;
-      toast.success(newRole === "admin" ? "Admin accordé" : "Admin retiré");
+      const msg = newRole === "admin" ? "Admin accordé" : newRole === "map_marker" ? "Map marker accordé" : "Rôle utilisateur";
+      toast.success(msg);
       qc.invalidateQueries({ queryKey: ["admin-users-full"] });
     } catch (e: any) {
       toast.error(e?.message ?? "Erreur");
@@ -300,20 +300,35 @@ function UsersTab() {
                   </p>
                 </div>
                 {isFounder && u.role !== "founder" && (
-                  <div className="flex gap-1 shrink-0">
+                  <div className="flex flex-wrap gap-1 shrink-0">
                     <Button
                       size="sm"
                       variant={u.role === "admin" ? "destructive" : "outline"}
                       className="gap-1"
                       disabled={updating === u.user_id}
-                      onClick={() => toggleAdmin(u.user_id, u.role)}
+                      onClick={() => setUserRole(u.user_id, u.role === "admin" ? "user" : "admin")}
                     >
                       {updating === u.user_id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : u.role === "admin" ? (
-                        <><ShieldOff className="h-3.5 w-3.5" /> Retirer</>
+                        <><ShieldOff className="h-3.5 w-3.5" /> Retirer admin</>
                       ) : (
                         <><Shield className="h-3.5 w-3.5" /> Admin</>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={u.role === "map_marker" ? "destructive" : "outline"}
+                      className="gap-1"
+                      disabled={updating === u.user_id}
+                      onClick={() => setUserRole(u.user_id, u.role === "map_marker" ? "user" : "map_marker")}
+                    >
+                      {updating === u.user_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : u.role === "map_marker" ? (
+                        "Retirer map"
+                      ) : (
+                        "Map marker"
                       )}
                     </Button>
                     <Button

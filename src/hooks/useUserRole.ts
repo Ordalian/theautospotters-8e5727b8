@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type UserRole = "user" | "admin" | "founder";
+export type UserRole = "user" | "admin" | "founder" | "map_marker";
 
 interface UserRoleData {
   role: UserRole;
@@ -10,6 +10,8 @@ interface UserRoleData {
   isFounder: boolean;
   isAdmin: boolean;
   isStaff: boolean; // founder OR admin
+  isMapMarker: boolean;
+  canManagePois: boolean; // map_marker OR admin OR founder
 }
 
 export function useUserRole(): UserRoleData & { loading: boolean } {
@@ -41,6 +43,8 @@ export function useUserRole(): UserRoleData & { loading: boolean } {
     isFounder: role === "founder",
     isAdmin: role === "admin",
     isStaff: role === "founder" || role === "admin",
+    isMapMarker: role === "map_marker",
+    canManagePois: role === "map_marker" || role === "admin" || role === "founder",
     loading: isLoading,
   };
 }

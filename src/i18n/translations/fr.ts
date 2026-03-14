@@ -764,6 +764,24 @@ const fr: Translations = {
   wdom_gps_active: "GPS actif",
   wdom_gps_waiting: "GPS en attente...",
 
+  // POI Manager (map marker role)
+  poi_manager_title: "Gestion des points",
+  poi_manager_add_poi: "Ajouter un point",
+  poi_manager_no_pois: "Aucun point pour l'instant.",
+  poi_manager_name: "Nom",
+  poi_manager_name_placeholder: "Ex : Thermes de Saint-Amand",
+  poi_manager_name_required: "Indique un nom pour le point.",
+  poi_manager_location: "Position sur la carte",
+  poi_manager_place_required: "Clique sur la carte pour placer le point.",
+  poi_manager_choose_on_map: "Choisir sur la carte",
+  poi_manager_image: "Image (optionnel)",
+  poi_manager_save: "Enregistrer",
+  poi_manager_cancel: "Annuler",
+  poi_manager_added: "Point ajouté.",
+  poi_manager_deleted: "Point supprimé.",
+  poi_manager_confirm_delete: "Supprimer ce point ?",
+  poi_manager_link: "Gérer les points",
+
   // Tab bar
   tab_home: "Accueil",
   tab_garage: "Garage",

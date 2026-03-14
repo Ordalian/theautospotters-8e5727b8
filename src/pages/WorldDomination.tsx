@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamSelector, type TeamColor } from "@/components/game/TeamSelector";
 import { WorldMap, type POI } from "@/components/game/WorldMap";
 import { POIDetail } from "@/components/game/POIDetail";
-import { ArrowLeft, Home, MapPin } from "lucide-react";
+import { ArrowLeft, Home, MapPin, MapPinned } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -21,6 +22,7 @@ const NEARBY_RADIUS = 500; // meters
 
 export default function WorldDomination() {
   const { user } = useAuth();
+  const { canManagePois } = useUserRole();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [teamColor, setTeamColor] = useState<TeamColor | null>(null);
@@ -35,7 +37,7 @@ export default function WorldDomination() {
     setLoading(true);
     const [{ data: profile }, { data: poiData }] = await Promise.all([
       supabase.from("profiles").select("team_color").eq("user_id", user.id).single(),
-      supabase.from("map_pois").select("id, name, latitude, longitude, owner_team, invulnerable_until") as any,
+      supabase.from("map_pois").select("id, name, latitude, longitude, owner_team, invulnerable_until, image_url") as any,
     ]);
     setTeamColor((profile as any)?.team_color ?? null);
     setPois((poiData as POI[] | null) ?? []);
@@ -97,9 +99,16 @@ export default function WorldDomination() {
             <span className="text-[10px] font-heading uppercase text-muted-foreground">{teamColor}</span>
           </div>
         </div>
-        <Link to="/home" className="shrink-0 text-muted-foreground hover:text-primary transition-colors">
-          <Home className="h-5 w-5" />
-        </Link>
+        <div className="shrink-0 flex items-center gap-2">
+          {canManagePois && (
+            <Link to="/card-game/poi-manager" className="text-muted-foreground hover:text-primary transition-colors" title={t.poi_manager_link as string}>
+              <MapPinned className="h-5 w-5" />
+            </Link>
+          )}
+          <Link to="/home" className="text-muted-foreground hover:text-primary transition-colors">
+            <Home className="h-5 w-5" />
+          </Link>
+        </div>
       </header>
 
       {/* Map */}

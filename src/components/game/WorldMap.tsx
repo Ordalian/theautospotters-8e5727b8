@@ -10,6 +10,7 @@ export interface POI {
   longitude: number;
   owner_team: string | null;
   invulnerable_until: string | null;
+  image_url?: string | null;
 }
 
 const TEAM_COLORS: Record<string, string> = {

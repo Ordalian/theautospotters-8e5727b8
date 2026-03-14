@@ -117,18 +117,29 @@ function PremiumBadge({ s }: { s: number }) {
   );
 }
 
+function MapMarkerBadge({ s }: { s: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" className="inline-block shrink-0" aria-label="Map marker">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#22c55e" stroke="#15803d" strokeWidth="1" />
+      <circle cx="12" cy="9" r="2.5" fill="#fff" fillOpacity="0.9" />
+    </svg>
+  );
+}
+
 const UserRoleBadge = ({ role, isPremium, size = "sm", className = "" }: UserRoleBadgeProps) => {
   const s = sizeMap[size];
   const showFounder = role === "founder";
   const showAdmin = role === "admin";
+  const showMapMarker = role === "map_marker";
   const showPremium = !!isPremium;
 
-  if (!showFounder && !showAdmin && !showPremium) return null;
+  if (!showFounder && !showAdmin && !showMapMarker && !showPremium) return null;
 
   return (
     <span className={`inline-flex items-center gap-0.5 align-middle ${className}`}>
       {showFounder && <FounderBadge s={s} />}
       {showAdmin && <AdminBadge s={s} />}
+      {showMapMarker && <MapMarkerBadge s={s} />}
       {showPremium && <PremiumBadge s={s} />}
     </span>
   );

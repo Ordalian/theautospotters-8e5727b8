@@ -15,6 +15,7 @@ interface POIDetailProps {
     name: string;
     owner_team: string | null;
     invulnerable_until: string | null;
+    image_url?: string | null;
   };
   userTeam: TeamColor;
   userId: string;
@@ -271,6 +272,12 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh 
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        {poi.image_url && (
+          <div className="rounded-xl overflow-hidden border border-border bg-muted">
+            <img src={poi.image_url} alt="" className="w-full aspect-video object-cover" />
+          </div>
+        )}
 
         {!isNearby && (
           <div className="rounded-lg bg-muted/50 border border-border p-3 text-sm text-muted-foreground text-center">

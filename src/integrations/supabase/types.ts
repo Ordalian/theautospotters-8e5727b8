@@ -531,6 +531,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           invulnerable_until: string | null
           latitude: number
           longitude: number
@@ -540,6 +541,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           invulnerable_until?: string | null
           latitude: number
           longitude: number
@@ -549,6 +551,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           invulnerable_until?: string | null
           latitude?: number
           longitude?: number
