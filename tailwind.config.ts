@@ -112,13 +112,13 @@ export default {
       },
       fontFamily: {
         heading: [
-          "'Barlow Condensed'",
+          "'Montserrat'",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
         ],
         sans: [
-          "'Barlow'",
+          "'Inter'",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",

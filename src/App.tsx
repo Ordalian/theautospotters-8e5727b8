@@ -124,7 +124,7 @@ function AnimatedRoutes() {
           </Routes>
         </Suspense>
       </AnimatePresence>
-      <ShowTabBar />
+      {/* tab bar removed */}
     </>
   );
 }

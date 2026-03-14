@@ -393,7 +393,7 @@ const Dashboard = () => {
         {/* Map preview */}
         <button
           onClick={() => navigate("/map", { state: { mapCenter } })}
-          className="mt-3 w-full rounded-2xl glass-panel overflow-hidden text-left transition-all duration-300 hover:scale-[1.01] hover:glass-glow-sm active:scale-[0.99]"
+          className="mt-3 w-full rounded-2xl bg-card border border-border overflow-hidden text-left transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
         >
           <div className="h-40 relative">
             <Suspense fallback={<div className="h-full w-full bg-secondary/20 animate-pulse rounded-2xl" />}>
