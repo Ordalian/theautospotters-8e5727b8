@@ -237,7 +237,7 @@ const FriendsGarages = () => {
       const senderIds = [...new Set(deliveries.map((d) => d.sender_id))];
       const carIds = deliveries.map((d) => d.car_id);
       const [profilesRes, carsRes] = await Promise.all([
-        supabase.from("profiles").select("user_id, username").in("user_id", senderIds),
+        supabase.from("profiles_public").select("user_id, username").in("user_id", senderIds),
         supabase.from("cars").select("id, brand, model").in("id", carIds),
       ]);
       const profileMap = new Map(profilesRes.data?.map((p) => [p.user_id, p.username]) || []);
