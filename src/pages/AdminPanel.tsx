@@ -436,6 +436,26 @@ function UsersTab() {
     staleTime: 10_000,
   });
 
+  // Signups toggle (founder only)
+  const { data: signupsEnabled = true } = useQuery({
+    queryKey: ["admin-signups-status"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_config").select("value").eq("key", "signups_enabled").maybeSingle();
+      return data?.value === true || data?.value === "true";
+    },
+    staleTime: 30_000,
+  });
+
+  // Flagged users
+  const { data: flaggedUsers = [] } = useQuery({
+    queryKey: ["admin-flagged-users"],
+    queryFn: async () => {
+      const data = await rpcAny<FlaggedUser[]>("get_flagged_users");
+      return data ?? [];
+    },
+    staleTime: 30_000,
+  });
+
   const canEditAdmin = isFounder;
   const canEditMapMarkerOrPremium = isFounder || isStaff;
 
@@ -447,34 +467,21 @@ function UsersTab() {
       if (error) throw error;
       toast.success(newRole === "admin" ? "Admin accordé" : "Rôle utilisateur");
       qc.invalidateQueries({ queryKey: ["admin-role-counts"] });
-      if (selectedUser?.user_id === targetUserId) {
-        setSelectedUser((prev) => prev ? { ...prev, role: newRole } : null);
-      }
-    } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
-    } finally {
-      setUpdating(null);
-    }
+      if (selectedUser?.user_id === targetUserId) setSelectedUser((prev) => prev ? { ...prev, role: newRole } : null);
+    } catch (e: any) { toast.error(e?.message ?? "Erreur"); } finally { setUpdating(null); }
   };
 
   const setMapMarker = async (targetUserId: string, value: boolean) => {
     if (!canEditMapMarkerOrPremium) return;
-    const target = selectedUser?.user_id === targetUserId ? selectedUser : null;
-    if (target && target.role === "founder") return; // don't change founder
+    if (selectedUser?.role === "founder") return;
     setUpdating(targetUserId);
     try {
       const { error } = await supabase.from("profiles").update({ is_map_marker: value } as any).eq("user_id", targetUserId);
       if (error) throw error;
       toast.success(value ? "Map maker accordé" : "Map maker retiré");
       qc.invalidateQueries({ queryKey: ["admin-role-counts"] });
-      if (selectedUser?.user_id === targetUserId) {
-        setSelectedUser((prev) => prev ? { ...prev, is_map_marker: value } : null);
-      }
-    } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
-    } finally {
-      setUpdating(null);
-    }
+      if (selectedUser?.user_id === targetUserId) setSelectedUser((prev) => prev ? { ...prev, is_map_marker: value } : null);
+    } catch (e: any) { toast.error(e?.message ?? "Erreur"); } finally { setUpdating(null); }
   };
 
   const togglePremium = async (targetUserId: string, currentPremium: boolean) => {
@@ -482,22 +489,72 @@ function UsersTab() {
     setUpdating(targetUserId);
     try {
       const updates: any = { is_premium: !currentPremium };
-      if (!currentPremium) {
-        updates.premium_until = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-      } else {
-        updates.premium_until = null;
-      }
+      if (!currentPremium) updates.premium_until = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      else updates.premium_until = null;
       const { error } = await supabase.from("profiles").update(updates).eq("user_id", targetUserId);
       if (error) throw error;
       toast.success(!currentPremium ? "Premium accordé" : "Premium retiré");
       qc.invalidateQueries({ queryKey: ["admin-role-counts"] });
-      if (selectedUser?.user_id === targetUserId) {
-        setSelectedUser((prev) => prev ? { ...prev, is_premium: !currentPremium } : null);
-      }
+      if (selectedUser?.user_id === targetUserId) setSelectedUser((prev) => prev ? { ...prev, is_premium: !currentPremium } : null);
+    } catch (e: any) { toast.error(e?.message ?? "Erreur"); } finally { setUpdating(null); }
+  };
+
+  const handleToggleSignups = async () => {
+    if (!isFounder) return;
+    setSignupsToggling(true);
+    try {
+      const res = await supabase.functions.invoke("manage-temp-users", {
+        body: { action: "toggle_signups", enabled: !signupsEnabled },
+      });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message);
+      toast.success(!signupsEnabled ? "Inscriptions activées" : "Inscriptions suspendues");
+      qc.invalidateQueries({ queryKey: ["admin-signups-status"] });
+    } catch (e: any) { toast.error(e?.message ?? "Erreur"); } finally { setSignupsToggling(false); }
+  };
+
+  const handleFlagUser = async (targetUserId: string) => {
+    setUpdating(targetUserId);
+    try {
+      const res = await supabase.functions.invoke("manage-temp-users", {
+        body: { action: "flag_user", user_id: targetUserId },
+      });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message);
+      toast.success("Compte signalé pour suppression");
+      qc.invalidateQueries({ queryKey: ["admin-flagged-users"] });
+      if (selectedUser?.user_id === targetUserId) setSelectedUser((prev) => prev ? { ...prev, flagged_for_deletion: true } : null);
+    } catch (e: any) { toast.error(e?.message ?? "Erreur"); } finally { setUpdating(null); }
+  };
+
+  const handleUnflagUser = async (targetUserId: string) => {
+    setUpdating(targetUserId);
+    try {
+      const res = await supabase.functions.invoke("manage-temp-users", {
+        body: { action: "unflag_user", user_id: targetUserId },
+      });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message);
+      toast.success("Signalement retiré");
+      qc.invalidateQueries({ queryKey: ["admin-flagged-users"] });
+      if (selectedUser?.user_id === targetUserId) setSelectedUser((prev) => prev ? { ...prev, flagged_for_deletion: false } : null);
+    } catch (e: any) { toast.error(e?.message ?? "Erreur"); } finally { setUpdating(null); }
+  };
+
+  const handleDeleteUser = async (targetUserId: string) => {
+    if (!isFounder) return;
+    setDeleteStep(2);
+    try {
+      const res = await supabase.functions.invoke("manage-temp-users", {
+        body: { action: "delete_user", user_id: targetUserId },
+      });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message);
+      toast.success("Compte supprimé définitivement");
+      setSelectedUser(null);
+      setDeleteStep(0);
+      qc.invalidateQueries({ queryKey: ["admin-flagged-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-role-counts"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
     } catch (e: any) {
-      toast.error(e?.message ?? "Erreur");
-    } finally {
-      setUpdating(null);
+      toast.error(e?.message ?? "Erreur lors de la suppression");
+      setDeleteStep(0);
     }
   };
 
