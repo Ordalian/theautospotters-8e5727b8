@@ -745,7 +745,6 @@ export type Database = {
           is_premium: boolean
           is_temp: boolean
           language: string
-          temp_expires_at: string | null
           last_coin_sent_at: string | null
           last_delivery_at: string | null
           notify_channels: boolean
@@ -754,6 +753,7 @@ export type Database = {
           premium_until: string | null
           role: string
           team_color: string | null
+          temp_expires_at: string | null
           theme: string | null
           total_xp: number
           user_id: string
@@ -837,30 +837,6 @@ export type Database = {
         }
         Relationships: []
       }
-      temp_access: {
-        Row: {
-          id: string
-          email: string
-          access_code: string
-          expires_at: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          email: string
-          access_code: string
-          expires_at: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string
-          access_code?: string
-          expires_at?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       support_replies: {
         Row: {
           body: string
@@ -917,6 +893,30 @@ export type Database = {
           status?: string
           subject?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      temp_access: {
+        Row: {
+          access_code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          access_code: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          access_code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
         }
         Relationships: []
       }
@@ -1147,7 +1147,6 @@ export type Database = {
         }[]
       }
       get_autospotter_status: { Args: never; Returns: Json }
-      get_temp_login: { Args: { p_code: string }; Returns: { email: string }[] }
       get_leaderboard: {
         Args: never
         Returns: {
@@ -1159,6 +1158,12 @@ export type Database = {
           total_estimated_price: number
           user_id: string
           username: string
+        }[]
+      }
+      get_temp_login: {
+        Args: { p_code: string }
+        Returns: {
+          email: string
         }[]
       }
       get_top_features: {

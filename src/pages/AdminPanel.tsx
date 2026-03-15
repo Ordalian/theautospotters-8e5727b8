@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Shield, ShieldOff, Loader2, Search, BarChart3,
   Users, MessageSquare, Trash2, ChevronRight, Send, X, MapPin, Gem,
+  Plus, ChevronDown, ChevronUp, Eye, EyeOff, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -218,6 +219,175 @@ function StatsTab() {
   );
 }
 
+// ───── Temp Users Section ─────
+
+interface TempUser {
+  user_id: string;
+  username: string | null;
+  created_at: string;
+  is_map_marker: boolean;
+}
+
+function TempUsersSection() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const { data: tempUsers = [], isLoading } = useQuery({
+    queryKey: ["admin-temp-users"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("manage-temp-users", {
+        body: { action: "list" },
+      });
+      if (res.error) throw res.error;
+      return (res.data?.users ?? []) as TempUser[];
+    },
+    staleTime: 30_000,
+  });
+
+  const handleCreate = async () => {
+    if (!username.trim() || !password.trim()) return;
+    setCreating(true);
+    try {
+      const res = await supabase.functions.invoke("manage-temp-users", {
+        body: { action: "create", username: username.trim(), password: password.trim() },
+      });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || "Erreur");
+      toast.success(`Compte "${username.trim()}" créé`);
+      setUsername("");
+      setPassword("");
+      setCreateOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-temp-users"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur lors de la création");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    setDeleting(userId);
+    try {
+      const res = await supabase.functions.invoke("manage-temp-users", {
+        body: { action: "delete", user_id: userId },
+      });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || res.error?.message || "Erreur");
+      toast.success("Compte temporaire supprimé");
+      setConfirmDelete(null);
+      qc.invalidateQueries({ queryKey: ["admin-temp-users"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur lors de la suppression");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-primary" />
+          <span className="font-semibold text-sm">Comptes temporaires</span>
+          <span className="text-xs text-muted-foreground">({tempUsers.length})</span>
+        </div>
+        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </button>
+
+      {open && (
+        <div className="border-t border-border/50 px-4 py-3 space-y-3">
+          <Button size="sm" className="gap-1 w-full" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> Créer un compte temp
+          </Button>
+
+          {isLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : tempUsers.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-2">Aucun compte temporaire.</p>
+          ) : (
+            <div className="space-y-1 max-h-60 overflow-y-auto">
+              {tempUsers.map((u) => (
+                <div key={u.user_id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/30 transition-colors">
+                  <div>
+                    <p className="text-sm font-medium">{u.username || "—"}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {new Date(u.created_at).toLocaleDateString("fr-FR")}
+                      {u.is_map_marker && " · Map maker"}
+                    </p>
+                  </div>
+                  {confirmDelete === u.user_id ? (
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="destructive" className="h-7 text-xs" disabled={deleting === u.user_id} onClick={() => handleDelete(u.user_id)}>
+                        {deleting === u.user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Confirmer"}
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setConfirmDelete(null)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setConfirmDelete(u.user_id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Create dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Créer un compte temporaire</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Nom d'utilisateur</label>
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="ex: testeur1"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Mot de passe (= code d'accès)</label>
+              <div className="relative mt-1">
+                <Input
+                  type={showPw ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mot de passe"
+                  className="pr-10"
+                />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShowPw(!showPw)}>
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <Button className="w-full" disabled={!username.trim() || !password.trim() || creating} onClick={handleCreate}>
+              {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Créer le compte
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ───── Users Tab ─────
 
 function UsersTab() {
@@ -391,6 +561,9 @@ function UsersTab() {
       </div>
 
       <p className="text-xs text-muted-foreground">Tape un nom ou un email puis sélectionne un utilisateur pour modifier ses rôles.</p>
+
+      {/* Temp users — founder only */}
+      {isFounder && <TempUsersSection />}
 
       {/* User profile modal */}
       <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
