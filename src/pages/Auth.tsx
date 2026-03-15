@@ -301,7 +301,7 @@ const Auth = () => {
                   >
                     {t.back as string}
                   </button>
-                ) : (
+                ) : signupsEnabled ? (
                   <button
                     type="button"
                     onClick={() => setIsSignUp(!isSignUp)}
@@ -309,7 +309,9 @@ const Auth = () => {
                   >
                     {isSignUp ? (t.auth_switch_to_login as string) : (t.auth_switch_to_signup as string)}
                   </button>
-                )}
+                ) : !isSignUp ? (
+                  <p className="text-xs text-muted-foreground">{t.auth_signups_closed as string}</p>
+                ) : null}
               </div>
             )}
           </CardContent>
