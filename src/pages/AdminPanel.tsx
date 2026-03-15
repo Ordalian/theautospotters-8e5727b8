@@ -32,6 +32,12 @@ interface AdminUser {
   is_map_marker: boolean;
   created_at: string;
   car_count: number;
+  flagged_for_deletion?: boolean;
+  flagged_by?: string | null;
+}
+
+interface FlaggedUser extends AdminUser {
+  flagger_username?: string | null;
 }
 
 interface AdminStats {
