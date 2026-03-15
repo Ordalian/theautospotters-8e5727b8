@@ -70,6 +70,7 @@ const fr: Translations = {
   auth_sign_in: "Se connecter",
   auth_switch_to_login: "Déjà un compte ? Se connecter",
   auth_switch_to_signup: "Pas encore de compte ? S'inscrire",
+  auth_signups_closed: "Les inscriptions sont actuellement fermées.",
   auth_success_signup: "Compte créé ! Tu es connecté.",
   auth_success_signin: "Bon retour !",
   auth_error: "Erreur d'authentification",
