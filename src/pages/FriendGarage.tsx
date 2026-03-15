@@ -69,7 +69,7 @@ const FriendGarage = () => {
   const { data: friendProfile } = useQuery({
     queryKey: ["profile-username", friendId],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("username").eq("user_id", friendId!).maybeSingle();
+      const { data } = await supabase.from("profiles_public").select("username").eq("user_id", friendId!).maybeSingle();
       return data?.username ?? null;
     },
     enabled: !!friendId,

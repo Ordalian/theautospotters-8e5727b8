@@ -53,7 +53,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         f.requester_id === user!.id ? f.addressee_id : f.requester_id
       );
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, username, avatar_url, role, is_premium")
         .in("user_id", friendIds);
       return (profiles || []) as Friend[];
@@ -116,7 +116,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       const extraProfiles = new Map<string, ProfileInfo>();
       if (missingIds.length > 0) {
         const { data: profiles } = await supabase
-          .from("profiles")
+          .from("profiles_public")
           .select("user_id, username, avatar_url, role, is_premium")
           .in("user_id", missingIds);
         (profiles || []).forEach((p: any) => extraProfiles.set(p.user_id, p));
@@ -365,7 +365,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
     queryKey: ["dm_search_users", debouncedSearch],
     queryFn: async () => {
       const { data } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, username, avatar_url, role, is_premium")
         .neq("user_id", user!.id)
         .ilike("username", `%${debouncedSearch}%`)

@@ -69,7 +69,7 @@ const DeliverSelectFriend = () => {
           f.requester_id === user.id ? f.addressee_id : f.requester_id
         );
         const { data: profiles } = await supabase
-          .from("profiles")
+          .from("profiles_public")
           .select("user_id, username, role, is_premium")
           .in("user_id", ids);
         setFriends(

@@ -1214,6 +1214,11 @@ export type Database = {
       increment_total_xp:
         | { Args: { amount?: number }; Returns: undefined }
         | { Args: { amount?: number; source?: string }; Returns: undefined }
+      insert_booster_cards: {
+        Args: { p_card_ids: string[]; p_conditions: string[] }
+        Returns: Json
+      }
+      is_staff: { Args: { p_user_id: string }; Returns: boolean }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
       process_booster_style_drop: { Args: never; Returns: Json }
       recompute_user_total_xp: {

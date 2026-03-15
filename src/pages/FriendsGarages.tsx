@@ -237,7 +237,7 @@ const FriendsGarages = () => {
       const senderIds = [...new Set(deliveries.map((d) => d.sender_id))];
       const carIds = deliveries.map((d) => d.car_id);
       const [profilesRes, carsRes] = await Promise.all([
-        supabase.from("profiles").select("user_id, username").in("user_id", senderIds),
+        supabase.from("profiles_public").select("user_id, username").in("user_id", senderIds),
         supabase.from("cars").select("id, brand, model").in("id", carIds),
       ]);
       const profileMap = new Map(profilesRes.data?.map((p) => [p.user_id, p.username]) || []);
@@ -265,7 +265,7 @@ const FriendsGarages = () => {
       .eq("status", "pending");
     if (data?.length) {
       const userIds = data.map((r) => r.requester_id);
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username, role, is_premium").in("user_id", userIds);
+      const { data: profiles } = await supabase.from("profiles_public").select("user_id, username, role, is_premium").in("user_id", userIds);
       const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
       setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id)?.username || null, role: profileMap.get(r.requester_id)?.role ?? null, is_premium: profileMap.get(r.requester_id)?.is_premium ?? false })));
     } else {
@@ -288,7 +288,7 @@ const FriendsGarages = () => {
         f.requester_id === user.id ? f.addressee_id : f.requester_id
       );
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, username, role, is_premium")
         .in("user_id", friendUserIds);
       const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
@@ -332,7 +332,7 @@ const FriendsGarages = () => {
     setSending(true);
     try {
       const { data: profile } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id")
         .eq("username", searchUsername.trim())
         .maybeSingle();

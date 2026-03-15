@@ -178,7 +178,7 @@ const Dashboard = () => {
           f.requester_id === user!.id ? f.addressee_id : f.requester_id
         );
         const { data: profiles } = await supabase
-          .from("profiles")
+          .from("profiles_public")
           .select("user_id, username")
           .in("user_id", friendIds);
         const profileMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);

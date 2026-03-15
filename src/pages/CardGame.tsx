@@ -373,12 +373,14 @@ export default function CardGame() {
             return;
           }
         }
-        const inserts = drawnCards.map((c) => ({
-          user_id: user.id,
-          card_id: c.id,
-          condition: c.condition ?? "good",
-        }));
-        const { error } = await supabase.from("user_game_cards").insert(inserts);
+        const cardIds = drawnCards.map((c) => c.id);
+        const conditions = drawnCards.map((c) => c.condition ?? "good");
+        const { data: rpcResult, error } = await supabase.rpc("insert_booster_cards", {
+          p_card_ids: cardIds,
+          p_conditions: conditions,
+        });
+        if (rpcResult && !(rpcResult as any).ok) throw new Error((rpcResult as any).error);
+
         if (error) throw error;
         trackFeature("booster_opened");
         const { data: instances } = await supabase.from("user_game_cards").select("id, condition, obtained_at, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)").eq("user_id", user.id);

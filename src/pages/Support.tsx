@@ -69,7 +69,7 @@ const Support = () => {
         .order("created_at", { ascending: true });
       if (!data?.length) return [];
       const userIds = [...new Set(data.map((r: any) => r.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username, role").in("user_id", userIds);
+      const { data: profiles } = await supabase.from("profiles_public").select("user_id, username, role").in("user_id", userIds);
       const pMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role }]) || []);
       return data.map((r: any) => ({ ...r, username: pMap.get(r.user_id)?.username || null, role: pMap.get(r.user_id)?.role || "user" })) as TicketReply[];
     },
