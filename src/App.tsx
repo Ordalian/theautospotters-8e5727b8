@@ -46,6 +46,7 @@ const DeckBuilder = lazy(() => import("./pages/DeckBuilder"));
 const WorldDomination = lazy(() => import("./pages/WorldDomination"));
 const POIDetailPage = lazy(() => import("./pages/POIDetailPage"));
 const POIManager = lazy(() => import("./pages/POIManager"));
+const UserActivity = lazy(() => import("./pages/UserActivity"));
 
 const AmisList = lazy(() => import("./pages/AmisList"));
 const Store = lazy(() => import("./pages/Store"));
