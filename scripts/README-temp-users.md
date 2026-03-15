@@ -8,13 +8,26 @@
    ```
    or apply `supabase/migrations/20260324100000_temp_access.sql`.
 
-2. Create the 50 temp accounts (from project root):
-   ```bash
-   SUPABASE_URL=https://YOUR_PROJECT.supabase.co SUPABASE_SERVICE_ROLE_KEY=your_service_role_key node scripts/create-temp-users.mjs
-   ```
-   Optional: `FOUNDER_USER_ID=uuid` if you want to use a specific founder; otherwise the script uses the first profile with `role = 'founder'`.
+2. Create the 50 temp accounts.
 
-3. The script writes **temp-users-list.csv** (username, password) and prints the list. Share the codes with the 50 users and keep the CSV secure.
+   **Option A – PowerShell (no Node.js required, recommended on Windows)**  
+   From the project root in PowerShell:
+   ```powershell
+   .\scripts\create-temp-users.ps1 -ServiceRoleKey "YOUR_SERVICE_ROLE_KEY"
+   ```
+   Or edit `scripts/create-temp-users.ps1` and set the default `$ServiceRoleKey` in the `param()` block, then run:
+   ```powershell
+   .\scripts\create-temp-users.ps1
+   ```
+
+   **Option B – Node.js**  
+   From the project root:
+   ```bash
+   SUPABASE_URL=https://YOUR_PROJECT.supabase.co SUPABASE_SERVICE_ROLE_KEY=your_key node scripts/create-temp-users.mjs
+   ```
+   (On PowerShell use `$env:SUPABASE_URL="..."; $env:SUPABASE_SERVICE_ROLE_KEY="..."; npm run create-temp-users`)
+
+3. The script writes **temp-users-list.csv** in the project root (username, password) and prints the list. Share the codes with the 50 users and keep the CSV secure.
 
 ## Behaviour
 
