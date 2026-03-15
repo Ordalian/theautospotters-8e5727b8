@@ -111,7 +111,7 @@ const Messaging = () => {
         .order("created_at", { ascending: false });
       if (!topicsData || topicsData.length === 0) return [];
       const userIds = [...new Set(topicsData.map((t) => t.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username, role, is_premium").in("user_id", userIds);
+      const { data: profiles } = await supabase.from("profiles_public").select("user_id, username, role, is_premium").in("user_id", userIds);
       const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
       const topicIds = topicsData.map((t) => t.id);
       const { data: replies } = await supabase.from("channel_replies").select("topic_id").in("topic_id", topicIds);
