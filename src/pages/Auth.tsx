@@ -20,6 +20,13 @@ const Auth = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [tempAccessMode, setTempAccessMode] = useState(false);
   const [tempCode, setTempCode] = useState("");
+  const [signupsEnabled, setSignupsEnabled] = useState(true);
+
+  useEffect(() => {
+    supabase.from("app_config").select("value").eq("key", "signups_enabled").maybeSingle().then(({ data }) => {
+      if (data) setSignupsEnabled(data.value === true || data.value === "true");
+    });
+  }, []);
   const { signIn, signUp } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
