@@ -116,6 +116,54 @@ async function rpcAny<T>(fn: string, params?: Record<string, unknown>): Promise<
 
 // ───── Stats Tab ─────
 
+interface ActivityOverview {
+  total_time_ms: number;
+  avg_time_per_user_ms: number;
+  total_views: number;
+  active_users: number;
+  peak_hour: number;
+}
+
+function ActivityOverviewTile() {
+  const { data } = useQuery({
+    queryKey: ["admin-activity-overview"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_activity_overview");
+      if (error) throw error;
+      if (data?.error) return null;
+      return data as ActivityOverview;
+    },
+    staleTime: 60_000,
+  });
+
+  if (!data) return null;
+
+  return (
+    <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">📊 Activité globale</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <p className="text-[10px] text-muted-foreground">Temps total</p>
+          <p className="text-lg font-bold">{formatDuration(data.total_time_ms)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Moy. par utilisateur</p>
+          <p className="text-lg font-bold">{formatDuration(data.avg_time_per_user_ms)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Pages vues</p>
+          <p className="text-lg font-bold">{data.total_views.toLocaleString("fr-FR")}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Utilisateurs actifs</p>
+          <p className="text-lg font-bold">{data.active_users}</p>
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">Heure de pointe : <span className="font-semibold text-foreground">{data.peak_hour}h00 – {data.peak_hour + 1}h00</span></p>
+    </div>
+  );
+}
+
 function StatsTab() {
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
@@ -162,6 +210,9 @@ function StatsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Activity overview tile */}
+      <ActivityOverviewTile />
+
       <div className="grid grid-cols-2 gap-3">
         {cards.map((c) => (
           <div key={c.label} className="rounded-xl border border-border/50 bg-card p-3">
