@@ -24,7 +24,11 @@ const Auth = () => {
 
   useEffect(() => {
     supabase.from("app_config").select("value").eq("key", "signups_enabled").maybeSingle().then(({ data }) => {
-      if (data) setSignupsEnabled(data.value === true || data.value === "true");
+      if (data) {
+        const enabled = data.value === true || data.value === "true";
+        setSignupsEnabled(enabled);
+        if (!enabled) setIsSignUp(false);
+      }
     });
   }, []);
   const { signIn, signUp } = useAuth();
