@@ -265,7 +265,7 @@ const FriendsGarages = () => {
       .eq("status", "pending");
     if (data?.length) {
       const userIds = data.map((r) => r.requester_id);
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username, role, is_premium").in("user_id", userIds);
+      const { data: profiles } = await supabase.from("profiles_public").select("user_id, username, role, is_premium").in("user_id", userIds);
       const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
       setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id)?.username || null, role: profileMap.get(r.requester_id)?.role ?? null, is_premium: profileMap.get(r.requester_id)?.is_premium ?? false })));
     } else {
