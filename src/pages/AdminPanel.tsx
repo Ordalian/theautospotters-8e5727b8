@@ -562,6 +562,9 @@ function UsersTab() {
 
       <p className="text-xs text-muted-foreground">Tape un nom ou un email puis sélectionne un utilisateur pour modifier ses rôles.</p>
 
+      {/* Temp users — founder only */}
+      {isFounder && <TempUsersSection />}
+
       {/* User profile modal */}
       <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
         <DialogContent className="sm:max-w-md">
