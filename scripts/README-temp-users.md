@@ -19,6 +19,10 @@
    ```powershell
    .\scripts\create-temp-users.ps1
    ```
+   If you get **email_exists** (temp users already created), remove them then recreate:
+   ```powershell
+   .\scripts\create-temp-users.ps1 -ServiceRoleKey "YOUR_KEY" -CleanFirst
+   ```
 
    **Option B – Node.js**  
    From the project root:

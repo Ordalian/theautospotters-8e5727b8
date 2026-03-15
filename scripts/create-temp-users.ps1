@@ -1,10 +1,12 @@
 # Create 50 temp users via Supabase REST API (no Node.js required).
 # 1. Edit $SupabaseUrl and $ServiceRoleKey below, then run: .\scripts\create-temp-users.ps1
 # 2. Or run: .\scripts\create-temp-users.ps1 -SupabaseUrl "https://xxx.supabase.co" -ServiceRoleKey "eyJ..."
+# 3. If temp users already exist (email_exists): run with -CleanFirst to remove them then create 50 again.
 
 param(
     [string]$SupabaseUrl = "https://crexgvuniedkqqlgqvbk.supabase.co",
-    [string]$ServiceRoleKey = ""
+    [string]$ServiceRoleKey = "",
+    [switch]$CleanFirst
 )
 
 if (-not $ServiceRoleKey) {
@@ -31,6 +33,41 @@ $headers = @{
     "apikey"       = $ServiceRoleKey
     "Content-Type" = "application/json"
     "Prefer"       = "return=representation"
+}
+
+if ($CleanFirst) {
+    Write-Host "CleanFirst: removing existing temp users (@$TempDomain)..."
+    $page = 1
+    $perPage = 1000
+    $toRemove = @()
+    do {
+        $listResp = Invoke-RestMethod -Uri "$SupabaseUrl/auth/v1/admin/users?per_page=$perPage&page=$page" -Method Get -Headers $headers
+        $users = if ($listResp.users) { $listResp.users } else { @() }
+        foreach ($u in $users) {
+            $em = if ($u.email) { $u.email } else { "" }
+            if ($em -like "*@$TempDomain") { $toRemove += @{ id = $u.id; email = $em } }
+        }
+        $page++
+    } while ($users.Count -eq $perPage)
+    foreach ($r in $toRemove) {
+        try {
+            Invoke-RestMethod -Uri "$SupabaseUrl/rest/v1/friendships?or=(requester_id.eq.$($r.id),addressee_id.eq.$($r.id))" -Method Delete -Headers $headers | Out-Null
+        } catch { }
+        try {
+            Invoke-RestMethod -Uri "$SupabaseUrl/rest/v1/profiles?user_id=eq.$($r.id)" -Method Delete -Headers $headers | Out-Null
+        } catch { }
+        try {
+            $emailEnc = [uri]::EscapeDataString("`"$($r.email)`"")
+            Invoke-RestMethod -Uri "$SupabaseUrl/rest/v1/temp_access?email=eq.$emailEnc" -Method Delete -Headers $headers | Out-Null
+        } catch { }
+        try {
+            Invoke-RestMethod -Uri "$SupabaseUrl/auth/v1/admin/users/$($r.id)" -Method Delete -Headers $headers | Out-Null
+            Write-Host "  Removed $($r.email)"
+        } catch {
+            Write-Host "  Failed to remove auth user $($r.email): $_" -ForegroundColor Yellow
+        }
+    }
+    if ($toRemove.Count -eq 0) { Write-Host "  No existing temp users found." } else { Write-Host "  Removed $($toRemove.Count) temp user(s)." }
 }
 
 $tempUsers = @()
