@@ -332,7 +332,7 @@ const FriendsGarages = () => {
     setSending(true);
     try {
       const { data: profile } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id")
         .eq("username", searchUsername.trim())
         .maybeSingle();

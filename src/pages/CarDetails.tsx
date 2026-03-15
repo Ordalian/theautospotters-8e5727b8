@@ -260,7 +260,7 @@ const CarDetails = () => {
     queryKey: ["profile", deliveredByUserId],
     queryFn: async () => {
       if (!deliveredByUserId) return null;
-      const { data } = await supabase.from("profiles").select("username").eq("user_id", deliveredByUserId).maybeSingle();
+      const { data } = await supabase.from("profiles_public").select("username").eq("user_id", deliveredByUserId).maybeSingle();
       return data?.username ?? null;
     },
     enabled: !!deliveredByUserId,

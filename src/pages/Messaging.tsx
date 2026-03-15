@@ -133,7 +133,7 @@ const Messaging = () => {
         .order("created_at", { ascending: true });
       if (!data || data.length === 0) return [];
       const userIds = [...new Set(data.map((r) => r.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username, role, is_premium").in("user_id", userIds);
+      const { data: profiles } = await supabase.from("profiles_public").select("user_id, username, role, is_premium").in("user_id", userIds);
       const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
       return data.map((r) => ({ ...r, username: profileMap.get(r.user_id)?.username || null, role: profileMap.get(r.user_id)?.role ?? null, is_premium: profileMap.get(r.user_id)?.is_premium ?? false })) as Reply[];
     },

@@ -53,7 +53,7 @@ const Leaderboard = () => {
     if (!err && data) {
       const raw = (data as Record<string, unknown>[]) ?? [];
       const userIds = raw.map((e) => e.user_id as string);
-      const { data: roles } = await supabase.from("profiles").select("user_id, role, is_premium").in("user_id", userIds);
+      const { data: roles } = await supabase.from("profiles_public").select("user_id, role, is_premium").in("user_id", userIds);
       const roleMap = new Map(roles?.map((r: any) => [r.user_id, { role: r.role, is_premium: r.is_premium }]) || []);
       setEntries(
         raw.map((e) => ({

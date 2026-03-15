@@ -365,7 +365,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
     queryKey: ["dm_search_users", debouncedSearch],
     queryFn: async () => {
       const { data } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, username, avatar_url, role, is_premium")
         .neq("user_id", user!.id)
         .ilike("username", `%${debouncedSearch}%`)
