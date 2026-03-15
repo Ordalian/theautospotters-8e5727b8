@@ -46,6 +46,7 @@ const DeckBuilder = lazy(() => import("./pages/DeckBuilder"));
 const WorldDomination = lazy(() => import("./pages/WorldDomination"));
 const POIDetailPage = lazy(() => import("./pages/POIDetailPage"));
 const POIManager = lazy(() => import("./pages/POIManager"));
+const UserActivity = lazy(() => import("./pages/UserActivity"));
 
 const AmisList = lazy(() => import("./pages/AmisList"));
 const Store = lazy(() => import("./pages/Store"));
@@ -137,6 +138,7 @@ function AnimatedRoutes() {
             <Route path="/card-game/world-domination" element={<ProtectedRoute><PageTransition><WorldDomination /></PageTransition></ProtectedRoute>} />
             <Route path="/card-game/poi/:poiId" element={<ProtectedRoute><PageTransition><POIDetailPage /></PageTransition></ProtectedRoute>} />
             <Route path="/card-game/poi-manager" element={<ProtectedRoute><PageTransition><POIManager /></PageTransition></ProtectedRoute>} />
+            <Route path="/admin/user/:userId" element={<ProtectedRoute><AdminRoute><PageTransition><UserActivity /></PageTransition></AdminRoute></ProtectedRoute>} />
             <Route path="/card-game/friends" element={<ProtectedRoute><PageTransition><AmisList /></PageTransition></ProtectedRoute>} />
             <Route path="/store" element={<ProtectedRoute><PageTransition><Store /></PageTransition></ProtectedRoute>} />
 

@@ -116,6 +116,54 @@ async function rpcAny<T>(fn: string, params?: Record<string, unknown>): Promise<
 
 // ───── Stats Tab ─────
 
+interface ActivityOverview {
+  total_time_ms: number;
+  avg_time_per_user_ms: number;
+  total_views: number;
+  active_users: number;
+  peak_hour: number;
+}
+
+function ActivityOverviewTile() {
+  const { data } = useQuery({
+    queryKey: ["admin-activity-overview"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_activity_overview");
+      if (error) throw error;
+      if (data?.error) return null;
+      return data as ActivityOverview;
+    },
+    staleTime: 60_000,
+  });
+
+  if (!data) return null;
+
+  return (
+    <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">📊 Activité globale</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <p className="text-[10px] text-muted-foreground">Temps total</p>
+          <p className="text-lg font-bold">{formatDuration(data.total_time_ms)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Moy. par utilisateur</p>
+          <p className="text-lg font-bold">{formatDuration(data.avg_time_per_user_ms)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Pages vues</p>
+          <p className="text-lg font-bold">{data.total_views.toLocaleString("fr-FR")}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">Utilisateurs actifs</p>
+          <p className="text-lg font-bold">{data.active_users}</p>
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">Heure de pointe : <span className="font-semibold text-foreground">{data.peak_hour}h00 – {data.peak_hour + 1}h00</span></p>
+    </div>
+  );
+}
+
 function StatsTab() {
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
@@ -162,6 +210,9 @@ function StatsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Activity overview tile */}
+      <ActivityOverviewTile />
+
       <div className="grid grid-cols-2 gap-3">
         {cards.map((c) => (
           <div key={c.label} className="rounded-xl border border-border/50 bg-card p-3">
@@ -391,6 +442,131 @@ function TempUsersSection() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ───── All Users Section ─────
+
+interface ActivityUser {
+  user_id: string;
+  username: string | null;
+  email: string;
+  role: string;
+  is_premium: boolean;
+  created_at: string;
+  car_count: number;
+  total_time_ms: number;
+  total_views: number;
+  total_features: number;
+}
+
+type ActivitySort = "newest" | "oldest" | "activity";
+
+function AllUsersSection() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [sort, setSort] = useState<ActivitySort>("newest");
+  const [search, setSearch] = useState("");
+  const [searchDebounce, setSearchDebounce] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounce(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["admin-all-users", sort, searchDebounce],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_users_with_activity", {
+        p_sort: sort,
+        p_query: searchDebounce,
+      });
+      if (error) throw error;
+      return (data ?? []) as ActivityUser[];
+    },
+    enabled: open,
+    staleTime: 30_000,
+  });
+
+  const sortOptions: { value: ActivitySort; label: string }[] = [
+    { value: "newest", label: "Plus récents" },
+    { value: "oldest", label: "Plus anciens" },
+    { value: "activity", label: "Plus actifs" },
+  ];
+
+  return (
+    <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" />
+          <span className="font-semibold text-sm">Tous les utilisateurs</span>
+        </div>
+        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </button>
+
+      {open && (
+        <div className="border-t border-border/50 px-4 py-3 space-y-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Sort */}
+          <div className="flex gap-1">
+            {sortOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSort(opt.value)}
+                className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors ${
+                  sort === opt.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* List */}
+          {isLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : users.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-2">Aucun utilisateur.</p>
+          ) : (
+            <div className="space-y-1 max-h-80 overflow-y-auto">
+              {users.map((u) => (
+                <button
+                  key={u.user_id}
+                  type="button"
+                  onClick={() => navigate(`/admin/user/${u.user_id}`)}
+                  className="w-full text-left flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/30 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{u.username || u.email}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {u.car_count} spot{u.car_count !== 1 ? "s" : ""} · {formatDuration(u.total_time_ms)}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -674,6 +850,9 @@ function UsersTab() {
 
       {/* Temp users — founder only */}
       {isFounder && <TempUsersSection />}
+
+      {/* All users section */}
+      <AllUsersSection />
 
       {/* User profile modal */}
       <Dialog open={!!selectedUser} onOpenChange={(open) => { if (!open) { setSelectedUser(null); setDeleteStep(0); } }}>
