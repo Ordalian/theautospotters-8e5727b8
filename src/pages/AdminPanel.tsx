@@ -562,6 +562,22 @@ function UsersTab() {
 
   return (
     <div className="space-y-4">
+      {/* Signup toggle — founder only */}
+      {isFounder && (
+        <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {signupsEnabled ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Ban className="h-5 w-5 text-destructive" />}
+            <div>
+              <p className="text-sm font-semibold">{signupsEnabled ? "Inscriptions ouvertes" : "Inscriptions suspendues"}</p>
+              <p className="text-[10px] text-muted-foreground">Les comptes temporaires ne sont pas affectés</p>
+            </div>
+          </div>
+          <Button size="sm" variant={signupsEnabled ? "destructive" : "outline"} disabled={signupsToggling} onClick={handleToggleSignups}>
+            {signupsToggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : signupsEnabled ? "Suspendre" : "Activer"}
+          </Button>
+        </div>
+      )}
+
       {/* Three tiles */}
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-border bg-card p-4 text-center">
@@ -587,23 +603,17 @@ function UsersTab() {
         <Input
           placeholder="Rechercher par nom ou email..."
           value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setDropdownOpen(true);
-          }}
+          onChange={(e) => { setSearchQuery(e.target.value); setDropdownOpen(true); }}
           onFocus={() => searchDebounce.length >= 3 && setDropdownOpen(true)}
           onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
           className="pl-9"
         />
-        {/* Search results dropdown */}
         {dropdownOpen && searchDebounce.length >= 3 && (
           <div className="absolute top-full left-0 right-0 mt-1 rounded-xl border border-border bg-card shadow-lg z-50 max-h-64 overflow-y-auto">
             {searchLoading ? (
-              <div className="p-4 flex justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
+              <div className="p-4 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
             ) : searchError ? (
-              <p className="p-4 text-sm text-destructive text-center">Erreur de recherche. Vérifie que la migration a bien été appliquée.</p>
+              <p className="p-4 text-sm text-destructive text-center">Erreur de recherche.</p>
             ) : searchResults.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground text-center">Aucun utilisateur trouvé.</p>
             ) : (
@@ -612,13 +622,12 @@ function UsersTab() {
                   key={u.user_id}
                   type="button"
                   className="w-full text-left px-4 py-3 hover:bg-muted/50 border-b border-border/50 last:border-0 flex items-center justify-between gap-2"
-                  onClick={() => {
-                    setSelectedUser({ ...u, is_map_marker: u.is_map_marker ?? false });
-                    setDropdownOpen(false);
-                    setSearchQuery("");
-                  }}
+                  onClick={() => { setSelectedUser({ ...u, is_map_marker: u.is_map_marker ?? false }); setDropdownOpen(false); setSearchQuery(""); setDeleteStep(0); }}
                 >
-                  <span className="font-medium text-sm truncate">{u.username || u.email || "—"}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm truncate">{u.username || u.email || "—"}</span>
+                    {u.flagged_for_deletion && <Flag className="h-3 w-3 text-destructive" />}
+                  </div>
                   <UserRoleBadge role={u.role} isPremium={u.is_premium} isMapMarker={u.is_map_marker} />
                 </button>
               ))
@@ -626,17 +635,51 @@ function UsersTab() {
           </div>
         )}
       </div>
-
       <p className="text-xs text-muted-foreground">Tape un nom ou un email puis sélectionne un utilisateur pour modifier ses rôles.</p>
+
+      {/* Flagged accounts — visible to staff */}
+      {flaggedUsers.length > 0 && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-destructive/20">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <span className="font-semibold text-sm text-destructive">Comptes signalés ({flaggedUsers.length})</span>
+          </div>
+          <div className="divide-y divide-border/50 max-h-60 overflow-y-auto">
+            {flaggedUsers.map((u) => (
+              <div key={u.user_id} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{u.username || u.email || "—"}</p>
+                    <UserRoleBadge role={u.role} isPremium={u.is_premium} isMapMarker={u.is_map_marker} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Signalé par {u.flagger_username || "inconnu"} · {u.car_count} spot{u.car_count !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" disabled={updating === u.user_id} onClick={() => handleUnflagUser(u.user_id)}>
+                    {updating === u.user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                  </Button>
+                  {isFounder && (
+                    <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={() => { setSelectedUser(u); setDeleteStep(0); }}>
+                      <UserX className="h-3 w-3" /> Gérer
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Temp users — founder only */}
       {isFounder && <TempUsersSection />}
 
       {/* User profile modal */}
-      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+      <Dialog open={!!selectedUser} onOpenChange={(open) => { if (!open) { setSelectedUser(null); setDeleteStep(0); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rôles utilisateur</DialogTitle>
+            <DialogTitle>Gestion utilisateur</DialogTitle>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
@@ -646,68 +689,75 @@ function UsersTab() {
                 <p className="text-[10px] text-muted-foreground mt-0.5">
                   {selectedUser.car_count} spot{selectedUser.car_count !== 1 ? "s" : ""} · inscrit le {new Date(selectedUser.created_at).toLocaleDateString("fr-FR")}
                 </p>
+                {selectedUser.flagged_for_deletion && (
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1"><Flag className="h-3 w-3" /> Signalé pour suppression</p>
+                )}
               </div>
               <div className="flex flex-wrap gap-2 items-center">
                 <UserRoleBadge role={selectedUser.role} isPremium={selectedUser.is_premium} isMapMarker={selectedUser.is_map_marker} />
               </div>
               {(canEditAdmin || canEditMapMarkerOrPremium) && selectedUser.role !== "founder" && (
                 <div className="space-y-2 pt-2 border-t border-border">
+                  {/* Role toggles */}
                   {canEditAdmin && (
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm">Admin</span>
-                      <Button
-                        size="sm"
-                        variant={selectedUser.role === "admin" ? "destructive" : "outline"}
-                        className="gap-1"
-                        disabled={updating === selectedUser.user_id}
-                        onClick={() => setUserRole(selectedUser.user_id, selectedUser.role === "admin" ? "user" : "admin")}
-                      >
-                        {updating === selectedUser.user_id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : selectedUser.role === "admin" ? (
-                          "Retirer"
-                        ) : (
-                          "Accorder"
-                        )}
+                      <Button size="sm" variant={selectedUser.role === "admin" ? "destructive" : "outline"} className="gap-1" disabled={updating === selectedUser.user_id} onClick={() => setUserRole(selectedUser.user_id, selectedUser.role === "admin" ? "user" : "admin")}>
+                        {updating === selectedUser.user_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : selectedUser.role === "admin" ? "Retirer" : "Accorder"}
                       </Button>
                     </div>
                   )}
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm">Map maker</span>
-                    <Button
-                      size="sm"
-                      variant={selectedUser.is_map_marker ? "destructive" : "outline"}
-                      className="gap-1"
-                      disabled={updating === selectedUser.user_id}
-                      onClick={() => setMapMarker(selectedUser.user_id, !selectedUser.is_map_marker)}
-                    >
-                      {updating === selectedUser.user_id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : selectedUser.is_map_marker ? (
-                        "Retirer"
-                      ) : (
-                        "Accorder"
-                      )}
+                    <Button size="sm" variant={selectedUser.is_map_marker ? "destructive" : "outline"} className="gap-1" disabled={updating === selectedUser.user_id} onClick={() => setMapMarker(selectedUser.user_id, !selectedUser.is_map_marker)}>
+                      {updating === selectedUser.user_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : selectedUser.is_map_marker ? "Retirer" : "Accorder"}
                     </Button>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm">Premium</span>
-                    <Button
-                      size="sm"
-                      variant={selectedUser.is_premium ? "destructive" : "outline"}
-                      className="gap-1"
-                      disabled={updating === selectedUser.user_id}
-                      onClick={() => togglePremium(selectedUser.user_id, selectedUser.is_premium)}
-                    >
-                      {updating === selectedUser.user_id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : selectedUser.is_premium ? (
-                        "Retirer"
-                      ) : (
-                        "Accorder"
-                      )}
+                    <Button size="sm" variant={selectedUser.is_premium ? "destructive" : "outline"} className="gap-1" disabled={updating === selectedUser.user_id} onClick={() => togglePremium(selectedUser.user_id, selectedUser.is_premium)}>
+                      {updating === selectedUser.user_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : selectedUser.is_premium ? "Retirer" : "Accorder"}
                     </Button>
                   </div>
+
+                  {/* Flag / Unflag */}
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
+                    <span className="text-sm flex items-center gap-1"><Flag className="h-3.5 w-3.5" /> Signaler</span>
+                    {selectedUser.flagged_for_deletion ? (
+                      <Button size="sm" variant="outline" className="gap-1" disabled={updating === selectedUser.user_id} onClick={() => handleUnflagUser(selectedUser.user_id)}>
+                        {updating === selectedUser.user_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Retirer le signalement"}
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="destructive" className="gap-1" disabled={updating === selectedUser.user_id} onClick={() => handleFlagUser(selectedUser.user_id)}>
+                        {updating === selectedUser.user_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Signaler"}
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Delete — founder only, double confirmation */}
+                  {isFounder && (
+                    <div className="pt-2 border-t border-destructive/30">
+                      {deleteStep === 0 && (
+                        <Button size="sm" variant="destructive" className="w-full gap-1" onClick={() => setDeleteStep(1)}>
+                          <UserX className="h-3.5 w-3.5" /> Supprimer le compte
+                        </Button>
+                      )}
+                      {deleteStep === 1 && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-destructive font-semibold text-center">⚠️ Cette action est irréversible. Confirmer la suppression ?</p>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="flex-1" onClick={() => setDeleteStep(0)}>Annuler</Button>
+                            <Button size="sm" variant="destructive" className="flex-1 gap-1" onClick={() => handleDeleteUser(selectedUser.user_id)}>
+                              <Trash2 className="h-3.5 w-3.5" /> Confirmer
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {deleteStep === 2 && (
+                        <div className="flex justify-center py-2"><Loader2 className="h-5 w-5 animate-spin text-destructive" /></div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               {selectedUser.role === "founder" && (
