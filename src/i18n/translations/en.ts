@@ -68,6 +68,7 @@ const en: Translations = {
   auth_sign_in: "Sign In",
   auth_switch_to_login: "Already have an account? Sign in",
   auth_switch_to_signup: "Don't have an account? Sign up",
+  auth_signups_closed: "Sign-ups are currently closed.",
   auth_success_signup: "Account created! You're logged in.",
   auth_success_signin: "Welcome back!",
   auth_error: "Authentication failed",

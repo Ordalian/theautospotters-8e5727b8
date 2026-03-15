@@ -24,7 +24,11 @@ const Auth = () => {
 
   useEffect(() => {
     supabase.from("app_config").select("value").eq("key", "signups_enabled").maybeSingle().then(({ data }) => {
-      if (data) setSignupsEnabled(data.value === true || data.value === "true");
+      if (data) {
+        const enabled = data.value === true || data.value === "true";
+        setSignupsEnabled(enabled);
+        if (!enabled) setIsSignUp(false);
+      }
     });
   }, []);
   const { signIn, signUp } = useAuth();
@@ -301,7 +305,7 @@ const Auth = () => {
                   >
                     {t.back as string}
                   </button>
-                ) : (
+                ) : signupsEnabled ? (
                   <button
                     type="button"
                     onClick={() => setIsSignUp(!isSignUp)}
@@ -309,7 +313,9 @@ const Auth = () => {
                   >
                     {isSignUp ? (t.auth_switch_to_login as string) : (t.auth_switch_to_signup as string)}
                   </button>
-                )}
+                ) : !isSignUp ? (
+                  <p className="text-xs text-muted-foreground">{t.auth_signups_closed as string}</p>
+                ) : null}
               </div>
             )}
           </CardContent>
