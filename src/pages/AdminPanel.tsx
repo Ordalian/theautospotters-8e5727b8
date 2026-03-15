@@ -446,6 +446,131 @@ function TempUsersSection() {
   );
 }
 
+// ───── All Users Section ─────
+
+interface ActivityUser {
+  user_id: string;
+  username: string | null;
+  email: string;
+  role: string;
+  is_premium: boolean;
+  created_at: string;
+  car_count: number;
+  total_time_ms: number;
+  total_views: number;
+  total_features: number;
+}
+
+type ActivitySort = "newest" | "oldest" | "activity";
+
+function AllUsersSection() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [sort, setSort] = useState<ActivitySort>("newest");
+  const [search, setSearch] = useState("");
+  const [searchDebounce, setSearchDebounce] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounce(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ["admin-all-users", sort, searchDebounce],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_users_with_activity", {
+        p_sort: sort,
+        p_query: searchDebounce,
+      });
+      if (error) throw error;
+      return (data ?? []) as ActivityUser[];
+    },
+    enabled: open,
+    staleTime: 30_000,
+  });
+
+  const sortOptions: { value: ActivitySort; label: string }[] = [
+    { value: "newest", label: "Plus récents" },
+    { value: "oldest", label: "Plus anciens" },
+    { value: "activity", label: "Plus actifs" },
+  ];
+
+  return (
+    <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" />
+          <span className="font-semibold text-sm">Tous les utilisateurs</span>
+        </div>
+        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </button>
+
+      {open && (
+        <div className="border-t border-border/50 px-4 py-3 space-y-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Sort */}
+          <div className="flex gap-1">
+            {sortOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSort(opt.value)}
+                className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors ${
+                  sort === opt.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* List */}
+          {isLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : users.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-2">Aucun utilisateur.</p>
+          ) : (
+            <div className="space-y-1 max-h-80 overflow-y-auto">
+              {users.map((u) => (
+                <button
+                  key={u.user_id}
+                  type="button"
+                  onClick={() => navigate(`/admin/user/${u.user_id}`)}
+                  className="w-full text-left flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/30 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{u.username || u.email}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {u.car_count} spot{u.car_count !== 1 ? "s" : ""} · {formatDuration(u.total_time_ms)}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ───── Users Tab ─────
 
 function UsersTab() {
