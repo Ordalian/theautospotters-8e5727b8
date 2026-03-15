@@ -672,7 +672,7 @@ function SupportTab() {
         .order("created_at", { ascending: false });
       if (!ticketsData?.length) return [];
       const userIds = [...new Set(ticketsData.map((t: any) => t.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username").in("user_id", userIds);
+      const { data: profiles } = await supabase.from("profiles_public").select("user_id, username").in("user_id", userIds);
       const pMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
       return ticketsData.map((t: any) => ({ ...t, username: pMap.get(t.user_id) || null })) as Ticket[];
     },
