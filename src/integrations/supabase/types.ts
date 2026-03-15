@@ -1149,6 +1149,7 @@ export type Database = {
       claim_daily_boosters: { Args: never; Returns: Json }
       consume_daily_booster: { Args: never; Returns: Json }
       consume_purchased_booster: { Args: never; Returns: boolean }
+      get_activity_overview: { Args: never; Returns: Json }
       get_admin_role_counts: {
         Args: never
         Returns: {
@@ -1220,6 +1221,7 @@ export type Database = {
           visit_count: number
         }[]
       }
+      get_user_activity_detail: { Args: { p_user_id: string }; Returns: Json }
       get_users_for_admin: {
         Args: never
         Returns: {
@@ -1246,6 +1248,21 @@ export type Database = {
           is_map_marker: boolean
           is_premium: boolean
           role: string
+          user_id: string
+          username: string
+        }[]
+      }
+      get_users_with_activity: {
+        Args: { p_query?: string; p_sort?: string }
+        Returns: {
+          car_count: number
+          created_at: string
+          email: string
+          is_premium: boolean
+          role: string
+          total_features: number
+          total_time_ms: number
+          total_views: number
           user_id: string
           username: string
         }[]
