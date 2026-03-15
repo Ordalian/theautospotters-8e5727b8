@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth check – caller must be founder
+    // Auth check – caller must be staff (founder or admin)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: corsHeaders });
@@ -34,14 +34,18 @@ Deno.serve(async (req) => {
     }
     const callerId = claimsData.claims.sub as string;
 
-    // Verify founder role
+    // Get caller profile
     const { data: callerProfile } = await anonClient
       .from("profiles")
       .select("role")
       .eq("user_id", callerId)
       .single();
 
-    if (callerProfile?.role !== "founder") {
+    const callerRole = callerProfile?.role;
+    const isFounder = callerRole === "founder";
+    const isStaff = callerRole === "founder" || callerRole === "admin";
+
+    if (!isStaff) {
       return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: corsHeaders });
     }
 
@@ -54,7 +58,7 @@ Deno.serve(async (req) => {
 
     const { action, ...params } = await req.json();
 
-    // ──── LIST ────
+    // ──── LIST TEMP USERS ────
     if (action === "list") {
       const { data: temps } = await adminClient
         .from("profiles")
@@ -64,8 +68,11 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, users: temps ?? [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ──── CREATE ────
+    // ──── CREATE TEMP USER ──── (founder only)
     if (action === "create") {
+      if (!isFounder) {
+        return new Response(JSON.stringify({ error: "founder_only" }), { status: 403, headers: corsHeaders });
+      }
       const { username, password } = params as { username: string; password: string };
       if (!username?.trim() || !password?.trim()) {
         return new Response(JSON.stringify({ error: "missing_fields" }), { status: 400, headers: corsHeaders });
@@ -74,7 +81,6 @@ Deno.serve(async (req) => {
       const email = `${username.trim().toLowerCase().replace(/\s+/g, "")}@${TEMP_DOMAIN}`;
       const expiresAt = new Date(Date.now() + HOURS_VALID * 60 * 60 * 1000).toISOString();
 
-      // Create auth user
       const { data: authData, error: authErr } = await adminClient.auth.admin.createUser({
         email,
         password: password.trim(),
@@ -85,45 +91,19 @@ Deno.serve(async (req) => {
       }
       const newUserId = authData.user.id;
 
-      // Update profile
-      await adminClient
-        .from("profiles")
-        .update({
-          is_temp: true,
-          temp_expires_at: expiresAt,
-          username_locked: true,
-          username: username.trim(),
-        })
-        .eq("user_id", newUserId);
+      await adminClient.from("profiles").update({
+        is_temp: true, temp_expires_at: expiresAt, username_locked: true, username: username.trim(),
+      }).eq("user_id", newUserId);
 
-      // Insert temp_access
-      await adminClient.from("temp_access").insert({
-        email,
-        access_code: password.trim(),
-        expires_at: expiresAt,
-      });
+      await adminClient.from("temp_access").insert({ email, access_code: password.trim(), expires_at: expiresAt });
 
-      // Create friendship founder <-> new temp
-      await adminClient.from("friendships").insert({
-        requester_id: callerId,
-        addressee_id: newUserId,
-        status: "accepted",
-      });
+      // Friendships: founder <-> new temp
+      await adminClient.from("friendships").insert({ requester_id: callerId, addressee_id: newUserId, status: "accepted" });
 
-      // Create friendships with all existing temps
-      const { data: existingTemps } = await adminClient
-        .from("profiles")
-        .select("user_id")
-        .eq("is_temp", true)
-        .neq("user_id", newUserId);
-
+      // Friendships: all existing temps <-> new temp
+      const { data: existingTemps } = await adminClient.from("profiles").select("user_id").eq("is_temp", true).neq("user_id", newUserId);
       if (existingTemps?.length) {
-        const friendships = existingTemps.map((t) => ({
-          requester_id: newUserId,
-          addressee_id: t.user_id,
-          status: "accepted",
-        }));
-        // Insert in batches to avoid payload limits
+        const friendships = existingTemps.map((t) => ({ requester_id: newUserId, addressee_id: t.user_id, status: "accepted" }));
         for (let i = 0; i < friendships.length; i += 100) {
           await adminClient.from("friendships").insert(friendships.slice(i, i + 100));
         }
@@ -135,44 +115,99 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ──── DELETE ────
+    // ──── DELETE TEMP USER ──── (founder only)
     if (action === "delete") {
+      if (!isFounder) {
+        return new Response(JSON.stringify({ error: "founder_only" }), { status: 403, headers: corsHeaders });
+      }
       const { user_id } = params as { user_id: string };
       if (!user_id) {
         return new Response(JSON.stringify({ error: "missing_user_id" }), { status: 400, headers: corsHeaders });
       }
 
-      // Get email for temp_access cleanup
-      const { data: profile } = await adminClient
-        .from("profiles")
-        .select("user_id, is_temp")
-        .eq("user_id", user_id)
-        .single();
-
+      const { data: profile } = await adminClient.from("profiles").select("user_id, is_temp").eq("user_id", user_id).single();
       if (!profile || !profile.is_temp) {
         return new Response(JSON.stringify({ error: "not_temp_user" }), { status: 400, headers: corsHeaders });
       }
 
-      // Delete friendships
-      await adminClient
-        .from("friendships")
-        .delete()
-        .or(`requester_id.eq.${user_id},addressee_id.eq.${user_id}`);
-
-      // Delete temp_access by email pattern
-      await adminClient
-        .from("temp_access")
-        .delete()
-        .like("email", `%@${TEMP_DOMAIN}`)
-        .eq("email", (await adminClient.auth.admin.getUserById(user_id)).data.user?.email ?? "");
-
-      // Delete auth user (cascades profile)
+      await adminClient.from("friendships").delete().or(`requester_id.eq.${user_id},addressee_id.eq.${user_id}`);
+      await adminClient.from("temp_access").delete().like("email", `%@${TEMP_DOMAIN}`).eq("email", (await adminClient.auth.admin.getUserById(user_id)).data.user?.email ?? "");
       const { error: delErr } = await adminClient.auth.admin.deleteUser(user_id);
       if (delErr) {
         return new Response(JSON.stringify({ error: delErr.message }), { status: 500, headers: corsHeaders });
       }
-
       return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ──── DELETE ANY USER ──── (founder only, with confirmation token)
+    if (action === "delete_user") {
+      if (!isFounder) {
+        return new Response(JSON.stringify({ error: "founder_only" }), { status: 403, headers: corsHeaders });
+      }
+      const { user_id } = params as { user_id: string };
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "missing_user_id" }), { status: 400, headers: corsHeaders });
+      }
+      // Cannot delete founder
+      const { data: targetProfile } = await adminClient.from("profiles").select("role").eq("user_id", user_id).single();
+      if (targetProfile?.role === "founder") {
+        return new Response(JSON.stringify({ error: "cannot_delete_founder" }), { status: 400, headers: corsHeaders });
+      }
+
+      // Clean up related data
+      await adminClient.from("friendships").delete().or(`requester_id.eq.${user_id},addressee_id.eq.${user_id}`);
+      await adminClient.from("direct_messages").delete().or(`sender_id.eq.${user_id},receiver_id.eq.${user_id}`);
+      await adminClient.from("dm_conversation_status").delete().or(`user_id.eq.${user_id},other_user_id.eq.${user_id}`);
+      await adminClient.from("temp_access").delete().eq("email", (await adminClient.auth.admin.getUserById(user_id)).data.user?.email ?? "");
+
+      // Delete auth user (cascades profile via trigger)
+      const { error: delErr } = await adminClient.auth.admin.deleteUser(user_id);
+      if (delErr) {
+        return new Response(JSON.stringify({ error: delErr.message }), { status: 500, headers: corsHeaders });
+      }
+      return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ──── FLAG USER ──── (admin or founder)
+    if (action === "flag_user") {
+      const { user_id } = params as { user_id: string };
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "missing_user_id" }), { status: 400, headers: corsHeaders });
+      }
+      // Cannot flag founder
+      const { data: targetProfile } = await adminClient.from("profiles").select("role").eq("user_id", user_id).single();
+      if (targetProfile?.role === "founder") {
+        return new Response(JSON.stringify({ error: "cannot_flag_founder" }), { status: 400, headers: corsHeaders });
+      }
+      await adminClient.from("profiles").update({ flagged_for_deletion: true, flagged_by: callerId }).eq("user_id", user_id);
+      return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ──── UNFLAG USER ──── (admin or founder)
+    if (action === "unflag_user") {
+      const { user_id } = params as { user_id: string };
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "missing_user_id" }), { status: 400, headers: corsHeaders });
+      }
+      await adminClient.from("profiles").update({ flagged_for_deletion: false, flagged_by: null }).eq("user_id", user_id);
+      return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ──── TOGGLE SIGNUPS ──── (founder only)
+    if (action === "toggle_signups") {
+      if (!isFounder) {
+        return new Response(JSON.stringify({ error: "founder_only" }), { status: 403, headers: corsHeaders });
+      }
+      const { enabled } = params as { enabled: boolean };
+      await adminClient.from("app_config").upsert({ key: "signups_enabled", value: enabled, updated_at: new Date().toISOString() });
+      return new Response(JSON.stringify({ ok: true, enabled }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ──── GET SIGNUPS STATUS ────
+    if (action === "get_signups_status") {
+      const { data } = await adminClient.from("app_config").select("value").eq("key", "signups_enabled").single();
+      const enabled = data?.value === true || data?.value === "true";
+      return new Response(JSON.stringify({ ok: true, enabled }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ error: "unknown_action" }), { status: 400, headers: corsHeaders });
