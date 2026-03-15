@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Shield, ShieldOff, Loader2, Search, BarChart3,
   Users, MessageSquare, Trash2, ChevronRight, Send, X, MapPin, Gem,
+  Plus, ChevronDown, ChevronUp, Eye, EyeOff, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
