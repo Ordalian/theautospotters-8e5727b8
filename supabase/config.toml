@@ -2,3 +2,6 @@ project_id = "qbbhsrlyttjgdkuovjwk"
 
 [functions.car-api]
 verify_jwt = false
+
+[functions.manage-temp-users]
+verify_jwt = false
