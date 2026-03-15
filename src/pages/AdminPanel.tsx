@@ -726,6 +726,9 @@ function UsersTab() {
       {/* Temp users — founder only */}
       {isFounder && <TempUsersSection />}
 
+      {/* All users section */}
+      <AllUsersSection />
+
       {/* User profile modal */}
       <Dialog open={!!selectedUser} onOpenChange={(open) => { if (!open) { setSelectedUser(null); setDeleteStep(0); } }}>
         <DialogContent className="sm:max-w-md">
