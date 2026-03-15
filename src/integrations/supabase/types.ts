@@ -1171,6 +1171,21 @@ export type Database = {
         }[]
       }
       get_autospotter_status: { Args: never; Returns: Json }
+      get_flagged_users: {
+        Args: never
+        Returns: {
+          car_count: number
+          created_at: string
+          email: string
+          flagged_by: string
+          flagger_username: string
+          is_map_marker: boolean
+          is_premium: boolean
+          role: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_leaderboard: {
         Args: never
         Returns: {
@@ -1211,6 +1226,8 @@ export type Database = {
           car_count: number
           created_at: string
           email: string
+          flagged_by: string
+          flagged_for_deletion: boolean
           is_map_marker: boolean
           is_premium: boolean
           role: string
@@ -1224,6 +1241,8 @@ export type Database = {
           car_count: number
           created_at: string
           email: string
+          flagged_by: string
+          flagged_for_deletion: boolean
           is_map_marker: boolean
           is_premium: boolean
           role: string
