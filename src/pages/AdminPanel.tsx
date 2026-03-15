@@ -398,6 +398,7 @@ function TempUsersSection() {
 // ───── Users Tab ─────
 
 function UsersTab() {
+  const { user } = useAuth();
   const { isFounder, isStaff } = useUserRole();
   const qc = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
@@ -405,6 +406,8 @@ function UsersTab() {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0); // 0 = none, 1 = first confirm, 2 = deleting
+  const [signupsToggling, setSignupsToggling] = useState(false);
 
   // Debounce search input
   useEffect(() => {
