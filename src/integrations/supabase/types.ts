@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       car_likes: {
         Row: {
           car_id: string
@@ -740,6 +758,8 @@ export type Database = {
           emblem_slot_1: string | null
           emblem_slot_2: string | null
           emblem_slot_3: string | null
+          flagged_by: string | null
+          flagged_for_deletion: boolean
           id: string
           is_map_marker: boolean
           is_premium: boolean
@@ -767,6 +787,8 @@ export type Database = {
           emblem_slot_1?: string | null
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
+          flagged_by?: string | null
+          flagged_for_deletion?: boolean
           id?: string
           is_map_marker?: boolean
           is_premium?: boolean
@@ -794,6 +816,8 @@ export type Database = {
           emblem_slot_1?: string | null
           emblem_slot_2?: string | null
           emblem_slot_3?: string | null
+          flagged_by?: string | null
+          flagged_for_deletion?: boolean
           id?: string
           is_map_marker?: boolean
           is_premium?: boolean
