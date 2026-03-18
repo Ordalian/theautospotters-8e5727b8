@@ -888,6 +888,7 @@ export type Database = {
           is_map_marker: boolean
           is_premium: boolean
           is_temp: boolean
+          is_tryout: boolean
           language: string
           last_coin_sent_at: string | null
           last_delivery_at: string | null
@@ -900,6 +901,7 @@ export type Database = {
           temp_expires_at: string | null
           theme: string | null
           total_xp: number
+          tryout_expires_at: string | null
           user_id: string
           username: string | null
           username_locked: boolean
@@ -917,6 +919,7 @@ export type Database = {
           is_map_marker?: boolean
           is_premium?: boolean
           is_temp?: boolean
+          is_tryout?: boolean
           language?: string
           last_coin_sent_at?: string | null
           last_delivery_at?: string | null
@@ -929,6 +932,7 @@ export type Database = {
           temp_expires_at?: string | null
           theme?: string | null
           total_xp?: number
+          tryout_expires_at?: string | null
           user_id: string
           username?: string | null
           username_locked?: boolean
@@ -946,6 +950,7 @@ export type Database = {
           is_map_marker?: boolean
           is_premium?: boolean
           is_temp?: boolean
+          is_tryout?: boolean
           language?: string
           last_coin_sent_at?: string | null
           last_delivery_at?: string | null
@@ -958,6 +963,7 @@ export type Database = {
           temp_expires_at?: string | null
           theme?: string | null
           total_xp?: number
+          tryout_expires_at?: string | null
           user_id?: string
           username?: string | null
           username_locked?: boolean
