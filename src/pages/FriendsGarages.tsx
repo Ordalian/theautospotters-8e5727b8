@@ -637,34 +637,39 @@ const FriendsGarages = () => {
               </div>
             </div>
 
-            {/* Block user */}
-            <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.block_user as string}</h2>
-              <div className="flex gap-2">
-                <Input placeholder={t.block_user_placeholder as string} value={blockUsername} onChange={(e) => setBlockUsername(e.target.value)} className="h-11" onKeyDown={(e) => e.key === "Enter" && handleBlockUser()} />
-                <Button onClick={handleBlockUser} disabled={blocking || !blockUsername.trim()} variant="destructive" className="h-11 gap-1"><Ban className="h-4 w-4" /></Button>
-              </div>
-            </div>
-
-            {/* Blocked users */}
-            {blockedUsers.length > 0 && (
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <button type="button" onClick={() => setBlockedOpen(!blockedOpen)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-2"><Ban className="h-4 w-4 text-destructive" /><span className="font-semibold text-sm">{t.blocked_users as string} ({blockedUsers.length})</span></div>
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${blockedOpen ? "rotate-180" : ""}`} />
-                </button>
-                {blockedOpen && (
-                  <div className="border-t border-border/50 px-4 py-3 space-y-1">
-                    {blockedUsers.map((b) => (
-                      <div key={b.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/30">
-                        <span className="text-sm font-medium">{b.username || "—"}</span>
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleUnblockUser(b.id)}>{t.unblock_user as string}</Button>
-                      </div>
-                    ))}
-                  </div>
+            {/* Blocked users — collapsible with search */}
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2">
+                <Ban className="h-4 w-4 text-destructive shrink-0" />
+                <Input
+                  placeholder={t.block_user_placeholder as string}
+                  value={blockUsername}
+                  onChange={(e) => setBlockUsername(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleBlockUser()}
+                  className="h-9 border-0 bg-transparent shadow-none focus-visible:ring-0 px-0"
+                />
+                {blockUsername.trim() && (
+                  <Button onClick={handleBlockUser} disabled={blocking} variant="destructive" size="sm" className="h-8 px-2 shrink-0">
+                    <Ban className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                {blockedUsers.length > 0 && (
+                  <button type="button" onClick={() => setBlockedOpen(!blockedOpen)} className="shrink-0 p-1 rounded hover:bg-muted/50 transition-colors">
+                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${blockedOpen ? "rotate-180" : ""}`} />
+                  </button>
                 )}
               </div>
-            )}
+              {blockedOpen && blockedUsers.length > 0 && (
+                <div className="border-t border-border/50 px-4 py-3 space-y-1">
+                  {blockedUsers.map((b) => (
+                    <div key={b.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/30">
+                      <span className="text-sm font-medium">{b.username || "—"}</span>
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleUnblockUser(b.id)}>{t.unblock_user as string}</Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Demandes d'amis */}
             {requests.length > 0 && (
