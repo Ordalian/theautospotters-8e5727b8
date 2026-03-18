@@ -116,7 +116,8 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       });
 
       const friendMap = new Map(friends.map((f) => [f.user_id, f]));
-      const allPartnerIds = new Set([...friendMap.keys(), ...convMap.keys()]);
+      // Only show actual conversations (at least 1 message) in the default list
+      const allPartnerIds = new Set([...convMap.keys()]);
 
       const missingIds = [...allPartnerIds].filter((id) => !friendMap.has(id));
       const extraProfiles = new Map<string, ProfileInfo>();
