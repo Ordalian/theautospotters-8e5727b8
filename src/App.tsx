@@ -54,6 +54,7 @@ const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Support = lazy(() => import("./pages/Support"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Legal = lazy(() => import("./pages/Legal"));
+const TryoutExplainer = lazy(() => import("./pages/TryoutExplainer"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
