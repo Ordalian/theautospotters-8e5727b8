@@ -44,6 +44,14 @@ const en: Translations = {
   landing_legal: "Legal",
   landing_app_preview: "In the app",
   landing_scroll_hint: "Scroll to see all features",
+  landing_temporary_try: "Temporary try",
+
+  // Tryout (no account, data erased on leave)
+  tryout_title: "Try without an account",
+  tryout_warning: "When you leave the app (close the tab or navigate away), all your data will be permanently deleted. You will have full access to all features until then.",
+  tryout_desc: "No sign-up required. Explore the garage, cards, map, and more. Create an account later to keep your progress.",
+  tryout_proceed: "Proceed",
+  tryout_started: "Tryout started. Your data will be deleted when you leave.",
 
   // Legal
   legal_title: "Legal",
