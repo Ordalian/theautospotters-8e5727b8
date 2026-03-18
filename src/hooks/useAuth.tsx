@@ -41,19 +41,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("is_temp, temp_expires_at")
+        .select("is_temp, temp_expires_at, is_tryout, tryout_expires_at")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled || !data) return;
-      const isTemp = !!(data as { is_temp?: boolean }).is_temp;
-      const expiresAt = (data as { temp_expires_at?: string | null }).temp_expires_at;
-      if (isTemp && expiresAt && new Date(expiresAt) <= new Date()) {
+      const d = data as any;
+      // Temp account expiry
+      if (d.is_temp && d.temp_expires_at && new Date(d.temp_expires_at) <= new Date()) {
         await supabase.auth.signOut();
         window.location.assign("/auth?expired=temp");
+        return;
+      }
+      // Tryout account expiry
+      if (d.is_tryout && d.tryout_expires_at && new Date(d.tryout_expires_at) <= new Date()) {
+        // Cleanup tryout data
+        try {
+          await supabase.functions.invoke("manage-tryout", {
+            body: { action: "cleanup", user_id: user.id },
+          });
+        } catch {}
+        sessionStorage.removeItem("tryout_user_id");
+        sessionStorage.removeItem("tryout_expires_at");
+        await supabase.auth.signOut();
+        window.location.assign("/auth?expired=tryout");
+        return;
+      }
+      // Store tryout info if it's a tryout user
+      if (d.is_tryout) {
+        sessionStorage.setItem("tryout_user_id", user.id);
+        if (d.tryout_expires_at) sessionStorage.setItem("tryout_expires_at", d.tryout_expires_at);
       }
     })();
     return () => { cancelled = true; };
   }, [user?.id, loading]);
+
+  // Tryout cleanup on page unload
+  useEffect(() => {
+    const handleUnload = () => {
+      const tryoutUserId = sessionStorage.getItem("tryout_user_id");
+      if (!tryoutUserId) return;
+      // Use sendBeacon for reliable cleanup on close
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-tryout`;
+      const body = JSON.stringify({ action: "cleanup", user_id: tryoutUserId });
+      navigator.sendBeacon(url, new Blob([body], { type: "application/json" }));
+      sessionStorage.removeItem("tryout_user_id");
+      sessionStorage.removeItem("tryout_expires_at");
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, []);
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({

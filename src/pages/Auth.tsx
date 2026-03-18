@@ -37,11 +37,15 @@ const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    if (searchParams.get("expired") === "temp") {
+    const expired = searchParams.get("expired");
+    if (expired === "temp") {
       toast.error(t.auth_temp_expired as string);
       setSearchParams({}, { replace: true });
+    } else if (expired === "tryout") {
+      toast.error(t.tryout_expired as string);
+      setSearchParams({}, { replace: true });
     }
-  }, [searchParams, setSearchParams, t.auth_temp_expired]);
+  }, [searchParams, setSearchParams, t.auth_temp_expired, t.tryout_expired]);
 
   const pwdRules = [
     { key: "pwd_min_length", test: password.length >= 8 },

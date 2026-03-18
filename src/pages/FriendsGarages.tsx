@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
-import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight, Coins } from "lucide-react";
+import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight, Coins, Ban, Search, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
@@ -141,6 +141,13 @@ const FriendsGarages = () => {
   const [coinSendFriendId, setCoinSendFriendId] = useState<string | null>(null);
   const [coinSendAmount, setCoinSendAmount] = useState("");
   const [coinSending, setCoinSending] = useState(false);
+  const [friendSearchFilter, setFriendSearchFilter] = useState("");
+  const [friendsOpen, setFriendsOpen] = useState(true);
+  // Block state
+  const [blockUsername, setBlockUsername] = useState("");
+  const [blocking, setBlocking] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState<{ id: string; user_id: string; username: string | null }[]>([]);
+  const [blockedOpen, setBlockedOpen] = useState(false);
 
   const DELIVERY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
   const COIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
@@ -205,8 +212,56 @@ const FriendsGarages = () => {
     if (user) {
       fetchFriends();
       fetchDeliveryState();
+      fetchBlockedUsers();
     }
   }, [user]);
+
+  const fetchBlockedUsers = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("user_blacklist")
+      .select("id, blacklisted_user_id")
+      .eq("user_id", user.id);
+    if (data?.length) {
+      const userIds = data.map(d => d.blacklisted_user_id);
+      const { data: profiles } = await supabase.from("profiles_public").select("user_id, username").in("user_id", userIds);
+      const pMap = new Map(profiles?.map(p => [p.user_id, p.username]) || []);
+      setBlockedUsers(data.map(d => ({ id: d.id, user_id: d.blacklisted_user_id, username: pMap.get(d.blacklisted_user_id) || null })));
+    } else {
+      setBlockedUsers([]);
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!user || !blockUsername.trim()) return;
+    setBlocking(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles_public")
+        .select("user_id")
+        .eq("username", blockUsername.trim())
+        .maybeSingle();
+      if (!profile) { toast.error("Utilisateur introuvable"); setBlocking(false); return; }
+      if (profile.user_id === user.id) { toast.error("Vous ne pouvez pas vous bloquer"); setBlocking(false); return; }
+      const { error } = await supabase.from("user_blacklist").insert({ user_id: user.id, blacklisted_user_id: profile.user_id });
+      if (error) {
+        if (error.code === "23505") toast.error("Déjà bloqué");
+        else toast.error(error.message);
+      } else {
+        toast.success(t.block_user_success as string);
+        setBlockUsername("");
+        fetchBlockedUsers();
+      }
+    } catch { toast.error(t.block_user_error as string); }
+    setBlocking(false);
+  };
+
+  const handleUnblockUser = async (blacklistId: string) => {
+    const { error } = await supabase.from("user_blacklist").delete().eq("id", blacklistId);
+    if (error) { toast.error(error.message); return; }
+    toast.success(t.unblock_user_success as string);
+    fetchBlockedUsers();
+  };
 
   useEffect(() => {
     if (!lastDeliveryAt) return;
@@ -574,95 +629,98 @@ const FriendsGarages = () => {
             )}
 
             {/* Add Friend */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Nom d'utilisateur..."
-                value={searchUsername}
-                onChange={(e) => setSearchUsername(e.target.value)}
-                className="h-11"
-                onKeyDown={(e) => e.key === "Enter" && handleAddFriend()}
-              />
-              <Button onClick={handleAddFriend} disabled={sending || !searchUsername.trim()} className="h-11 gap-1">
-                <UserPlus className="h-4 w-4" />
-                Ajouter
-              </Button>
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Ajouter un ami</h2>
+              <div className="flex gap-2">
+                <Input placeholder="Nom d'utilisateur..." value={searchUsername} onChange={(e) => setSearchUsername(e.target.value)} className="h-11" onKeyDown={(e) => e.key === "Enter" && handleAddFriend()} />
+                <Button onClick={handleAddFriend} disabled={sending || !searchUsername.trim()} className="h-11 gap-1"><UserPlus className="h-4 w-4" /> Ajouter</Button>
+              </div>
             </div>
+
+            {/* Block user */}
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.block_user as string}</h2>
+              <div className="flex gap-2">
+                <Input placeholder={t.block_user_placeholder as string} value={blockUsername} onChange={(e) => setBlockUsername(e.target.value)} className="h-11" onKeyDown={(e) => e.key === "Enter" && handleBlockUser()} />
+                <Button onClick={handleBlockUser} disabled={blocking || !blockUsername.trim()} variant="destructive" className="h-11 gap-1"><Ban className="h-4 w-4" /></Button>
+              </div>
+            </div>
+
+            {/* Blocked users */}
+            {blockedUsers.length > 0 && (
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <button type="button" onClick={() => setBlockedOpen(!blockedOpen)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-2"><Ban className="h-4 w-4 text-destructive" /><span className="font-semibold text-sm">{t.blocked_users as string} ({blockedUsers.length})</span></div>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${blockedOpen ? "rotate-180" : ""}`} />
+                </button>
+                {blockedOpen && (
+                  <div className="border-t border-border/50 px-4 py-3 space-y-1">
+                    {blockedUsers.map((b) => (
+                      <div key={b.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/30">
+                        <span className="text-sm font-medium">{b.username || "—"}</span>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleUnblockUser(b.id)}>{t.unblock_user as string}</Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Demandes d'amis */}
             {requests.length > 0 && (
               <div className="space-y-2">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  Demandes d'amis ({requests.length})
-                </h2>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Demandes d'amis ({requests.length})</h2>
                 {requests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="flex items-center justify-between rounded-xl border border-border bg-card p-3"
-                  >
+                  <div key={req.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
                     <span className="font-medium flex items-center gap-1">{req.username || "Anonyme"} <UserRoleBadge role={req.role} isPremium={req.is_premium} /></span>
                     <div className="flex gap-2">
-                      <Button type="button" size="sm" onClick={() => handleAcceptRequest(req.id)} className="gap-1">
-                        <Check className="h-4 w-4" /> Accepter
-                      </Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => handleDeclineRequest(req.id)}>
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <Button type="button" size="sm" onClick={() => handleAcceptRequest(req.id)} className="gap-1"><Check className="h-4 w-4" /> Accepter</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => handleDeclineRequest(req.id)}><X className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Recent Spots — Auto-scroll */}
+            {/* Recent Spots */}
             {recentSpots.length > 0 && (
               <div className="space-y-2">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  {t.friends_recent_spots as string}
-                </h2>
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.friends_recent_spots as string}</h2>
                 <FriendSpotsAutoCarousel spots={recentSpots} />
               </div>
             )}
 
-            {/* Friends List */}
+            {/* Friends List — collapsible with search */}
             <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                Mes amis ({friends.length})
-              </h2>
-              {loading ? (
-                <p className="text-muted-foreground text-sm animate-pulse">Chargement...</p>
-              ) : friends.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Aucun ami pour l'instant. Ajoutez-en un ci-dessus !</p>
-              ) : (
-                friends.map((friend) => (
-                  <button
-                    key={friend.user_id}
-                    onClick={() => handleSelectFriend(friend)}
-                    className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="font-bold text-primary text-sm">
-                          {(friend.username || "?")[0].toUpperCase()}
-                        </span>
-                      </div>
-                      <span className="font-medium flex items-center gap-1">{friend.username || "Anonyme"} <UserRoleBadge role={friend.role} isPremium={friend.is_premium} /></span>
+              <button type="button" onClick={() => setFriendsOpen(!friendsOpen)} className="w-full flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mes amis ({friends.length})</h2>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${friendsOpen ? "rotate-180" : ""}`} />
+              </button>
+              {friendsOpen && (
+                <>
+                  {friends.length > 3 && (
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder={t.friends_search_placeholder as string} value={friendSearchFilter} onChange={(e) => setFriendSearchFilter(e.target.value)} className="pl-9 h-10" />
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRemoveConfirm({
-                          friendshipId: friend.friendship_id,
-                          username: friend.username || "cet ami",
-                        });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </button>
-                ))
-)}
+                  )}
+                  {loading ? (
+                    <p className="text-muted-foreground text-sm animate-pulse">Chargement...</p>
+                  ) : friends.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">Aucun ami pour l'instant.</p>
+                  ) : (
+                    friends.filter(f => !friendSearchFilter.trim() || (f.username || "").toLowerCase().includes(friendSearchFilter.toLowerCase())).map((friend) => (
+                      <button key={friend.user_id} onClick={() => handleSelectFriend(friend)} className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors text-left">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center"><span className="font-bold text-primary text-sm">{(friend.username || "?")[0].toUpperCase()}</span></div>
+                          <span className="font-medium flex items-center gap-1">{friend.username || "Anonyme"} <UserRoleBadge role={friend.role} isPremium={friend.is_premium} /></span>
+                        </div>
+                        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setRemoveConfirm({ friendshipId: friend.friendship_id, username: friend.username || "cet ami" }); }}><X className="h-4 w-4" /></Button>
+                      </button>
+                    ))
+                  )}
+                </>
+              )}
           </div>
 
           {/* Confirmation suppression ami */}
