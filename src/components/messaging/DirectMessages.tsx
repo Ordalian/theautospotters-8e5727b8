@@ -419,7 +419,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-2 relative z-10">
+        <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-2 relative z-10">
           {msgsLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : messages.length === 0 ? (
