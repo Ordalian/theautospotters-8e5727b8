@@ -3,6 +3,21 @@ import { installBrowserStorageFallbacks } from "./lib/browserStorage";
 import { cleanupRuntimeRecoveryUrl, normalizeRuntimeErrorMessage, reloadForRuntimeRecovery } from "./lib/runtimeRecovery";
 import "./index.css";
 
+function ensureRuntimeBackendEnv() {
+  const env = import.meta.env as ImportMetaEnv & {
+    VITE_SUPABASE_URL?: string;
+    VITE_SUPABASE_PROJECT_ID?: string;
+  };
+
+  if (env.VITE_SUPABASE_URL) return;
+
+  const projectId = env.VITE_SUPABASE_PROJECT_ID?.trim();
+  if (!projectId) return;
+
+  env.VITE_SUPABASE_URL = `https://${projectId}.supabase.co`;
+}
+
+ensureRuntimeBackendEnv();
 installBrowserStorageFallbacks();
 cleanupRuntimeRecoveryUrl();
 
