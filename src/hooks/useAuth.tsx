@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearPersistedQueryCache } from "@/lib/queryPersistence";
 
+/** User types: (1) Permanent = normal auth; (2) Temporary = founder-created, is_temp, may expire; (3) Tryout = anonymous, is_tryout, data deleted on leave. */
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -63,10 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [user?.id, loading]);
 
-  // Tryout: on leave (tab close / navigate away), delete data and sign out
+  // Tryout: on leave (tab close / navigate away), delete server data, clear local cache, sign out
   useEffect(() => {
     if (!isTryout || !user?.id) return;
     const cleanup = () => {
+      clearPersistedQueryCache();
       supabase.rpc("delete_tryout_user").then(() => supabase.auth.signOut()).catch(() => {});
     };
     const onPageHide = () => cleanup();
@@ -98,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     if (isTryout && user?.id) {
+      await clearPersistedQueryCache();
       await supabase.rpc("delete_tryout_user");
     }
     const { error } = await supabase.auth.signOut();
