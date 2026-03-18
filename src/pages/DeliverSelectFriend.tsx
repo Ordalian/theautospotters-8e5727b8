@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBlacklist } from "@/hooks/useBlacklist";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
@@ -40,6 +41,7 @@ const DeliverSelectFriend = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [delivering, setDelivering] = useState(false);
+  const { isBlacklisted } = useBlacklist(user?.id);
 
   const loadData = async () => {
     if (!user || !carId) return;
@@ -91,15 +93,19 @@ const DeliverSelectFriend = () => {
     loadData();
   }, [user, carId, navigate]);
 
+  const friendsNotBlacklisted = useMemo(
+    () => friends.filter((f) => !isBlacklisted(f.user_id)),
+    [friends, isBlacklisted]
+  );
   const filteredFriends = useMemo(() => {
-    if (!searchQuery.trim()) return friends;
+    if (!searchQuery.trim()) return friendsNotBlacklisted;
     const q = searchQuery.trim().toLowerCase();
-    return friends.filter(
+    return friendsNotBlacklisted.filter(
       (f) =>
         (f.username || "").toLowerCase().includes(q) ||
         f.user_id.toLowerCase().includes(q)
     );
-  }, [friends, searchQuery]);
+  }, [friendsNotBlacklisted, searchQuery]);
 
   const handleDeliver = async () => {
     if (!user || !car || !selectedFriend) return;

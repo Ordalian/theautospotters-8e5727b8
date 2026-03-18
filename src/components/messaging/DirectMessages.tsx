@@ -91,6 +91,12 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   const { data: conversations = [], isLoading: convsLoading } = useQuery({
     queryKey: ["dm_conversations", user?.id, friends, convStatuses],
     queryFn: async () => {
+      const blacklistedSet = new Set<string>();
+      const { data: bl1 } = await supabase.from("user_blacklist").select("blacklisted_user_id").eq("user_id", user!.id);
+      (bl1 || []).forEach((r: { blacklisted_user_id: string }) => blacklistedSet.add(r.blacklisted_user_id));
+      const { data: bl2 } = await supabase.from("user_blacklist").select("user_id").eq("blacklisted_user_id", user!.id);
+      (bl2 || []).forEach((r: { user_id: string }) => blacklistedSet.add(r.user_id));
+
       const { data: messages } = await supabase
         .from("direct_messages")
         .select("*")
@@ -124,6 +130,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
       const result: Conversation[] = [];
       for (const id of allPartnerIds) {
+        if (blacklistedSet.has(id)) continue;
         const profile = friendMap.get(id) || extraProfiles.get(id);
         if (!profile) continue;
         const status = getConvStatus(id);

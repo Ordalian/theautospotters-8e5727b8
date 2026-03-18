@@ -476,6 +476,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_blacklist: {
+        Row: {
+          id: string
+          user_id: string
+          blacklisted_user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          blacklisted_user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          blacklisted_user_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       game_cards: {
         Row: {
           adaptability: number

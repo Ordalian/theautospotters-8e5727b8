@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBlacklist } from "@/hooks/useBlacklist";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getLevelProgress } from "@/lib/leveling";
 import { ACHIEVEMENTS, ACHIEVEMENT_SHAPES, getAchievementLevel, getAchievementValue, type AchievementId } from "@/lib/achievements";
@@ -142,6 +143,7 @@ const ProfileStats = () => {
   const { friendId } = useParams<{ friendId?: string }>();
   const [hoverBar, setHoverBar] = useState<string | null>(null);
   const isFriendView = !!friendId && friendId !== user?.id;
+  const { isBlacklisted } = useBlacklist(user?.id);
 
   const { data: friendProfile } = useQuery({
     queryKey: ["profile-username-pinned-xp-emblem", friendId],
@@ -259,6 +261,12 @@ const ProfileStats = () => {
       navigate("/friends", { replace: true });
     }
   }, [isFriendView, loadingFriend, isFriend, navigate]);
+
+  useEffect(() => {
+    if (isFriendView && friendId && user?.id && isBlacklisted(friendId)) {
+      navigate("/friends", { replace: true });
+    }
+  }, [isFriendView, friendId, user?.id, isBlacklisted, navigate]);
 
   const targetUserId = isFriendView ? friendId! : user?.id ?? null;
 

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { CarLikeButton } from "@/components/CarLikeButton";
 import { useQuery } from "@tanstack/react-query";
+import { useBlacklist } from "@/hooks/useBlacklist";
 
 const VEHICLE_TYPES = [
   { key: "car", icon: Car, gradient: "from-primary/20 to-primary/5" },
@@ -48,6 +49,7 @@ const FriendGarage = () => {
   const { friendId } = useParams<{ friendId: string }>();
   const [searchParams] = useSearchParams();
   const typeFilter = searchParams.get("type");
+  const { isBlacklisted } = useBlacklist(user?.id);
 
   const { data: isFriend = false, isLoading: loadingFriend } = useQuery({
     queryKey: ["is-friend", user?.id, friendId],
@@ -136,6 +138,23 @@ const FriendGarage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (friendId && user?.id && isBlacklisted(friendId)) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background relative">
+        <BlackGoldBg />
+        <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/friends")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-bold flex-1">Garage</h1>
+        </header>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <p className="text-muted-foreground text-center">Vous ne pouvez pas accéder à ce garage.</p>
+        </div>
       </div>
     );
   }
