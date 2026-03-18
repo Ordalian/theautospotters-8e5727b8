@@ -7,11 +7,12 @@ installBrowserStorageFallbacks();
 cleanupRuntimeRecoveryUrl();
 
 window.addEventListener("vite:preloadError", (event) => {
-  event.preventDefault();
-
-  if (!reloadForRuntimeRecovery()) {
-    console.error("Vite preload error could not be auto-recovered.", event);
+  if (reloadForRuntimeRecovery()) {
+    event.preventDefault();
+    return;
   }
+
+  console.error("Vite preload error could not be auto-recovered.", event);
 });
 
 const rootElement = document.getElementById("root");
@@ -65,7 +66,13 @@ function renderBootstrapFallback(message: string) {
 }
 
 async function bootstrap() {
-  const { default: App } = await import("./App.tsx");
+  const appModule = await import("./App");
+  const App = appModule?.default;
+
+  if (!App) {
+    throw new Error("App module loaded without a default export.");
+  }
+
   createRoot(rootElement).render(<App />);
 }
 
