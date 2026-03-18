@@ -98,7 +98,7 @@ const VehicleTypeMenu = () => {
           >
             {latestAllImage ? (
               <>
-                <img
+                <SignedMediaImg
                   src={latestAllImage}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover rounded-2xl"
