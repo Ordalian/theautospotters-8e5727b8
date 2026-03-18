@@ -1420,6 +1420,7 @@ export type Database = {
       consume_daily_booster: { Args: never; Returns: Json }
       consume_purchased_booster: { Args: never; Returns: boolean }
       get_activity_overview: { Args: never; Returns: Json }
+      get_admin_analytics: { Args: { p_days?: number }; Returns: Json }
       get_admin_role_counts: {
         Args: never
         Returns: {
