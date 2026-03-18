@@ -506,7 +506,7 @@ const ProfileStats = () => {
               <div className="relative aspect-[2/1] min-h-[100px] bg-muted/30">
                 {myPinnedCar?.image_url ? (
                   <>
-                    <img
+                    <SignedMediaImg
                       src={myPinnedCar.image_url}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"

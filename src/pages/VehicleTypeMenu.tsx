@@ -137,7 +137,7 @@ const VehicleTypeMenu = () => {
               >
                 {img ? (
                   <>
-                    <img
+                    <SignedMediaImg
                       src={img}
                       alt={t[LABEL_KEYS[key]] as string}
                       className="absolute inset-0 w-full h-full object-cover rounded-2xl"

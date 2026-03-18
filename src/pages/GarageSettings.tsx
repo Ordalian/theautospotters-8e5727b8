@@ -338,7 +338,7 @@ const GarageSettings = () => {
                           }`}
                         >
                           {car.image_url ? (
-                            <img
+                            <SignedMediaImg
                               src={car.image_url}
                               alt={`${car.brand} ${car.model}`}
                               className="h-12 w-12 rounded-lg object-cover shrink-0"
