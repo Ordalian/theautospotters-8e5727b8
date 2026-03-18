@@ -476,27 +476,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_blacklist: {
-        Row: {
-          id: string
-          user_id: string
-          blacklisted_user_id: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          blacklisted_user_id: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          blacklisted_user_id?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       game_cards: {
         Row: {
           adaptability: number
@@ -965,6 +944,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_blacklist: {
+        Row: {
+          blacklisted_user_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          blacklisted_user_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          blacklisted_user_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_booster_cooldown: {
         Row: {
           id: string
@@ -1298,6 +1298,10 @@ export type Database = {
       insert_booster_cards: {
         Args: { p_card_ids: string[]; p_conditions: string[] }
         Returns: Json
+      }
+      is_blacklisted: {
+        Args: { uid_a: string; uid_b: string }
+        Returns: boolean
       }
       is_staff: { Args: { p_user_id: string }; Returns: boolean }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
