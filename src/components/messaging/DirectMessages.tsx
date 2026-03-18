@@ -491,7 +491,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
         {/* Input bar — shown if accepted/friend, or if I initiated the conversation */}
         {(isConversationAccepted || (isPending && messages.length > 0 && messages[0]?.sender_id === user!.id) || messages.length === 0) && (
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex gap-2 items-end">
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] flex gap-2 items-end">
             <input
               ref={fileInputRef}
               type="file"
