@@ -212,10 +212,56 @@ const FriendsGarages = () => {
     if (user) {
       fetchFriends();
       fetchDeliveryState();
+      fetchBlockedUsers();
     }
   }, [user]);
 
-  useEffect(() => {
+  const fetchBlockedUsers = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("user_blacklist")
+      .select("id, blacklisted_user_id")
+      .eq("user_id", user.id);
+    if (data?.length) {
+      const userIds = data.map(d => d.blacklisted_user_id);
+      const { data: profiles } = await supabase.from("profiles_public").select("user_id, username").in("user_id", userIds);
+      const pMap = new Map(profiles?.map(p => [p.user_id, p.username]) || []);
+      setBlockedUsers(data.map(d => ({ id: d.id, user_id: d.blacklisted_user_id, username: pMap.get(d.blacklisted_user_id) || null })));
+    } else {
+      setBlockedUsers([]);
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!user || !blockUsername.trim()) return;
+    setBlocking(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles_public")
+        .select("user_id")
+        .eq("username", blockUsername.trim())
+        .maybeSingle();
+      if (!profile) { toast.error("Utilisateur introuvable"); setBlocking(false); return; }
+      if (profile.user_id === user.id) { toast.error("Vous ne pouvez pas vous bloquer"); setBlocking(false); return; }
+      const { error } = await supabase.from("user_blacklist").insert({ user_id: user.id, blacklisted_user_id: profile.user_id });
+      if (error) {
+        if (error.code === "23505") toast.error("Déjà bloqué");
+        else toast.error(error.message);
+      } else {
+        toast.success(t.block_user_success as string);
+        setBlockUsername("");
+        fetchBlockedUsers();
+      }
+    } catch { toast.error(t.block_user_error as string); }
+    setBlocking(false);
+  };
+
+  const handleUnblockUser = async (blacklistId: string) => {
+    const { error } = await supabase.from("user_blacklist").delete().eq("id", blacklistId);
+    if (error) { toast.error(error.message); return; }
+    toast.success(t.unblock_user_success as string);
+    fetchBlockedUsers();
+  };
     if (!lastDeliveryAt) return;
     const end = new Date(lastDeliveryAt).getTime() + DELIVERY_COOLDOWN_MS;
     if (end <= Date.now()) return;
