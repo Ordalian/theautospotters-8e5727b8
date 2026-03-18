@@ -613,7 +613,7 @@ Réponds UNIQUEMENT avec un objet JSON : {"price_eur": number, "units_produced":
       return jsonResponse({ price_eur, price_display, units_produced, condition_label });
     }
 
-    return errResponse("action required: 'identify', 'extract_plate', 'identify_and_extract_plate', 'engines', 'editions', 'description', 'car-info' or 'get_price_and_units'.", 400);
+    return errResponse("action required: 'identify', 'extract_plate', 'identify_and_extract_plate', 'engines', 'editions', 'description', 'car-info', 'generation_bounds' or 'get_price_and_units'.", 400);
   } catch (e) {
     console.error("car-api error:", e);
     return errResponse(e instanceof Error ? e.message : "Unknown error", 500);
