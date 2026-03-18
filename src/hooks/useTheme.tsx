@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { getSafeLocalStorage } from "@/lib/browserStorage";
 
 export type ThemeId =
   | "noir-or"
@@ -53,7 +52,6 @@ export const PAID_STYLES: ThemeOption[] = [
 const FREE_THEME_IDS: ThemeId[] = ["noir-or", "bleu-alpine", "rose-barbie", "vert-rallye", "glace-arctique", "ferrari-red"];
 const PAID_STYLE_IDS: ThemeId[] = PAID_STYLES.map((s) => s.id);
 const ALL_THEME_IDS: ThemeId[] = [...FREE_THEME_IDS, ...PAID_STYLE_IDS];
-const THEME_STORAGE_KEY = "app-theme";
 
 function isValidTheme(t: string | null, ownedStyleIds?: Set<string>): t is ThemeId {
   if (t == null) return false;
@@ -81,7 +79,7 @@ const ThemeContext = createContext<ThemeCtx>({
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [theme, setThemeState] = useState<ThemeId>(() => {
-    return (getSafeLocalStorage().getItem(THEME_STORAGE_KEY) as ThemeId) || "noir-or";
+    return (localStorage.getItem("app-theme") as ThemeId) || "noir-or";
   });
   const [ownedStyleIds, setOwnedStyleIds] = useState<Set<string>>(new Set());
   const [coins, setCoins] = useState(0);
@@ -98,7 +96,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const profileTheme = profileRes.data?.theme;
     if (profileTheme && isValidTheme(profileTheme, owned)) {
       setThemeState(profileTheme);
-      getSafeLocalStorage().setItem(THEME_STORAGE_KEY, profileTheme);
+      localStorage.setItem("app-theme", profileTheme);
     }
   };
 
@@ -118,7 +116,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       const profileTheme = profileRes.data?.theme;
       if (profileTheme && isValidTheme(profileTheme, owned)) {
         setThemeState(profileTheme);
-        getSafeLocalStorage().setItem(THEME_STORAGE_KEY, profileTheme);
+        localStorage.setItem("app-theme", profileTheme);
       }
     })();
     return () => { cancelled = true; };
@@ -128,7 +126,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const canUse = FREE_THEME_IDS.includes(t) || ownedStyleIds.has(t);
     if (!canUse) return;
     setThemeState(t);
-    getSafeLocalStorage().setItem(THEME_STORAGE_KEY, t);
+    localStorage.setItem("app-theme", t);
     if (user?.id) {
       supabase.from("profiles").update({ theme: t }).eq("user_id", user.id).then(() => {});
     }

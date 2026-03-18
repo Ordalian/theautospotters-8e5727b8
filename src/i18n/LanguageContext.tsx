@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { getSafeLocalStorage } from "@/lib/browserStorage";
 import fr from "./translations/fr";
 import type { Translations } from "./translations/fr";
 import en from "./translations/en";
@@ -9,7 +8,6 @@ import en from "./translations/en";
 export type Language = "fr" | "en";
 
 const translationsMap: Record<Language, Translations> = { fr, en };
-const LANGUAGE_STORAGE_KEY = "app_language";
 
 interface LanguageContextType {
   language: Language;
@@ -22,7 +20,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [language, setLang] = useState<Language>(() => {
-    const stored = getSafeLocalStorage().getItem(LANGUAGE_STORAGE_KEY) as Language | null;
+    const stored = localStorage.getItem("app_language") as Language | null;
     return stored === "en" ? "en" : "fr";
   });
 
@@ -38,14 +36,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         const lang = (data as any)?.language as Language | undefined;
         if (lang && (lang === "fr" || lang === "en")) {
           setLang(lang);
-          getSafeLocalStorage().setItem(LANGUAGE_STORAGE_KEY, lang);
+          localStorage.setItem("app_language", lang);
         }
       });
   }, [user]);
 
   const setLanguage = useCallback(async (lang: Language) => {
     setLang(lang);
-    getSafeLocalStorage().setItem(LANGUAGE_STORAGE_KEY, lang);
+    localStorage.setItem("app_language", lang);
     if (user) {
       await supabase
         .from("profiles")
