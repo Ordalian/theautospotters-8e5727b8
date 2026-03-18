@@ -1,17 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { clearPersistedQueryCache } from "@/lib/queryPersistence";
 
-/** User types: (1) Permanent = normal auth; (2) Temporary = founder-created, is_temp, may expire; (3) Tryout = anonymous, is_tryout, data deleted on leave. */
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  isTryout: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signInTryout: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -21,7 +17,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isTryout, setIsTryout] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -39,24 +34,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Temp accounts: if expired, sign out and redirect. Also load is_tryout.
+  // Temp accounts: if expired, sign out and redirect
   useEffect(() => {
-    if (!user?.id || loading) {
-      setIsTryout(false);
-      return;
-    }
+    if (!user?.id || loading) return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("is_temp, temp_expires_at, is_tryout")
+        .select("is_temp, temp_expires_at")
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled || !data) return;
       const isTemp = !!(data as { is_temp?: boolean }).is_temp;
       const expiresAt = (data as { temp_expires_at?: string | null }).temp_expires_at;
-      const tryout = !!(data as { is_tryout?: boolean }).is_tryout;
-      setIsTryout(tryout);
       if (isTemp && expiresAt && new Date(expiresAt) <= new Date()) {
         await supabase.auth.signOut();
         window.location.assign("/auth?expired=temp");
@@ -64,18 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
     return () => { cancelled = true; };
   }, [user?.id, loading]);
-
-  // Tryout: on leave (tab close / navigate away), delete server data, clear local cache, sign out
-  useEffect(() => {
-    if (!isTryout || !user?.id) return;
-    const cleanup = () => {
-      clearPersistedQueryCache();
-      supabase.rpc("delete_tryout_user").then(() => supabase.auth.signOut()).catch(() => {});
-    };
-    const onPageHide = () => cleanup();
-    window.addEventListener("pagehide", onPageHide);
-    return () => window.removeEventListener("pagehide", onPageHide);
-  }, [isTryout, user?.id]);
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
@@ -91,25 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
-  const signInTryout = async () => {
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error) throw error;
-    if (data.user?.id) {
-      await supabase.from("profiles").update({ is_tryout: true }).eq("user_id", data.user.id);
-    }
-  };
-
   const signOut = async () => {
-    if (isTryout && user?.id) {
-      await clearPersistedQueryCache();
-      await supabase.rpc("delete_tryout_user");
-    }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, isTryout, signUp, signIn, signInTryout, signOut }}>
+    <AuthContext.Provider value={{ session, user, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

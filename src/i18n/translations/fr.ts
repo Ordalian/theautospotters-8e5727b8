@@ -46,14 +46,6 @@ const fr: Translations = {
   landing_legal: "Mentions légales",
   landing_app_preview: "Dans l'app",
   landing_scroll_hint: "Défiler pour voir toutes les fonctionnalités",
-  landing_temporary_try: "Essai temporaire",
-
-  // Tryout (no account, data erased on leave)
-  tryout_title: "Essayer sans compte",
-  tryout_warning: "Dès que vous quittez l'application (fermeture de l'onglet ou navigation ailleurs), toutes vos données seront définitivement supprimées. Vous aurez accès à toutes les fonctionnalités jusqu'à ce moment.",
-  tryout_desc: "Aucune inscription. Explore le garage, les cartes, la carte et plus encore. Crée un compte plus tard pour garder ta progression.",
-  tryout_proceed: "Continuer",
-  tryout_started: "Essai démarré. Tes données seront supprimées à ta sortie.",
 
   // Legal
   legal_title: "Mentions légales",

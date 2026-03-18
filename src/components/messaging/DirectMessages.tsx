@@ -419,7 +419,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-2 relative z-10">
+        <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-2 relative z-10">
           {msgsLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : messages.length === 0 ? (
@@ -491,7 +491,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
         {/* Input bar — shown if accepted/friend, or if I initiated the conversation */}
         {(isConversationAccepted || (isPending && messages.length > 0 && messages[0]?.sender_id === user!.id) || messages.length === 0) && (
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex gap-2 items-end">
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] flex gap-2 items-end">
             <input
               ref={fileInputRef}
               type="file"
@@ -517,7 +517,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
         {/* Pending: receiver can't send until accepted */}
         {isPending && messages.length > 0 && messages[0]?.sender_id !== user!.id && (
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] text-center">
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] text-center">
             <p className="text-xs text-muted-foreground">{t.dm_accept_to_reply as string || "Acceptez la conversation pour répondre"}</p>
           </div>
         )}

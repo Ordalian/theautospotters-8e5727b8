@@ -4,12 +4,13 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2, Languages } from "lucide-react";
+import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2, Languages, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const DirectMessages = lazy(() => import("@/components/messaging/DirectMessages"));
+const GroupChats = lazy(() => import("@/components/messaging/GroupChats"));
 import UserRoleBadge from "@/components/UserRoleBadge";
 
 type Channel = { id: string; name: string; slug: string; description: string | null; sort_order: number };
@@ -32,6 +33,7 @@ const Messaging = () => {
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
   const [showDMs, setShowDMs] = useState(false);
+  const [showGroupChats, setShowGroupChats] = useState(false);
   const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({});
   const [showTranslatedIds, setShowTranslatedIds] = useState<Set<string>>(new Set());
   const [translatingId, setTranslatingId] = useState<string | null>(null);
@@ -70,7 +72,7 @@ const Messaging = () => {
     if (swipeRef.current.locked === "h") swipeRef.current.delta = dx;
   };
   const onSwipeEnd = () => {
-    if (!selectedChannel && !selectedTopic && !showDMs && swipeRef.current.locked === "h" && swipeRef.current.delta > 80) {
+    if (!selectedChannel && !selectedTopic && !showDMs && !showGroupChats && swipeRef.current.locked === "h" && swipeRef.current.delta > 80) {
       navigate("/home");
     }
   };
@@ -250,6 +252,15 @@ const Messaging = () => {
     );
   }
 
+  // Group chats view
+  if (showGroupChats) {
+    return (
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+        <GroupChats onBack={() => setShowGroupChats(false)} />
+      </Suspense>
+    );
+  }
+
   // Reply thread view
   if (selectedTopic) {
     return (
@@ -263,7 +274,7 @@ const Messaging = () => {
             <p className="text-xs text-muted-foreground flex items-center gap-1">par {selectedTopic.username || t.anonymous as string} <UserRoleBadge role={selectedTopic.role} isPremium={selectedTopic.is_premium} /></p>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-3 relative z-10">
+        <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-3 relative z-10">
           <div className="rounded-xl border border-primary/20 bg-card/90 p-4">
             <div className="flex items-center justify-between mb-1 flex-wrap gap-x-2 gap-y-1">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -341,7 +352,7 @@ const Messaging = () => {
             })
           )}
         </div>
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex gap-2">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] flex gap-2">
           <Input
             value={replyBody}
             onChange={(e) => setReplyBody(e.target.value)}
@@ -471,6 +482,19 @@ const Messaging = () => {
           <div className="min-w-0 flex-1">
             <h3 className="font-bold text-sm">{t.msg_messages as string}</h3>
             <p className="text-xs text-muted-foreground">{t.msg_messages_desc as string}</p>
+          </div>
+        </button>
+        {/* Group Chats Tile */}
+        <button
+          onClick={() => setShowGroupChats(true)}
+          className="w-full text-left rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 p-4 hover:border-primary/50 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-3 mb-3"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 shrink-0">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-sm">Groupes</h3>
+            <p className="text-xs text-muted-foreground">Discussions de groupe avec vos amis</p>
           </div>
         </button>
         {channels.map((ch) => {
