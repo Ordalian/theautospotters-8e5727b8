@@ -87,7 +87,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
     return (convStatusMap.get(otherId) as ConvStatus) || "pending";
   };
 
-  // ─── Conversations ───
+  // ─── Conversations (ONLY from actual messages) ───
   const { data: conversations = [], isLoading: convsLoading } = useQuery({
     queryKey: ["dm_conversations", user?.id, friends, convStatuses],
     queryFn: async () => {
@@ -97,8 +97,10 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
         .order("created_at", { ascending: false });
 
+      if (!messages || messages.length === 0) return [];
+
       const convMap = new Map<string, { last_message: string; last_at: string; unread_count: number }>();
-      (messages || []).forEach((m: any) => {
+      messages.forEach((m: any) => {
         const otherId = m.sender_id === user!.id ? m.receiver_id : m.sender_id;
         if (!convMap.has(otherId)) {
           const preview = m.image_url ? "📷 Photo" : m.video_url ? "🎥 Vidéo" : m.body;
@@ -110,9 +112,10 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       });
 
       const friendMap = new Map(friends.map((f) => [f.user_id, f]));
-      const allPartnerIds = new Set([...friendMap.keys(), ...convMap.keys()]);
+      // Only include users who have actual messages
+      const partnerIds = [...convMap.keys()];
 
-      const missingIds = [...allPartnerIds].filter((id) => !friendMap.has(id));
+      const missingIds = partnerIds.filter((id) => !friendMap.has(id));
       const extraProfiles = new Map<string, ProfileInfo>();
       if (missingIds.length > 0) {
         const { data: profiles } = await supabase
@@ -123,31 +126,39 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       }
 
       const result: Conversation[] = [];
-      for (const id of allPartnerIds) {
+      for (const id of partnerIds) {
         const profile = friendMap.get(id) || extraProfiles.get(id);
         if (!profile) continue;
         const status = getConvStatus(id);
         if (status === "blocked") continue;
-        const conv = convMap.get(id);
+        const conv = convMap.get(id)!;
         result.push({
           ...profile,
-          last_message: conv?.last_message,
-          last_at: conv?.last_at,
-          unread_count: conv?.unread_count || 0,
+          last_message: conv.last_message,
+          last_at: conv.last_at,
+          unread_count: conv.unread_count,
           convStatus: status,
         });
       }
 
       result.sort((a, b) => {
         if (a.last_at && b.last_at) return new Date(b.last_at).getTime() - new Date(a.last_at).getTime();
-        if (a.last_at) return -1;
-        if (b.last_at) return 1;
-        return (a.username || "").localeCompare(b.username || "");
+        return 0;
       });
       return result;
     },
     enabled: !!user,
   });
+
+  // Split conversations into active and pending requests
+  const activeConversations = useMemo(
+    () => conversations.filter((c) => c.convStatus === "friend" || c.convStatus === "accepted"),
+    [conversations]
+  );
+  const pendingRequests = useMemo(
+    () => conversations.filter((c) => c.convStatus === "pending"),
+    [conversations]
+  );
 
   // ─── Messages for selected conversation ───
   const selectedConvStatus = selectedFriend ? getConvStatus(selectedFriend.user_id) : "friend";
@@ -225,7 +236,6 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
     }
     qc.invalidateQueries({ queryKey: ["dm_conv_statuses"] });
     qc.invalidateQueries({ queryKey: ["dm_conversations"] });
-    // Now mark pending messages as read
     const unread = messages.filter((m) => m.receiver_id === user!.id && !m.read_at);
     if (unread.length > 0) {
       await supabase
@@ -489,7 +499,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
           </div>
         )}
 
-        {/* Input bar — shown if accepted/friend, or if I initiated the conversation */}
+        {/* Input bar */}
         {(isConversationAccepted || (isPending && messages.length > 0 && messages[0]?.sender_id === user!.id) || messages.length === 0) && (
           <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] flex gap-2 items-end">
             <input
@@ -539,13 +549,11 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   //  CONVERSATION LIST
   // ═══════════════════════════════════════
 
-  const renderUserRow = (p: ProfileInfo, extra?: { lastMsg?: string; lastAt?: string; unread?: number; status?: ConvStatus }) => (
+  const renderConversationRow = (p: Conversation) => (
     <button
       key={p.user_id}
       onClick={() => setSelectedFriend(p)}
-      className={`w-full text-left rounded-xl border bg-card/80 p-3 hover:border-primary/40 transition-colors flex items-center gap-3 ${
-        extra?.status === "pending" ? "border-amber-500/30" : "border-border/50"
-      }`}
+      className="w-full text-left rounded-xl border border-border/50 bg-card/80 p-3 hover:border-primary/40 transition-colors flex items-center gap-3"
     >
       {p.avatar_url ? (
         <img src={p.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover shrink-0" />
@@ -558,23 +566,39 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         <div className="flex items-center justify-between">
           <span className="font-semibold text-sm truncate flex items-center gap-1">
             {p.username} <UserRoleBadge role={p.role} isPremium={p.is_premium} />
-            {extra?.status === "pending" && (
-              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500 ml-1">
-                {t.dm_request_badge as string || "Demande"}
-              </span>
-            )}
           </span>
-          {extra?.lastAt && <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{formatTime(extra.lastAt)}</span>}
+          {p.last_at && <span className="text-[10px] text-muted-foreground shrink-0 ml-2">{formatTime(p.last_at)}</span>}
         </div>
-        {extra?.lastMsg && (
-          <p className="text-xs text-muted-foreground truncate mt-0.5">{extra.lastMsg}</p>
+        {p.last_message && (
+          <p className="text-xs text-muted-foreground truncate mt-0.5">{p.last_message}</p>
         )}
       </div>
-      {(extra?.unread ?? 0) > 0 && (
+      {p.unread_count > 0 && (
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1 shrink-0">
-          {extra!.unread}
+          {p.unread_count}
         </span>
       )}
+    </button>
+  );
+
+  const renderSearchRow = (p: ProfileInfo) => (
+    <button
+      key={p.user_id}
+      onClick={() => setSelectedFriend(p)}
+      className="w-full text-left rounded-xl border border-border/50 bg-card/80 p-3 hover:border-primary/40 transition-colors flex items-center gap-3"
+    >
+      {p.avatar_url ? (
+        <img src={p.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover shrink-0" />
+      ) : (
+        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+          <User className="h-5 w-5 text-primary" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <span className="font-semibold text-sm truncate flex items-center gap-1">
+          {p.username} <UserRoleBadge role={p.role} isPremium={p.is_premium} />
+        </span>
+      </div>
     </button>
   );
 
@@ -589,6 +613,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
           </Button>
           <h1 className="text-sm font-bold">{t.dm_title as string}</h1>
         </div>
+        {/* Search bar to start new conversations */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -605,7 +630,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 relative z-10">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10">
         {isSearching ? (
           <>
             {searchLoading ? (
@@ -613,19 +638,64 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
             ) : searchResults.length === 0 ? (
               <p className="text-center text-muted-foreground text-sm py-12">{t.dm_no_search_results as string || "Aucun utilisateur trouvé"}</p>
             ) : (
-              searchResults.map((p) => renderUserRow(p))
+              searchResults.map((p) => renderSearchRow(p))
             )}
           </>
         ) : (
           <>
+            {/* Pending conversation requests */}
+            {pendingRequests.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-500">
+                    {t.dm_pending_requests as string || "Demandes de conversation"} ({pendingRequests.length})
+                  </p>
+                </div>
+                {pendingRequests.map((conv) => (
+                  <div key={conv.user_id} className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex items-center gap-3">
+                    <button onClick={() => setSelectedFriend(conv)} className="flex items-center gap-3 min-w-0 flex-1 text-left">
+                      {conv.avatar_url ? (
+                        <img src={conv.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <span className="font-semibold text-sm truncate flex items-center gap-1">
+                          {conv.username} <UserRoleBadge role={conv.role} isPremium={conv.is_premium} />
+                        </span>
+                        {conv.last_message && (
+                          <p className="text-xs text-muted-foreground truncate">{conv.last_message}</p>
+                        )}
+                      </div>
+                    </button>
+                    <div className="flex gap-1.5 shrink-0">
+                      <Button size="icon" variant="outline" className="h-8 w-8 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => blockConversation(conv.user_id)}>
+                        <Ban className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="icon" className="h-8 w-8" onClick={() => acceptConversation(conv.user_id)}>
+                        <UserCheck className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Active conversations */}
             {convsLoading ? (
               <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-            ) : conversations.length === 0 ? (
-              <p className="text-center text-muted-foreground text-sm py-12">{t.dm_no_friends as string}</p>
+            ) : activeConversations.length === 0 && pendingRequests.length === 0 ? (
+              <div className="text-center py-12 space-y-2">
+                <p className="text-muted-foreground text-sm">{t.dm_no_conversations as string || "Aucune conversation"}</p>
+                <p className="text-xs text-muted-foreground">{t.dm_search_to_start as string || "Utilisez la barre de recherche pour démarrer une conversation"}</p>
+              </div>
             ) : (
-              conversations.map((conv) =>
-                renderUserRow(conv, { lastMsg: conv.last_message, lastAt: conv.last_at, unread: conv.unread_count, status: conv.convStatus })
-              )
+              <div className="space-y-1">
+                {activeConversations.map((conv) => renderConversationRow(conv))}
+              </div>
             )}
           </>
         )}
