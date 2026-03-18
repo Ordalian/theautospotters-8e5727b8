@@ -109,6 +109,7 @@ function AnimatedRoutes() {
             <Route path="/auth" element={<AuthRoute><PageTransition><Auth /></PageTransition></AuthRoute>} />
             <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
             <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+            <Route path="/tryout" element={<PageTransition><TryoutExplainer /></PageTransition>} />
             <Route path="/legal" element={<PageTransition><Legal /></PageTransition>} />
             <Route path="/home" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
             <Route path="/garage" element={<ProtectedRoute><PageTransition><MyGarage /></PageTransition></ProtectedRoute>} />
