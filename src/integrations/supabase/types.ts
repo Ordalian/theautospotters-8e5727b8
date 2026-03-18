@@ -107,6 +107,7 @@ export type Database = {
           finitions: string | null
           garage_group_id: string | null
           generation: string | null
+          generation_id: string | null
           id: string
           image_url: string | null
           latitude: number | null
@@ -115,13 +116,17 @@ export type Database = {
           location_name: string | null
           location_precision: string | null
           longitude: number | null
+          make_id: string | null
           model: string
+          model_id: string | null
           modified: boolean
           modified_comment: string | null
+          needs_review: boolean
           parked: boolean
           photo_source: string | null
           quality_rating: number | null
           rarity_rating: number | null
+          review_reason: string | null
           seen_on_road: boolean
           stock: boolean
           units_produced: number | null
@@ -142,6 +147,7 @@ export type Database = {
           finitions?: string | null
           garage_group_id?: string | null
           generation?: string | null
+          generation_id?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -150,13 +156,17 @@ export type Database = {
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
+          make_id?: string | null
           model: string
+          model_id?: string | null
           modified?: boolean
           modified_comment?: string | null
+          needs_review?: boolean
           parked?: boolean
           photo_source?: string | null
           quality_rating?: number | null
           rarity_rating?: number | null
+          review_reason?: string | null
           seen_on_road?: boolean
           stock?: boolean
           units_produced?: number | null
@@ -177,6 +187,7 @@ export type Database = {
           finitions?: string | null
           garage_group_id?: string | null
           generation?: string | null
+          generation_id?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -185,13 +196,17 @@ export type Database = {
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
+          make_id?: string | null
           model?: string
+          model_id?: string | null
           modified?: boolean
           modified_comment?: string | null
+          needs_review?: boolean
           parked?: boolean
           photo_source?: string | null
           quality_rating?: number | null
           rarity_rating?: number | null
+          review_reason?: string | null
           seen_on_road?: boolean
           stock?: boolean
           units_produced?: number | null
@@ -208,10 +223,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cars_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_generations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cars_linked_car_id_fkey"
             columns: ["linked_car_id"]
             isOneToOne: false
             referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cars_make_id_fkey"
+            columns: ["make_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_makes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cars_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_models"
             referencedColumns: ["id"]
           },
         ]
@@ -542,6 +578,94 @@ export type Database = {
           name?: string
           sort_order?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      group_chat_members: {
+        Row: {
+          chat_id: string
+          joined_at: string
+          left_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          joined_at?: string
+          left_at?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          joined_at?: string
+          left_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_chat_messages: {
+        Row: {
+          body: string
+          chat_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          chat_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          chat_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_chats: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          last_message_at: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          last_message_at?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_message_at?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -944,6 +1068,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_blacklist: {
+        Row: {
+          blacklisted_user_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          blacklisted_user_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          blacklisted_user_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_booster_cooldown: {
         Row: {
           id: string
@@ -1096,6 +1241,109 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_generations: {
+        Row: {
+          created_at: string
+          end_year: number | null
+          id: string
+          model_id: string
+          name: string | null
+          needs_review: boolean
+          normalized_name: string | null
+          start_year: number | null
+        }
+        Insert: {
+          created_at?: string
+          end_year?: number | null
+          id?: string
+          model_id: string
+          name?: string | null
+          needs_review?: boolean
+          normalized_name?: string | null
+          start_year?: number | null
+        }
+        Update: {
+          created_at?: string
+          end_year?: number | null
+          id?: string
+          model_id?: string
+          name?: string | null
+          needs_review?: boolean
+          normalized_name?: string | null
+          start_year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_generations_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_makes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          needs_review: boolean
+          normalized_name: string
+          vehicle_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          needs_review?: boolean
+          normalized_name: string
+          vehicle_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          needs_review?: boolean
+          normalized_name?: string
+          vehicle_type?: string
+        }
+        Relationships: []
+      }
+      vehicle_models: {
+        Row: {
+          created_at: string
+          id: string
+          make_id: string
+          name: string
+          needs_review: boolean
+          normalized_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          make_id: string
+          name: string
+          needs_review?: boolean
+          normalized_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          make_id?: string
+          name?: string
+          needs_review?: boolean
+          normalized_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_models_make_id_fkey"
+            columns: ["make_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_makes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       profiles_public: {
@@ -1145,6 +1393,22 @@ export type Database = {
       achievement_xp_for_level: { Args: { p_level: number }; Returns: number }
       add_coins: { Args: { p_amount: number }; Returns: undefined }
       add_purchased_boosters: { Args: { pack_size: number }; Returns: Json }
+      admin_mark_car_reviewed: {
+        Args: { p_car_id: string }
+        Returns: undefined
+      }
+      admin_merge_vehicle_model: {
+        Args: { p_from_model_id: string; p_to_model_id: string }
+        Returns: undefined
+      }
+      admin_set_vehicle_generation_bounds: {
+        Args: {
+          p_end_year: number
+          p_generation_id: string
+          p_start_year: number
+        }
+        Returns: undefined
+      }
       buy_premium_coins: { Args: { p_plan: string }; Returns: Json }
       claim_daily_boosters: { Args: never; Returns: Json }
       consume_daily_booster: { Args: never; Returns: Json }
@@ -1185,6 +1449,20 @@ export type Database = {
           role: string
           user_id: string
           username: string
+        }[]
+      }
+      get_generation_suggestions: {
+        Args: {
+          p_make: string
+          p_model: string
+          p_vehicle_type: string
+          p_year: number
+        }
+        Returns: {
+          end_year: number
+          generation_id: string
+          generation_name: string
+          start_year: number
         }[]
       }
       get_leaderboard: {
@@ -1267,6 +1545,21 @@ export type Database = {
           username: string
         }[]
       }
+      get_vehicle_review_queue: {
+        Args: { p_limit?: number }
+        Returns: {
+          brand: string
+          car_id: string
+          created_at: string
+          generation: string
+          model: string
+          needs_review: boolean
+          review_reason: string
+          user_id: string
+          vehicle_type: string
+          year: number
+        }[]
+      }
       grant_coins_for_spot: {
         Args: { p_rarity_rating: number }
         Returns: undefined
@@ -1278,9 +1571,33 @@ export type Database = {
         Args: { p_card_ids: string[]; p_conditions: string[] }
         Returns: Json
       }
+      is_blacklisted: {
+        Args: { uid_a: string; uid_b: string }
+        Returns: boolean
+      }
+      is_group_chat_member: {
+        Args: { p_chat_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_group_chat_owner: {
+        Args: { p_chat_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_staff: { Args: { p_user_id: string }; Returns: boolean }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
+      normalize_vehicle_text: { Args: { p_text: string }; Returns: string }
       process_booster_style_drop: { Args: never; Returns: Json }
+      propose_vehicle_generation_bounds: {
+        Args: {
+          p_end_year: number
+          p_generation_name: string
+          p_make: string
+          p_model: string
+          p_start_year: number
+          p_vehicle_type: string
+        }
+        Returns: string
+      }
       recompute_user_total_xp: {
         Args: { p_user_id: string }
         Returns: undefined
