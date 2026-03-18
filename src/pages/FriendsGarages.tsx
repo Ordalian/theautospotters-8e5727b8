@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 import {
   Carousel,
   CarouselContent,
@@ -102,10 +103,8 @@ function FriendSpotsAutoCarousel({ spots }: { spots: FriendCar[] }) {
           className={`absolute inset-0 transition-opacity duration-700 ${i === idx ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           {spot.image_url ? (
-            <img
-              src={spot.image_url.includes('/storage/v1/object/public/')
-                ? spot.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
-                : spot.image_url}
+            <SignedMediaImg
+              src={spot.image_url}
               alt={`${spot.brand} ${spot.model}`}
               className="h-full w-full object-cover"
               loading="lazy"

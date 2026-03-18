@@ -69,8 +69,7 @@ export function PhotoUploadDialog({ open, onOpenChange, onPhotoSelect }: PhotoUp
       });
       streamRef.current = stream;
       setMode("camera");
-    } catch (err) {
-      console.error("Camera error:", err);
+    } catch {
       onOpenChange(false);
     }
   };

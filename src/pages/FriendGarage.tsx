@@ -9,6 +9,7 @@ import BlackGoldBg from "@/components/BlackGoldBg";
 import { CarLikeButton } from "@/components/CarLikeButton";
 import { useQuery } from "@tanstack/react-query";
 import { useBlacklist } from "@/hooks/useBlacklist";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 
 const VEHICLE_TYPES = [
   { key: "car", icon: Car, gradient: "from-primary/20 to-primary/5" },
@@ -191,14 +192,12 @@ const FriendGarage = () => {
                 className="w-full rounded-xl border border-border bg-card overflow-hidden text-left hover:border-primary/30 transition-colors"
               >
                 {car.image_url ? (
-                  <img
-                    src={car.image_url.includes('/storage/v1/object/public/')
-                      ? car.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=600&quality=60'
-                      : car.image_url}
+                  <SignedMediaImg
+                    src={car.image_url}
                     alt={`${car.brand} ${car.model}`}
                     className="h-40 w-full object-cover bg-muted"
                     loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.querySelector('.img-fallback')?.classList.remove('hidden'); }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).parentElement!.querySelector(".img-fallback")?.classList.remove("hidden"); }}
                   />
                 ) : null}
                 <div className={`h-40 flex items-center justify-center bg-muted img-fallback ${car.image_url ? 'hidden' : ''}`}>

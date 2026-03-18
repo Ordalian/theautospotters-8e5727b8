@@ -10,7 +10,6 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
-// BottomTabBar removed
 import ThemeParticles from "@/components/ThemeParticles";
 import { Loader2 } from "lucide-react";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -95,8 +94,6 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Tab bar removed
-
 function AnimatedRoutes() {
   const location = useLocation();
   usePageTracking();
@@ -146,7 +143,6 @@ function AnimatedRoutes() {
           </Routes>
         </Suspense>
       </AnimatePresence>
-      {/* tab bar removed */}
     </>
   );
 }

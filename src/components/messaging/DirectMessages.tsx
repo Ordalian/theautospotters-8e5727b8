@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { resizeImage } from "@/lib/imageUtils";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { useUserRole } from "@/hooks/useUserRole";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
+import { SignedMediaVideo } from "@/components/SignedMediaVideo";
 
 type ProfileInfo = { user_id: string; username: string; avatar_url: string | null; role?: string | null; is_premium?: boolean };
 type Friend = ProfileInfo;
@@ -454,12 +456,12 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
                     )}
                     {m.image_url && (
                       <button onClick={() => setViewingImage(m.image_url)} className="block mb-1 rounded-lg overflow-hidden">
-                        <img src={m.image_url} alt="" className="max-w-full max-h-48 rounded-lg object-cover" loading="lazy" />
+                        <SignedMediaImg src={m.image_url} alt="" className="max-w-full max-h-48 rounded-lg object-cover" loading="lazy" />
                       </button>
                     )}
                     {m.video_url && (
                       <div className="mb-1 rounded-lg overflow-hidden relative">
-                        <video src={m.video_url} controls className="max-w-full max-h-48 rounded-lg" preload="metadata" />
+                        <SignedMediaVideo src={m.video_url} controls className="max-w-full max-h-48 rounded-lg" preload="metadata" />
                       </div>
                     )}
                     {m.body && m.body !== "📷" && m.body !== "🎥" && (
@@ -533,7 +535,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         {/* Image viewer overlay */}
         {viewingImage && (
           <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setViewingImage(null)}>
-            <img src={viewingImage} alt="" className="max-w-full max-h-full object-contain" />
+            <SignedMediaImg src={viewingImage} alt="" className="max-w-full max-h-full object-contain" />
             <button onClick={() => setViewingImage(null)} className="absolute top-4 right-4 rounded-full bg-background/50 p-2">
               <X className="h-5 w-5 text-foreground" />
             </button>
