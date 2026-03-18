@@ -341,7 +341,7 @@ const Messaging = () => {
             })
           )}
         </div>
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex gap-2">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] flex gap-2">
           <Input
             value={replyBody}
             onChange={(e) => setReplyBody(e.target.value)}
