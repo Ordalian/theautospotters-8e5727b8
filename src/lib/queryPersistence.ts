@@ -5,18 +5,30 @@ const IDB_KEY = "tqs-react-query-cache";
 
 /**
  * IndexedDB-based persister for React Query.
- * Stores the entire query cache locally so the app renders instantly on repeat visits.
+ * Falls back silently when IndexedDB is unavailable in restricted preview contexts.
  */
 export function createIDBPersister(): Persister {
   return {
     persistClient: async (client: PersistedClient) => {
-      await set(IDB_KEY, client);
+      try {
+        await set(IDB_KEY, client);
+      } catch {
+        // Ignore storage failures and keep the app running without persistence.
+      }
     },
     restoreClient: async () => {
-      return await get<PersistedClient>(IDB_KEY);
+      try {
+        return await get<PersistedClient>(IDB_KEY);
+      } catch {
+        return undefined;
+      }
     },
     removeClient: async () => {
-      await del(IDB_KEY);
+      try {
+        await del(IDB_KEY);
+      } catch {
+        // Ignore storage failures and keep the app running without persistence.
+      }
     },
   };
 }

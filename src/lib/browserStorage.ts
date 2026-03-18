@@ -66,7 +66,7 @@ function installStorageFallback(kind: StorageKind) {
     });
   } catch {
     try {
-      (window as Window & Record<StorageKind, Storage>)[kind] = fallback;
+      (window as unknown as Record<StorageKind, Storage>)[kind] = fallback;
     } catch {
       // Ignore: callers can still use getSafeStorage()
     }
