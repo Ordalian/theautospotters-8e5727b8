@@ -14,7 +14,15 @@ import { useUserRole } from "@/hooks/useUserRole";
 type ProfileInfo = { user_id: string; username: string; avatar_url: string | null; role?: string | null; is_premium?: boolean };
 type Friend = ProfileInfo;
 type ConvStatus = "accepted" | "pending" | "blocked" | "friend";
-type Conversation = Friend & { last_message?: string; last_at?: string; unread_count: number; convStatus: ConvStatus };
+type Conversation = Friend & {
+  last_message?: string;
+  last_at?: string;
+  last_sender_id?: string;
+  unread_count: number;
+  convStatus: ConvStatus;
+  has_incoming: boolean;
+  has_outgoing: boolean;
+};
 type DM = { id: string; sender_id: string; receiver_id: string; body: string; created_at: string; read_at: string | null; image_url: string | null; video_url: string | null };
 type DmConvStatus = { user_id: string; other_user_id: string; status: string };
 
@@ -93,26 +101,46 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
     queryFn: async () => {
       const { data: messages } = await supabase
         .from("direct_messages")
-        .select("*")
+        .select("id, sender_id, receiver_id, body, created_at, read_at, image_url, video_url")
         .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
         .order("created_at", { ascending: false });
 
       if (!messages || messages.length === 0) return [];
 
-      const convMap = new Map<string, { last_message: string; last_at: string; unread_count: number }>();
-      messages.forEach((m: any) => {
+      const convMap = new Map<string, {
+        last_message: string;
+        last_at: string;
+        last_sender_id: string;
+        unread_count: number;
+        has_incoming: boolean;
+        has_outgoing: boolean;
+      }>();
+
+      messages.forEach((m) => {
         const otherId = m.sender_id === user!.id ? m.receiver_id : m.sender_id;
-        if (!convMap.has(otherId)) {
+        const entry = convMap.get(otherId);
+
+        if (!entry) {
           const preview = m.image_url ? "📷 Photo" : m.video_url ? "🎥 Vidéo" : m.body;
-          convMap.set(otherId, { last_message: preview, last_at: m.created_at, unread_count: 0 });
+          convMap.set(otherId, {
+            last_message: preview,
+            last_at: m.created_at,
+            last_sender_id: m.sender_id,
+            unread_count: m.receiver_id === user!.id && !m.read_at ? 1 : 0,
+            has_incoming: m.receiver_id === user!.id,
+            has_outgoing: m.sender_id === user!.id,
+          });
+          return;
         }
+
         if (m.receiver_id === user!.id && !m.read_at) {
-          convMap.get(otherId)!.unread_count++;
+          entry.unread_count += 1;
         }
+        if (m.receiver_id === user!.id) entry.has_incoming = true;
+        if (m.sender_id === user!.id) entry.has_outgoing = true;
       });
 
       const friendMap = new Map(friends.map((f) => [f.user_id, f]));
-      // Only include users who have actual messages
       const partnerIds = [...convMap.keys()];
 
       const missingIds = partnerIds.filter((id) => !friendMap.has(id));
@@ -136,8 +164,11 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
           ...profile,
           last_message: conv.last_message,
           last_at: conv.last_at,
+          last_sender_id: conv.last_sender_id,
           unread_count: conv.unread_count,
           convStatus: status,
+          has_incoming: conv.has_incoming,
+          has_outgoing: conv.has_outgoing,
         });
       }
 
@@ -152,12 +183,12 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
   // Split conversations into active and pending requests
   const activeConversations = useMemo(
-    () => conversations.filter((c) => c.convStatus === "friend" || c.convStatus === "accepted"),
-    [conversations]
+    () => conversations.filter((c) => c.convStatus === "friend" || c.convStatus === "accepted" || (c.convStatus === "pending" && c.last_sender_id === user?.id)),
+    [conversations, user?.id]
   );
   const pendingRequests = useMemo(
-    () => conversations.filter((c) => c.convStatus === "pending"),
-    [conversations]
+    () => conversations.filter((c) => c.convStatus === "pending" && c.last_sender_id !== user?.id),
+    [conversations, user?.id]
   );
 
   // ─── Messages for selected conversation ───
