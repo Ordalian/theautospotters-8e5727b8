@@ -6,6 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useTheme, THEMES, PAID_STYLES, type ThemeId } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Car, Check, ChevronLeft, Lock, Palette, Pin, Search, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Coins } from "lucide-react";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
