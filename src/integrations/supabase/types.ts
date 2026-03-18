@@ -107,6 +107,7 @@ export type Database = {
           finitions: string | null
           garage_group_id: string | null
           generation: string | null
+          generation_id: string | null
           id: string
           image_url: string | null
           latitude: number | null
@@ -115,7 +116,9 @@ export type Database = {
           location_name: string | null
           location_precision: string | null
           longitude: number | null
+          make_id: string | null
           model: string
+          model_id: string | null
           modified: boolean
           modified_comment: string | null
           parked: boolean
@@ -142,6 +145,7 @@ export type Database = {
           finitions?: string | null
           garage_group_id?: string | null
           generation?: string | null
+          generation_id?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -150,7 +154,9 @@ export type Database = {
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
+          make_id?: string | null
           model: string
+          model_id?: string | null
           modified?: boolean
           modified_comment?: string | null
           parked?: boolean
@@ -177,6 +183,7 @@ export type Database = {
           finitions?: string | null
           garage_group_id?: string | null
           generation?: string | null
+          generation_id?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -185,7 +192,9 @@ export type Database = {
           location_name?: string | null
           location_precision?: string | null
           longitude?: number | null
+          make_id?: string | null
           model?: string
+          model_id?: string | null
           modified?: boolean
           modified_comment?: string | null
           parked?: boolean
@@ -208,10 +217,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cars_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_generations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cars_linked_car_id_fkey"
             columns: ["linked_car_id"]
             isOneToOne: false
             referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cars_make_id_fkey"
+            columns: ["make_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_makes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cars_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_models"
             referencedColumns: ["id"]
           },
         ]
@@ -1205,6 +1235,100 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_generations: {
+        Row: {
+          created_at: string
+          end_year: number | null
+          id: string
+          model_id: string
+          name: string | null
+          normalized_name: string | null
+          start_year: number | null
+        }
+        Insert: {
+          created_at?: string
+          end_year?: number | null
+          id?: string
+          model_id: string
+          name?: string | null
+          normalized_name?: string | null
+          start_year?: number | null
+        }
+        Update: {
+          created_at?: string
+          end_year?: number | null
+          id?: string
+          model_id?: string
+          name?: string | null
+          normalized_name?: string | null
+          start_year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_generations_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_makes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          normalized_name: string
+          vehicle_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          normalized_name: string
+          vehicle_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          normalized_name?: string
+          vehicle_type?: string
+        }
+        Relationships: []
+      }
+      vehicle_models: {
+        Row: {
+          created_at: string
+          id: string
+          make_id: string
+          name: string
+          normalized_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          make_id: string
+          name: string
+          normalized_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          make_id?: string
+          name?: string
+          normalized_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_models_make_id_fkey"
+            columns: ["make_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_makes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       profiles_public: {
@@ -1401,6 +1525,7 @@ export type Database = {
       }
       is_staff: { Args: { p_user_id: string }; Returns: boolean }
       normalize_license_plate: { Args: { plate: string }; Returns: string }
+      normalize_vehicle_text: { Args: { p_text: string }; Returns: string }
       process_booster_style_drop: { Args: never; Returns: Json }
       recompute_user_total_xp: {
         Args: { p_user_id: string }
