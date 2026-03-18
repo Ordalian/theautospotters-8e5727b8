@@ -8,6 +8,7 @@ import { ACHIEVEMENTS, ACHIEVEMENT_SHAPES, getAchievementLevel, getAchievementVa
 import { Emblem } from "@/components/Emblem";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Car } from "lucide-react";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import UserRoleBadge from "@/components/UserRoleBadge";
@@ -466,7 +467,7 @@ const ProfileStats = () => {
               <div className="relative aspect-[2/1] min-h-[100px] bg-muted/30">
                 {(friendPinnedCar ?? cars[0])?.image_url ? (
                   <>
-                    <img
+                    <SignedMediaImg
                       src={(friendPinnedCar ?? cars[0])!.image_url!}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
@@ -505,7 +506,7 @@ const ProfileStats = () => {
               <div className="relative aspect-[2/1] min-h-[100px] bg-muted/30">
                 {myPinnedCar?.image_url ? (
                   <>
-                    <img
+                    <SignedMediaImg
                       src={myPinnedCar.image_url}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"

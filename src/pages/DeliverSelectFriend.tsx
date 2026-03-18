@@ -6,6 +6,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
 import { ArrowLeft, Car, Loader2 } from "lucide-react";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 import { Button } from "@/components/ui/button";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Input } from "@/components/ui/input";
@@ -204,7 +205,7 @@ const DeliverSelectFriend = () => {
       <div className="relative z-10 p-6 max-w-md mx-auto space-y-6">
         <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
           {car.image_url ? (
-            <img
+            <SignedMediaImg
               src={car.image_url}
               alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
               className="h-16 w-16 rounded-lg object-cover shrink-0"
