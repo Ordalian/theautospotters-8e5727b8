@@ -6,6 +6,7 @@ import { ArrowLeft, Car, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Loader2
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { useQuery } from "@tanstack/react-query";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 
 const VEHICLE_TYPES = [
   { key: "car", icon: Car, gradient: "from-primary/20 to-primary/5" },
