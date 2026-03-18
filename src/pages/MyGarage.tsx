@@ -407,7 +407,7 @@ const MyGarage = () => {
                 <div onClick={() => navigate(`/car/${car.id}`, { state: { carIds: sortedCars.map((c) => c.id), returnTo } })} className="cursor-pointer">
                   {car.image_url ? (
                     <div className="h-44 overflow-hidden">
-                      <img
+                      <SignedMediaImg
                         src={car.image_url}
                         alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
                         className="h-full w-full object-cover"
