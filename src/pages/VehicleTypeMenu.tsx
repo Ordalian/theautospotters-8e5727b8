@@ -6,7 +6,6 @@ import { ArrowLeft, Car, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Loader2
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { useQuery } from "@tanstack/react-query";
-import { SignedMediaImg } from "@/components/SignedMediaImg";
 
 const VEHICLE_TYPES = [
   { key: "car", icon: Car, gradient: "from-primary/20 to-primary/5" },
@@ -98,7 +97,7 @@ const VehicleTypeMenu = () => {
           >
             {latestAllImage ? (
               <>
-                <SignedMediaImg
+                <img
                   src={latestAllImage}
                   alt=""
                   className="absolute inset-0 w-full h-full object-cover rounded-2xl"
@@ -137,7 +136,7 @@ const VehicleTypeMenu = () => {
               >
                 {img ? (
                   <>
-                    <SignedMediaImg
+                    <img
                       src={img}
                       alt={t[LABEL_KEYS[key]] as string}
                       className="absolute inset-0 w-full h-full object-cover rounded-2xl"

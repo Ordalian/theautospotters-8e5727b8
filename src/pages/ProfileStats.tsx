@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useBlacklist } from "@/hooks/useBlacklist";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { getLevelProgress } from "@/lib/leveling";
 import { ACHIEVEMENTS, ACHIEVEMENT_SHAPES, getAchievementLevel, getAchievementValue, type AchievementId } from "@/lib/achievements";
 import { Emblem } from "@/components/Emblem";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Car } from "lucide-react";
-import { SignedMediaImg } from "@/components/SignedMediaImg";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import UserRoleBadge from "@/components/UserRoleBadge";
@@ -144,7 +142,6 @@ const ProfileStats = () => {
   const { friendId } = useParams<{ friendId?: string }>();
   const [hoverBar, setHoverBar] = useState<string | null>(null);
   const isFriendView = !!friendId && friendId !== user?.id;
-  const { isBlacklisted } = useBlacklist(user?.id);
 
   const { data: friendProfile } = useQuery({
     queryKey: ["profile-username-pinned-xp-emblem", friendId],
@@ -262,12 +259,6 @@ const ProfileStats = () => {
       navigate("/friends", { replace: true });
     }
   }, [isFriendView, loadingFriend, isFriend, navigate]);
-
-  useEffect(() => {
-    if (isFriendView && friendId && user?.id && isBlacklisted(friendId)) {
-      navigate("/friends", { replace: true });
-    }
-  }, [isFriendView, friendId, user?.id, isBlacklisted, navigate]);
 
   const targetUserId = isFriendView ? friendId! : user?.id ?? null;
 
@@ -467,7 +458,7 @@ const ProfileStats = () => {
               <div className="relative aspect-[2/1] min-h-[100px] bg-muted/30">
                 {(friendPinnedCar ?? cars[0])?.image_url ? (
                   <>
-                    <SignedMediaImg
+                    <img
                       src={(friendPinnedCar ?? cars[0])!.image_url!}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
@@ -506,7 +497,7 @@ const ProfileStats = () => {
               <div className="relative aspect-[2/1] min-h-[100px] bg-muted/30">
                 {myPinnedCar?.image_url ? (
                   <>
-                    <SignedMediaImg
+                    <img
                       src={myPinnedCar.image_url}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"

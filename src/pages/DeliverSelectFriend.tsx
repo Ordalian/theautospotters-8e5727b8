@@ -1,12 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useBlacklist } from "@/hooks/useBlacklist";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
 import { ArrowLeft, Car, Loader2 } from "lucide-react";
-import { SignedMediaImg } from "@/components/SignedMediaImg";
 import { Button } from "@/components/ui/button";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Input } from "@/components/ui/input";
@@ -42,7 +40,6 @@ const DeliverSelectFriend = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [delivering, setDelivering] = useState(false);
-  const { isBlacklisted } = useBlacklist(user?.id);
 
   const loadData = async () => {
     if (!user || !carId) return;
@@ -94,19 +91,15 @@ const DeliverSelectFriend = () => {
     loadData();
   }, [user, carId, navigate]);
 
-  const friendsNotBlacklisted = useMemo(
-    () => friends.filter((f) => !isBlacklisted(f.user_id)),
-    [friends, isBlacklisted]
-  );
   const filteredFriends = useMemo(() => {
-    if (!searchQuery.trim()) return friendsNotBlacklisted;
+    if (!searchQuery.trim()) return friends;
     const q = searchQuery.trim().toLowerCase();
-    return friendsNotBlacklisted.filter(
+    return friends.filter(
       (f) =>
         (f.username || "").toLowerCase().includes(q) ||
         f.user_id.toLowerCase().includes(q)
     );
-  }, [friendsNotBlacklisted, searchQuery]);
+  }, [friends, searchQuery]);
 
   const handleDeliver = async () => {
     if (!user || !car || !selectedFriend) return;
@@ -205,7 +198,7 @@ const DeliverSelectFriend = () => {
       <div className="relative z-10 p-6 max-w-md mx-auto space-y-6">
         <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-4">
           {car.image_url ? (
-            <SignedMediaImg
+            <img
               src={car.image_url}
               alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
               className="h-16 w-16 rounded-lg object-cover shrink-0"

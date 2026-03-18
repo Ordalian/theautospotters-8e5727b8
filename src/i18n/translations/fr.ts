@@ -538,18 +538,6 @@ const fr: Translations = {
   friends_garage_load_error: "Impossible de charger les véhicules.",
   friends_garage_no_vehicle_in_category: "Aucun véhicule dans cette catégorie.",
   friends_this_friend: "cet ami",
-  friends_blacklist: "Liste noire",
-  friends_blacklist_add_placeholder: "Nom d'utilisateur à blacklister...",
-  friends_blacklist_add_button: "Ajouter à la liste noire",
-  friends_blacklisted_list: "Utilisateurs blacklistés",
-  friends_blacklist_empty: "Aucun utilisateur blacklisté.",
-  friends_unblacklist: "Retirer",
-  friends_unblacklist_after_24h: "Retirable dans",
-  friends_blacklist_added: "Utilisateur blacklisté.",
-  friends_blacklist_user_not_found: "Utilisateur introuvable",
-  friends_blacklist_self: "Vous ne pouvez pas vous blacklister",
-  friends_blacklist_already: "Déjà blacklisté",
-  friends_unblacklisted: "Retiré de la liste noire",
 
   // Deliver
   deliver_title: "Livrer un véhicule",

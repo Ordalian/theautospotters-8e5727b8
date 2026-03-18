@@ -10,8 +10,6 @@ import { Input } from "@/components/ui/input";
 import { resizeImage } from "@/lib/imageUtils";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { useUserRole } from "@/hooks/useUserRole";
-import { SignedMediaImg } from "@/components/SignedMediaImg";
-import { SignedMediaVideo } from "@/components/SignedMediaVideo";
 
 type ProfileInfo = { user_id: string; username: string; avatar_url: string | null; role?: string | null; is_premium?: boolean };
 type Friend = ProfileInfo;
@@ -93,12 +91,6 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   const { data: conversations = [], isLoading: convsLoading } = useQuery({
     queryKey: ["dm_conversations", user?.id, friends, convStatuses],
     queryFn: async () => {
-      const blacklistedSet = new Set<string>();
-      const { data: bl1 } = await supabase.from("user_blacklist").select("blacklisted_user_id").eq("user_id", user!.id);
-      (bl1 || []).forEach((r: { blacklisted_user_id: string }) => blacklistedSet.add(r.blacklisted_user_id));
-      const { data: bl2 } = await supabase.from("user_blacklist").select("user_id").eq("blacklisted_user_id", user!.id);
-      (bl2 || []).forEach((r: { user_id: string }) => blacklistedSet.add(r.user_id));
-
       const { data: messages } = await supabase
         .from("direct_messages")
         .select("*")
@@ -118,8 +110,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       });
 
       const friendMap = new Map(friends.map((f) => [f.user_id, f]));
-      // Only show actual conversations (at least 1 message) in the default list
-      const allPartnerIds = new Set([...convMap.keys()]);
+      const allPartnerIds = new Set([...friendMap.keys(), ...convMap.keys()]);
 
       const missingIds = [...allPartnerIds].filter((id) => !friendMap.has(id));
       const extraProfiles = new Map<string, ProfileInfo>();
@@ -133,7 +124,6 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
       const result: Conversation[] = [];
       for (const id of allPartnerIds) {
-        if (blacklistedSet.has(id)) continue;
         const profile = friendMap.get(id) || extraProfiles.get(id);
         if (!profile) continue;
         const status = getConvStatus(id);
@@ -456,12 +446,12 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
                     )}
                     {m.image_url && (
                       <button onClick={() => setViewingImage(m.image_url)} className="block mb-1 rounded-lg overflow-hidden">
-                        <SignedMediaImg src={m.image_url} alt="" className="max-w-full max-h-48 rounded-lg object-cover" loading="lazy" />
+                        <img src={m.image_url} alt="" className="max-w-full max-h-48 rounded-lg object-cover" loading="lazy" />
                       </button>
                     )}
                     {m.video_url && (
                       <div className="mb-1 rounded-lg overflow-hidden relative">
-                        <SignedMediaVideo src={m.video_url} controls className="max-w-full max-h-48 rounded-lg" preload="metadata" />
+                        <video src={m.video_url} controls className="max-w-full max-h-48 rounded-lg" preload="metadata" />
                       </div>
                     )}
                     {m.body && m.body !== "📷" && m.body !== "🎥" && (
@@ -535,7 +525,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         {/* Image viewer overlay */}
         {viewingImage && (
           <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setViewingImage(null)}>
-            <SignedMediaImg src={viewingImage} alt="" className="max-w-full max-h-full object-contain" />
+            <img src={viewingImage} alt="" className="max-w-full max-h-full object-contain" />
             <button onClick={() => setViewingImage(null)} className="absolute top-4 right-4 rounded-full bg-background/50 p-2">
               <X className="h-5 w-5 text-foreground" />
             </button>

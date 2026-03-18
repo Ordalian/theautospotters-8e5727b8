@@ -8,7 +8,7 @@ import {
   ArrowLeft, Shield, ShieldOff, Loader2, Search, BarChart3,
   Users, MessageSquare, Trash2, ChevronRight, Send, X, MapPin, Gem,
   Plus, ChevronDown, ChevronUp, Eye, EyeOff, UserPlus, Flag, UserX,
-  Ban, CheckCircle2, AlertTriangle, Car,
+  Ban, CheckCircle2, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,20 +74,7 @@ interface TicketReply {
   role?: string;
 }
 
-type Tab = "stats" | "users" | "support" | "vehicles";
-
-interface ReviewCarRow {
-  car_id: string;
-  user_id: string;
-  vehicle_type: string;
-  brand: string;
-  model: string;
-  year: number;
-  generation: string | null;
-  needs_review: boolean;
-  review_reason: string | null;
-  created_at: string;
-}
+type Tab = "stats" | "users" | "support";
 
 // ───── Helpers ─────
 
@@ -128,174 +115,6 @@ async function rpcAny<T>(fn: string, params?: Record<string, unknown>): Promise<
 }
 
 // ───── Stats Tab ─────
-
-function VehiclesReviewTab() {
-  const qc = useQueryClient();
-  const [limit, setLimit] = useState(100);
-  const [boundsEdits, setBoundsEdits] = useState<Record<string, { start: string; end: string }>>({});
-  const [mergeFromModelId, setMergeFromModelId] = useState("");
-  const [mergeToModelId, setMergeToModelId] = useState("");
-
-  const { data: rows = [], isLoading, error } = useQuery({
-    queryKey: ["admin-vehicle-review-queue", limit],
-    queryFn: async () => {
-      const data = await rpcAny<ReviewCarRow[]>("get_vehicle_review_queue", { p_limit: limit });
-      return data ?? [];
-    },
-    staleTime: 10_000,
-  });
-
-  const { data: generationsToReview = [] } = useQuery({
-    queryKey: ["admin-generations-needs-review"],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("vehicle_generations")
-        .select("id, name, start_year, end_year, needs_review, model_id")
-        .eq("needs_review", true)
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return (data as any[] | null) ?? [];
-    },
-    staleTime: 10_000,
-  });
-
-  const markReviewed = async (carId: string) => {
-    await rpcAny("admin_mark_car_reviewed", { p_car_id: carId });
-    qc.invalidateQueries({ queryKey: ["admin-vehicle-review-queue"] });
-  };
-
-  const saveBounds = async (genId: string) => {
-    const edit = boundsEdits[genId];
-    const start = edit?.start ? parseInt(edit.start, 10) : null;
-    const end = edit?.end ? parseInt(edit.end, 10) : null;
-    await rpcAny("admin_set_vehicle_generation_bounds", {
-      p_generation_id: genId,
-      p_start_year: start,
-      p_end_year: end,
-    });
-    toast.success("Bornes mises à jour.");
-    qc.invalidateQueries({ queryKey: ["admin-generations-needs-review"] });
-  };
-
-  const mergeModels = async () => {
-    if (!mergeFromModelId || !mergeToModelId) return;
-    await rpcAny("admin_merge_vehicle_model", {
-      p_from_model_id: mergeFromModelId,
-      p_to_model_id: mergeToModelId,
-    });
-    toast.success("Modèles fusionnés.");
-    setMergeFromModelId("");
-    setMergeToModelId("");
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-10">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-xl border border-border/50 bg-card p-4">
-        <p className="text-sm text-destructive">Erreur: {(error as any)?.message ?? "Impossible de charger la file"}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">🚗 Needs review</p>
-          <p className="text-sm text-muted-foreground">Véhicules ajoutés en mode “je ne sais pas” ou incomplets.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Input
-            value={String(limit)}
-            onChange={(e) => setLimit(Math.max(10, Math.min(500, parseInt(e.target.value || "100", 10) || 100)))}
-            className="w-20 bg-secondary/30"
-            inputMode="numeric"
-          />
-          <span className="text-xs text-muted-foreground">lignes</span>
-        </div>
-      </div>
-
-      {rows.length === 0 ? (
-        <div className="rounded-xl border border-border/50 bg-card p-4 text-sm text-muted-foreground text-center">
-          Rien à revoir pour l’instant.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {rows.map((r) => (
-            <div key={r.car_id} className="rounded-xl border border-border/50 bg-card p-3 flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">
-                  {r.brand} {r.model} {r.year} {r.generation ? `• ${r.generation}` : ""}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {r.vehicle_type} • {formatDate(r.created_at)} {r.review_reason ? `• ${r.review_reason}` : ""}
-                </p>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => markReviewed(r.car_id)}>
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Marquer OK
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">🧬 Générations à valider</p>
-        {generationsToReview.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucune génération en attente.</p>
-        ) : (
-          <div className="space-y-2">
-            {generationsToReview.map((g) => {
-              const edit = boundsEdits[g.id] ?? { start: g.start_year ? String(g.start_year) : "", end: g.end_year ? String(g.end_year) : "" };
-              return (
-                <div key={g.id} className="rounded-xl border border-border/50 bg-background/40 p-3">
-                  <p className="font-medium">{g.name ?? "—"}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">gen_id: {g.id}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input
-                      value={edit.start}
-                      onChange={(e) => setBoundsEdits((prev) => ({ ...prev, [g.id]: { ...edit, start: e.target.value } }))}
-                      placeholder="start"
-                      className="w-24 bg-secondary/30"
-                      inputMode="numeric"
-                    />
-                    <Input
-                      value={edit.end}
-                      onChange={(e) => setBoundsEdits((prev) => ({ ...prev, [g.id]: { ...edit, end: e.target.value } }))}
-                      placeholder="end"
-                      className="w-24 bg-secondary/30"
-                      inputMode="numeric"
-                    />
-                    <Button size="sm" onClick={() => saveBounds(g.id)}>Valider</Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">🧩 Fusion modèles (staff)</p>
-        <p className="text-sm text-muted-foreground">Colle les IDs des modèles (UUID). Cette action déplace les générations et liens de voitures.</p>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Input value={mergeFromModelId} onChange={(e) => setMergeFromModelId(e.target.value)} placeholder="from_model_id" className="bg-secondary/30" />
-          <Input value={mergeToModelId} onChange={(e) => setMergeToModelId(e.target.value)} placeholder="to_model_id" className="bg-secondary/30" />
-          <Button onClick={mergeModels} disabled={!mergeFromModelId || !mergeToModelId}>Fusionner</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface ActivityOverview {
   total_time_ms: number;
@@ -1334,7 +1153,6 @@ const AdminPanel = () => {
     { id: "stats", label: "Stats", icon: <BarChart3 className="h-4 w-4" /> },
     { id: "users", label: "Utilisateurs", icon: <Users className="h-4 w-4" /> },
     { id: "support", label: "Support", icon: <MessageSquare className="h-4 w-4" /> },
-    { id: "vehicles", label: "Véhicules", icon: <Car className="h-4 w-4" /> },
   ];
 
   return (
@@ -1368,7 +1186,6 @@ const AdminPanel = () => {
         {tab === "stats" && <StatsTab />}
         {tab === "users" && <UsersTab />}
         {tab === "support" && <SupportTab />}
-        {tab === "vehicles" && <VehiclesReviewTab />}
       </div>
     </div>
   );

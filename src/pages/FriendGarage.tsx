@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { CarLikeButton } from "@/components/CarLikeButton";
 import { useQuery } from "@tanstack/react-query";
-import { useBlacklist } from "@/hooks/useBlacklist";
-import { SignedMediaImg } from "@/components/SignedMediaImg";
 
 const VEHICLE_TYPES = [
   { key: "car", icon: Car, gradient: "from-primary/20 to-primary/5" },
@@ -50,7 +48,6 @@ const FriendGarage = () => {
   const { friendId } = useParams<{ friendId: string }>();
   const [searchParams] = useSearchParams();
   const typeFilter = searchParams.get("type");
-  const { isBlacklisted } = useBlacklist(user?.id);
 
   const { data: isFriend = false, isLoading: loadingFriend } = useQuery({
     queryKey: ["is-friend", user?.id, friendId],
@@ -143,23 +140,6 @@ const FriendGarage = () => {
     );
   }
 
-  if (friendId && user?.id && isBlacklisted(friendId)) {
-    return (
-      <div className="flex min-h-screen flex-col bg-background relative">
-        <BlackGoldBg />
-        <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/friends")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-bold flex-1">Garage</h1>
-        </header>
-        <div className="flex flex-1 items-center justify-center p-4">
-          <p className="text-muted-foreground text-center">Vous ne pouvez pas accéder à ce garage.</p>
-        </div>
-      </div>
-    );
-  }
-
   if (typeFilter) {
     const listTitle = typeFilter === "all" ? (t.garage_menu_all as string) : (t[LABEL_KEYS[typeFilter as VehicleTypeKey] as keyof typeof t] as string);
     return (
@@ -192,12 +172,14 @@ const FriendGarage = () => {
                 className="w-full rounded-xl border border-border bg-card overflow-hidden text-left hover:border-primary/30 transition-colors"
               >
                 {car.image_url ? (
-                  <SignedMediaImg
-                    src={car.image_url}
+                  <img
+                    src={car.image_url.includes('/storage/v1/object/public/')
+                      ? car.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=600&quality=60'
+                      : car.image_url}
                     alt={`${car.brand} ${car.model}`}
                     className="h-40 w-full object-cover bg-muted"
                     loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).parentElement!.querySelector(".img-fallback")?.classList.remove("hidden"); }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.querySelector('.img-fallback')?.classList.remove('hidden'); }}
                   />
                 ) : null}
                 <div className={`h-40 flex items-center justify-center bg-muted img-fallback ${car.image_url ? 'hidden' : ''}`}>
@@ -246,8 +228,10 @@ const FriendGarage = () => {
           >
             {latestAllImage ? (
               <>
-                <SignedMediaImg
-                  src={latestAllImage}
+                <img
+                  src={latestAllImage.includes('/storage/v1/object/public/')
+                    ? latestAllImage.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
+                    : latestAllImage}
                   alt="" className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
                   loading="lazy"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -282,8 +266,10 @@ const FriendGarage = () => {
               >
                 {img ? (
                   <>
-                    <SignedMediaImg
-                      src={img}
+                    <img
+                      src={img.includes('/storage/v1/object/public/')
+                        ? img.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
+                        : img}
                       alt={t[LABEL_KEYS[key]] as string} className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
                       loading="lazy"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

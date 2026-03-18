@@ -4,13 +4,12 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2, Languages, Users } from "lucide-react";
+import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const DirectMessages = lazy(() => import("@/components/messaging/DirectMessages"));
-const GroupChats = lazy(() => import("@/components/messaging/GroupChats"));
 import UserRoleBadge from "@/components/UserRoleBadge";
 
 type Channel = { id: string; name: string; slug: string; description: string | null; sort_order: number };
@@ -33,7 +32,6 @@ const Messaging = () => {
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
   const [showDMs, setShowDMs] = useState(false);
-  const [showGroups, setShowGroups] = useState(false);
   const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({});
   const [showTranslatedIds, setShowTranslatedIds] = useState<Set<string>>(new Set());
   const [translatingId, setTranslatingId] = useState<string | null>(null);
@@ -248,15 +246,6 @@ const Messaging = () => {
     return (
       <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
         <DirectMessages onBack={() => setShowDMs(false)} />
-      </Suspense>
-    );
-  }
-
-  // Group chats view
-  if (showGroups) {
-    return (
-      <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
-        <GroupChats onBack={() => setShowGroups(false)} />
       </Suspense>
     );
   }
@@ -482,20 +471,6 @@ const Messaging = () => {
           <div className="min-w-0 flex-1">
             <h3 className="font-bold text-sm">{t.msg_messages as string}</h3>
             <p className="text-xs text-muted-foreground">{t.msg_messages_desc as string}</p>
-          </div>
-        </button>
-
-        {/* Group chats tile */}
-        <button
-          onClick={() => setShowGroups(true)}
-          className="w-full text-left rounded-xl border border-border/50 bg-card/80 p-4 hover:border-primary/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-3 mb-3"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 shrink-0">
-            <Users className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-sm">Groupes</h3>
-            <p className="text-xs text-muted-foreground">Discussions en groupe</p>
           </div>
         </button>
         {channels.map((ch) => {

@@ -536,18 +536,6 @@ const en: Translations = {
   friends_garage_load_error: "Unable to load vehicles.",
   friends_garage_no_vehicle_in_category: "No vehicles in this category.",
   friends_this_friend: "this friend",
-  friends_blacklist: "Blacklist",
-  friends_blacklist_add_placeholder: "Username to blacklist...",
-  friends_blacklist_add_button: "Add to blacklist",
-  friends_blacklisted_list: "Blacklisted users",
-  friends_blacklist_empty: "No blacklisted users.",
-  friends_unblacklist: "Remove",
-  friends_unblacklist_after_24h: "Removable in",
-  friends_blacklist_added: "User blacklisted.",
-  friends_blacklist_user_not_found: "User not found",
-  friends_blacklist_self: "You cannot blacklist yourself",
-  friends_blacklist_already: "User already blacklisted",
-  friends_unblacklisted: "Removed from blacklist",
 
   // Deliver
   deliver_title: "Deliver a vehicle",

@@ -8,7 +8,6 @@ import type { TeamColor } from "./TeamSelector";
 import { TEAMS } from "./TeamSelector";
 import { Shield, Sword, Brain, X, Clock, Lock, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { SignedMediaImg } from "@/components/SignedMediaImg";
 
 interface POIDetailProps {
   poi: {
@@ -320,7 +319,7 @@ export function POIDetail({ poi, userTeam, userId, isNearby, onClose, onRefresh,
 
         {poi.image_url && (
           <div className="rounded-xl overflow-hidden border border-border bg-muted">
-            <SignedMediaImg src={poi.image_url} alt="" className="w-full aspect-video object-cover" />
+            <img src={poi.image_url} alt="" className="w-full aspect-video object-cover" />
           </div>
         )}
 

@@ -1,23 +1,14 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
-import { useBlacklist, canUnblacklist, unblacklistCooldownMs } from "@/hooks/useBlacklist";
-import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight, Coins, ChevronDown, Ban } from "lucide-react";
+import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight, Coins } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -27,64 +18,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { SignedMediaImg } from "@/components/SignedMediaImg";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-
-/* Blacklisted users list with usernames and unblacklist (24h cooldown) */
-function BlacklistEntries({
-  rows,
-  onUnblacklist,
-  canUnblacklist,
-  unblacklistCooldownMs,
-  formatCooldown,
-  t,
-}: {
-  rows: { id: string; blacklisted_user_id: string; created_at: string }[];
-  onUnblacklist: (id: string) => void;
-  canUnblacklist: (createdAt: string) => boolean;
-  unblacklistCooldownMs: (createdAt: string) => number;
-  formatCooldown: (ms: number) => string;
-  t: Record<string, unknown>;
-}) {
-  const ids = useMemo(() => rows.map((r) => r.blacklisted_user_id), [rows]);
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["profiles_blacklist", ids],
-    queryFn: async () => {
-      if (ids.length === 0) return [];
-      const { data } = await supabase.from("profiles_public").select("user_id, username").in("user_id", ids);
-      return data || [];
-    },
-    enabled: ids.length > 0,
-  });
-  const nameMap = useMemo(() => new Map(profiles.map((p: { user_id: string; username: string | null }) => [p.user_id, p.username])), [profiles]);
-  return (
-    <ul className="divide-y divide-border max-h-48 overflow-y-auto">
-      {rows.map((r) => {
-        const removable = canUnblacklist(r.created_at);
-        const cooldownMs = unblacklistCooldownMs(r.created_at);
-        return (
-          <li key={r.id} className="flex items-center justify-between gap-2 p-3">
-            <span className="font-medium text-sm truncate">{nameMap.get(r.blacklisted_user_id) ?? r.blacklisted_user_id.slice(0, 8)}</span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="shrink-0 text-destructive hover:text-destructive"
-              disabled={!removable}
-              onClick={() => removable && onUnblacklist(r.id)}
-              title={removable ? undefined : `${t.friends_unblacklist_after_24h as string} ${formatCooldown(cooldownMs)}`}
-            >
-              {removable ? (t.friends_unblacklist as string) : formatCooldown(cooldownMs)}
-            </Button>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
 
 /* Auto-scrolling carousel for friend spots */
 function FriendSpotsAutoCarousel({ spots }: { spots: FriendCar[] }) {
@@ -103,8 +41,10 @@ function FriendSpotsAutoCarousel({ spots }: { spots: FriendCar[] }) {
           className={`absolute inset-0 transition-opacity duration-700 ${i === idx ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           {spot.image_url ? (
-            <SignedMediaImg
-              src={spot.image_url}
+            <img
+              src={spot.image_url.includes('/storage/v1/object/public/')
+                ? spot.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
+                : spot.image_url}
               alt={`${spot.brand} ${spot.model}`}
               className="h-full w-full object-cover"
               loading="lazy"
@@ -201,12 +141,6 @@ const FriendsGarages = () => {
   const [coinSendFriendId, setCoinSendFriendId] = useState<string | null>(null);
   const [coinSendAmount, setCoinSendAmount] = useState("");
   const [coinSending, setCoinSending] = useState(false);
-  const [blacklistUsername, setBlacklistUsername] = useState("");
-  const [blacklistSending, setBlacklistSending] = useState(false);
-  const [blacklistOpen, setBlacklistOpen] = useState(false);
-  const blacklistPanelRef = useRef<HTMLDivElement>(null);
-
-  const { myBlacklistRows, isBlacklisted, invalidate: invalidateBlacklist } = useBlacklist(user?.id);
 
   const DELIVERY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
   const COIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
@@ -257,7 +191,7 @@ const FriendsGarages = () => {
         setLastCoinSentAt(new Date().toISOString());
         toast.success(t.send_coin_success as string);
       } else {
-        const msg = result?.error === "cooldown_24h" ? (t.send_coin_cooldown as string) : result?.error === "insufficient_coins" ? (t.send_coin_insufficient as string) : result?.error === "blacklisted" ? (t.friends_blacklist as string) : result?.error || "Error";
+        const msg = result?.error === "cooldown_24h" ? (t.send_coin_cooldown as string) : result?.error === "insufficient_coins" ? (t.send_coin_insufficient as string) : result?.error || "Error";
         toast.error(msg);
       }
     } catch (e) {
@@ -464,65 +398,6 @@ const FriendsGarages = () => {
     fetchRequests();
   };
 
-  const displayFriends = useMemo(
-    () => friends.filter((f) => !isBlacklisted(f.user_id)),
-    [friends, isBlacklisted]
-  );
-
-  const handleBlacklistAdd = async () => {
-    if (!user || !blacklistUsername.trim()) return;
-    setBlacklistSending(true);
-    try {
-      const { data: profile } = await supabase
-        .from("profiles_public")
-        .select("user_id")
-        .eq("username", blacklistUsername.trim())
-        .maybeSingle();
-      if (!profile) {
-        toast.error(t.friends_blacklist_user_not_found as string);
-        setBlacklistSending(false);
-        return;
-      }
-      if (profile.user_id === user.id) {
-        toast.error(t.friends_blacklist_self as string);
-        setBlacklistSending(false);
-        return;
-      }
-      const { error } = await supabase.from("user_blacklist").insert({
-        user_id: user.id,
-        blacklisted_user_id: profile.user_id,
-      });
-      if (error) {
-        if (error.code === "23505") toast.error(t.friends_blacklist_already as string);
-        else toast.error(error.message);
-      } else {
-        toast.success(t.friends_blacklist_added as string);
-        setBlacklistUsername("");
-        invalidateBlacklist();
-      }
-    } catch {
-      toast.error("Erreur");
-    }
-    setBlacklistSending(false);
-  };
-
-  const handleUnblacklist = async (id: string) => {
-    const { error } = await supabase.from("user_blacklist").delete().eq("id", id);
-    if (error) {
-      toast.error(error.message || "Erreur");
-      return;
-    }
-    toast.success(t.friends_unblacklisted as string);
-    invalidateBlacklist();
-  };
-
-  const formatCooldown = (ms: number) => {
-    const s = Math.floor((ms / 1000) % 60);
-    const m = Math.floor((ms / 60000) % 60);
-    const h = Math.floor(ms / 3600000);
-    return `${h}h ${m}m ${s}s`;
-  };
-
   return (
     <div className="min-h-screen bg-background relative">
       <BlackGoldBg />
@@ -641,7 +516,7 @@ const FriendsGarages = () => {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">{t.send_coin_choose_friend as string}</p>
                     <div className="max-h-40 overflow-y-auto space-y-1 border rounded-lg p-2">
-                      {displayFriends.map((f) => (
+                      {friends.map((f) => (
                         <button
                           key={f.user_id}
                           type="button"
@@ -651,7 +526,7 @@ const FriendsGarages = () => {
                           {f.username || f.user_id}
                         </button>
                       ))}
-                      {displayFriends.length === 0 && <p className="text-sm text-muted-foreground p-2">Aucun ami</p>}
+                      {friends.length === 0 && <p className="text-sm text-muted-foreground p-2">Aucun ami</p>}
                     </div>
                   </div>
                   <div>
@@ -698,63 +573,10 @@ const FriendsGarages = () => {
               </div>
             )}
 
-            {/* Friends dropdown */}
-            <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                {t.friends_my_friends as string} ({displayFriends.length})
-              </h2>
-              {loading ? (
-                <p className="text-muted-foreground text-sm animate-pulse">{t.friends_loading as string}</p>
-              ) : displayFriends.length === 0 ? (
-                <p className="text-muted-foreground text-sm">{t.friends_no_friends_yet as string}</p>
-              ) : (
-                <Select
-                  value=""
-                  onValueChange={(value) => {
-                    const friend = displayFriends.find((f) => f.user_id === value);
-                    if (friend) handleSelectFriend(friend);
-                  }}
-                >
-                  <SelectTrigger className="w-full h-11">
-                    <SelectValue placeholder={t.friends_my_friends as string} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {displayFriends.map((friend) => (
-                      <SelectItem key={friend.user_id} value={friend.user_id}>
-                        <span className="flex items-center gap-2">
-                          {friend.username || "Anonyme"} <UserRoleBadge role={friend.role} isPremium={friend.is_premium} />
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {displayFriends.length > 0 && (
-                <details className="mt-2">
-                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">Gérer les amis</summary>
-                  <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
-                    {displayFriends.map((friend) => (
-                      <li key={friend.user_id} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-card/50 p-2">
-                        <span className="text-sm truncate">{friend.username || "Anonyme"}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => setRemoveConfirm({ friendshipId: friend.friendship_id, username: friend.username || "cet ami" })}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-            </div>
-
             {/* Add Friend */}
             <div className="flex gap-2">
               <Input
-                placeholder={t.friends_username_placeholder as string}
+                placeholder="Nom d'utilisateur..."
                 value={searchUsername}
                 onChange={(e) => setSearchUsername(e.target.value)}
                 className="h-11"
@@ -762,63 +584,8 @@ const FriendsGarages = () => {
               />
               <Button onClick={handleAddFriend} disabled={sending || !searchUsername.trim()} className="h-11 gap-1">
                 <UserPlus className="h-4 w-4" />
-                {t.friends_add_button as string}
+                Ajouter
               </Button>
-            </div>
-
-            {/* Blacklist form */}
-            <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                {t.friends_blacklist as string}
-              </h2>
-              <div className="flex gap-2">
-                <Input
-                  placeholder={t.friends_blacklist_add_placeholder as string}
-                  value={blacklistUsername}
-                  onChange={(e) => setBlacklistUsername(e.target.value)}
-                  className="h-11"
-                  onKeyDown={(e) => e.key === "Enter" && handleBlacklistAdd()}
-                />
-                <Button
-                  onClick={handleBlacklistAdd}
-                  disabled={blacklistSending || !blacklistUsername.trim()}
-                  className="h-11 gap-1"
-                  variant="outline"
-                >
-                  <Ban className="h-4 w-4" />
-                  {t.friends_blacklist_add_button as string}
-                </Button>
-              </div>
-            </div>
-
-            {/* Blacklisted users dropdown */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setBlacklistOpen((o) => !o)}
-                className="flex items-center justify-between w-full rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors text-left"
-              >
-                <span className="text-sm font-medium">
-                  {t.friends_blacklisted_list as string} ({myBlacklistRows.length})
-                </span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${blacklistOpen ? "rotate-180" : ""}`} />
-              </button>
-              {blacklistOpen && (
-                <div ref={blacklistPanelRef} className="rounded-xl border border-border bg-card overflow-hidden">
-                  {myBlacklistRows.length === 0 ? (
-                    <p className="text-sm text-muted-foreground p-3">{t.friends_blacklist_empty as string}</p>
-                  ) : (
-                    <BlacklistEntries
-                      rows={myBlacklistRows}
-                      onUnblacklist={handleUnblacklist}
-                      canUnblacklist={canUnblacklist}
-                      unblacklistCooldownMs={unblacklistCooldownMs}
-                      formatCooldown={formatCooldown}
-                      t={t}
-                    />
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Demandes d'amis */}
@@ -856,7 +623,49 @@ const FriendsGarages = () => {
               </div>
             )}
 
-            {/* Confirmation suppression ami */}
+            {/* Friends List */}
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                Mes amis ({friends.length})
+              </h2>
+              {loading ? (
+                <p className="text-muted-foreground text-sm animate-pulse">Chargement...</p>
+              ) : friends.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Aucun ami pour l'instant. Ajoutez-en un ci-dessus !</p>
+              ) : (
+                friends.map((friend) => (
+                  <button
+                    key={friend.user_id}
+                    onClick={() => handleSelectFriend(friend)}
+                    className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="font-bold text-primary text-sm">
+                          {(friend.username || "?")[0].toUpperCase()}
+                        </span>
+                      </div>
+                      <span className="font-medium flex items-center gap-1">{friend.username || "Anonyme"} <UserRoleBadge role={friend.role} isPremium={friend.is_premium} /></span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRemoveConfirm({
+                          friendshipId: friend.friendship_id,
+                          username: friend.username || "cet ami",
+                        });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </button>
+                ))
+)}
+          </div>
+
+          {/* Confirmation suppression ami */}
           <Dialog open={!!removeConfirm} onOpenChange={(open) => !open && setRemoveConfirm(null)}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>

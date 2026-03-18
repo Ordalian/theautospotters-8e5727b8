@@ -20,7 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SignedMediaImg } from "@/components/SignedMediaImg";
 
 interface CarDetail {
   id: string;
@@ -559,7 +558,7 @@ const CarDetails = () => {
             onClick={() => { setPhotoIndex(0); setPhotoPopupOpen(true); }}
             className={`w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative ${hasLinkedCar ? "ring-2 linked-car-ring ring-offset-2 ring-offset-card shadow-xl" : ""}`}
           >
-            <SignedMediaImg
+            <img
               src={allPhotoUrls[0] ?? car.image_url ?? ""}
               alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
               className="h-full w-full object-cover"
@@ -737,7 +736,7 @@ const CarDetails = () => {
                   className="w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 text-left hover:border-primary/40 transition-colors"
                 >
                   {c.image_url ? (
-                    <SignedMediaImg src={c.image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                    <img src={c.image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
                   ) : (
                     <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
                       <Car className="h-6 w-6 text-muted-foreground" />
@@ -809,8 +808,8 @@ const CarDetails = () => {
             onTouchMove={handlePinchMove}
             onTouchEnd={handlePinchEnd}
           >
-            <SignedMediaImg
-              src={allPhotoUrls[photoIndex] ?? car.image_url ?? ""}
+            <img
+              src={allPhotoUrls[photoIndex] ?? car.image_url!}
               alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
               className="max-w-full max-h-[90vh] w-auto h-auto object-contain pointer-events-none"
               draggable={false}
