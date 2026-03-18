@@ -386,7 +386,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
     const isPending = selectedConvStatus === "pending";
 
     return (
-      <div className="min-h-screen relative flex flex-col">
+      <div className="min-h-screen min-h-[100dvh] relative flex flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
           <Button variant="ghost" size="icon" onClick={() => { setSelectedFriend(null); clearMedia(); }}>
             <ChevronLeft className="h-5 w-5" />
@@ -419,7 +419,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 relative z-10">
+        <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-2 relative z-10">
           {msgsLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : messages.length === 0 ? (
@@ -491,7 +491,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
         {/* Input bar — shown if accepted/friend, or if I initiated the conversation */}
         {(isConversationAccepted || (isPending && messages.length > 0 && messages[0]?.sender_id === user!.id) || messages.length === 0) && (
-          <div className="sticky bottom-0 z-20 p-3 border-t border-border/40 bg-background/95 backdrop-blur flex gap-2 items-end">
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex gap-2 items-end">
             <input
               ref={fileInputRef}
               type="file"
@@ -517,7 +517,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
         {/* Pending: receiver can't send until accepted */}
         {isPending && messages.length > 0 && messages[0]?.sender_id !== user!.id && (
-          <div className="sticky bottom-0 z-20 p-3 border-t border-border/40 bg-background/95 backdrop-blur text-center">
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] text-center">
             <p className="text-xs text-muted-foreground">{t.dm_accept_to_reply as string || "Acceptez la conversation pour répondre"}</p>
           </div>
         )}
@@ -581,7 +581,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   const isSearching = searchQuery.trim().length >= 2;
 
   return (
-    <div className="min-h-screen relative flex flex-col">
+    <div className="min-h-screen min-h-[100dvh] relative flex flex-col">
       <header className="sticky top-0 z-20 flex flex-col gap-2 px-4 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack}>

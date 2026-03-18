@@ -253,7 +253,7 @@ const Messaging = () => {
   // Reply thread view
   if (selectedTopic) {
     return (
-      <div className="min-h-screen relative flex flex-col">
+      <div className="min-h-screen min-h-[100dvh] relative flex flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
           <Button variant="ghost" size="icon" onClick={() => setSelectedTopic(null)}>
             <ChevronLeft className="h-5 w-5" />
@@ -263,7 +263,7 @@ const Messaging = () => {
             <p className="text-xs text-muted-foreground flex items-center gap-1">par {selectedTopic.username || t.anonymous as string} <UserRoleBadge role={selectedTopic.role} isPremium={selectedTopic.is_premium} /></p>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 relative z-10">
+        <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-3 relative z-10">
           <div className="rounded-xl border border-primary/20 bg-card/90 p-4">
             <div className="flex items-center justify-between mb-1 flex-wrap gap-x-2 gap-y-1">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -341,7 +341,7 @@ const Messaging = () => {
             })
           )}
         </div>
-        <div className="sticky bottom-0 z-20 p-3 border-t border-border/40 bg-background/95 backdrop-blur flex gap-2">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex gap-2">
           <Input
             value={replyBody}
             onChange={(e) => setReplyBody(e.target.value)}
@@ -360,7 +360,7 @@ const Messaging = () => {
   // Topics list view (with bell)
   if (selectedChannel) {
     return (
-      <div className="min-h-screen relative flex flex-col">
+      <div className="min-h-screen min-h-[100dvh] relative flex flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-primary/10 bg-background/95 backdrop-blur">
           <Button variant="ghost" size="icon" onClick={() => { setSelectedChannel(null); setShowNewTopic(false); }}>
             <ChevronLeft className="h-5 w-5" />
@@ -434,7 +434,7 @@ const Messaging = () => {
   // Channel list view
   return (
     <div
-      className="min-h-screen relative"
+      className="min-h-screen min-h-[100dvh] relative"
       onTouchStart={onSwipeStart}
       onTouchMove={onSwipeMove}
       onTouchEnd={onSwipeEnd}

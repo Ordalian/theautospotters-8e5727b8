@@ -120,7 +120,7 @@ const Support = () => {
   // ─── Ticket detail view ───
   if (selectedTicket) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-4 border-b border-border/50 bg-background/95 backdrop-blur">
           <Button variant="ghost" size="icon" onClick={() => setSelectedTicket(null)}>
             <ArrowLeft className="h-5 w-5" />
@@ -138,7 +138,7 @@ const Support = () => {
           </span>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-3">
           <div className="rounded-xl border border-border/50 bg-card p-4">
             <p className="text-sm whitespace-pre-wrap">{selectedTicket.body}</p>
           </div>
@@ -163,7 +163,7 @@ const Support = () => {
         </div>
 
         {selectedTicket.status !== "closed" && (
-          <div className="sticky bottom-0 p-3 border-t border-border/40 bg-background/95 backdrop-blur flex gap-2">
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] flex gap-2">
             <Input
               value={replyBody}
               onChange={(e) => setReplyBody(e.target.value)}
