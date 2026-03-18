@@ -114,61 +114,70 @@ async function rpcAny<T>(fn: string, params?: Record<string, unknown>): Promise<
   return data as T;
 }
 
-// ───── Stats Tab ─────
+// ───── Mini Sparkline ─────
 
-interface ActivityOverview {
-  total_time_ms: number;
-  avg_time_per_user_ms: number;
-  total_views: number;
-  active_users: number;
-  peak_hour: number;
-}
-
-function ActivityOverviewTile() {
-  const { data } = useQuery({
-    queryKey: ["admin-activity-overview"],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc("get_activity_overview");
-      if (error) throw error;
-      if (data?.error) return null;
-      return data as ActivityOverview;
-    },
-    staleTime: 60_000,
-  });
-
-  if (!data) return null;
-
+function MiniChart({ data, valueKey, color = "bg-primary", height = 48 }: { data: any[]; valueKey: string; color?: string; height?: number }) {
+  if (!data || data.length === 0) return <div style={{ height }} className="flex items-center justify-center text-[10px] text-muted-foreground">Pas de données</div>;
+  const values = data.map((d) => d[valueKey] || 0);
+  const max = Math.max(1, ...values);
   return (
-    <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">📊 Activité globale</p>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <p className="text-[10px] text-muted-foreground">Temps total</p>
-          <p className="text-lg font-bold">{formatDuration(data.total_time_ms)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-muted-foreground">Moy. par utilisateur</p>
-          <p className="text-lg font-bold">{formatDuration(data.avg_time_per_user_ms)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-muted-foreground">Pages vues</p>
-          <p className="text-lg font-bold">{data.total_views.toLocaleString("fr-FR")}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-muted-foreground">Utilisateurs actifs</p>
-          <p className="text-lg font-bold">{data.active_users}</p>
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground">Heure de pointe : <span className="font-semibold text-foreground">{data.peak_hour}h00 – {data.peak_hour + 1}h00</span></p>
+    <div className="flex items-end gap-[2px]" style={{ height }}>
+      {values.map((v, i) => (
+        <div
+          key={i}
+          className={`flex-1 ${color} rounded-t-sm min-h-[2px] transition-all`}
+          style={{ height: `${Math.max(3, (v / max) * 100)}%` }}
+          title={`${data[i]?.day}: ${v}`}
+        />
+      ))}
     </div>
   );
 }
 
+// ───── Stats Tab ─────
+
+interface AnalyticsData {
+  total_users: number;
+  wau: number;
+  mau: number;
+  retention_7d: number;
+  retention_30d: number;
+  dau: { day: string; active_users: number }[];
+  new_users: { day: string; signups: number }[];
+  daily_spots: { day: string; spots: number }[];
+  daily_dms: { day: string; messages: number }[];
+  feature_adoption: { feature: string; unique_users: number; total_uses: number; adoption_pct: number }[];
+}
+
+interface AdminStatsAll {
+  total_users: number;
+  total_spots: number;
+  total_miniatures: number;
+  total_messages: number;
+  total_dms: number;
+  total_deliveries: number;
+  total_tickets: number;
+  open_tickets: number;
+}
+
 function StatsTab() {
+  const [days, setDays] = useState(30);
+
+  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["admin-analytics", days],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_admin_analytics", { p_days: days });
+      if (error) throw error;
+      if (data?.error) return null;
+      return data as AnalyticsData;
+    },
+    staleTime: 60_000,
+  });
+
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const data = await rpcAny<AdminStats[]>("get_admin_stats");
+      const data = await rpcAny<AdminStatsAll[]>("get_admin_stats");
       if (!data || data.length === 0) return null;
       return data[0];
     },
@@ -184,49 +193,149 @@ function StatsTab() {
     staleTime: 60_000,
   });
 
-  const { data: topFeatures = [] } = useQuery({
-    queryKey: ["admin-top-features"],
-    queryFn: async () => {
-      const data = await rpcAny<TopFeature[]>("get_top_features", { p_limit: 10 });
-      return data ?? [];
-    },
-    staleTime: 60_000,
-  });
-
-  if (!stats) {
+  if (analyticsLoading || !analytics) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
-  const cards = [
-    { label: "Utilisateurs", value: stats.total_users },
-    { label: "Spots", value: stats.total_spots },
-    { label: "Miniatures", value: stats.total_miniatures },
-    { label: "Messages canal", value: stats.total_messages },
-    { label: "Messages privés", value: stats.total_dms },
-    { label: "Livraisons", value: stats.total_deliveries },
-    { label: "Tickets support", value: stats.total_tickets },
-    { label: "Tickets ouverts", value: stats.open_tickets },
+  // Compute trends from DAU data
+  const dauArr = analytics.dau || [];
+  const todayDau = dauArr.length > 0 ? dauArr[dauArr.length - 1]?.active_users || 0 : 0;
+  const yesterdayDau = dauArr.length > 1 ? dauArr[dauArr.length - 2]?.active_users || 0 : 0;
+  const dauTrend = yesterdayDau > 0 ? Math.round(((todayDau - yesterdayDau) / yesterdayDau) * 100) : 0;
+
+  const newUsersArr = analytics.new_users || [];
+  const totalNewUsers = newUsersArr.reduce((s, d) => s + d.signups, 0);
+  const spotsArr = analytics.daily_spots || [];
+  const totalSpots = spotsArr.reduce((s, d) => s + d.spots, 0);
+  const dmsArr = analytics.daily_dms || [];
+  const totalDms = dmsArr.reduce((s, d) => s + d.messages, 0);
+
+  const dayOptions = [
+    { value: 7, label: "7j" },
+    { value: 14, label: "14j" },
+    { value: 30, label: "30j" },
+    { value: 90, label: "90j" },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Activity overview tile */}
-      <ActivityOverviewTile />
-
-      <div className="grid grid-cols-2 gap-3">
-        {cards.map((c) => (
-          <div key={c.label} className="rounded-xl border border-border/50 bg-card p-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{c.label}</p>
-            <p className="text-2xl font-bold mt-1">{c.value.toLocaleString("fr-FR")}</p>
-          </div>
+    <div className="space-y-4">
+      {/* Period selector */}
+      <div className="flex gap-1 bg-muted/50 rounded-lg p-1">
+        {dayOptions.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setDays(opt.value)}
+            className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${
+              days === opt.value ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {opt.label}
+          </button>
         ))}
       </div>
 
+      {/* Key metrics */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-xl border border-border/50 bg-card p-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Utilisateurs actifs (jour)</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <p className="text-2xl font-bold">{todayDau}</p>
+            {dauTrend !== 0 && (
+              <span className={`text-xs font-semibold ${dauTrend > 0 ? "text-green-500" : "text-red-500"}`}>
+                {dauTrend > 0 ? "↑" : "↓"}{Math.abs(dauTrend)}%
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="rounded-xl border border-border/50 bg-card p-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Actifs (7j / 30j)</p>
+          <p className="text-2xl font-bold mt-1">{analytics.wau} <span className="text-sm text-muted-foreground font-normal">/ {analytics.mau}</span></p>
+        </div>
+        <div className="rounded-xl border border-border/50 bg-card p-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Rétention 7j</p>
+          <p className="text-2xl font-bold mt-1">{analytics.retention_7d}%</p>
+        </div>
+        <div className="rounded-xl border border-border/50 bg-card p-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Rétention 30j</p>
+          <p className="text-2xl font-bold mt-1">{analytics.retention_30d}%</p>
+        </div>
+      </div>
+
+      {/* DAU chart */}
+      <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Utilisateurs actifs / jour</p>
+          <p className="text-xs text-muted-foreground">{days}j</p>
+        </div>
+        <MiniChart data={dauArr} valueKey="active_users" color="bg-primary/80" height={64} />
+        <div className="flex justify-between text-[8px] text-muted-foreground">
+          <span>{dauArr[0]?.day ? new Date(dauArr[0].day).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : ""}</span>
+          <span>{dauArr[dauArr.length - 1]?.day ? new Date(dauArr[dauArr.length - 1].day).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : ""}</span>
+        </div>
+      </div>
+
+      {/* Growth charts grid */}
+      <div className="grid grid-cols-1 gap-3">
+        {/* New signups */}
+        <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Inscriptions</p>
+            <p className="text-sm font-bold text-green-500">+{totalNewUsers}</p>
+          </div>
+          <MiniChart data={newUsersArr} valueKey="signups" color="bg-green-500/80" height={40} />
+        </div>
+
+        {/* Spots per day */}
+        <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Spots ajoutés</p>
+            <p className="text-sm font-bold text-blue-500">+{totalSpots}</p>
+          </div>
+          <MiniChart data={spotsArr} valueKey="spots" color="bg-blue-500/80" height={40} />
+        </div>
+
+        {/* DMs per day */}
+        <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Messages privés</p>
+            <p className="text-sm font-bold text-purple-500">+{totalDms}</p>
+          </div>
+          <MiniChart data={dmsArr} valueKey="messages" color="bg-purple-500/80" height={40} />
+        </div>
+      </div>
+
+      {/* Feature adoption */}
+      {analytics.feature_adoption.length > 0 && (
+        <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Adoption des fonctionnalités <span className="text-muted-foreground font-normal">(% des actifs 30j)</span></p>
+          <div className="space-y-2">
+            {analytics.feature_adoption.map((f) => (
+              <div key={f.feature}>
+                <div className="flex items-center justify-between text-sm mb-0.5">
+                  <span className="font-medium truncate">{f.feature}</span>
+                  <span className="text-muted-foreground text-xs shrink-0 ml-2">
+                    {f.adoption_pct}% · {f.unique_users} user{f.unique_users > 1 ? "s" : ""} · {f.total_uses}×
+                  </span>
+                </div>
+                <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-amber-500 rounded-full transition-all"
+                    style={{ width: `${Math.min(100, f.adoption_pct)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top pages */}
       {topPages.length > 0 && (
         <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pages les plus visitées</p>
           <div className="space-y-2">
-            {topPages.map((p, i) => {
+            {topPages.map((p) => {
               const maxVisits = topPages[0]?.visit_count || 1;
               return (
                 <div key={p.page}>
@@ -249,27 +358,26 @@ function StatsTab() {
         </div>
       )}
 
-      {topFeatures.length > 0 && (
+      {/* Totals */}
+      {stats && (
         <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fonctionnalités les plus utilisées</p>
-          <div className="space-y-2">
-            {topFeatures.map((f) => {
-              const maxUses = topFeatures[0]?.use_count || 1;
-              return (
-                <div key={f.feature}>
-                  <div className="flex items-center justify-between text-sm mb-0.5">
-                    <span className="font-medium">{f.feature}</span>
-                    <span className="text-muted-foreground text-xs">{f.use_count}</span>
-                  </div>
-                  <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-amber-500 rounded-full transition-all"
-                      style={{ width: `${(f.use_count / maxUses) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Totaux globaux</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: "Utilisateurs", value: stats.total_users },
+              { label: "Spots", value: stats.total_spots },
+              { label: "Miniatures", value: stats.total_miniatures },
+              { label: "Messages canal", value: stats.total_messages },
+              { label: "Messages privés", value: stats.total_dms },
+              { label: "Livraisons", value: stats.total_deliveries },
+              { label: "Tickets", value: stats.total_tickets },
+              { label: "Tickets ouverts", value: stats.open_tickets },
+            ].map((c) => (
+              <div key={c.label} className="flex items-center justify-between text-sm py-1 border-b border-border/30 last:border-0">
+                <span className="text-muted-foreground">{c.label}</span>
+                <span className="font-bold">{c.value.toLocaleString("fr-FR")}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
