@@ -121,10 +121,12 @@ export type Database = {
           model_id: string | null
           modified: boolean
           modified_comment: string | null
+          needs_review: boolean
           parked: boolean
           photo_source: string | null
           quality_rating: number | null
           rarity_rating: number | null
+          review_reason: string | null
           seen_on_road: boolean
           stock: boolean
           units_produced: number | null
@@ -159,10 +161,12 @@ export type Database = {
           model_id?: string | null
           modified?: boolean
           modified_comment?: string | null
+          needs_review?: boolean
           parked?: boolean
           photo_source?: string | null
           quality_rating?: number | null
           rarity_rating?: number | null
+          review_reason?: string | null
           seen_on_road?: boolean
           stock?: boolean
           units_produced?: number | null
@@ -197,10 +201,12 @@ export type Database = {
           model_id?: string | null
           modified?: boolean
           modified_comment?: string | null
+          needs_review?: boolean
           parked?: boolean
           photo_source?: string | null
           quality_rating?: number | null
           rarity_rating?: number | null
+          review_reason?: string | null
           seen_on_road?: boolean
           stock?: boolean
           units_produced?: number | null
@@ -1242,6 +1248,7 @@ export type Database = {
           id: string
           model_id: string
           name: string | null
+          needs_review: boolean
           normalized_name: string | null
           start_year: number | null
         }
@@ -1251,6 +1258,7 @@ export type Database = {
           id?: string
           model_id: string
           name?: string | null
+          needs_review?: boolean
           normalized_name?: string | null
           start_year?: number | null
         }
@@ -1260,6 +1268,7 @@ export type Database = {
           id?: string
           model_id?: string
           name?: string | null
+          needs_review?: boolean
           normalized_name?: string | null
           start_year?: number | null
         }
@@ -1278,6 +1287,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          needs_review: boolean
           normalized_name: string
           vehicle_type: string
         }
@@ -1285,6 +1295,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          needs_review?: boolean
           normalized_name: string
           vehicle_type: string
         }
@@ -1292,6 +1303,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          needs_review?: boolean
           normalized_name?: string
           vehicle_type?: string
         }
@@ -1303,6 +1315,7 @@ export type Database = {
           id: string
           make_id: string
           name: string
+          needs_review: boolean
           normalized_name: string
         }
         Insert: {
@@ -1310,6 +1323,7 @@ export type Database = {
           id?: string
           make_id: string
           name: string
+          needs_review?: boolean
           normalized_name: string
         }
         Update: {
@@ -1317,6 +1331,7 @@ export type Database = {
           id?: string
           make_id?: string
           name?: string
+          needs_review?: boolean
           normalized_name?: string
         }
         Relationships: [
@@ -1378,6 +1393,22 @@ export type Database = {
       achievement_xp_for_level: { Args: { p_level: number }; Returns: number }
       add_coins: { Args: { p_amount: number }; Returns: undefined }
       add_purchased_boosters: { Args: { pack_size: number }; Returns: Json }
+      admin_mark_car_reviewed: {
+        Args: { p_car_id: string }
+        Returns: undefined
+      }
+      admin_merge_vehicle_model: {
+        Args: { p_from_model_id: string; p_to_model_id: string }
+        Returns: undefined
+      }
+      admin_set_vehicle_generation_bounds: {
+        Args: {
+          p_end_year: number
+          p_generation_id: string
+          p_start_year: number
+        }
+        Returns: undefined
+      }
       buy_premium_coins: { Args: { p_plan: string }; Returns: Json }
       claim_daily_boosters: { Args: never; Returns: Json }
       consume_daily_booster: { Args: never; Returns: Json }
@@ -1418,6 +1449,20 @@ export type Database = {
           role: string
           user_id: string
           username: string
+        }[]
+      }
+      get_generation_suggestions: {
+        Args: {
+          p_make: string
+          p_model: string
+          p_vehicle_type: string
+          p_year: number
+        }
+        Returns: {
+          end_year: number
+          generation_id: string
+          generation_name: string
+          start_year: number
         }[]
       }
       get_leaderboard: {
@@ -1500,6 +1545,21 @@ export type Database = {
           username: string
         }[]
       }
+      get_vehicle_review_queue: {
+        Args: { p_limit?: number }
+        Returns: {
+          brand: string
+          car_id: string
+          created_at: string
+          generation: string
+          model: string
+          needs_review: boolean
+          review_reason: string
+          user_id: string
+          vehicle_type: string
+          year: number
+        }[]
+      }
       grant_coins_for_spot: {
         Args: { p_rarity_rating: number }
         Returns: undefined
@@ -1527,6 +1587,17 @@ export type Database = {
       normalize_license_plate: { Args: { plate: string }; Returns: string }
       normalize_vehicle_text: { Args: { p_text: string }; Returns: string }
       process_booster_style_drop: { Args: never; Returns: Json }
+      propose_vehicle_generation_bounds: {
+        Args: {
+          p_end_year: number
+          p_generation_name: string
+          p_make: string
+          p_model: string
+          p_start_year: number
+          p_vehicle_type: string
+        }
+        Returns: string
+      }
       recompute_user_total_xp: {
         Args: { p_user_id: string }
         Returns: undefined
