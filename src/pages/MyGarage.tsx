@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -50,6 +50,62 @@ interface GarageGroup {
   id: string;
   name: string;
   sort_order: number;
+}
+
+const getOptimizedStorageImageUrl = (url: string | null, width: number) => {
+  if (!url) return null;
+  if (url.includes("/storage/v1/object/public/")) {
+    return `${url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/")}?width=${width}&quality=80`;
+  }
+  return url;
+};
+
+function GarageImage({
+  src,
+  alt,
+  width,
+  imgClassName,
+  fallbackClassName,
+  iconClassName,
+}: {
+  src: string | null;
+  alt: string;
+  width: number;
+  imgClassName: string;
+  fallbackClassName: string;
+  iconClassName: string;
+}) {
+  const [currentSrc, setCurrentSrc] = useState<string | null>(() => getOptimizedStorageImageUrl(src, width));
+  const [failed, setFailed] = useState(!src);
+
+  useEffect(() => {
+    setCurrentSrc(getOptimizedStorageImageUrl(src, width));
+    setFailed(!src);
+  }, [src, width]);
+
+  if (!src || failed) {
+    return (
+      <div className={fallbackClassName}>
+        <Car className={iconClassName} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={currentSrc ?? src}
+      alt={alt}
+      className={imgClassName}
+      loading="lazy"
+      onError={() => {
+        if (currentSrc && currentSrc !== src) {
+          setCurrentSrc(src);
+          return;
+        }
+        setFailed(true);
+      }}
+    />
+  );
 }
 
 const MyGarage = () => {
@@ -295,13 +351,14 @@ const MyGarage = () => {
                     className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors flex"
                   >
                     <div className="w-28 h-28 shrink-0 overflow-hidden bg-secondary/20">
-                      {first?.image_url ? (
-                        <img src={first.image_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Car className="h-10 w-10 text-muted-foreground/30" />
-                        </div>
-                      )}
+                      <GarageImage
+                        src={first?.image_url ?? null}
+                        alt={brandName}
+                        width={320}
+                        imgClassName="w-full h-full object-cover"
+                        fallbackClassName="w-full h-full flex items-center justify-center bg-secondary/20"
+                        iconClassName="h-10 w-10 text-muted-foreground/30"
+                      />
                     </div>
                     <div className="p-4 flex-1 flex items-center justify-between">
                       <div>
@@ -325,13 +382,14 @@ const MyGarage = () => {
                     className="rounded-xl border border-border/50 bg-card overflow-hidden cursor-pointer hover:border-primary/30 transition-colors flex"
                   >
                     <div className="w-28 h-28 shrink-0 overflow-hidden bg-secondary/20">
-                      {first?.image_url ? (
-                        <img src={first.image_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Car className="h-10 w-10 text-muted-foreground/30" />
-                        </div>
-                      )}
+                      <GarageImage
+                        src={first?.image_url ?? null}
+                        alt={name}
+                        width={320}
+                        imgClassName="w-full h-full object-cover"
+                        fallbackClassName="w-full h-full flex items-center justify-center bg-secondary/20"
+                        iconClassName="h-10 w-10 text-muted-foreground/30"
+                      />
                     </div>
                     <div className="p-4 flex-1 flex items-center justify-between">
                       <div>
@@ -353,18 +411,14 @@ const MyGarage = () => {
                   onClick={() => navigate(`/car/${car.id}`, { state: { carIds: sortedCars.map((c) => c.id), returnTo } })}
                   className="aspect-square rounded-xl overflow-hidden relative group focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  {car.image_url ? (
-                    <img
-                      src={car.image_url}
-                      alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-secondary/20 flex items-center justify-center">
-                      <Car className="h-10 w-10 text-muted-foreground/20" />
-                    </div>
-                  )}
+                  <GarageImage
+                    src={car.image_url}
+                    alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
+                    width={480}
+                    imgClassName="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    fallbackClassName="h-full w-full bg-secondary/20 flex items-center justify-center"
+                    iconClassName="h-10 w-10 text-muted-foreground/20"
+                  />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6">
                     <p className="text-white text-xs font-semibold truncate">{car.brand} {car.model}</p>
                   </div>
@@ -404,20 +458,16 @@ const MyGarage = () => {
                   </Button>
                 </div>
                 <div onClick={() => navigate(`/car/${car.id}`, { state: { carIds: sortedCars.map((c) => c.id), returnTo } })} className="cursor-pointer">
-                  {car.image_url ? (
-                    <div className="h-44 overflow-hidden">
-                      <img
-                        src={car.image_url}
-                        alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-44 overflow-hidden bg-secondary/20 flex items-center justify-center">
-                      <Car className="h-16 w-16 text-muted-foreground/20" />
-                    </div>
-                  )}
+                  <div className="h-44 overflow-hidden">
+                    <GarageImage
+                      src={car.image_url}
+                      alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
+                      width={768}
+                      imgClassName="h-full w-full object-cover"
+                      fallbackClassName="h-full w-full overflow-hidden bg-secondary/20 flex items-center justify-center"
+                      iconClassName="h-16 w-16 text-muted-foreground/20"
+                    />
+                  </div>
                   <div className="p-4">
                     <div className="flex items-baseline justify-between gap-2">
                       <h3 className="font-bold text-lg">{car.brand} {car.model}{car.generation ? ` ${car.generation}` : ""}</h3>
