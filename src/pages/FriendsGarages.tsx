@@ -141,6 +141,13 @@ const FriendsGarages = () => {
   const [coinSendFriendId, setCoinSendFriendId] = useState<string | null>(null);
   const [coinSendAmount, setCoinSendAmount] = useState("");
   const [coinSending, setCoinSending] = useState(false);
+  const [friendSearchFilter, setFriendSearchFilter] = useState("");
+  const [friendsOpen, setFriendsOpen] = useState(true);
+  // Block state
+  const [blockUsername, setBlockUsername] = useState("");
+  const [blocking, setBlocking] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState<{ id: string; user_id: string; username: string | null }[]>([]);
+  const [blockedOpen, setBlockedOpen] = useState(false);
 
   const DELIVERY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
   const COIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
