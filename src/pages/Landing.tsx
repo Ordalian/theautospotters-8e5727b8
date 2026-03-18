@@ -68,7 +68,7 @@ const Landing = () => {
         {/* Sticky CTA — bottom (respects safe area on notched devices) */}
         <div className="fixed z-50 right-4 md:right-6" style={{ bottom: 'max(1rem, calc(1rem + env(safe-area-inset-bottom)))' }}>
           <Button asChild size="lg" className="shadow-lg ring-2 ring-primary/20">
-            <Link to="/auth">{t.landing_try_me as string}</Link>
+            <Link to="/temporary-try">{t.landing_try_me as string}</Link>
           </Button>
         </div>
 
@@ -83,9 +83,14 @@ const Landing = () => {
           <p className="mt-3 text-muted-foreground text-center max-w-md text-lg slogan-tagline">
             {t.landing_tagline as string}
           </p>
-          <Button asChild size="lg" className="mt-8 gap-2">
-            <Link to="/auth">{t.landing_connect as string}</Link>
-          </Button>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 items-stretch">
+            <Button asChild size="lg" className="gap-2 flex-1">
+              <Link to="/auth">{t.landing_connect as string}</Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary" className="gap-2 flex-1">
+              <Link to="/temporary-try">{t.landing_try_me as string}</Link>
+            </Button>
+          </div>
           <p className="mt-6 text-xs text-muted-foreground/80">
             {t.landing_scroll_hint as string}
           </p>
@@ -135,7 +140,7 @@ const Landing = () => {
             {t.landing_tagline as string}
           </p>
           <Button asChild size="lg">
-            <Link to="/auth">{t.landing_try_me as string}</Link>
+            <Link to="/temporary-try">{t.landing_try_me as string}</Link>
           </Button>
           <Link
             to="/legal"
