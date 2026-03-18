@@ -1,6 +1,11 @@
 import { Component, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  isRecoverableChunkError,
+  normalizeRuntimeErrorMessage,
+  reloadForRuntimeRecovery,
+} from "@/lib/runtimeRecovery";
 
 type AppErrorBoundaryProps = {
   children: ReactNode;
@@ -11,28 +16,6 @@ type AppErrorBoundaryState = {
   errorMessage: string | null;
 };
 
-const STALE_CHUNK_PATTERNS = [
-  "failed to fetch dynamically imported module",
-  "importing a module script failed",
-  "loading chunk",
-  "chunkloaderror",
-];
-
-function normalizeErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return "Unknown runtime error";
-  }
-}
-
-function isStaleChunkError(message: string): boolean {
-  const lower = message.toLowerCase();
-  return STALE_CHUNK_PATTERNS.some((pattern) => lower.includes(pattern));
-}
-
 class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
   state: AppErrorBoundaryState = {
     hasError: false,
@@ -42,11 +25,15 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
   static getDerivedStateFromError(error: unknown): AppErrorBoundaryState {
     return {
       hasError: true,
-      errorMessage: normalizeErrorMessage(error),
+      errorMessage: normalizeRuntimeErrorMessage(error),
     };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    if (isRecoverableChunkError(error) && reloadForRuntimeRecovery()) {
+      return;
+    }
+
     console.error("AppErrorBoundary caught error:", error, errorInfo);
   }
 
@@ -61,10 +48,10 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
   }
 
   private handleWindowError = (event: ErrorEvent) => {
-    const message = event.message || "Unknown runtime error";
+    const runtimeError = event.error ?? event.message;
+    const message = normalizeRuntimeErrorMessage(runtimeError || "Unknown runtime error");
 
-    if (isStaleChunkError(message)) {
-      window.location.reload();
+    if (isRecoverableChunkError(runtimeError) && reloadForRuntimeRecovery()) {
       return;
     }
 
@@ -74,10 +61,9 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
   };
 
   private handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-    const message = normalizeErrorMessage(event.reason);
+    const message = normalizeRuntimeErrorMessage(event.reason);
 
-    if (isStaleChunkError(message)) {
-      window.location.reload();
+    if (isRecoverableChunkError(event.reason) && reloadForRuntimeRecovery()) {
       return;
     }
 
