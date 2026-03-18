@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
 import ThemeParticles from "@/components/ThemeParticles";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 import { Loader2 } from "lucide-react";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
@@ -152,14 +153,16 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <BrowserRouter>
-        <AuthProvider>
-          <ThemeProvider>
-            <ThemeParticles />
-            <LanguageProvider>
-              <AnimatedRoutes />
-            </LanguageProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <AppErrorBoundary>
+          <AuthProvider>
+            <ThemeProvider>
+              <ThemeParticles />
+              <LanguageProvider>
+                <AnimatedRoutes />
+              </LanguageProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </AppErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
   </PersistQueryClientProvider>
