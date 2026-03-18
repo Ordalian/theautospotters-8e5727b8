@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
-import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight, Coins } from "lucide-react";
+import { ArrowLeft, UserPlus, Car, X, Check, Package, ChevronRight, Coins, Ban, Search, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
