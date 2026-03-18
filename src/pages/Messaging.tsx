@@ -4,7 +4,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2, Languages } from "lucide-react";
+import { Hash, Plus, Send, MessageSquare, Loader2, ChevronLeft, Bell, BellOff, Mail, Trash2, Languages, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUserRole } from "@/hooks/useUserRole";
