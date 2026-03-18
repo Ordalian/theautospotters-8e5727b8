@@ -425,6 +425,8 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   // ═══════════════════════════════════════
   if (selectedFriend) {
     const isPending = selectedConvStatus === "pending";
+    const lastMessage = messages[messages.length - 1];
+    const lastMessageIsMine = lastMessage?.sender_id === user!.id;
 
     return (
       <div className="min-h-screen min-h-[100dvh] relative flex flex-col">
@@ -443,7 +445,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         </header>
 
         {/* Pending request banner */}
-        {isPending && messages.length > 0 && messages[0]?.sender_id !== user!.id && (
+        {isPending && messages.length > 0 && !lastMessageIsMine && (
           <div className="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{t.dm_request_title as string || "Demande de message"}</p>
@@ -531,7 +533,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         )}
 
         {/* Input bar */}
-        {(isConversationAccepted || (isPending && messages.length > 0 && messages[0]?.sender_id === user!.id) || messages.length === 0) && (
+        {(isConversationAccepted || (isPending && messages.length > 0 && lastMessageIsMine) || messages.length === 0) && (
           <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] flex gap-2 items-end">
             <input
               ref={fileInputRef}
@@ -557,7 +559,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
         )}
 
         {/* Pending: receiver can't send until accepted */}
-        {isPending && messages.length > 0 && messages[0]?.sender_id !== user!.id && (
+        {isPending && messages.length > 0 && !lastMessageIsMine && (
           <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] text-center">
             <p className="text-xs text-muted-foreground">{t.dm_accept_to_reply as string || "Acceptez la conversation pour répondre"}</p>
           </div>
