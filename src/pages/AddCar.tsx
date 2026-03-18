@@ -122,6 +122,7 @@ const AddCar = () => {
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const [showExtraPhotoDialog, setShowExtraPhotoDialog] = useState(false);
   const [spotDate, setSpotDate] = useState("");
+  const [quickUnknown, setQuickUnknown] = useState(false);
 
   // Initialiser la source de la photo si elle vient d'AutoSpotter
   useEffect(() => {
@@ -148,10 +149,11 @@ const AddCar = () => {
   // ─── Vehicle catalog (DB) — progressive enrichment ───
   const [catalogMakes, setCatalogMakes] = useState<{ id: string; name: string }[]>([]);
   const [catalogModels, setCatalogModels] = useState<{ id: string; name: string }[]>([]);
-  const [catalogGenerations, setCatalogGenerations] = useState<string[]>([]);
+  const [catalogGenerations, setCatalogGenerations] = useState<{ id: string; name: string; start_year: number | null; end_year: number | null }[]>([]);
   const [loadingCatalogMakes, setLoadingCatalogMakes] = useState(false);
   const [loadingCatalogModels, setLoadingCatalogModels] = useState(false);
   const [loadingCatalogGenerations, setLoadingCatalogGenerations] = useState(false);
+  const [catalogReloadNonce, setCatalogReloadNonce] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -204,26 +206,31 @@ const AddCar = () => {
     async function loadGenerations() {
       setCatalogGenerations([]);
       if (!brand || !model) return;
-      const makeId = catalogMakes.find((m) => m.name === brand)?.id;
-      const modelId = makeId ? catalogModels.find((m) => m.name === model)?.id : undefined;
-      if (!modelId) return;
+      if (!year) return;
       setLoadingCatalogGenerations(true);
       try {
-        // Keep it simple V1: show generation labels that exist for this model (optionally year-matched)
-        let q: any = supabase
-          .from("vehicle_generations" as any)
-          .select("name,start_year,end_year")
-          .eq("model_id", modelId)
-          .order("created_at", { ascending: false });
-        const selectedYear = year ? parseInt(year) : null;
-        if (selectedYear) {
-          q = q.or(`start_year.is.null,start_year.lte.${selectedYear}`);
+        const y = parseInt(year);
+        const { data } = await (supabase as any).rpc("get_generation_suggestions", {
+          p_vehicle_type: brandModelType,
+          p_make: brand,
+          p_model: model,
+          p_year: y,
+        });
+        const rows = (data as any[] | null) ?? [];
+        const mapped = rows
+          .map((r) => ({
+            id: r.generation_id as string,
+            name: String(r.generation_name ?? ""),
+            start_year: (r.start_year ?? null) as number | null,
+            end_year: (r.end_year ?? null) as number | null,
+          }))
+          .filter((r) => r.name);
+        if (!cancelled) setCatalogGenerations(mapped);
+
+        // Auto-pick when there is a single suggestion and user hasn't typed anything yet
+        if (!cancelled && mapped.length === 1 && !generation.trim()) {
+          setGeneration(mapped[0].name);
         }
-        const { data } = await q;
-        const opts = (data as any[] | null)
-          ?.map((g) => (g.name ? String(g.name) : null))
-          .filter(Boolean) as string[] | undefined;
-        if (!cancelled) setCatalogGenerations(Array.from(new Set(opts ?? [])).slice(0, 20));
       } catch {
         if (!cancelled) setCatalogGenerations([]);
       } finally {
@@ -232,7 +239,7 @@ const AddCar = () => {
     }
     loadGenerations();
     return () => { cancelled = true; };
-  }, [brand, model, year, catalogMakes, catalogModels]);
+  }, [brand, model, year, brandModelType, generation, catalogReloadNonce]);
 
   const useDbCatalog = catalogMakes.length > 0;
 
@@ -457,9 +464,9 @@ const AddCar = () => {
         brand,
         model,
         year: parseInt(year),
-        edition: edition || null,
-        generation: generation.trim() || null,
-        finitions: finitions.trim() || null,
+        edition: quickUnknown ? null : (edition || null),
+        generation: quickUnknown ? null : (generation.trim() || null),
+        finitions: quickUnknown ? null : (finitions.trim() || null),
         seen_on_road: isMiniature ? seenOnRoad : seenOnRoad, // for miniature: true = sous blister oui
         parked: isMiniature ? false : parked,
         stock,
@@ -467,7 +474,7 @@ const AddCar = () => {
         modified_comment: modified ? (modifiedComment.trim().slice(0, 500) || null) : null,
         car_meet: isMiniature ? false : carMeet,
         image_url: allPhotoUrls[0] ?? imageUrl ?? null,
-        engine: isMiniature ? null : (engine || null),
+        engine: isMiniature ? null : (quickUnknown ? null : (engine || null)),
         latitude: isMiniature ? null : (coords?.lat || null),
         longitude: isMiniature ? null : (coords?.lng || null),
         location_name: isMiniature ? null : (locationName || null),
@@ -478,6 +485,7 @@ const AddCar = () => {
         rarity_rating: rarityRating.level,
         license_plate: isMiniature ? null : extractedPlateFromPhoto,
         vehicle_type: vehicleType,
+        ...(quickUnknown ? { needs_review: true, review_reason: "quick_add" } : {}),
         ...(isMiniature ? { miniature_maker: fabricant } : {}),
       };
 
@@ -693,6 +701,18 @@ const AddCar = () => {
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             {isMiniature ? (t.add_miniature_brand as string) : (t.add_car_brand as string)}
           </Label>
+          {!isMiniature && (
+            <button
+              type="button"
+              onClick={() => setQuickUnknown((v) => !v)}
+              className={cn(
+                "w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors",
+                quickUnknown ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {quickUnknown ? "Ajout rapide activé (à vérifier plus tard)" : "Je ne sais pas / Ajout rapide"}
+            </button>
+          )}
           <div className="relative">
             <Input
               placeholder={t.add_car_search_brand as string}
@@ -816,18 +836,54 @@ const AddCar = () => {
                 )}
                 {!loadingCatalogGenerations && catalogGenerations.map((g) => (
                   <button
-                    key={g}
+                    key={g.id}
                     type="button"
-                    onClick={() => setGeneration(g)}
+                    onClick={() => setGeneration(g.name)}
                     className={cn(
                       "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                      generation === g ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:text-foreground"
+                      generation === g.name ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    {g}
+                    {g.name}
                   </button>
                 ))}
               </div>
+            )}
+            {!quickUnknown && !!brand && !!model && !!year && !loadingCatalogGenerations && catalogGenerations.length === 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={async () => {
+                  try {
+                    const res = await callCarApi<{ generations: { name: string; start_year: number | null; end_year: number | null }[] }>({
+                      action: "generation_bounds",
+                      brand,
+                      model,
+                      year: parseInt(year),
+                      lang: "fr",
+                    } as any);
+                    const gens = res.generations ?? [];
+                    for (const g of gens) {
+                      if (!g?.name) continue;
+                      await (supabase as any).rpc("propose_vehicle_generation_bounds", {
+                        p_vehicle_type: brandModelType,
+                        p_make: brand,
+                        p_model: model,
+                        p_generation_name: g.name,
+                        p_start_year: g.start_year,
+                        p_end_year: g.end_year,
+                      });
+                    }
+                    setCatalogReloadNonce((n) => n + 1);
+                    toast.success("Générations importées dans le catalogue.");
+                  } catch (e: any) {
+                    toast.error(e?.message ?? "Impossible d'enrichir via l'API");
+                  }
+                }}
+              >
+                Enrichir via l’API (générations)
+              </Button>
             )}
             <Input
               placeholder="I, II, III, IV, V, VI…"
