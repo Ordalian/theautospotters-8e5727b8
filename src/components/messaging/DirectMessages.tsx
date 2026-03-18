@@ -517,7 +517,7 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
 
         {/* Pending: receiver can't send until accepted */}
         {isPending && messages.length > 0 && messages[0]?.sender_id !== user!.id && (
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] text-center">
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/40 bg-background/95 backdrop-blur p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] text-center">
             <p className="text-xs text-muted-foreground">{t.dm_accept_to_reply as string || "Acceptez la conversation pour répondre"}</p>
           </div>
         )}
