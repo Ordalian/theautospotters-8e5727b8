@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const DirectMessages = lazy(() => import("@/components/messaging/DirectMessages"));
+const GroupChats = lazy(() => import("@/components/messaging/GroupChats"));
 import UserRoleBadge from "@/components/UserRoleBadge";
 
 type Channel = { id: string; name: string; slug: string; description: string | null; sort_order: number };
