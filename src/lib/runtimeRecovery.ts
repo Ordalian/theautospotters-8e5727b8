@@ -1,3 +1,5 @@
+import { getSafeSessionStorage } from "./browserStorage";
+
 const RECOVERY_STORAGE_KEY = "lovable-runtime-recovery-at";
 const RECOVERY_QUERY_PARAM = "__lovable_recover";
 const RECOVERY_WINDOW_MS = 15_000;
@@ -36,14 +38,15 @@ export function isRecoverableChunkError(error: unknown): boolean {
 export function reloadForRuntimeRecovery(): boolean {
   if (typeof window === "undefined") return false;
 
+  const storage = getSafeSessionStorage();
   const now = Date.now();
-  const lastRecoveryAt = Number(window.sessionStorage.getItem(RECOVERY_STORAGE_KEY) ?? 0);
+  const lastRecoveryAt = Number(storage.getItem(RECOVERY_STORAGE_KEY) ?? 0);
 
   if (lastRecoveryAt && now - lastRecoveryAt < RECOVERY_WINDOW_MS) {
     return false;
   }
 
-  window.sessionStorage.setItem(RECOVERY_STORAGE_KEY, String(now));
+  storage.setItem(RECOVERY_STORAGE_KEY, String(now));
 
   const url = new URL(window.location.href);
   url.searchParams.set(RECOVERY_QUERY_PARAM, String(now));
