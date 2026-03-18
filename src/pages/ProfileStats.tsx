@@ -8,6 +8,7 @@ import { ACHIEVEMENTS, ACHIEVEMENT_SHAPES, getAchievementLevel, getAchievementVa
 import { Emblem } from "@/components/Emblem";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Loader2, Car } from "lucide-react";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import UserRoleBadge from "@/components/UserRoleBadge";
