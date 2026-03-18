@@ -33,6 +33,7 @@ const Messaging = () => {
   const [newTopicBody, setNewTopicBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
   const [showDMs, setShowDMs] = useState(false);
+  const [showGroupChats, setShowGroupChats] = useState(false);
   const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({});
   const [showTranslatedIds, setShowTranslatedIds] = useState<Set<string>>(new Set());
   const [translatingId, setTranslatingId] = useState<string | null>(null);
