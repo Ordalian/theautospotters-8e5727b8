@@ -72,7 +72,7 @@ const Messaging = () => {
     if (swipeRef.current.locked === "h") swipeRef.current.delta = dx;
   };
   const onSwipeEnd = () => {
-    if (!selectedChannel && !selectedTopic && !showDMs && swipeRef.current.locked === "h" && swipeRef.current.delta > 80) {
+    if (!selectedChannel && !selectedTopic && !showDMs && !showGroupChats && swipeRef.current.locked === "h" && swipeRef.current.delta > 80) {
       navigate("/home");
     }
   };
