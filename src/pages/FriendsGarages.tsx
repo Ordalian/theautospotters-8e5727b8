@@ -695,36 +695,40 @@ const FriendsGarages = () => {
               </div>
             )}
 
-            {/* Friends List — collapsible with search */}
-            <div className="space-y-2">
-              <button type="button" onClick={() => setFriendsOpen(!friendsOpen)} className="w-full flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mes amis ({friends.length})</h2>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${friendsOpen ? "rotate-180" : ""}`} />
-              </button>
+            {/* Friends List — collapsible with search bar + arrow */}
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2">
+                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Input
+                  placeholder={`${t.friends_search_placeholder as string} (${friends.length})`}
+                  value={friendSearchFilter}
+                  onChange={(e) => setFriendSearchFilter(e.target.value)}
+                  className="h-9 border-0 bg-transparent shadow-none focus-visible:ring-0 px-0"
+                />
+                <button type="button" onClick={() => setFriendsOpen(!friendsOpen)} className="shrink-0 p-1 rounded hover:bg-muted/50 transition-colors">
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${friendsOpen ? "rotate-180" : ""}`} />
+                </button>
+              </div>
               {friendsOpen && (
-                <>
-                  {friends.length > 3 && (
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder={t.friends_search_placeholder as string} value={friendSearchFilter} onChange={(e) => setFriendSearchFilter(e.target.value)} className="pl-9 h-10" />
+                <div className="border-t border-border/50">
+                  {loading ? (
+                    <p className="text-muted-foreground text-sm animate-pulse p-4">Chargement...</p>
+                  ) : friends.length === 0 ? (
+                    <p className="text-muted-foreground text-sm p-4">Aucun ami pour l'instant.</p>
+                  ) : (
+                    <div className="divide-y divide-border/30">
+                      {friends.filter(f => !friendSearchFilter.trim() || (f.username || "").toLowerCase().includes(friendSearchFilter.toLowerCase())).map((friend) => (
+                        <div key={friend.user_id} onClick={() => handleSelectFriend(friend)} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center"><span className="font-bold text-primary text-sm">{(friend.username || "?")[0].toUpperCase()}</span></div>
+                            <span className="font-medium text-sm flex items-center gap-1">{friend.username || "Anonyme"} <UserRoleBadge role={friend.role} isPremium={friend.is_premium} /></span>
+                          </div>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); setRemoveConfirm({ friendshipId: friend.friendship_id, username: friend.username || "cet ami" }); }}><X className="h-4 w-4" /></Button>
+                        </div>
+                      ))}
                     </div>
                   )}
-                  {loading ? (
-                    <p className="text-muted-foreground text-sm animate-pulse">Chargement...</p>
-                  ) : friends.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">Aucun ami pour l'instant.</p>
-                  ) : (
-                    friends.filter(f => !friendSearchFilter.trim() || (f.username || "").toLowerCase().includes(friendSearchFilter.toLowerCase())).map((friend) => (
-                      <button key={friend.user_id} onClick={() => handleSelectFriend(friend)} className="w-full flex items-center justify-between rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors text-left">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center"><span className="font-bold text-primary text-sm">{(friend.username || "?")[0].toUpperCase()}</span></div>
-                          <span className="font-medium flex items-center gap-1">{friend.username || "Anonyme"} <UserRoleBadge role={friend.role} isPremium={friend.is_premium} /></span>
-                        </div>
-                        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setRemoveConfirm({ friendshipId: friend.friendship_id, username: friend.username || "cet ami" }); }}><X className="h-4 w-4" /></Button>
-                      </button>
-                    ))
-                  )}
-                </>
+                </div>
               )}
           </div>
 
