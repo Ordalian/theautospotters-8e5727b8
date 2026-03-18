@@ -12,6 +12,7 @@ import { SignedMediaImg } from "@/components/SignedMediaImg";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import UserRoleBadge from "@/components/UserRoleBadge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const VEHICLE_TYPES_ORDER = ["car", "truck", "motorcycle", "boat", "plane", "train"] as const;
 const TYPE_LABEL_KEYS: Record<string, string> = {
@@ -588,9 +589,14 @@ const ProfileStats = () => {
             {/* Pie charts */}
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl border border-border bg-card p-4 flex flex-col items-center gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">
-                  {t.profile_stats_by_type as string}
-                </p>
+                <div className="text-center space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t.profile_stats_by_type as string}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    {t.profile_stats_by_type_sub as string}
+                  </p>
+                </div>
                 {stats.typeData.length > 0 ? (
                   <>
                     <PieChart data={stats.typeData} size={140} />
@@ -611,9 +617,14 @@ const ProfileStats = () => {
                 )}
               </div>
               <div className="rounded-xl border border-border bg-card p-4 flex flex-col items-center gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">
-                  {t.profile_stats_by_rarity as string}
-                </p>
+                <div className="text-center space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t.profile_stats_by_rarity as string}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80">
+                    {t.profile_stats_by_rarity_sub as string}
+                  </p>
+                </div>
                 {stats.rarityData.length > 0 ? (
                   <>
                     <PieChart data={stats.rarityData} size={140} />
@@ -643,7 +654,14 @@ const ProfileStats = () => {
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/30">
                 <p className="text-2xl font-bold tabular-nums">{stats.carLevel.toFixed(1)}</p>
-                <p className="text-xs text-muted-foreground">{t.profile_stats_car_level as string}</p>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-muted-foreground cursor-help">{t.profile_stats_car_level as string}</p>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs text-xs">
+                    {t.profile_stats_car_level_help as string}
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <div className="text-center p-2 rounded-lg bg-muted/30">
                 <p className="text-2xl font-bold tabular-nums">{stats.avgQuality.toFixed(1)}</p>
@@ -657,7 +675,10 @@ const ProfileStats = () => {
 
             {/* Value section */}
             <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-              <h2 className="text-base font-bold">{t.profile_stats_value as string}</h2>
+              <div>
+                <h2 className="text-base font-bold">{t.profile_stats_value as string}</h2>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t.profile_stats_value_estimated as string}</p>
+              </div>
 
               <div className="space-y-3">
                 <div
