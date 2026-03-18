@@ -246,10 +246,8 @@ const FriendGarage = () => {
           >
             {latestAllImage ? (
               <>
-                <img
-                  src={latestAllImage.includes('/storage/v1/object/public/')
-                    ? latestAllImage.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
-                    : latestAllImage}
+                <SignedMediaImg
+                  src={latestAllImage}
                   alt="" className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
                   loading="lazy"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -284,10 +282,8 @@ const FriendGarage = () => {
               >
                 {img ? (
                   <>
-                    <img
-                      src={img.includes('/storage/v1/object/public/')
-                        ? img.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
-                        : img}
+                    <SignedMediaImg
+                      src={img}
                       alt={t[LABEL_KEYS[key]] as string} className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
                       loading="lazy"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

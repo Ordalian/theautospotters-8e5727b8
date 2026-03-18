@@ -4,7 +4,13 @@ const PRIVATE_BUCKETS = ["dm-media", "car-photos"];
 
 export function isPrivateStorageUrl(url: string | null | undefined): boolean {
   if (!url || typeof url !== "string") return false;
-  return PRIVATE_BUCKETS.some((b) => url.includes(`/object/public/${b}/`) || url.includes(`/${b}/`));
+  return PRIVATE_BUCKETS.some(
+    (b) =>
+      url.includes(`/storage/v1/object/public/${b}/`) ||
+      url.includes(`/storage/v1/render/image/public/${b}/`) ||
+      url.includes(`/object/public/${b}/`) ||
+      url.includes(`/render/image/public/${b}/`)
+  );
 }
 
 const cache = new Map<string, { url: string; expires: number }>();

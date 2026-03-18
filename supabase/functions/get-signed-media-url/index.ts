@@ -20,7 +20,9 @@ function jsonResponse(body: object, status = 200) {
 function parseStorageUrl(url: string): { bucket: string; path: string } | null {
   try {
     const u = new URL(url);
-    const match = u.pathname.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+    const match =
+      u.pathname.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/) ??
+      u.pathname.match(/\/storage\/v1\/render\/image\/public\/([^/]+)\/(.+)/);
     if (!match) return null;
     const [, bucket, path] = match;
     return { bucket, path: decodeURIComponent(path) };

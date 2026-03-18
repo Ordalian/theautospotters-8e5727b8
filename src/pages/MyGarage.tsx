@@ -12,6 +12,7 @@ import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSort
 import { RatingExplainer } from "@/components/RatingExplainer";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 import {
   Dialog,
   DialogContent,
@@ -296,7 +297,7 @@ const MyGarage = () => {
                   >
                     <div className="w-28 h-28 shrink-0 overflow-hidden bg-secondary/20">
                       {first?.image_url ? (
-                        <img src={first.image_url} alt="" className="w-full h-full object-cover" />
+                        <SignedMediaImg src={first.image_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Car className="h-10 w-10 text-muted-foreground/30" />
@@ -326,7 +327,7 @@ const MyGarage = () => {
                   >
                     <div className="w-28 h-28 shrink-0 overflow-hidden bg-secondary/20">
                       {first?.image_url ? (
-                        <img src={first.image_url} alt="" className="w-full h-full object-cover" />
+                        <SignedMediaImg src={first.image_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Car className="h-10 w-10 text-muted-foreground/30" />
@@ -354,7 +355,7 @@ const MyGarage = () => {
                   className="aspect-square rounded-xl overflow-hidden relative group focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {car.image_url ? (
-                    <img
+                    <SignedMediaImg
                       src={car.image_url}
                       alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"

@@ -5,6 +5,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loader2, ChevronRight } from "lucide-react";
 import { CardImage } from "@/components/game/CardImage";
+import { SignedMediaImg } from "@/components/SignedMediaImg";
 import storeBg from "@/assets/store-bg.png";
 import type { CardCondition, CardArchetype } from "@/data/gameCards";
 import { Button } from "@/components/ui/button";
@@ -399,7 +400,7 @@ const Dashboard = () => {
                         className={`absolute inset-0 transition-opacity duration-700 ${idx === friendsTileIndex ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                       >
                         {spot.image_url ? (
-                          <img src={spot.image_url} alt={`${spot.brand} ${spot.model}`} className="h-full w-full object-cover rounded-xl" loading="lazy" />
+                          <SignedMediaImg src={spot.image_url} alt={`${spot.brand} ${spot.model}`} className="h-full w-full object-cover rounded-xl" loading="lazy" />
                         ) : (
                           <div className="h-full w-full rounded-xl bg-secondary/30 flex items-center justify-center">
                             <Car className="h-10 w-10 text-muted-foreground/30" />

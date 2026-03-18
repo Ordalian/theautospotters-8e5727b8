@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackFeature } from "@/hooks/useTrackFeature";
 import { callCarApi } from "@/lib/carApi";
 import { resizeImage, blurPlateInImage, dataUrlToFile } from "@/lib/imageUtils";
-import { getBrandsForVehicleType, getModelsForBrand, getYearsForModel } from "@/data/carData";
+import { getBrandsForVehicleType, getModelsForBrand, getYearsForModel, type CarBrand, type CarModel } from "@/data/carData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -235,9 +235,19 @@ const AddCar = () => {
   }, [brand, model, year, catalogMakes, catalogModels]);
 
   const useDbCatalog = catalogMakes.length > 0;
-  const brandsForType = useDbCatalog
-    ? (catalogMakes.map((m) => ({ name: m.name, models: [] })) as any)
-    : getBrandsForVehicleType(brandModelType);
+
+  // Merge DB (self-learning) + static dataset (large coverage) without duplicates.
+  const staticBrands = getBrandsForVehicleType(brandModelType);
+  const brandsForType: CarBrand[] = useDbCatalog
+    ? (() => {
+        const dbNames = new Set(catalogMakes.map((m) => m.name));
+        const merged: CarBrand[] = [
+          ...catalogMakes.map((m) => ({ name: m.name, models: [] })),
+          ...staticBrands.filter((b) => !dbNames.has(b.name)),
+        ];
+        return merged;
+      })()
+    : staticBrands;
 
   const MINIATURE_MAKERS = ["Hot Wheels", "Majorette", "Matchbox"] as const;
   const [fabricant, setFabricant] = useState("");
@@ -246,10 +256,18 @@ const AddCar = () => {
     b.name.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
-  const models = useDbCatalog
-    ? (catalogModels.map((m) => ({ name: m.name, years: [1900, 2026] as [number, number] })) as any)
-    : getModelsForBrand(brand, brandModelType);
-  const filteredModels = models.filter((m: any) => m.name.toLowerCase().includes(modelSearch.toLowerCase()));
+  const staticModels = getModelsForBrand(brand, brandModelType);
+  const models: CarModel[] = useDbCatalog && catalogModels.length > 0
+    ? (() => {
+        const dbNames = new Set(catalogModels.map((m) => m.name));
+        const merged: CarModel[] = [
+          ...catalogModels.map((m) => ({ name: m.name, years: [1900, 2026] as [number, number] })),
+          ...staticModels.filter((m) => !dbNames.has(m.name)),
+        ];
+        return merged;
+      })()
+    : staticModels;
+  const filteredModels = models.filter((m) => m.name.toLowerCase().includes(modelSearch.toLowerCase()));
 
   // V1: years still come from static dataset (until we start storing year ranges per model/generation)
   const years = getYearsForModel(brand, model, brandModelType);
