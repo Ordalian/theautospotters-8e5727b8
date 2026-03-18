@@ -139,9 +139,14 @@ const Landing = () => {
           <p className="text-muted-foreground text-sm text-center max-w-sm slogan-tagline">
             {t.landing_tagline as string}
           </p>
-          <Button asChild size="lg">
-            <Link to="/auth">{t.landing_try_me as string}</Link>
-          </Button>
+          <div className="flex gap-3">
+            <Button asChild size="lg">
+              <Link to="/auth">{t.landing_try_me as string}</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/tryout">{t.tryout_button as string}</Link>
+            </Button>
+          </div>
           <Link
             to="/legal"
             className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 mt-2"
