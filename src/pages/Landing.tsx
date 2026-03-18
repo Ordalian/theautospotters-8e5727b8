@@ -83,9 +83,14 @@ const Landing = () => {
           <p className="mt-3 text-muted-foreground text-center max-w-md text-lg slogan-tagline">
             {t.landing_tagline as string}
           </p>
-          <Button asChild size="lg" className="mt-8 gap-2">
-            <Link to="/auth">{t.landing_connect as string}</Link>
-          </Button>
+          <div className="flex gap-3 mt-8">
+            <Button asChild size="lg">
+              <Link to="/auth">{t.landing_connect as string}</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/tryout">{t.tryout_button as string}</Link>
+            </Button>
+          </div>
           <p className="mt-6 text-xs text-muted-foreground/80">
             {t.landing_scroll_hint as string}
           </p>
