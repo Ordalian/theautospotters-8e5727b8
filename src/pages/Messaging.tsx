@@ -263,7 +263,7 @@ const Messaging = () => {
             <p className="text-xs text-muted-foreground flex items-center gap-1">par {selectedTopic.username || t.anonymous as string} <UserRoleBadge role={selectedTopic.role} isPremium={selectedTopic.is_premium} /></p>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-3 relative z-10">
+        <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-3 relative z-10">
           <div className="rounded-xl border border-primary/20 bg-card/90 p-4">
             <div className="flex items-center justify-between mb-1 flex-wrap gap-x-2 gap-y-1">
               <div className="flex items-center gap-1.5 flex-wrap">
