@@ -476,6 +476,75 @@ export type Database = {
         }
         Relationships: []
       }
+      game_cards: {
+        Row: {
+          adaptability: number
+          archetype: string
+          brand: string
+          hp: number
+          id: string
+          image_url: string | null
+          model: string
+          name: string
+          power: number
+          rarity: string
+          resilience: number
+          speed: number
+        }
+        Insert: {
+          adaptability: number
+          archetype: string
+          brand: string
+          hp: number
+          id?: string
+          image_url?: string | null
+          model: string
+          name: string
+          power: number
+          rarity: string
+          resilience: number
+          speed: number
+        }
+        Update: {
+          adaptability?: number
+          archetype?: string
+          brand?: string
+          hp?: number
+          id?: string
+          image_url?: string | null
+          model?: string
+          name?: string
+          power?: number
+          rarity?: string
+          resilience?: number
+          speed?: number
+        }
+        Relationships: []
+      }
+      garage_groups: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_chat_members: {
         Row: {
           chat_id: string
@@ -561,75 +630,6 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           title?: string
-        }
-        Relationships: []
-      }
-      game_cards: {
-        Row: {
-          adaptability: number
-          archetype: string
-          brand: string
-          hp: number
-          id: string
-          image_url: string | null
-          model: string
-          name: string
-          power: number
-          rarity: string
-          resilience: number
-          speed: number
-        }
-        Insert: {
-          adaptability: number
-          archetype: string
-          brand: string
-          hp: number
-          id?: string
-          image_url?: string | null
-          model: string
-          name: string
-          power: number
-          rarity: string
-          resilience: number
-          speed: number
-        }
-        Update: {
-          adaptability?: number
-          archetype?: string
-          brand?: string
-          hp?: number
-          id?: string
-          image_url?: string | null
-          model?: string
-          name?: string
-          power?: number
-          rarity?: string
-          resilience?: number
-          speed?: number
-        }
-        Relationships: []
-      }
-      garage_groups: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          sort_order: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          sort_order?: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          sort_order?: number
-          user_id?: string
         }
         Relationships: []
       }
@@ -1389,6 +1389,14 @@ export type Database = {
       }
       is_blacklisted: {
         Args: { uid_a: string; uid_b: string }
+        Returns: boolean
+      }
+      is_group_chat_member: {
+        Args: { p_chat_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_group_chat_owner: {
+        Args: { p_chat_id: string; p_user_id: string }
         Returns: boolean
       }
       is_staff: { Args: { p_user_id: string }; Returns: boolean }
