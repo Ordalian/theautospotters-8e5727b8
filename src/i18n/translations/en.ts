@@ -866,6 +866,36 @@ const en: Translations = {
   autospotter_unlimited: "unlimited analyses",
   autospotter_needs_coins: (n: number) => `${n} coins needed for this analysis`,
   autospotter_coin_deducted: (n: number) => `${n} coins deducted`,
+
+  // Tryout
+  tryout_button: "Temporary try",
+  tryout_title: "Temporary try",
+  tryout_heading: "Try the app",
+  tryout_subtitle: "Access all features for free for 1 hour.",
+  tryout_full_access: "Full access",
+  tryout_full_access_desc: "All features available: garage, cards, messaging, friends...",
+  tryout_time_limit: "Limited to 1 hour",
+  tryout_time_limit_desc: "Your session expires automatically after 1 hour.",
+  tryout_data_erased: "Data erased",
+  tryout_data_erased_desc: "All your data is deleted when you leave the site or the session expires.",
+  tryout_warning: "No data will be kept. Create a real account to save your spots.",
+  tryout_proceed: "Start the trial",
+  tryout_have_account: "Already have an account?",
+  tryout_started: "Trial started! You have 1 hour.",
+  tryout_expired: "Your trial session has expired.",
+
+  // Blocking
+  block_user: "Block a user",
+  block_user_placeholder: "Username to block...",
+  block_user_success: "User blocked",
+  block_user_error: "Error blocking user",
+  unblock_user: "Unblock",
+  unblock_user_success: "User unblocked",
+  blocked_users: "Blocked users",
+  no_blocked_users: "No blocked users",
+
+  // Friends search
+  friends_search_placeholder: "Search a friend...",
 };
 
 export default en;

@@ -868,6 +868,36 @@ const fr: Translations = {
   autospotter_unlimited: "analyses illimitées",
   autospotter_needs_coins: (n: number) => `${n} pièces nécessaires pour cette analyse`,
   autospotter_coin_deducted: (n: number) => `${n} pièces déduites`,
+
+  // Tryout
+  tryout_button: "Essai temporaire",
+  tryout_title: "Essai temporaire",
+  tryout_heading: "Testez l'application",
+  tryout_subtitle: "Accédez à toutes les fonctionnalités gratuitement pendant 1 heure.",
+  tryout_full_access: "Accès complet",
+  tryout_full_access_desc: "Toutes les fonctionnalités sont disponibles : garage, cartes, messagerie, amis...",
+  tryout_time_limit: "Limité à 1 heure",
+  tryout_time_limit_desc: "Votre session expire automatiquement après 1 heure.",
+  tryout_data_erased: "Données effacées",
+  tryout_data_erased_desc: "Toutes vos données sont supprimées dès que vous quittez le site ou que la session expire.",
+  tryout_warning: "Aucune donnée ne sera conservée. Créez un vrai compte pour garder vos spots.",
+  tryout_proceed: "Commencer l'essai",
+  tryout_have_account: "Vous avez déjà un compte ?",
+  tryout_started: "Essai démarré ! Vous avez 1 heure.",
+  tryout_expired: "Votre session d'essai a expiré.",
+
+  // Blocking
+  block_user: "Bloquer un utilisateur",
+  block_user_placeholder: "Nom d'utilisateur à bloquer...",
+  block_user_success: "Utilisateur bloqué",
+  block_user_error: "Erreur lors du blocage",
+  unblock_user: "Débloquer",
+  unblock_user_success: "Utilisateur débloqué",
+  blocked_users: "Utilisateurs bloqués",
+  no_blocked_users: "Aucun utilisateur bloqué",
+
+  // Friends search
+  friends_search_placeholder: "Rechercher un ami...",
 };
 
 export default fr;
