@@ -252,6 +252,15 @@ const Messaging = () => {
     );
   }
 
+  // Group chats view
+  if (showGroupChats) {
+    return (
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}>
+        <GroupChats onBack={() => setShowGroupChats(false)} />
+      </Suspense>
+    );
+  }
+
   // Reply thread view
   if (selectedTopic) {
     return (
