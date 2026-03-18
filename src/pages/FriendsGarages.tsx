@@ -262,6 +262,8 @@ const FriendsGarages = () => {
     toast.success(t.unblock_user_success as string);
     fetchBlockedUsers();
   };
+
+  useEffect(() => {
     if (!lastDeliveryAt) return;
     const end = new Date(lastDeliveryAt).getTime() + DELIVERY_COOLDOWN_MS;
     if (end <= Date.now()) return;
