@@ -8,7 +8,7 @@ import {
   ArrowLeft, Shield, ShieldOff, Loader2, Search, BarChart3,
   Users, MessageSquare, Trash2, ChevronRight, Send, X, MapPin, Gem,
   Plus, ChevronDown, ChevronUp, Eye, EyeOff, UserPlus, Flag, UserX,
-  Ban, CheckCircle2, AlertTriangle,
+  Ban, CheckCircle2, AlertTriangle, Car,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
