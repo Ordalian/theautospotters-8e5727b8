@@ -142,7 +142,7 @@ const FriendsGarages = () => {
   const [coinSendAmount, setCoinSendAmount] = useState("");
   const [coinSending, setCoinSending] = useState(false);
   const [friendSearchFilter, setFriendSearchFilter] = useState("");
-  const [friendsOpen, setFriendsOpen] = useState(true);
+  const [friendsOpen, setFriendsOpen] = useState(false);
   // Block state
   const [blockUsername, setBlockUsername] = useState("");
   const [blocking, setBlocking] = useState(false);
