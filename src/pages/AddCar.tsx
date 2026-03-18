@@ -143,7 +143,101 @@ const AddCar = () => {
   const vehicleType = validVehicleTypes.includes(vehicleTypeParam) ? vehicleTypeParam : "car";
   const isMiniature = vehicleType === "hot_wheels";
   // Miniatures: "marque" = car brands (Renault, Peugeot…); fabricant (Hot Wheels, etc.) stored in miniature_maker
-  const brandsForType = isMiniature ? getBrandsForVehicleType("car") : getBrandsForVehicleType(vehicleType);
+  const brandModelType = isMiniature ? "car" : vehicleType;
+
+  // ─── Vehicle catalog (DB) — progressive enrichment ───
+  const [catalogMakes, setCatalogMakes] = useState<{ id: string; name: string }[]>([]);
+  const [catalogModels, setCatalogModels] = useState<{ id: string; name: string }[]>([]);
+  const [catalogGenerations, setCatalogGenerations] = useState<string[]>([]);
+  const [loadingCatalogMakes, setLoadingCatalogMakes] = useState(false);
+  const [loadingCatalogModels, setLoadingCatalogModels] = useState(false);
+  const [loadingCatalogGenerations, setLoadingCatalogGenerations] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadMakes() {
+      setLoadingCatalogMakes(true);
+      try {
+        const { data } = await supabase
+          .from("vehicle_makes" as any)
+          .select("id,name")
+          .eq("vehicle_type", brandModelType)
+          .order("name", { ascending: true });
+        if (!cancelled) setCatalogMakes((data as any[] | null)?.map((m) => ({ id: m.id, name: m.name })) ?? []);
+      } catch {
+        if (!cancelled) setCatalogMakes([]);
+      } finally {
+        if (!cancelled) setLoadingCatalogMakes(false);
+      }
+    }
+    loadMakes();
+    return () => { cancelled = true; };
+  }, [brandModelType]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadModels() {
+      setCatalogModels([]);
+      if (!brand) return;
+      const makeId = catalogMakes.find((m) => m.name === brand)?.id;
+      if (!makeId) return;
+      setLoadingCatalogModels(true);
+      try {
+        const { data } = await supabase
+          .from("vehicle_models" as any)
+          .select("id,name")
+          .eq("make_id", makeId)
+          .order("name", { ascending: true });
+        if (!cancelled) setCatalogModels((data as any[] | null)?.map((m) => ({ id: m.id, name: m.name })) ?? []);
+      } catch {
+        if (!cancelled) setCatalogModels([]);
+      } finally {
+        if (!cancelled) setLoadingCatalogModels(false);
+      }
+    }
+    loadModels();
+    return () => { cancelled = true; };
+  }, [brand, catalogMakes]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadGenerations() {
+      setCatalogGenerations([]);
+      if (!brand || !model) return;
+      const makeId = catalogMakes.find((m) => m.name === brand)?.id;
+      const modelId = makeId ? catalogModels.find((m) => m.name === model)?.id : undefined;
+      if (!modelId) return;
+      setLoadingCatalogGenerations(true);
+      try {
+        // Keep it simple V1: show generation labels that exist for this model (optionally year-matched)
+        let q: any = supabase
+          .from("vehicle_generations" as any)
+          .select("name,start_year,end_year")
+          .eq("model_id", modelId)
+          .order("created_at", { ascending: false });
+        const selectedYear = year ? parseInt(year) : null;
+        if (selectedYear) {
+          q = q.or(`start_year.is.null,start_year.lte.${selectedYear}`);
+        }
+        const { data } = await q;
+        const opts = (data as any[] | null)
+          ?.map((g) => (g.name ? String(g.name) : null))
+          .filter(Boolean) as string[] | undefined;
+        if (!cancelled) setCatalogGenerations(Array.from(new Set(opts ?? [])).slice(0, 20));
+      } catch {
+        if (!cancelled) setCatalogGenerations([]);
+      } finally {
+        if (!cancelled) setLoadingCatalogGenerations(false);
+      }
+    }
+    loadGenerations();
+    return () => { cancelled = true; };
+  }, [brand, model, year, catalogMakes, catalogModels]);
+
+  const useDbCatalog = catalogMakes.length > 0;
+  const brandsForType = useDbCatalog
+    ? (catalogMakes.map((m) => ({ name: m.name, models: [] })) as any)
+    : getBrandsForVehicleType(brandModelType);
 
   const MINIATURE_MAKERS = ["Hot Wheels", "Majorette", "Matchbox"] as const;
   const [fabricant, setFabricant] = useState("");
@@ -152,12 +246,12 @@ const AddCar = () => {
     b.name.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
-  const brandModelType = isMiniature ? "car" : vehicleType;
-  const models = getModelsForBrand(brand, brandModelType);
-  const filteredModels = models.filter((m) =>
-    m.name.toLowerCase().includes(modelSearch.toLowerCase())
-  );
+  const models = useDbCatalog
+    ? (catalogModels.map((m) => ({ name: m.name, years: [1900, 2026] as [number, number] })) as any)
+    : getModelsForBrand(brand, brandModelType);
+  const filteredModels = models.filter((m: any) => m.name.toLowerCase().includes(modelSearch.toLowerCase()));
 
+  // V1: years still come from static dataset (until we start storing year ranges per model/generation)
   const years = getYearsForModel(brand, model, brandModelType);
 
   // Reset model/year when brand changes
@@ -697,6 +791,26 @@ const AddCar = () => {
             <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               {typeof t.add_car_generation === "string" ? t.add_car_generation : "Génération"}
             </Label>
+            {useDbCatalog && (loadingCatalogGenerations || catalogGenerations.length > 0) && (
+              <div className="flex flex-wrap gap-2">
+                {loadingCatalogGenerations && (
+                  <span className="text-xs text-muted-foreground">Chargement…</span>
+                )}
+                {!loadingCatalogGenerations && catalogGenerations.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGeneration(g)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                      generation === g ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            )}
             <Input
               placeholder="I, II, III, IV, V, VI…"
               value={generation}
