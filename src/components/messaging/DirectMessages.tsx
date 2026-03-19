@@ -146,10 +146,10 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       const missingIds = partnerIds.filter((id) => !friendMap.has(id));
       const extraProfiles = new Map<string, ProfileInfo>();
       if (missingIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles_public")
-          .select("user_id, username, avatar_url, role, is_premium")
-          .in("user_id", missingIds);
+        const { data: profiles, error: profilesError } = await supabase.rpc("get_public_profiles_by_ids", {
+          p_user_ids: missingIds,
+        });
+        if (profilesError) throw profilesError;
         (profiles || []).forEach((p: any) => extraProfiles.set(p.user_id, p));
       }
 
