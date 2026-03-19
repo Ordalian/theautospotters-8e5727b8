@@ -361,13 +361,14 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       } else if (mediaFile && mediaType === "video") {
         video_url = await uploadMedia(mediaFile, "video");
       }
-      await supabase.from("direct_messages").insert({
+      const { error } = await supabase.from("direct_messages").insert({
         sender_id: user!.id,
         receiver_id: selectedFriend!.user_id,
         body: messageBody.trim() || (image_url ? "📷" : video_url ? "🎥" : ""),
         image_url,
         video_url,
       } as any);
+      if (error) throw error;
     },
     onSuccess: () => {
       trackFeature("dm_sent");
