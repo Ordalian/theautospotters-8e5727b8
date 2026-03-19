@@ -74,7 +74,7 @@ interface TicketReply {
   role?: string;
 }
 
-type Tab = "stats" | "users" | "support";
+type Tab = "stats" | "users" | "support" | "review";
 
 // ───── Helpers ─────
 
