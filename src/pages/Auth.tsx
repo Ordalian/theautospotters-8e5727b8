@@ -345,6 +345,30 @@ const Auth = () => {
             )}
           </CardContent>
         </Card>
+
+        {(deferredPrompt || showIOSInstall) && (
+          <div className="text-center">
+            {deferredPrompt ? (
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={async () => {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  if (outcome === "accepted") setDeferredPrompt(null);
+                }}
+              >
+                <Download className="h-4 w-4" />
+                {t.pwa_auth_install_btn as string}
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                <Share className="h-3.5 w-3.5" />
+                {t.pwa_auth_install_ios as string}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
