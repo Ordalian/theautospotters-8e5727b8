@@ -378,8 +378,9 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       clearMedia();
       setUploading(false);
     },
-    onError: () => {
+    onError: (error) => {
       setUploading(false);
+      alert((error as Error)?.message || "Unable to send message.");
     },
   });
 

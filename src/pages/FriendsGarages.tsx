@@ -8,6 +8,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { Button } from "@/components/ui/button";
 import UserRoleBadge from "@/components/UserRoleBadge";
+import SignedCarImage from "@/components/SignedCarImage";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -40,20 +41,17 @@ function FriendSpotsAutoCarousel({ spots }: { spots: FriendCar[] }) {
           key={spot.id}
           className={`absolute inset-0 transition-opacity duration-700 ${i === idx ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
-          {spot.image_url ? (
-            <img
-              src={spot.image_url.includes('/storage/v1/object/public/')
-                ? spot.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
-                : spot.image_url}
-              alt={`${spot.brand} ${spot.model}`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center bg-muted">
-              <Car className="h-8 w-8 text-muted-foreground/40" />
-            </div>
-          )}
+          <SignedCarImage
+            src={spot.image_url}
+            alt={`${spot.brand} ${spot.model}`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            fallback={
+              <div className="h-full w-full flex items-center justify-center bg-muted">
+                <Car className="h-8 w-8 text-muted-foreground/40" />
+              </div>
+            }
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           <div className="absolute bottom-3 left-3 right-3">
             <p className="font-bold text-sm text-foreground">{spot.brand} {spot.model}</p>
