@@ -688,7 +688,21 @@ const AddCar = () => {
                     {b.name}
                   </button>
                 ))}
-                {filteredBrands.length === 0 && (
+                {filteredBrands.length === 0 && brandSearch.trim() && (
+                  <button
+                    onClick={() => {
+                      setBrand(brandSearch.trim());
+                      setBrandSearch(brandSearch.trim());
+                      setShowBrands(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    {typeof t.add_car_use_custom_brand === "function"
+                      ? t.add_car_use_custom_brand(brandSearch.trim())
+                      : `Utiliser "${brandSearch.trim()}"`}
+                  </button>
+                )}
+                {filteredBrands.length === 0 && !brandSearch.trim() && (
                   <div className="px-4 py-3 text-sm text-muted-foreground">{t.add_car_no_brands as string}</div>
                 )}
               </div>
