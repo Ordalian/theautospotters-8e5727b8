@@ -421,7 +421,7 @@ const AddCar = () => {
         edition: edition || null,
         generation: generation.trim() || null,
         finitions: finitions.trim() || null,
-        seen_on_road: isMiniature ? seenOnRoad : seenOnRoad, // for miniature: true = sous blister oui
+        seen_on_road: isMiniature ? seenOnRoad : seenOnRoad,
         parked: isMiniature ? false : parked,
         stock,
         modified,
@@ -440,6 +440,13 @@ const AddCar = () => {
         license_plate: isMiniature ? null : extractedPlateFromPhoto,
         vehicle_type: vehicleType,
         ...(isMiniature ? { miniature_maker: fabricant } : {}),
+        // Self-learning: flag for review if brand or model is unknown
+        ...(isCustomEntry ? {
+          needs_review: true,
+          review_reason: !isBrandKnown
+            ? `new_brand: ${brand}`
+            : `new_model: ${brand} ${model}`,
+        } : {}),
       };
 
       // --- Check if plate matches an owned vehicle for bonus ---
