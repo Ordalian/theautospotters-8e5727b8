@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Car, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
+import SignedCarImage from "@/components/SignedCarImage";
 import { useQuery } from "@tanstack/react-query";
 
 const VEHICLE_TYPES = [
@@ -16,6 +17,11 @@ const VEHICLE_TYPES = [
   { key: "train", icon: TrainFront, gradient: "from-amber-500/20 to-amber-500/5" },
   { key: "hot_wheels", icon: Sparkles, gradient: "from-rose-500/20 to-rose-500/5" },
 ] as const;
+
+const TILE_IMAGE_TRANSFORM = {
+  width: 400,
+  quality: 50,
+} as const;
 
 type VehicleTypeKey = (typeof VEHICLE_TYPES)[number]["key"];
 
@@ -51,7 +57,6 @@ const VehicleTypeMenu = () => {
         if (!images[vt] && (row as any).image_url) {
           images[vt] = (row as any).image_url;
         }
-        // "Tous les véhicules" excludes miniatures (hot_wheels)
         if (vt !== "hot_wheels" && !latestAllImage && (row as any).image_url) {
           latestAllImage = (row as any).image_url;
         }
@@ -65,7 +70,6 @@ const VehicleTypeMenu = () => {
   const counts = typesData.counts;
   const images = typesData.images;
   const latestAllImage = typesData.latestAllImage ?? null;
-  // "Tous les véhicules" = all except miniatures (hot_wheels)
   const total = Object.entries(counts).reduce((sum, [k, v]) => sum + (k === "hot_wheels" ? 0 : v), 0);
 
   if (typesLoading) {
@@ -88,41 +92,41 @@ const VehicleTypeMenu = () => {
       </header>
 
       <main className="flex-1 flex flex-col min-h-0 p-4 max-w-lg mx-auto w-full">
-        {/* Grille 2 colonnes, 4 rangées, répartition égale de l’écran */}
         <div className="grid grid-cols-2 grid-rows-4 gap-3 flex-1 min-h-0">
-          {/* Tuile Tous */}
           <button
             onClick={() => navigate("/garage")}
             className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] min-h-0 shadow-lg shadow-black/20"
           >
+            <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-4">
+              <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg">
+                <Car className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+              </div>
+              <div className="mt-3">
+                <h3 className="font-bold text-sm leading-tight">{t.garage_menu_all as string}</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {total} spot{total !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+
             {latestAllImage ? (
               <>
-                <img
+                <SignedCarImage
                   src={latestAllImage}
                   alt=""
-                  className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+                  className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
+                  loading="lazy"
+                  transform={TILE_IMAGE_TRANSFORM}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent rounded-2xl" />
-                <div className="relative flex h-full w-full flex-col justify-end p-4">
+                <div className="absolute inset-0 flex h-full w-full flex-col justify-end p-4">
                   <h3 className="font-bold text-sm leading-tight text-white drop-shadow-md">{t.garage_menu_all as string}</h3>
                   <p className="text-[10px] text-white/70 mt-0.5">
                     {total} spot{total !== 1 ? "s" : ""}
                   </p>
                 </div>
               </>
-            ) : (
-              <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-4">
-                <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg">
-                  <Car className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                </div>
-                <div className="mt-3">
-                  <h3 className="font-bold text-sm leading-tight">{t.garage_menu_all as string}</h3>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {total} spot{total !== 1 ? "s" : ""}
-                  </p>
-                </div>
-              </div>
-            )}
+            ) : null}
           </button>
 
           {VEHICLE_TYPES.map(({ key, icon: Icon, gradient }) => {
@@ -134,34 +138,36 @@ const VehicleTypeMenu = () => {
                 onClick={() => navigate(`/garage?type=${key}`)}
                 className="relative group overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-1 text-left transition-all hover:scale-[1.02] hover:border-primary/40 active:scale-[0.98] min-h-0 shadow-lg shadow-black/20"
               >
+                <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-4">
+                  <div className={`flex flex-1 items-center justify-center bg-gradient-to-br ${gradient} rounded-lg`}>
+                    <Icon className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                  </div>
+                  <div className="mt-3">
+                    <h3 className="font-bold text-sm leading-tight">{t[LABEL_KEYS[key]] as string}</h3>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {count} spot{count !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+
                 {img ? (
                   <>
-                    <img
+                    <SignedCarImage
                       src={img}
-                      alt={t[LABEL_KEYS[key]] as string}
-                      className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
+                      loading="lazy"
+                      transform={TILE_IMAGE_TRANSFORM}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent rounded-2xl" />
-                    <div className="relative flex h-full w-full flex-col justify-end p-4">
+                    <div className="absolute inset-0 flex h-full w-full flex-col justify-end p-4">
                       <h3 className="font-bold text-sm leading-tight text-white drop-shadow-md">{t[LABEL_KEYS[key]] as string}</h3>
                       <p className="text-[10px] text-white/70 mt-0.5">
                         {count} spot{count !== 1 ? "s" : ""}
                       </p>
                     </div>
                   </>
-                ) : (
-                  <div className="flex h-full w-full flex-col justify-between rounded-xl bg-card/90 p-4">
-                    <div className={`flex flex-1 items-center justify-center bg-gradient-to-br ${gradient} rounded-lg`}>
-                      <Icon className="h-12 w-12 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
-                    </div>
-                    <div className="mt-3">
-                      <h3 className="font-bold text-sm leading-tight">{t[LABEL_KEYS[key]] as string}</h3>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {count} spot{count !== 1 ? "s" : ""}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                ) : null}
               </button>
             );
           })}
