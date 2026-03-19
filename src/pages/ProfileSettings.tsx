@@ -145,6 +145,80 @@ const NotificationPreferences = ({ user }: { user: any }) => {
   );
 };
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+const PwaInstallSection = () => {
+  const { t } = useLanguage();
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const standalone = isStandalone();
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  useEffect(() => {
+    if (standalone) return;
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, [standalone]);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+  };
+
+  // Already installed
+  if (standalone) {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-lg font-bold flex items-center gap-2">
+          <Smartphone className="h-5 w-5 text-primary" />
+          {t.pwa_install_title as string}
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
+          <Check className="h-5 w-5 text-green-500 shrink-0" />
+          <p className="text-sm text-muted-foreground">{t.pwa_settings_installed as string}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-lg font-bold flex items-center gap-2">
+        <Smartphone className="h-5 w-5 text-primary" />
+        {t.pwa_install_title as string}
+      </h2>
+      <p className="text-sm text-muted-foreground">{t.pwa_install_desc as string}</p>
+      {deferredPrompt ? (
+        <Button className="w-full gap-2" onClick={handleInstall}>
+          <Download className="h-4 w-4" />
+          {t.pwa_install_btn as string}
+        </Button>
+      ) : isIOS && isSafari ? (
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <Share className="h-4 w-4 shrink-0" />
+            {t.pwa_install_ios_steps as string}
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-sm text-muted-foreground">{t.pwa_settings_open_browser as string}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProfileSettings = () => {
   const { user } = useAuth();
   const { t, language, setLanguage } = useLanguage();
