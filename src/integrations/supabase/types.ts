@@ -1485,6 +1485,16 @@ export type Database = {
           username: string
         }[]
       }
+      get_public_profiles_by_ids: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          is_premium: boolean
+          role: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_temp_login: {
         Args: { p_code: string }
         Returns: {
@@ -1611,6 +1621,16 @@ export type Database = {
       }
       repair_card: { Args: { p_user_game_card_id: string }; Returns: Json }
       resolve_poi_battle: { Args: { p_battle_id: string }; Returns: Json }
+      search_public_profiles: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          avatar_url: string
+          is_premium: boolean
+          role: string
+          user_id: string
+          username: string
+        }[]
+      }
       send_coins_to_friend: {
         Args: { p_amount: number; p_to_user_id: string }
         Returns: Json
