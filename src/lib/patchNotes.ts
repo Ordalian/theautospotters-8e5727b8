@@ -1,5 +1,5 @@
 // Bump this value each time a new patch note is added
-export const LATEST_PATCH_VERSION = "0.3";
+export const LATEST_PATCH_VERSION = "0.36";
 
 const STORAGE_KEY = "last_seen_patch";
 
