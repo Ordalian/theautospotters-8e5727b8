@@ -45,6 +45,7 @@ interface SpottedCar {
   quality_rating: number | null;
   rarity_rating: number | null;
   garage_group_id: string | null;
+  needs_review: boolean;
 }
 
 interface GarageGroup {
