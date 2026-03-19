@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Car, Globe, Eye, EyeOff, Check, X } from "lucide-react";
+import { Car, Globe, Eye, EyeOff, Check, X, Download, Share } from "lucide-react";
+import { isStandalone } from "@/lib/pushNotifications";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,6 +27,21 @@ const Auth = () => {
   const [tempAccessMode, setTempAccessMode] = useState(false);
   const [tempCode, setTempCode] = useState("");
   const [signupsEnabled, setSignupsEnabled] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showIOSInstall, setShowIOSInstall] = useState(false);
+
+  useEffect(() => {
+    if (isStandalone()) return;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isIOS && isSafari) {
+      setShowIOSInstall(true);
+      return;
+    }
+    const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e as BeforeInstallPromptEvent); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
 
   useEffect(() => {
     supabase.from("app_config").select("value").eq("key", "signups_enabled").maybeSingle().then(({ data }) => {
@@ -324,6 +345,30 @@ const Auth = () => {
             )}
           </CardContent>
         </Card>
+
+        {(deferredPrompt || showIOSInstall) && (
+          <div className="text-center">
+            {deferredPrompt ? (
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={async () => {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  if (outcome === "accepted") setDeferredPrompt(null);
+                }}
+              >
+                <Download className="h-4 w-4" />
+                {t.pwa_auth_install_btn as string}
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                <Share className="h-3.5 w-3.5" />
+                {t.pwa_auth_install_ios as string}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
