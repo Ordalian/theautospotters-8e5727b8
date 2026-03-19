@@ -915,6 +915,8 @@ const fr: Translations = {
   pwa_install_btn: "Installer",
   pwa_install_ios: "Installe Autospotter depuis Safari pour recevoir les notifications.",
   pwa_install_ios_steps: "Appuie sur Partager → Ajouter à l'écran d'accueil",
+  pwa_auth_install_btn: "Installer l'application",
+  pwa_auth_install_ios: "Ouvre cette page dans Safari, puis : Partager → Ajouter à l'écran d'accueil",
 
   // Push notifications
   push_notifications: "Notifications push",
