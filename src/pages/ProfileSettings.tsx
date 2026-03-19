@@ -485,6 +485,9 @@ const ProfileSettings = () => {
         {/* Notification Preferences */}
         <NotificationPreferences user={user} />
 
+        {/* PWA Install */}
+        <PwaInstallSection />
+
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Scale className="h-5 w-5 text-primary" />
