@@ -505,7 +505,47 @@ const ProfileNews = () => {
       </header>
 
       <div className="p-4 max-w-lg mx-auto space-y-5">
-        {/* Patch v0.3.5 — most recent */}
+        {/* Patch v0.36 — most recent */}
+        <div className="flex items-center gap-3 pt-2">
+          <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
+            <Newspaper className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">Patch Note v0.36</h2>
+            <p className="text-xs text-muted-foreground">19 {lang === "fr" ? "mars" : "March"} 2026</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {patchesV036.map((entry, i) => (
+            <Card key={`v036-${i}`} className="border-border/50 bg-card/80 overflow-hidden">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 mt-0.5">
+                    <entry.icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm leading-tight">{entry.title}</h3>
+                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${tagColors[entry.tag]}`}>
+                        {tagLabels[lang][entry.tag]}
+                      </span>
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {entry.details.map((d, j) => (
+                        <li key={j} className="text-xs text-muted-foreground leading-relaxed flex gap-2">
+                          <span className="text-primary/60 mt-1 shrink-0">•</span>
+                          <span>{d}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Patch v0.3.5 */}
         <div className="flex items-center gap-3 pt-2">
           <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
             <Newspaper className="h-5 w-5 text-primary" />
