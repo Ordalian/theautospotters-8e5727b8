@@ -56,7 +56,7 @@ const en: Translations = {
   legal_last_updated: "Last updated: March 2026. For questions, use the in-app support.",
 
   // Auth
-  auth_title: "The Machinery",
+  auth_title: "Autospotter",
   auth_subtitle: "Spot. Collect. Compete.",
   auth_create_account: "Create Account",
   auth_welcome_back: "Welcome Back",

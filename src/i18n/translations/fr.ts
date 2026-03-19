@@ -58,7 +58,7 @@ const fr: Translations = {
   legal_last_updated: "Dernière mise à jour : mars 2026. Pour toute question, utilisez le support in-app.",
 
   // Auth
-  auth_title: "La Machinerie",
+  auth_title: "Autospotter",
   auth_subtitle: "Spottez. Collectionnez. Défiez-vous.",
   auth_create_account: "Créer un compte",
   auth_welcome_back: "Bon retour",
