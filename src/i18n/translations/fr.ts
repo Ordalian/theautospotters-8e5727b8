@@ -24,10 +24,10 @@ const fr: Translations = {
   friend: "Ami",
 
   // App
-  app_name: "La Machinerie",
+  app_name: "Autospotter",
 
   // Landing
-  landing_welcome: "Bienvenue sur La Machinerie",
+  landing_welcome: "Bienvenue sur Autospotter",
   landing_tagline: "Spottez. Collectionnez. Défiez-vous.",
   landing_connect: "Se connecter",
   landing_try_me: "Essayer",
