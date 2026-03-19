@@ -398,6 +398,11 @@ const MyGarage = () => {
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6">
                     <p className="text-white text-xs font-semibold truncate">{car.brand} {car.model}</p>
                   </div>
+                  {car.needs_review && (
+                    <div className="absolute top-1.5 left-1.5 rounded-full bg-amber-500/90 px-2 py-0.5">
+                      <span className="text-[10px] font-bold text-white">⏳</span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
