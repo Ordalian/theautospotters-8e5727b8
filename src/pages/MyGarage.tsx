@@ -463,8 +463,18 @@ const MyGarage = () => {
                       </p>
                     )}
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {getBadges(car).map((badge) => (
-                        <span key={badge} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">{badge}</span>
+                      {getBadges(car).map((badge, i) => (
+                        <span
+                          key={badge}
+                          className={cn(
+                            "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                            i === 0 && car.needs_review
+                              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                              : "bg-secondary text-secondary-foreground"
+                          )}
+                        >
+                          {badge}
+                        </span>
                       ))}
                     </div>
                   </div>
