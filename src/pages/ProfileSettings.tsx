@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe, Scale, Download, Share, Smartphone } from "lucide-react";
+import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe, Scale, Download, Share, Smartphone, MoreVertical } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported, isStandalone } from "@/lib/pushNotifications";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Button } from "@/components/ui/button";
