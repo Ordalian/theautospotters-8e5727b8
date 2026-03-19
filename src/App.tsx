@@ -181,6 +181,8 @@ const App = () => (
           <ThemeProvider>
             <ThemeParticles />
             <LanguageProvider>
+              <SWUpdatePrompt />
+              <InstallPrompt />
               <AnimatedRoutes />
             </LanguageProvider>
           </ThemeProvider>
