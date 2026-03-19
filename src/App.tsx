@@ -98,7 +98,24 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Tab bar removed
+// SW update prompt
+function SWUpdatePrompt() {
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
+  if (!needRefresh) return null;
+  return (
+    <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top-4">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-xl flex items-center justify-between gap-3">
+        <p className="text-sm font-medium">Mise à jour disponible</p>
+        <button
+          onClick={() => updateServiceWorker(true)}
+          className="text-sm font-bold text-primary underline"
+        >
+          Mettre à jour
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
