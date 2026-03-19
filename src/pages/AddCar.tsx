@@ -153,12 +153,14 @@ const AddCar = () => {
   );
 
   const brandModelType = isMiniature ? "car" : vehicleType;
-  const models = getModelsForBrand(brand, brandModelType);
+  const selectedBrand = brand || brandSearch.trim();
+  const selectedModel = model || modelSearch.trim();
+  const models = getModelsForBrand(selectedBrand, brandModelType);
   const filteredModels = models.filter((m) =>
     m.name.toLowerCase().includes(modelSearch.toLowerCase())
   );
 
-  const years = getYearsForModel(brand, model, brandModelType);
+  const years = getYearsForModel(selectedBrand, selectedModel, brandModelType);
 
   // Reset model/year when brand changes
   useEffect(() => {
@@ -221,8 +223,13 @@ const AddCar = () => {
 
   const handleSubmit = async () => {
     if (!user) return;
+    const finalBrand = (brand || brandSearch).trim();
+    const finalModel = (model || modelSearch).trim();
+    const finalYear = year.trim();
+    const finalYearNum = Number.parseInt(finalYear, 10);
+
     if (isMiniature) {
-      if (!fabricant || !brand || !model || !year) {
+      if (!fabricant || !finalBrand || !finalModel || !finalYear || Number.isNaN(finalYearNum)) {
         toast.error(t.add_miniature_fill_required as string);
         return;
       }
@@ -231,7 +238,7 @@ const AddCar = () => {
         return;
       }
     } else {
-      if (!brand || !model || !year) {
+      if (!finalBrand || !finalModel || !finalYear || Number.isNaN(finalYearNum)) {
         toast.error(t.add_car_fill_required as string);
         return;
       }
@@ -338,13 +345,19 @@ const AddCar = () => {
 
       // Calculate ratings
       const qualityRating = calculateQualityRating(photoSource, carCondition);
-      const rarityRating = calculateRarityRating(brand, model);
+      const rarityRating = calculateRarityRating(finalBrand, finalModel);
+      const knownBrand = brandsForType.some((b) => b.name.toLowerCase() === finalBrand.toLowerCase());
+      const knownModel = getModelsForBrand(finalBrand, brandModelType).some((m) => m.name.toLowerCase() === finalModel.toLowerCase());
+      const needsVehicleReview = !knownBrand || !knownModel;
+      const reviewReasons: string[] = [];
+      if (!knownBrand) reviewReasons.push("new_brand");
+      if (!knownModel) reviewReasons.push("new_model");
 
       const insertPayload: Record<string, any> = {
         user_id: user.id,
-        brand,
-        model,
-        year: parseInt(year),
+        brand: finalBrand,
+        model: finalModel,
+        year: finalYearNum,
         edition: edition || null,
         generation: generation.trim() || null,
         finitions: finitions.trim() || null,
@@ -366,6 +379,8 @@ const AddCar = () => {
         rarity_rating: rarityRating.level,
         license_plate: isMiniature ? null : extractedPlateFromPhoto,
         vehicle_type: vehicleType,
+        needs_review: needsVehicleReview,
+        review_reason: needsVehicleReview ? reviewReasons.join(",") : null,
         ...(isMiniature ? { miniature_maker: fabricant } : {}),
       };
 
@@ -473,7 +488,7 @@ const AddCar = () => {
             const list = (spots ?? []) as { id: string; brand: string; model: string }[];
             let best: { id: string; score: number } | null = null;
             for (const s of list) {
-              const score = spotMatchScore(s, brand, model);
+              const score = spotMatchScore(s, finalBrand, finalModel);
               if (score >= 8 && (!best || score > best.score)) best = { id: s.id, score };
             }
             if (best) {
@@ -484,8 +499,12 @@ const AddCar = () => {
             /* ignore auto-link errors */
           }
         }
-        const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(brand, model) : `${brand} ${model}`;
-        toast.success(successMsg);
+        if (insertPayload.needs_review) {
+          toast.success((t.add_car_pending_review as string) || "Vehicule envoye pour validation. Il apparaitra apres approbation.");
+        } else {
+          const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(finalBrand, finalModel) : `${finalBrand} ${finalModel}`;
+          toast.success(successMsg);
+        }
         queryClient.invalidateQueries({ queryKey: ["profile-pinned-self-xp", user?.id] });
         queryClient.invalidateQueries({ queryKey: ["profile-stats-cars", user?.id] });
         navigate(isMiniature ? "/garage?type=hot_wheels" : "/garage");
@@ -621,7 +640,7 @@ const AddCar = () => {
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_car_model as string}</Label>
           <div className="relative">
             <Input
-              placeholder={brand ? (t.add_car_search_model as string) : (t.add_car_select_brand as string)}
+              placeholder={selectedBrand ? (t.add_car_search_model as string) : (t.add_car_select_brand as string)}
               value={modelSearch}
               onChange={(e) => {
                 setModelSearch(e.target.value);
@@ -629,10 +648,10 @@ const AddCar = () => {
                 if (model && e.target.value !== model) setModel("");
               }}
               onFocus={() => setShowModels(true)}
-              disabled={!brand}
+              disabled={!selectedBrand}
               className="bg-secondary/30"
             />
-            {showModels && brand && (
+            {showModels && selectedBrand && (
               <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
                 {filteredModels.map((m) => (
                   <button
@@ -662,17 +681,17 @@ const AddCar = () => {
           <div className="relative">
             <button
               type="button"
-              onClick={() => model && setShowYears(!showYears)}
-              disabled={!model}
+              onClick={() => selectedModel && years.length > 0 && setShowYears(!showYears)}
+              disabled={!selectedModel || years.length === 0}
               className={cn(
                 "flex h-10 w-full items-center justify-between rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm",
-                !model && "opacity-50 cursor-not-allowed",
+                (!selectedModel || years.length === 0) && "opacity-50 cursor-not-allowed",
                 !year && "text-muted-foreground"
               )}
             >
-              {year || (model ? (t.add_car_select_year as string) : (t.add_car_select_model as string))}
+              {year || (selectedModel ? (years.length > 0 ? (t.add_car_select_year as string) : (t.add_car_enter_year as string)) : (t.add_car_select_model as string))}
             </button>
-            {showYears && (
+            {showYears && years.length > 0 && (
               <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
                 {years.map((y) => (
                   <button
@@ -689,6 +708,15 @@ const AddCar = () => {
               </div>
             )}
           </div>
+          <Input
+            type="number"
+            min={1886}
+            max={new Date().getFullYear() + 1}
+            placeholder={t.add_car_enter_year as string}
+            value={year}
+            onChange={(e) => setYear(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))}
+            className="bg-secondary/30"
+          />
         </div>
 
         {/* Generation (e.g. Clio I, II, III, IV, V, VI) */}
@@ -1196,8 +1224,8 @@ const AddCar = () => {
           disabled={
             loading ||
             (isMiniature
-              ? !fabricant || !brand || !model || !year || (!imagePreview && !imageFile)
-              : !brand || !model || !year)
+              ? !fabricant || !(brand || brandSearch).trim() || !(model || modelSearch).trim() || !year || (!imagePreview && !imageFile)
+              : !(brand || brandSearch).trim() || !(model || modelSearch).trim() || !year)
           }
           className="w-full h-12 text-base font-bold rounded-xl"
         >
