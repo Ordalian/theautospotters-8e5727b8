@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,7 @@ import { trackFeature } from "@/hooks/useTrackFeature";
 import { callCarApi } from "@/lib/carApi";
 import { resizeImage, blurPlateInImage, dataUrlToFile } from "@/lib/imageUtils";
 import { getBrandsForVehicleType, getModelsForBrand, getYearsForModel } from "@/data/carData";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -148,19 +149,89 @@ const AddCar = () => {
   const MINIATURE_MAKERS = ["Hot Wheels", "Majorette", "Matchbox"] as const;
   const [fabricant, setFabricant] = useState("");
 
-  const filteredBrands = brandsForType.filter((b) =>
+  // Fetch DB catalog (vehicle_makes + vehicle_models) for self-learning
+  const dbVehicleType = isMiniature ? "car" : vehicleType;
+  const { data: dbMakes = [] } = useQuery({
+    queryKey: ["vehicle-makes", dbVehicleType],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("vehicle_makes")
+        .select("id, name, normalized_name")
+        .eq("vehicle_type", dbVehicleType)
+        .order("name");
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const selectedMakeId = useMemo(() => {
+    if (!brand) return null;
+    const norm = brand.toLowerCase().trim();
+    return dbMakes.find((m) => m.name.toLowerCase().trim() === norm || m.normalized_name === norm)?.id ?? null;
+  }, [brand, dbMakes]);
+
+  const { data: dbModels = [] } = useQuery({
+    queryKey: ["vehicle-models", selectedMakeId],
+    queryFn: async () => {
+      if (!selectedMakeId) return [];
+      const { data } = await supabase
+        .from("vehicle_models")
+        .select("id, name, normalized_name")
+        .eq("make_id", selectedMakeId)
+        .order("name");
+      return data ?? [];
+    },
+    enabled: !!selectedMakeId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Merge static + DB brands (deduplicate by lowercase name)
+  const mergedBrands = useMemo(() => {
+    const seen = new Set(brandsForType.map((b) => b.name.toLowerCase().trim()));
+    const extra = dbMakes
+      .filter((m) => !seen.has(m.name.toLowerCase().trim()))
+      .map((m) => ({ name: m.name, models: [] as { name: string; years: [number, number] }[] }));
+    return [...brandsForType, ...extra].sort((a, b) => a.name.localeCompare(b.name));
+  }, [brandsForType, dbMakes]);
+
+  const filteredBrands = mergedBrands.filter((b) =>
     b.name.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
+  // Check if current brand is "known" (in static or DB list)
+  const isBrandKnown = useMemo(() => {
+    if (!brand) return true;
+    const norm = brand.toLowerCase().trim();
+    return mergedBrands.some((b) => b.name.toLowerCase().trim() === norm);
+  }, [brand, mergedBrands]);
+
   const brandModelType = isMiniature ? "car" : vehicleType;
-  const selectedBrand = brand || brandSearch.trim();
-  const selectedModel = model || modelSearch.trim();
-  const models = getModelsForBrand(selectedBrand, brandModelType);
-  const filteredModels = models.filter((m) =>
+
+  // Merge static + DB models
+  const mergedModels = useMemo(() => {
+    const staticModels = getModelsForBrand(brand, brandModelType);
+    const seen = new Set(staticModels.map((m) => m.name.toLowerCase().trim()));
+    const extra = dbModels
+      .filter((m) => !seen.has(m.name.toLowerCase().trim()))
+      .map((m) => ({ name: m.name, years: [1900, 2026] as [number, number] }));
+    return [...staticModels, ...extra].sort((a, b) => a.name.localeCompare(b.name));
+  }, [brand, brandModelType, dbModels]);
+
+  const filteredModels = mergedModels.filter((m) =>
     m.name.toLowerCase().includes(modelSearch.toLowerCase())
   );
 
-  const years = getYearsForModel(selectedBrand, selectedModel, brandModelType);
+  // Check if current model is "known"
+  const isModelKnown = useMemo(() => {
+    if (!model) return true;
+    const norm = model.toLowerCase().trim();
+    return mergedModels.some((m) => m.name.toLowerCase().trim() === norm);
+  }, [model, mergedModels]);
+
+  // If brand/model are custom, use free text for year
+  const isCustomEntry = !isBrandKnown || !isModelKnown;
+
+  const years = getYearsForModel(brand, model, brandModelType);
 
   // Reset model/year when brand changes
   useEffect(() => {
@@ -223,13 +294,8 @@ const AddCar = () => {
 
   const handleSubmit = async () => {
     if (!user) return;
-    const finalBrand = (brand || brandSearch).trim();
-    const finalModel = (model || modelSearch).trim();
-    const finalYear = year.trim();
-    const finalYearNum = Number.parseInt(finalYear, 10);
-
     if (isMiniature) {
-      if (!fabricant || !finalBrand || !finalModel || !finalYear || Number.isNaN(finalYearNum)) {
+      if (!fabricant || !brand || !model || !year) {
         toast.error(t.add_miniature_fill_required as string);
         return;
       }
@@ -238,7 +304,7 @@ const AddCar = () => {
         return;
       }
     } else {
-      if (!finalBrand || !finalModel || !finalYear || Number.isNaN(finalYearNum)) {
+      if (!brand || !model || !year) {
         toast.error(t.add_car_fill_required as string);
         return;
       }
@@ -345,23 +411,17 @@ const AddCar = () => {
 
       // Calculate ratings
       const qualityRating = calculateQualityRating(photoSource, carCondition);
-      const rarityRating = calculateRarityRating(finalBrand, finalModel);
-      const knownBrand = brandsForType.some((b) => b.name.toLowerCase() === finalBrand.toLowerCase());
-      const knownModel = getModelsForBrand(finalBrand, brandModelType).some((m) => m.name.toLowerCase() === finalModel.toLowerCase());
-      const needsVehicleReview = !knownBrand || !knownModel;
-      const reviewReasons: string[] = [];
-      if (!knownBrand) reviewReasons.push("new_brand");
-      if (!knownModel) reviewReasons.push("new_model");
+      const rarityRating = calculateRarityRating(brand, model);
 
       const insertPayload: Record<string, any> = {
         user_id: user.id,
-        brand: finalBrand,
-        model: finalModel,
-        year: finalYearNum,
+        brand,
+        model,
+        year: parseInt(year),
         edition: edition || null,
         generation: generation.trim() || null,
         finitions: finitions.trim() || null,
-        seen_on_road: isMiniature ? seenOnRoad : seenOnRoad, // for miniature: true = sous blister oui
+        seen_on_road: isMiniature ? seenOnRoad : seenOnRoad,
         parked: isMiniature ? false : parked,
         stock,
         modified,
@@ -379,9 +439,14 @@ const AddCar = () => {
         rarity_rating: rarityRating.level,
         license_plate: isMiniature ? null : extractedPlateFromPhoto,
         vehicle_type: vehicleType,
-        needs_review: needsVehicleReview,
-        review_reason: needsVehicleReview ? reviewReasons.join(",") : null,
         ...(isMiniature ? { miniature_maker: fabricant } : {}),
+        // Self-learning: flag for review if brand or model is unknown
+        ...(isCustomEntry ? {
+          needs_review: true,
+          review_reason: !isBrandKnown
+            ? `new_brand: ${brand}`
+            : `new_model: ${brand} ${model}`,
+        } : {}),
       };
 
       // --- Check if plate matches an owned vehicle for bonus ---
@@ -488,7 +553,7 @@ const AddCar = () => {
             const list = (spots ?? []) as { id: string; brand: string; model: string }[];
             let best: { id: string; score: number } | null = null;
             for (const s of list) {
-              const score = spotMatchScore(s, finalBrand, finalModel);
+              const score = spotMatchScore(s, brand, model);
               if (score >= 8 && (!best || score > best.score)) best = { id: s.id, score };
             }
             if (best) {
@@ -499,12 +564,8 @@ const AddCar = () => {
             /* ignore auto-link errors */
           }
         }
-        if (insertPayload.needs_review) {
-          toast.success((t.add_car_pending_review as string) || "Vehicule envoye pour validation. Il apparaitra apres approbation.");
-        } else {
-          const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(finalBrand, finalModel) : `${finalBrand} ${finalModel}`;
-          toast.success(successMsg);
-        }
+        const successMsg = typeof t.add_car_success === "function" ? t.add_car_success(brand, model) : `${brand} ${model}`;
+        toast.success(successMsg);
         queryClient.invalidateQueries({ queryKey: ["profile-pinned-self-xp", user?.id] });
         queryClient.invalidateQueries({ queryKey: ["profile-stats-cars", user?.id] });
         navigate(isMiniature ? "/garage?type=hot_wheels" : "/garage");
@@ -627,7 +688,21 @@ const AddCar = () => {
                     {b.name}
                   </button>
                 ))}
-                {filteredBrands.length === 0 && (
+                {filteredBrands.length === 0 && brandSearch.trim() && (
+                  <button
+                    onClick={() => {
+                      setBrand(brandSearch.trim());
+                      setBrandSearch(brandSearch.trim());
+                      setShowBrands(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    {typeof t.add_car_use_custom_brand === "function"
+                      ? t.add_car_use_custom_brand(brandSearch.trim())
+                      : `Utiliser "${brandSearch.trim()}"`}
+                  </button>
+                )}
+                {filteredBrands.length === 0 && !brandSearch.trim() && (
                   <div className="px-4 py-3 text-sm text-muted-foreground">{t.add_car_no_brands as string}</div>
                 )}
               </div>
@@ -640,7 +715,7 @@ const AddCar = () => {
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_car_model as string}</Label>
           <div className="relative">
             <Input
-              placeholder={selectedBrand ? (t.add_car_search_model as string) : (t.add_car_select_brand as string)}
+              placeholder={brand ? (t.add_car_search_model as string) : (t.add_car_select_brand as string)}
               value={modelSearch}
               onChange={(e) => {
                 setModelSearch(e.target.value);
@@ -648,10 +723,10 @@ const AddCar = () => {
                 if (model && e.target.value !== model) setModel("");
               }}
               onFocus={() => setShowModels(true)}
-              disabled={!selectedBrand}
+              disabled={!brand}
               className="bg-secondary/30"
             />
-            {showModels && selectedBrand && (
+            {showModels && brand && (
               <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
                 {filteredModels.map((m) => (
                   <button
@@ -667,7 +742,22 @@ const AddCar = () => {
                     {m.name}
                   </button>
                 ))}
-                {filteredModels.length === 0 && (
+                {filteredModels.length === 0 && modelSearch.trim() && (
+                  <button
+                    onClick={() => {
+                      setModel(modelSearch.trim());
+                      setModelSearch(modelSearch.trim());
+                      setShowModels(false);
+                      setYear("");
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    {typeof t.add_car_use_custom_model === "function"
+                      ? t.add_car_use_custom_model(modelSearch.trim())
+                      : `Utiliser "${modelSearch.trim()}"`}
+                  </button>
+                )}
+                {filteredModels.length === 0 && !modelSearch.trim() && (
                   <div className="px-4 py-3 text-sm text-muted-foreground">{t.add_car_no_models as string}</div>
                 )}
               </div>
@@ -679,45 +769,59 @@ const AddCar = () => {
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_car_year as string}</Label>
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => selectedModel && years.length > 0 && setShowYears(!showYears)}
-              disabled={!selectedModel || years.length === 0}
-              className={cn(
-                "flex h-10 w-full items-center justify-between rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm",
-                (!selectedModel || years.length === 0) && "opacity-50 cursor-not-allowed",
-                !year && "text-muted-foreground"
-              )}
-            >
-              {year || (selectedModel ? (years.length > 0 ? (t.add_car_select_year as string) : (t.add_car_enter_year as string)) : (t.add_car_select_model as string))}
-            </button>
-            {showYears && years.length > 0 && (
-              <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
-                {years.map((y) => (
-                  <button
-                    key={y}
-                    onClick={() => {
-                      setYear(String(y));
-                      setShowYears(false);
-                    }}
-                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary/50 transition-colors"
-                  >
-                    {y}
-                  </button>
-                ))}
-              </div>
+            {isCustomEntry || years.length === 0 ? (
+              <Input
+                type="number"
+                placeholder={t.add_car_custom_year_placeholder as string}
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                disabled={!model}
+                className="bg-secondary/30"
+                min={1900}
+                max={2030}
+              />
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => model && setShowYears(!showYears)}
+                  disabled={!model}
+                  className={cn(
+                    "flex h-10 w-full items-center justify-between rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm",
+                    !model && "opacity-50 cursor-not-allowed",
+                    !year && "text-muted-foreground"
+                  )}
+                >
+                  {year || (model ? (t.add_car_select_year as string) : (t.add_car_select_model as string))}
+                </button>
+                {showYears && (
+                  <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
+                    {years.map((y) => (
+                      <button
+                        key={y}
+                        onClick={() => {
+                          setYear(String(y));
+                          setShowYears(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary/50 transition-colors"
+                      >
+                        {y}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
-          <Input
-            type="number"
-            min={1886}
-            max={new Date().getFullYear() + 1}
-            placeholder={t.add_car_enter_year as string}
-            value={year}
-            onChange={(e) => setYear(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))}
-            className="bg-secondary/30"
-          />
         </div>
+
+        {/* Info banner when custom entry */}
+        {isCustomEntry && brand && model && (
+          <div className="flex items-center gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
+            <span className="text-amber-500 text-lg">⏳</span>
+            <p className="text-xs text-muted-foreground">{t.add_car_pending_review_info as string}</p>
+          </div>
+        )}
 
         {/* Generation (e.g. Clio I, II, III, IV, V, VI) */}
         {!isMiniature && (
@@ -1224,8 +1328,8 @@ const AddCar = () => {
           disabled={
             loading ||
             (isMiniature
-              ? !fabricant || !(brand || brandSearch).trim() || !(model || modelSearch).trim() || !year || (!imagePreview && !imageFile)
-              : !(brand || brandSearch).trim() || !(model || modelSearch).trim() || !year)
+              ? !fabricant || !brand || !model || !year || (!imagePreview && !imageFile)
+              : !brand || !model || !year)
           }
           className="w-full h-12 text-base font-bold rounded-xl"
         >

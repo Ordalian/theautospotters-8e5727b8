@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { ArrowLeft, Plus, Car, Loader2, Trash2, FolderPlus, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ interface SpottedCar {
   quality_rating: number | null;
   rarity_rating: number | null;
   garage_group_id: string | null;
+  needs_review: boolean;
 }
 
 interface GarageGroup {
@@ -121,9 +123,8 @@ const MyGarage = () => {
     queryFn: async () => {
       const q = supabase
         .from("cars")
-        .select("id, brand, model, year, generation, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id")
-        .eq("user_id", user!.id)
-        .eq("needs_review", false) as any;
+        .select("id, brand, model, year, generation, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id, needs_review")
+        .eq("user_id", user!.id) as any;
       const q2 = typeFilter ? q.eq("vehicle_type", typeFilter) : q.neq("vehicle_type", "hot_wheels");
       const { data } = await q2.order("created_at", { ascending: false });
       return (data as SpottedCar[]) || [];
@@ -259,6 +260,7 @@ const MyGarage = () => {
 
   const getBadges = (car: SpottedCar) => {
     const badges: string[] = [];
+    if (car.needs_review) badges.push("⏳ " + (t.add_car_pending_review as string));
     if (car.seen_on_road) badges.push("🛣️ Road");
     if (car.parked) badges.push("🅿️ Parked");
     if (car.stock) badges.push("Stock");
@@ -397,6 +399,11 @@ const MyGarage = () => {
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6">
                     <p className="text-white text-xs font-semibold truncate">{car.brand} {car.model}</p>
                   </div>
+                  {car.needs_review && (
+                    <div className="absolute top-1.5 left-1.5 rounded-full bg-amber-500/90 px-2 py-0.5">
+                      <span className="text-[10px] font-bold text-white">⏳</span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -457,8 +464,18 @@ const MyGarage = () => {
                       </p>
                     )}
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {getBadges(car).map((badge) => (
-                        <span key={badge} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">{badge}</span>
+                      {getBadges(car).map((badge, i) => (
+                        <span
+                          key={badge}
+                          className={cn(
+                            "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                            i === 0 && car.needs_review
+                              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                              : "bg-secondary text-secondary-foreground"
+                          )}
+                        >
+                          {badge}
+                        </span>
                       ))}
                     </div>
                   </div>

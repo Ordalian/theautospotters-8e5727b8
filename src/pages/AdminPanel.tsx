@@ -74,7 +74,7 @@ interface TicketReply {
   role?: string;
 }
 
-type Tab = "stats" | "users" | "review" | "support";
+type Tab = "stats" | "users" | "support";
 
 // ───── Helpers ─────
 
@@ -1232,77 +1232,6 @@ function SupportTab() {
   );
 }
 
-interface VehicleReviewItem {
-  car_id: string;
-  user_id: string;
-  brand: string;
-  model: string;
-  year: number;
-  vehicle_type: string;
-  review_reason: string | null;
-  created_at: string;
-}
-
-function VehicleReviewTab() {
-  const qc = useQueryClient();
-  const [approving, setApproving] = useState<string | null>(null);
-
-  const { data: queue = [], isLoading } = useQuery({
-    queryKey: ["admin-vehicle-review-queue"],
-    queryFn: async () => {
-      const data = await rpcAny<VehicleReviewItem[]>("get_vehicle_review_queue", { p_limit: 200 });
-      return data ?? [];
-    },
-    staleTime: 15_000,
-  });
-
-  const handleApprove = async (carId: string) => {
-    setApproving(carId);
-    try {
-      await rpcAny("admin_mark_car_reviewed", { p_car_id: carId });
-      toast.success("Vehicule valide");
-      qc.invalidateQueries({ queryKey: ["admin-vehicle-review-queue"] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Erreur de validation");
-    } finally {
-      setApproving(null);
-    }
-  };
-
-  if (isLoading) {
-    return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
-  }
-
-  if (queue.length === 0) {
-    return <p className="text-center text-sm text-muted-foreground py-12">Aucune validation en attente.</p>;
-  }
-
-  return (
-    <div className="space-y-3">
-      {queue.map((item) => (
-        <div key={item.car_id} className="rounded-xl border border-border/50 bg-card p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-semibold text-sm truncate">{item.brand} {item.model} ({item.year})</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {item.vehicle_type} · {item.review_reason || "needs_review"} · {formatDate(item.created_at)}
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="shrink-0"
-              disabled={approving === item.car_id}
-              onClick={() => handleApprove(item.car_id)}
-            >
-              {approving === item.car_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Valider"}
-            </Button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ───── Main Admin Panel ─────
 
 const AdminPanel = () => {
@@ -1331,7 +1260,6 @@ const AdminPanel = () => {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "stats", label: "Stats", icon: <BarChart3 className="h-4 w-4" /> },
     { id: "users", label: "Utilisateurs", icon: <Users className="h-4 w-4" /> },
-    { id: "review", label: "Validations", icon: <CheckCircle2 className="h-4 w-4" /> },
     { id: "support", label: "Support", icon: <MessageSquare className="h-4 w-4" /> },
   ];
 
@@ -1365,7 +1293,6 @@ const AdminPanel = () => {
       <div className="p-4 max-w-2xl mx-auto">
         {tab === "stats" && <StatsTab />}
         {tab === "users" && <UsersTab />}
-        {tab === "review" && <VehicleReviewTab />}
         {tab === "support" && <SupportTab />}
       </div>
     </div>
