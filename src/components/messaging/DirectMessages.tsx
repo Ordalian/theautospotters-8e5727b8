@@ -406,12 +406,11 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   const { data: searchResults = [], isLoading: searchLoading } = useQuery({
     queryKey: ["dm_search_users", debouncedSearch],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles_public")
-        .select("user_id, username, avatar_url, role, is_premium")
-        .neq("user_id", user!.id)
-        .ilike("username", `%${debouncedSearch}%`)
-        .limit(15);
+      const { data, error } = await supabase.rpc("search_public_profiles", {
+        p_query: debouncedSearch,
+        p_limit: 15,
+      });
+      if (error) throw error;
       return (data || []) as ProfileInfo[];
     },
     enabled: !!user && debouncedSearch.length >= 2,
