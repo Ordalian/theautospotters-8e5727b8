@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Download, Share, Smartphone } from "lucide-react";
+import { X, Download, Share, Smartphone, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { isStandalone } from "@/lib/pushNotifications";
@@ -9,21 +9,29 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+const isFirefox = () => /firefox/i.test(navigator.userAgent);
+const isIOSSafari = () =>
+  /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+  !(window as any).MSStream &&
+  /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
 export default function InstallPrompt() {
   const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
+  const [showManualPrompt, setShowManualPrompt] = useState<"ios" | "firefox" | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (isStandalone()) return;
     if (localStorage.getItem("pwa-install-dismissed")) return;
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isIOSSafari()) {
+      setShowManualPrompt("ios");
+      return;
+    }
 
-    if (isIOS && isSafari) {
-      setShowIOSPrompt(true);
+    if (isFirefox()) {
+      setShowManualPrompt("firefox");
       return;
     }
 
@@ -48,11 +56,11 @@ export default function InstallPrompt() {
   const handleDismiss = () => {
     setDismissed(true);
     setDeferredPrompt(null);
-    setShowIOSPrompt(false);
+    setShowManualPrompt(null);
     localStorage.setItem("pwa-install-dismissed", "1");
   };
 
-  if (dismissed || (!deferredPrompt && !showIOSPrompt)) return null;
+  if (dismissed || (!deferredPrompt && !showManualPrompt)) return null;
 
   return (
     <div className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-sm">
@@ -63,14 +71,20 @@ export default function InstallPrompt() {
         <div className="flex-1 min-w-0">
           <p className="font-bold text-sm truncate">{t.pwa_install_title as string}</p>
           <p className="text-xs text-muted-foreground line-clamp-1">
-            {showIOSPrompt
+            {showManualPrompt === "ios"
               ? (t.pwa_install_ios as string)
-              : (t.pwa_install_desc as string)}
+              : showManualPrompt === "firefox"
+                ? (t.pwa_install_firefox as string)
+                : (t.pwa_install_desc as string)}
           </p>
         </div>
-        {showIOSPrompt ? (
+        {showManualPrompt === "ios" ? (
           <p className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
             <Share className="h-3.5 w-3.5" />
+          </p>
+        ) : showManualPrompt === "firefox" ? (
+          <p className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
+            <MoreVertical className="h-3.5 w-3.5" />
           </p>
         ) : (
           <Button size="sm" className="gap-1.5 shrink-0" onClick={handleInstall}>
@@ -82,11 +96,19 @@ export default function InstallPrompt() {
           <X className="h-4 w-4" />
         </button>
       </div>
-      {showIOSPrompt && (
+      {showManualPrompt === "ios" && (
         <div className="px-4 pb-3 -mt-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
             <Share className="h-3.5 w-3.5 shrink-0" />
             {t.pwa_install_ios_steps as string}
+          </p>
+        </div>
+      )}
+      {showManualPrompt === "firefox" && (
+        <div className="px-4 pb-3 -mt-1">
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <MoreVertical className="h-3.5 w-3.5 shrink-0" />
+            {t.pwa_install_firefox_steps as string}
           </p>
         </div>
       )}

@@ -156,6 +156,7 @@ const PwaInstallSection = () => {
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isFF = /firefox/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (standalone) return;
@@ -207,6 +208,13 @@ const PwaInstallSection = () => {
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             <Share className="h-4 w-4 shrink-0" />
             {t.pwa_install_ios_steps as string}
+          </p>
+        </div>
+      ) : isFF ? (
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <MoreVertical className="h-4 w-4 shrink-0" />
+            {t.pwa_install_firefox_steps as string}
           </p>
         </div>
       ) : (
