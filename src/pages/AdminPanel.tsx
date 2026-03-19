@@ -1294,6 +1294,7 @@ const AdminPanel = () => {
       <div className="p-4 max-w-2xl mx-auto">
         {tab === "stats" && <StatsTab />}
         {tab === "users" && <UsersTab />}
+        {tab === "review" && <ReviewTab />}
         {tab === "support" && <SupportTab />}
       </div>
     </div>
