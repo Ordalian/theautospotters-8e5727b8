@@ -48,7 +48,7 @@ const en: Translations = {
   // Legal
   legal_title: "Legal",
   legal_copyright_title: "Copyright",
-  legal_copyright_text: "© 2026 The Machinery. All rights reserved.\n\nThe application, its design, and all related content are protected by intellectual property laws. No part of this application may be reproduced, distributed, or used without prior written permission from the owner.",
+  legal_copyright_text: "© 2026 Autospotter. All rights reserved.\n\nThe application, its design, and all related content are protected by intellectual property laws. No part of this application may be reproduced, distributed, or used without prior written permission from the owner.",
   legal_privacy_title: "Privacy & data protection",
   legal_privacy_text: "We collect and process the following data to operate the application:\n\n• Account data: email address, username, profile preferences.\n• Usage data: cars you add, cards you collect, messages you send, and in-app actions.\n• Technical data: connection and usage analytics (e.g. time spent on pages) to improve the service.\n\nData is stored on secure servers (Supabase). We do not sell your data to third parties.\n\nYou have the right to access, rectify, or delete your personal data. To exercise these rights, use the in-app support or contact the owner. You may also have the right to data portability and to lodge a complaint with a supervisory authority.",
   legal_terms_title: "Terms of use",
