@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.manage-temp-users]
 verify_jwt = false
+
+[functions.manage-tryout]
+verify_jwt = false
+
+[functions.web-push-subscribe]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false

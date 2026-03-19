@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe, Scale } from "lucide-react";
+import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,9 @@ const NotificationPreferences = ({ user }: { user: any }) => {
   const [notifyChannels, setNotifyChannels] = useState(true);
   const [notifyDms, setNotifyDms] = useState(true);
   const [loaded, setLoaded] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const pushSupported = isPushSupported();
 
   useEffect(() => {
     if (!user) return;
@@ -56,12 +60,32 @@ const NotificationPreferences = ({ user }: { user: any }) => {
       }
       setLoaded(true);
     });
+    // Check push subscription status
+    isPushSubscribed().then(setPushEnabled);
   }, [user]);
 
   const toggle = async (field: "notify_channels" | "notify_dms", value: boolean) => {
     if (field === "notify_channels") setNotifyChannels(value);
     else setNotifyDms(value);
     await supabase.from("profiles").update({ [field]: value } as any).eq("user_id", user.id);
+  };
+
+  const handlePushToggle = async (enable: boolean) => {
+    setPushLoading(true);
+    try {
+      if (enable) {
+        const ok = await subscribeToPush();
+        setPushEnabled(ok);
+        if (!ok) toast.error(t.push_not_supported as string);
+      } else {
+        await unsubscribeFromPush();
+        setPushEnabled(false);
+      }
+    } catch {
+      toast.error(t.error as string);
+    } finally {
+      setPushLoading(false);
+    }
   };
 
   if (!loaded) return null;
@@ -73,6 +97,24 @@ const NotificationPreferences = ({ user }: { user: any }) => {
         {t.notif_settings_title as string}
       </h2>
       <div className="space-y-3">
+        {pushSupported && (
+          <label className="flex items-center justify-between rounded-xl border border-border bg-card p-3 cursor-pointer">
+            <div>
+              <p className="text-sm font-medium">{t.push_notifications as string}</p>
+              <p className="text-xs text-muted-foreground">{t.push_notifications_desc as string}</p>
+            </div>
+            {pushLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            ) : (
+              <input
+                type="checkbox"
+                checked={pushEnabled}
+                onChange={(e) => handlePushToggle(e.target.checked)}
+                className="h-5 w-5 accent-[hsl(var(--primary))] rounded"
+              />
+            )}
+          </label>
+        )}
         <label className="flex items-center justify-between rounded-xl border border-border bg-card p-3 cursor-pointer">
           <div>
             <p className="text-sm font-medium">{t.notif_channels as string}</p>

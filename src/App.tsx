@@ -10,11 +10,13 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
-// BottomTabBar removed
 import ThemeParticles from "@/components/ThemeParticles";
+import InstallPrompt from "@/components/InstallPrompt";
 import { Loader2 } from "lucide-react";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
+import { useRegisterSW } from "virtual:pwa-register/react";
+import { toast } from "sonner";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
@@ -96,7 +98,24 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Tab bar removed
+// SW update prompt
+function SWUpdatePrompt() {
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
+  if (!needRefresh) return null;
+  return (
+    <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top-4">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-xl flex items-center justify-between gap-3">
+        <p className="text-sm font-medium">Mise à jour disponible</p>
+        <button
+          onClick={() => updateServiceWorker(true)}
+          className="text-sm font-bold text-primary underline"
+        >
+          Mettre à jour
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -162,6 +181,8 @@ const App = () => (
           <ThemeProvider>
             <ThemeParticles />
             <LanguageProvider>
+              <SWUpdatePrompt />
+              <InstallPrompt />
               <AnimatedRoutes />
             </LanguageProvider>
           </ThemeProvider>
