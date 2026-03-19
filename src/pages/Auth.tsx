@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Car, Globe, Eye, EyeOff, Check, X } from "lucide-react";
+import { Car, Globe, Eye, EyeOff, Check, X, Download, Share } from "lucide-react";
+import { isStandalone } from "@/lib/pushNotifications";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
