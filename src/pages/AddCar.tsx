@@ -149,15 +149,87 @@ const AddCar = () => {
   const MINIATURE_MAKERS = ["Hot Wheels", "Majorette", "Matchbox"] as const;
   const [fabricant, setFabricant] = useState("");
 
-  const filteredBrands = brandsForType.filter((b) =>
+  // Fetch DB catalog (vehicle_makes + vehicle_models) for self-learning
+  const dbVehicleType = isMiniature ? "car" : vehicleType;
+  const { data: dbMakes = [] } = useQuery({
+    queryKey: ["vehicle-makes", dbVehicleType],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("vehicle_makes")
+        .select("id, name, normalized_name")
+        .eq("vehicle_type", dbVehicleType)
+        .order("name");
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const selectedMakeId = useMemo(() => {
+    if (!brand) return null;
+    const norm = brand.toLowerCase().trim();
+    return dbMakes.find((m) => m.name.toLowerCase().trim() === norm || m.normalized_name === norm)?.id ?? null;
+  }, [brand, dbMakes]);
+
+  const { data: dbModels = [] } = useQuery({
+    queryKey: ["vehicle-models", selectedMakeId],
+    queryFn: async () => {
+      if (!selectedMakeId) return [];
+      const { data } = await supabase
+        .from("vehicle_models")
+        .select("id, name, normalized_name")
+        .eq("make_id", selectedMakeId)
+        .order("name");
+      return data ?? [];
+    },
+    enabled: !!selectedMakeId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Merge static + DB brands (deduplicate by lowercase name)
+  const mergedBrands = useMemo(() => {
+    const seen = new Set(brandsForType.map((b) => b.name.toLowerCase().trim()));
+    const extra = dbMakes
+      .filter((m) => !seen.has(m.name.toLowerCase().trim()))
+      .map((m) => ({ name: m.name, models: [] as { name: string; years: [number, number] }[] }));
+    return [...brandsForType, ...extra].sort((a, b) => a.name.localeCompare(b.name));
+  }, [brandsForType, dbMakes]);
+
+  const filteredBrands = mergedBrands.filter((b) =>
     b.name.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
+  // Check if current brand is "known" (in static or DB list)
+  const isBrandKnown = useMemo(() => {
+    if (!brand) return true;
+    const norm = brand.toLowerCase().trim();
+    return mergedBrands.some((b) => b.name.toLowerCase().trim() === norm);
+  }, [brand, mergedBrands]);
+
   const brandModelType = isMiniature ? "car" : vehicleType;
-  const models = getModelsForBrand(brand, brandModelType);
-  const filteredModels = models.filter((m) =>
+
+  // Merge static + DB models
+  const mergedModels = useMemo(() => {
+    const staticModels = getModelsForBrand(brand, brandModelType);
+    const seen = new Set(staticModels.map((m) => m.name.toLowerCase().trim()));
+    const extra = dbModels
+      .filter((m) => !seen.has(m.name.toLowerCase().trim()))
+      .map((m) => ({ name: m.name, years: [1900, 2026] as [number, number] }));
+    return [...staticModels, ...extra].sort((a, b) => a.name.localeCompare(b.name));
+  }, [brand, brandModelType, dbModels]);
+
+  const filteredModels = mergedModels.filter((m) =>
     m.name.toLowerCase().includes(modelSearch.toLowerCase())
   );
+
+  // Check if current model is "known"
+  const isModelKnown = useMemo(() => {
+    if (!model) return true;
+    const norm = model.toLowerCase().trim();
+    return mergedModels.some((m) => m.name.toLowerCase().trim() === norm);
+  }, [model, mergedModels]);
+
+  // If brand/model are custom, use free text for year
+  const isCustomEntry = !isBrandKnown || !isModelKnown;
 
   const years = getYearsForModel(brand, model, brandModelType);
 
