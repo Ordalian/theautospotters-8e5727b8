@@ -1,11 +1,18 @@
 import { ImgHTMLAttributes, ReactNode, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+type SignedCarImageTransform = {
+  width?: number;
+  height?: number;
+  quality?: number;
+};
+
 type SignedCarImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src: string | null;
   bucket?: string;
   fallback?: ReactNode;
   expiresIn?: number;
+  transform?: SignedCarImageTransform;
 };
 
 function extractStoragePath(source: string, bucket: string): string | null {
@@ -21,6 +28,7 @@ function extractStoragePath(source: string, bucket: string): string | null {
       `/storage/v1/object/public/${bucket}/`,
       `/storage/v1/object/sign/${bucket}/`,
       `/storage/v1/render/image/public/${bucket}/`,
+      `/storage/v1/render/image/sign/${bucket}/`,
     ];
 
     for (const marker of markers) {
@@ -43,10 +51,15 @@ export default function SignedCarImage({
   bucket = "car-photos",
   fallback = null,
   expiresIn = 60 * 60,
+  transform,
   onError,
   ...imgProps
 }: SignedCarImageProps) {
   const storagePath = useMemo(() => (src ? extractStoragePath(src, bucket) : null), [src, bucket]);
+  const signedUrlOptions = useMemo(
+    () => (transform ? { transform } : undefined),
+    [transform?.height, transform?.quality, transform?.width]
+  );
   const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -66,7 +79,9 @@ export default function SignedCarImage({
         return;
       }
 
-      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(storagePath, expiresIn);
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(storagePath, expiresIn, signedUrlOptions);
 
       if (cancelled) return;
       if (error || !data?.signedUrl) {
@@ -82,7 +97,7 @@ export default function SignedCarImage({
     return () => {
       cancelled = true;
     };
-  }, [src, storagePath, bucket, expiresIn]);
+  }, [src, storagePath, bucket, expiresIn, signedUrlOptions]);
 
   if (!src || !resolvedSrc || failed) {
     return <>{fallback}</>;
