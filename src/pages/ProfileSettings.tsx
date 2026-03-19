@@ -5,7 +5,6 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe, Scale, Download, Share, Smartphone } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported, isStandalone } from "@/lib/pushNotifications";
-import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
