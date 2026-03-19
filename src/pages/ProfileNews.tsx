@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye, Package, LayoutGrid, Sparkles, Trophy, UserCog, CheckCheck, Globe, Trash2, Scale } from "lucide-react";
+import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye, Package, LayoutGrid, Sparkles, Trophy, UserCog, CheckCheck, Globe, Trash2, Scale, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { markPatchNotesRead } from "@/lib/patchNotes";
