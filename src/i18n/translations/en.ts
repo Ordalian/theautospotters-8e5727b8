@@ -916,6 +916,8 @@ const en: Translations = {
   pwa_install_ios_steps: "Tap Share → Add to Home Screen",
   pwa_auth_install_btn: "Install the app",
   pwa_auth_install_ios: "Open this page in Safari, then: Share → Add to Home Screen",
+  pwa_settings_installed: "The app is already installed on this device.",
+  pwa_settings_open_browser: "Open this page in Chrome or Safari to install the app.",
 
   // Push notifications
   push_notifications: "Push notifications",
