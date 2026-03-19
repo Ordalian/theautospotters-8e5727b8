@@ -769,36 +769,59 @@ const AddCar = () => {
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t.add_car_year as string}</Label>
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => model && setShowYears(!showYears)}
-              disabled={!model}
-              className={cn(
-                "flex h-10 w-full items-center justify-between rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm",
-                !model && "opacity-50 cursor-not-allowed",
-                !year && "text-muted-foreground"
-              )}
-            >
-              {year || (model ? (t.add_car_select_year as string) : (t.add_car_select_model as string))}
-            </button>
-            {showYears && (
-              <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
-                {years.map((y) => (
-                  <button
-                    key={y}
-                    onClick={() => {
-                      setYear(String(y));
-                      setShowYears(false);
-                    }}
-                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary/50 transition-colors"
-                  >
-                    {y}
-                  </button>
-                ))}
-              </div>
+            {isCustomEntry || years.length === 0 ? (
+              <Input
+                type="number"
+                placeholder={t.add_car_custom_year_placeholder as string}
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                disabled={!model}
+                className="bg-secondary/30"
+                min={1900}
+                max={2030}
+              />
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => model && setShowYears(!showYears)}
+                  disabled={!model}
+                  className={cn(
+                    "flex h-10 w-full items-center justify-between rounded-md border border-input bg-secondary/30 px-3 py-2 text-sm",
+                    !model && "opacity-50 cursor-not-allowed",
+                    !year && "text-muted-foreground"
+                  )}
+                >
+                  {year || (model ? (t.add_car_select_year as string) : (t.add_car_select_model as string))}
+                </button>
+                {showYears && (
+                  <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
+                    {years.map((y) => (
+                      <button
+                        key={y}
+                        onClick={() => {
+                          setYear(String(y));
+                          setShowYears(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-secondary/50 transition-colors"
+                      >
+                        {y}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
+
+        {/* Info banner when custom entry */}
+        {isCustomEntry && brand && model && (
+          <div className="flex items-center gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
+            <span className="text-amber-500 text-lg">⏳</span>
+            <p className="text-xs text-muted-foreground">{t.add_car_pending_review_info as string}</p>
+          </div>
+        )}
 
         {/* Generation (e.g. Clio I, II, III, IV, V, VI) */}
         {!isMiniature && (
