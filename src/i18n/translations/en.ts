@@ -22,10 +22,10 @@ const en: Translations = {
   friend: "Friend",
 
   // App
-  app_name: "The Machinery",
+  app_name: "Autospotter",
 
   // Landing
-  landing_welcome: "Welcome to The Machinery",
+  landing_welcome: "Welcome to Autospotter",
   landing_tagline: "Spot. Collect. Compete.",
   landing_connect: "Sign in",
   landing_try_me: "Try me",
