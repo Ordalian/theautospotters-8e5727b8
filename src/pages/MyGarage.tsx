@@ -259,6 +259,7 @@ const MyGarage = () => {
 
   const getBadges = (car: SpottedCar) => {
     const badges: string[] = [];
+    if (car.needs_review) badges.push("⏳ " + (t.add_car_pending_review as string));
     if (car.seen_on_road) badges.push("🛣️ Road");
     if (car.parked) badges.push("🅿️ Parked");
     if (car.stock) badges.push("Stock");
