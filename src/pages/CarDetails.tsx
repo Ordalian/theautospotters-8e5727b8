@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import GoldParticles from "@/components/GoldParticles";
 import { RatingExplainer } from "@/components/RatingExplainer";
+import SignedCarImage from "@/components/SignedCarImage";
 import { CarLikeButton } from "@/components/CarLikeButton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -118,6 +119,7 @@ const CarDetails = () => {
       }, { once: true });
     }
   };
+
   const onSwipeEnd = (clientX: number, clientY: number) => {
     const s = swipeState.current;
     if (!s || !s.isTouch || !carIds || carIds.length < 2) return;
@@ -153,7 +155,7 @@ const CarDetails = () => {
       try {
         const { data, error } = await supabase.from("cars").select("linked_car_id").eq("id", id!).maybeSingle();
         if (error) return null;
-        return (data as any)?.linked_car_id ?? null;
+        return (data as { linked_car_id?: string | null } | null)?.linked_car_id ?? null;
       } catch {
         return null;
       }
@@ -164,7 +166,7 @@ const CarDetails = () => {
 
   const car = useMemo((): CarDetail | null => {
     if (!carRaw) return null;
-    const rawLinked = (carRaw as any)?.linked_car_id ?? null;
+    const rawLinked = (carRaw as { linked_car_id?: string | null })?.linked_car_id ?? null;
     return { ...carRaw, vehicle_type: carRaw.vehicle_type ?? "car", linked_car_id: rawLinked || linkedCarId } as CarDetail;
   }, [carRaw, linkedCarId]);
 
@@ -179,7 +181,7 @@ const CarDetails = () => {
         .select("role")
         .eq("user_id", car.user_id)
         .maybeSingle();
-      return ((data as any)?.role as string) ?? "user";
+      return (data as { role?: string } | null)?.role ?? "user";
     },
     enabled: !!car && !isOwner,
     staleTime: 5 * 60 * 1000,
@@ -187,6 +189,7 @@ const CarDetails = () => {
 
   const canDelete = isOwner || isFounder || (isAdmin && ownerRole === "user");
   const needLinkType = car ? ((car.vehicle_type || "car") === "hot_wheels" ? "spot" : "hot_wheels") : null;
+
   const { data: carsToLink = [] } = useQuery({
     queryKey: ["my-cars-to-link", user?.id, needLinkType, car?.id],
     queryFn: async () => {
@@ -202,7 +205,6 @@ const CarDetails = () => {
           .order("created_at", { ascending: false });
         return (data ?? []) as { id: string; brand: string; model: string; year: number; image_url: string | null; vehicle_type: string }[];
       }
-      // Spots: include vehicle_type in (car, truck, ...) OR vehicle_type is null (legacy rows)
       const { data } = await supabase
         .from("cars")
         .select("id, brand, model, year, image_url, vehicle_type")
@@ -350,12 +352,11 @@ const CarDetails = () => {
     if (!user || !car || car.user_id !== user.id) return;
     setLinking(true);
     try {
-      const { error: e1 } = await supabase.from("cars").update({ linked_car_id: targetId } as any).eq("id", car.id).eq("user_id", user.id);
+      const { error: e1 } = await supabase.from("cars").update({ linked_car_id: targetId } as never).eq("id", car.id).eq("user_id", user.id);
       if (e1) throw e1;
-      const { error: e2 } = await supabase.from("cars").update({ linked_car_id: car.id } as any).eq("id", targetId).eq("user_id", user.id);
+      const { error: e2 } = await supabase.from("cars").update({ linked_car_id: car.id } as never).eq("id", targetId).eq("user_id", user.id);
       if (e2) throw e2;
-      // Award XP for linking a real car and its miniature (atomic increment)
-      await supabase.rpc("recompute_user_total_xp" as any, { p_user_id: user.id });
+      await supabase.rpc("recompute_user_total_xp" as never, { p_user_id: user.id } as never);
       toast.success(t.car_detail_linked as string);
       setLinkDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["car", car.id] });
@@ -363,8 +364,8 @@ const CarDetails = () => {
       queryClient.invalidateQueries({ queryKey: ["car-linked-id", car.id] });
       queryClient.invalidateQueries({ queryKey: ["car-linked-id", targetId] });
       queryClient.invalidateQueries({ queryKey: ["profile-pinned-self-xp-emblem", user.id] });
-    } catch (err: any) {
-      toast.error(err?.message ?? (t.error as string));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : (t.error as string));
     } finally {
       setLinking(false);
     }
@@ -480,8 +481,8 @@ const CarDetails = () => {
       toast.success(t.car_detail_deleted as string);
       queryClient.invalidateQueries({ queryKey: ["my-cars", car.user_id] });
       navigate(returnTo ?? "/garage");
-    } catch (err: any) {
-      toast.error(err?.message || (t.car_detail_delete_error as string));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : (t.car_detail_delete_error as string));
     } finally {
       setDeleting(false);
     }
@@ -558,11 +559,16 @@ const CarDetails = () => {
             onClick={() => { setPhotoIndex(0); setPhotoPopupOpen(true); }}
             className={`w-full h-64 overflow-hidden block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-primary rounded-b-xl relative ${hasLinkedCar ? "ring-2 linked-car-ring ring-offset-2 ring-offset-card shadow-xl" : ""}`}
           >
-            <img
-              src={allPhotoUrls[0] ?? car.image_url ?? ""}
+            <SignedCarImage
+              src={allPhotoUrls[0] ?? car.image_url}
               alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
               className="h-full w-full object-cover"
               loading="lazy"
+              fallback={
+                <div className={`flex h-full w-full items-center justify-center ${hasLinkedCar ? "linked-car-section" : "bg-secondary/20"}`}>
+                  <Car className={`h-20 w-20 ${hasLinkedCar ? "text-primary/30" : "text-muted-foreground/20"}`} />
+                </div>
+              }
             />
             {allPhotoUrls.length > 1 && (
               <span className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1.5 text-xs font-medium text-white backdrop-blur">
@@ -736,7 +742,16 @@ const CarDetails = () => {
                   className="w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 text-left hover:border-primary/40 transition-colors"
                 >
                   {c.image_url ? (
-                    <img src={c.image_url} alt="" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                    <SignedCarImage
+                      src={c.image_url}
+                      alt={`${c.brand} ${c.model}`}
+                      className="h-12 w-12 rounded-lg object-cover shrink-0"
+                      fallback={
+                        <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
+                          <Car className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      }
+                    />
                   ) : (
                     <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0">
                       <Car className="h-6 w-6 text-muted-foreground" />
@@ -808,8 +823,8 @@ const CarDetails = () => {
             onTouchMove={handlePinchMove}
             onTouchEnd={handlePinchEnd}
           >
-            <img
-              src={allPhotoUrls[photoIndex] ?? car.image_url!}
+            <SignedCarImage
+              src={allPhotoUrls[photoIndex] ?? car.image_url}
               alt={car.generation ? `${car.brand} ${car.model} ${car.generation}` : `${car.brand} ${car.model}`}
               className="max-w-full max-h-[90vh] w-auto h-auto object-contain pointer-events-none"
               draggable={false}
@@ -817,6 +832,11 @@ const CarDetails = () => {
                 transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
                 transition: panStart.current || pinchStart.current ? "none" : "transform 0.2s ease-out",
               }}
+              fallback={
+                <div className="flex h-[70vh] w-[70vw] items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-white/70" />
+                </div>
+              }
             />
           </div>
           {allPhotoUrls.length > 1 && (
