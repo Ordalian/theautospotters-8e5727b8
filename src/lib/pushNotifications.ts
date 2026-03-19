@@ -42,7 +42,7 @@ export async function subscribeToPush(): Promise<boolean> {
     const appServerKey = urlBase64ToUint8Array(vapidKey);
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: appServerKey,
+      applicationServerKey: appServerKey.buffer as ArrayBuffer,
     });
 
     const json = subscription.toJSON();
