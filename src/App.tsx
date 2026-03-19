@@ -10,11 +10,13 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
-// BottomTabBar removed
 import ThemeParticles from "@/components/ThemeParticles";
+import InstallPrompt from "@/components/InstallPrompt";
 import { Loader2 } from "lucide-react";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
+import { useRegisterSW } from "virtual:pwa-register/react";
+import { toast } from "sonner";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
