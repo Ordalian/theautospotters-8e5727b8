@@ -31,6 +31,96 @@ const ProfileNews = () => {
 
   useEffect(() => { markPatchNotesRead(); }, []);
 
+  const patchesV036: PatchEntry[] = lang === "fr" ? [
+    {
+      icon: MessageSquare,
+      title: "Messagerie corrigée",
+      details: [
+        "Les messages reçus dans une nouvelle conversation s'affichent désormais correctement dans les demandes de conversation.",
+        "Recherche d'utilisateurs fonctionnelle via des fonctions sécurisées (SECURITY DEFINER).",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Eye,
+      title: "Photos du garage",
+      details: [
+        "Les images de voitures utilisent désormais des URLs signées pour un chargement fiable.",
+        "Fallback automatique si une image ne peut pas être chargée.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Sparkles,
+      title: "Renommage en Autospotter",
+      details: [
+        "L'application s'appelle désormais « Autospotter » partout (landing, auth, mentions légales).",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Users,
+      title: "Essai amélioré",
+      details: [
+        "Les comptes d'essai (tryout) sont automatiquement amis avec les fondateurs et admins.",
+        "Boutons de la landing page empilés verticalement pour un meilleur affichage mobile.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Shield,
+      title: "Correction API AutoSpotter",
+      details: [
+        "Correction de l'erreur 401 sur la fonction de reconnaissance de voiture (edge function car-api).",
+      ],
+      tag: "fix",
+    },
+  ] : [
+    {
+      icon: MessageSquare,
+      title: "Messaging fixed",
+      details: [
+        "Messages received in a new conversation now correctly appear under conversation requests.",
+        "User search now works reliably via secure functions (SECURITY DEFINER).",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Eye,
+      title: "Garage photos",
+      details: [
+        "Car images now use signed URLs for reliable loading.",
+        "Automatic fallback if an image fails to load.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Sparkles,
+      title: "Renamed to Autospotter",
+      details: [
+        "The app is now called \"Autospotter\" everywhere (landing, auth, legal).",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Users,
+      title: "Improved tryout",
+      details: [
+        "Tryout accounts are now automatically friends with founders and admins.",
+        "Landing page buttons stacked vertically for better mobile display.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Shield,
+      title: "AutoSpotter API fix",
+      details: [
+        "Fixed 401 error on the car recognition edge function (car-api).",
+      ],
+      tag: "fix",
+    },
+  ];
+
   const patchesV035: PatchEntry[] = lang === "fr" ? [
     {
       icon: Shield,
