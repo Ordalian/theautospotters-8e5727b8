@@ -918,6 +918,8 @@ const fr: Translations = {
   pwa_install_ios_steps: "Appuie sur Partager → Ajouter à l'écran d'accueil",
   pwa_auth_install_btn: "Installer l'application",
   pwa_auth_install_ios: "Ouvre cette page dans Safari, puis : Partager → Ajouter à l'écran d'accueil",
+  pwa_settings_installed: "L'application est déjà installée sur cet appareil.",
+  pwa_settings_open_browser: "Ouvre cette page dans Chrome ou Safari pour installer l'app.",
 
   // Push notifications
   push_notifications: "Notifications push",
