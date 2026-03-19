@@ -920,6 +920,8 @@ const fr: Translations = {
   pwa_auth_install_ios: "Ouvre cette page dans Safari, puis : Partager → Ajouter à l'écran d'accueil",
   pwa_settings_installed: "L'application est déjà installée sur cet appareil.",
   pwa_settings_open_browser: "Ouvre cette page dans Chrome ou Safari pour installer l'app.",
+  pwa_install_firefox: "Installe Autospotter depuis le menu Firefox.",
+  pwa_install_firefox_steps: "Menu ⋮ → Installer",
 
   // Push notifications
   push_notifications: "Notifications push",
