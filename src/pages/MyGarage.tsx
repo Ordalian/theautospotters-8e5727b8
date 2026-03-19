@@ -122,7 +122,7 @@ const MyGarage = () => {
     queryFn: async () => {
       const q = supabase
         .from("cars")
-        .select("id, brand, model, year, generation, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id")
+        .select("id, brand, model, year, generation, engine, seen_on_road, parked, stock, modified, modified_comment, car_meet, image_url, created_at, quality_rating, rarity_rating, garage_group_id, needs_review")
         .eq("user_id", user!.id) as any;
       const q2 = typeFilter ? q.eq("vehicle_type", typeFilter) : q.neq("vehicle_type", "hot_wheels");
       const { data } = await q2.order("created_at", { ascending: false });
