@@ -1260,6 +1260,7 @@ const AdminPanel = () => {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "stats", label: "Stats", icon: <BarChart3 className="h-4 w-4" /> },
     { id: "users", label: "Utilisateurs", icon: <Users className="h-4 w-4" /> },
+    { id: "review", label: "Véhicules", icon: <Car className="h-4 w-4" /> },
     { id: "support", label: "Support", icon: <MessageSquare className="h-4 w-4" /> },
   ];
 
