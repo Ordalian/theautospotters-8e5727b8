@@ -906,6 +906,21 @@ const en: Translations = {
 
   // Friends search
   friends_search_placeholder: "Search a friend...",
+
+  // PWA
+  pwa_install_title: "Install Autospotter",
+  pwa_install_desc: "Add to your home screen for quick access and notifications.",
+  pwa_install_btn: "Install",
+  pwa_install_ios: "Install Autospotter from Safari to get notifications.",
+  pwa_install_ios_steps: "Tap Share → Add to Home Screen",
+
+  // Push notifications
+  push_notifications: "Push notifications",
+  push_notifications_desc: "Get alerts even when the app is closed",
+  push_enable: "Enable push notifications",
+  push_disable: "Disable push notifications",
+  push_not_supported: "Push notifications are not supported on this browser",
+  push_ios_standalone: "Install the app from Safari to enable notifications",
 };
 
 export default en;

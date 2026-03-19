@@ -908,6 +908,21 @@ const fr: Translations = {
 
   // Friends search
   friends_search_placeholder: "Rechercher un ami...",
+
+  // PWA
+  pwa_install_title: "Installer Autospotter",
+  pwa_install_desc: "Ajoute l'app à ton écran d'accueil pour un accès rapide et des notifications.",
+  pwa_install_btn: "Installer",
+  pwa_install_ios: "Installe Autospotter depuis Safari pour recevoir les notifications.",
+  pwa_install_ios_steps: "Appuie sur Partager → Ajouter à l'écran d'accueil",
+
+  // Push notifications
+  push_notifications: "Notifications push",
+  push_notifications_desc: "Reçois des alertes même quand l'app est fermée",
+  push_enable: "Activer les notifications push",
+  push_disable: "Désactiver les notifications push",
+  push_not_supported: "Les notifications push ne sont pas supportées sur ce navigateur",
+  push_ios_standalone: "Installe l'app depuis Safari pour activer les notifications",
 };
 
 export default fr;
