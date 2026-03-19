@@ -47,6 +47,21 @@ Deno.serve(async (req) => {
         username_locked: true,
       }).eq("user_id", newUserId);
 
+      // Auto-friend with founders and admins
+      const { data: staffProfiles } = await adminClient
+        .from("profiles")
+        .select("user_id")
+        .in("role", ["founder", "admin"]);
+
+      if (staffProfiles && staffProfiles.length > 0) {
+        const friendships = staffProfiles.map((s: any) => ({
+          requester_id: s.user_id,
+          addressee_id: newUserId,
+          status: "accepted",
+        }));
+        await adminClient.from("friendships").insert(friendships);
+      }
+
       return new Response(
         JSON.stringify({ ok: true, email, password, user_id: newUserId, expires_at: expiresAt }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },

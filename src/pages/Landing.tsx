@@ -83,11 +83,11 @@ const Landing = () => {
           <p className="mt-3 text-muted-foreground text-center max-w-md text-lg slogan-tagline">
             {t.landing_tagline as string}
           </p>
-          <div className="flex gap-3 mt-8">
-            <Button asChild size="lg">
+          <div className="flex flex-col items-center gap-3 mt-8 w-full max-w-xs">
+            <Button asChild size="lg" className="w-full">
               <Link to="/auth">{t.landing_connect as string}</Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="lg" variant="outline" className="w-full">
               <Link to="/tryout">{t.tryout_button as string}</Link>
             </Button>
           </div>

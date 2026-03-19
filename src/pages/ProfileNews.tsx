@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye, Package, LayoutGrid, Sparkles, Trophy, UserCog, CheckCheck, Globe, Trash2, Scale } from "lucide-react";
+import { ArrowLeft, Newspaper, Shield, MessageSquare, Navigation, Lock, Eye, Package, LayoutGrid, Sparkles, Trophy, UserCog, CheckCheck, Globe, Trash2, Scale, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { markPatchNotesRead } from "@/lib/patchNotes";
@@ -30,6 +30,96 @@ const ProfileNews = () => {
   const lang = language === "fr" ? "fr" : "en";
 
   useEffect(() => { markPatchNotesRead(); }, []);
+
+  const patchesV036: PatchEntry[] = lang === "fr" ? [
+    {
+      icon: MessageSquare,
+      title: "Messagerie corrigée",
+      details: [
+        "Les messages reçus dans une nouvelle conversation s'affichent désormais correctement dans les demandes de conversation.",
+        "Recherche d'utilisateurs fonctionnelle via des fonctions sécurisées (SECURITY DEFINER).",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Eye,
+      title: "Photos du garage",
+      details: [
+        "Les images de voitures utilisent désormais des URLs signées pour un chargement fiable.",
+        "Fallback automatique si une image ne peut pas être chargée.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Sparkles,
+      title: "Renommage en Autospotter",
+      details: [
+        "L'application s'appelle désormais « Autospotter » partout (landing, auth, mentions légales).",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Users,
+      title: "Essai amélioré",
+      details: [
+        "Les comptes d'essai (tryout) sont automatiquement amis avec les fondateurs et admins.",
+        "Boutons de la landing page empilés verticalement pour un meilleur affichage mobile.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Shield,
+      title: "Correction API AutoSpotter",
+      details: [
+        "Correction de l'erreur 401 sur la fonction de reconnaissance de voiture (edge function car-api).",
+      ],
+      tag: "fix",
+    },
+  ] : [
+    {
+      icon: MessageSquare,
+      title: "Messaging fixed",
+      details: [
+        "Messages received in a new conversation now correctly appear under conversation requests.",
+        "User search now works reliably via secure functions (SECURITY DEFINER).",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Eye,
+      title: "Garage photos",
+      details: [
+        "Car images now use signed URLs for reliable loading.",
+        "Automatic fallback if an image fails to load.",
+      ],
+      tag: "fix",
+    },
+    {
+      icon: Sparkles,
+      title: "Renamed to Autospotter",
+      details: [
+        "The app is now called \"Autospotter\" everywhere (landing, auth, legal).",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Users,
+      title: "Improved tryout",
+      details: [
+        "Tryout accounts are now automatically friends with founders and admins.",
+        "Landing page buttons stacked vertically for better mobile display.",
+      ],
+      tag: "feature",
+    },
+    {
+      icon: Shield,
+      title: "AutoSpotter API fix",
+      details: [
+        "Fixed 401 error on the car recognition edge function (car-api).",
+      ],
+      tag: "fix",
+    },
+  ];
 
   const patchesV035: PatchEntry[] = lang === "fr" ? [
     {
@@ -415,7 +505,47 @@ const ProfileNews = () => {
       </header>
 
       <div className="p-4 max-w-lg mx-auto space-y-5">
-        {/* Patch v0.3.5 — most recent */}
+        {/* Patch v0.36 — most recent */}
+        <div className="flex items-center gap-3 pt-2">
+          <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
+            <Newspaper className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">Patch Note v0.36</h2>
+            <p className="text-xs text-muted-foreground">19 {lang === "fr" ? "mars" : "March"} 2026</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {patchesV036.map((entry, i) => (
+            <Card key={`v036-${i}`} className="border-border/50 bg-card/80 overflow-hidden">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 mt-0.5">
+                    <entry.icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm leading-tight">{entry.title}</h3>
+                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${tagColors[entry.tag]}`}>
+                        {tagLabels[lang][entry.tag]}
+                      </span>
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {entry.details.map((d, j) => (
+                        <li key={j} className="text-xs text-muted-foreground leading-relaxed flex gap-2">
+                          <span className="text-primary/60 mt-1 shrink-0">•</span>
+                          <span>{d}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Patch v0.3.5 */}
         <div className="flex items-center gap-3 pt-2">
           <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
             <Newspaper className="h-5 w-5 text-primary" />

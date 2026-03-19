@@ -24,10 +24,10 @@ const fr: Translations = {
   friend: "Ami",
 
   // App
-  app_name: "La Machinerie",
+  app_name: "Autospotter",
 
   // Landing
-  landing_welcome: "Bienvenue sur La Machinerie",
+  landing_welcome: "Bienvenue sur Autospotter",
   landing_tagline: "Spottez. Collectionnez. Défiez-vous.",
   landing_connect: "Se connecter",
   landing_try_me: "Essayer",
@@ -50,7 +50,7 @@ const fr: Translations = {
   // Legal
   legal_title: "Mentions légales",
   legal_copyright_title: "Propriété intellectuelle",
-  legal_copyright_text: "© 2026 La Machinerie. Tous droits réservés.\n\nL'application, son design et tout contenu associé sont protégés par le droit de la propriété intellectuelle. Aucune partie de cette application ne peut être reproduite, diffusée ou utilisée sans autorisation écrite préalable de l'éditeur.",
+  legal_copyright_text: "© 2026 Autospotter. Tous droits réservés.\n\nL'application, son design et tout contenu associé sont protégés par le droit de la propriété intellectuelle. Aucune partie de cette application ne peut être reproduite, diffusée ou utilisée sans autorisation écrite préalable de l'éditeur.",
   legal_privacy_title: "Confidentialité et protection des données",
   legal_privacy_text: "Nous collectons et traitons les données suivantes pour faire fonctionner l'application :\n\n• Données de compte : adresse e-mail, pseudo, préférences de profil.\n• Données d'usage : voitures ajoutées, cartes collectées, messages envoyés et actions dans l'app.\n• Données techniques : connexion et analytics d'usage (ex. temps par page) pour améliorer le service.\n\nLes données sont hébergées sur des serveurs sécurisés (Supabase). Nous ne vendons pas vos données à des tiers.\n\nVous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour l'exercer, utilisez le support in-app ou contactez l'éditeur. Vous pouvez aussi avoir un droit à la portabilité et introduire une réclamation auprès d'une autorité de contrôle.",
   legal_terms_title: "Conditions d'utilisation",
@@ -58,7 +58,7 @@ const fr: Translations = {
   legal_last_updated: "Dernière mise à jour : mars 2026. Pour toute question, utilisez le support in-app.",
 
   // Auth
-  auth_title: "La Machinerie",
+  auth_title: "Autospotter",
   auth_subtitle: "Spottez. Collectionnez. Défiez-vous.",
   auth_create_account: "Créer un compte",
   auth_welcome_back: "Bon retour",
