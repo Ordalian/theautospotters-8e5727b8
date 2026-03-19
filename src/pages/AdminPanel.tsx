@@ -1232,6 +1232,113 @@ function SupportTab() {
   );
 }
 
+// ───── Review Tab ─────
+
+interface ReviewItem {
+  car_id: string;
+  user_id: string;
+  vehicle_type: string;
+  brand: string;
+  model: string;
+  year: number;
+  generation: string | null;
+  needs_review: boolean;
+  review_reason: string | null;
+  created_at: string;
+}
+
+function ReviewTab() {
+  const queryClient = useQueryClient();
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+
+  const { data: queue = [], isLoading } = useQuery({
+    queryKey: ["vehicle-review-queue"],
+    queryFn: () => rpcAny<ReviewItem[]>("get_vehicle_review_queue", { p_limit: 100 }),
+    staleTime: 30_000,
+  });
+
+  const handleApprove = async (carId: string) => {
+    setApprovingId(carId);
+    try {
+      await rpcAny("admin_mark_car_reviewed", { p_car_id: carId });
+      toast.success("Véhicule validé ✓");
+      queryClient.invalidateQueries({ queryKey: ["vehicle-review-queue"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const handleReject = async (carId: string) => {
+    if (!confirm("Supprimer ce véhicule ? L'utilisateur le perdra.")) return;
+    setApprovingId(carId);
+    try {
+      const { error } = await supabase.from("cars").delete().eq("id", carId);
+      if (error) throw error;
+      toast.success("Véhicule supprimé");
+      queryClient.invalidateQueries({ queryKey: ["vehicle-review-queue"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (queue.length === 0) {
+    return (
+      <div className="flex flex-col items-center py-16 text-center">
+        <CheckCircle2 className="h-12 w-12 text-primary/30 mb-3" />
+        <p className="text-muted-foreground">Aucun véhicule en attente de validation.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">{queue.length} véhicule{queue.length > 1 ? "s" : ""} en attente</p>
+      {queue.map((item) => (
+        <div key={item.car_id} className="rounded-xl border border-border/50 bg-card p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-base truncate">{item.brand} {item.model}{item.generation ? ` ${item.generation}` : ""}</h3>
+              <p className="text-sm text-muted-foreground">{item.year} · {item.vehicle_type}</p>
+              {item.review_reason && (
+                <span className="inline-block mt-1.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-2.5 py-0.5 text-xs font-medium">
+                  {item.review_reason}
+                </span>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">{formatDate(item.created_at)}</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => handleReject(item.car_id)}
+                disabled={approvingId === item.car_id}
+              >
+                {approvingId === item.car_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleApprove(item.car_id)}
+                disabled={approvingId === item.car_id}
+              >
+                {approvingId === item.car_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4 mr-1" /> Valider</>}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ───── Main Admin Panel ─────
 
 const AdminPanel = () => {
