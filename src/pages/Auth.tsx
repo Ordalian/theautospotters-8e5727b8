@@ -27,6 +27,21 @@ const Auth = () => {
   const [tempAccessMode, setTempAccessMode] = useState(false);
   const [tempCode, setTempCode] = useState("");
   const [signupsEnabled, setSignupsEnabled] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showIOSInstall, setShowIOSInstall] = useState(false);
+
+  useEffect(() => {
+    if (isStandalone()) return;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isIOS && isSafari) {
+      setShowIOSInstall(true);
+      return;
+    }
+    const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e as BeforeInstallPromptEvent); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
 
   useEffect(() => {
     supabase.from("app_config").select("value").eq("key", "signups_enabled").maybeSingle().then(({ data }) => {
