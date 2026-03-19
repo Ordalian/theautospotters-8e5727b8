@@ -103,12 +103,12 @@ function SWUpdatePrompt() {
   const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
   if (!needRefresh) return null;
   return (
-    <div className="fixed top-4 left-4 right-4 z-50 animate-in slide-in-from-top-4">
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-xl flex items-center justify-between gap-3">
+    <div className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-sm">
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
         <p className="text-sm font-medium">Mise à jour disponible</p>
         <button
           onClick={() => updateServiceWorker(true)}
-          className="text-sm font-bold text-primary underline"
+          className="text-sm font-bold text-primary underline shrink-0"
         >
           Mettre à jour
         </button>
