@@ -742,7 +742,22 @@ const AddCar = () => {
                     {m.name}
                   </button>
                 ))}
-                {filteredModels.length === 0 && (
+                {filteredModels.length === 0 && modelSearch.trim() && (
+                  <button
+                    onClick={() => {
+                      setModel(modelSearch.trim());
+                      setModelSearch(modelSearch.trim());
+                      setShowModels(false);
+                      setYear("");
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    {typeof t.add_car_use_custom_model === "function"
+                      ? t.add_car_use_custom_model(modelSearch.trim())
+                      : `Utiliser "${modelSearch.trim()}"`}
+                  </button>
+                )}
+                {filteredModels.length === 0 && !modelSearch.trim() && (
                   <div className="px-4 py-3 text-sm text-muted-foreground">{t.add_car_no_models as string}</div>
                 )}
               </div>
