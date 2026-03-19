@@ -913,6 +913,7 @@ const fr: Translations = {
   pwa_install_title: "Installer Autospotter",
   pwa_install_desc: "Ajoute l'app à ton écran d'accueil pour un accès rapide et des notifications.",
   pwa_install_btn: "Installer",
+  pwa_install_dismiss: "Plus tard",
   pwa_install_ios: "Installe Autospotter depuis Safari pour recevoir les notifications.",
   pwa_install_ios_steps: "Appuie sur Partager → Ajouter à l'écran d'accueil",
   pwa_auth_install_btn: "Installer l'application",
