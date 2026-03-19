@@ -12,6 +12,7 @@ import GarageSortSelect, { type GarageSortOption } from "@/components/GarageSort
 import { RatingExplainer } from "@/components/RatingExplainer";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import SignedCarImage from "@/components/SignedCarImage";
 import {
   Dialog,
   DialogContent,
@@ -52,18 +53,9 @@ interface GarageGroup {
   sort_order: number;
 }
 
-const getOptimizedStorageImageUrl = (url: string | null, width: number) => {
-  if (!url) return null;
-  if (url.includes("/storage/v1/object/public/")) {
-    return `${url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/")}?width=${width}&quality=80`;
-  }
-  return url;
-};
-
 function GarageImage({
   src,
   alt,
-  width,
   imgClassName,
   fallbackClassName,
   iconClassName,
@@ -75,35 +67,17 @@ function GarageImage({
   fallbackClassName: string;
   iconClassName: string;
 }) {
-  const [currentSrc, setCurrentSrc] = useState<string | null>(() => getOptimizedStorageImageUrl(src, width));
-  const [failed, setFailed] = useState(!src);
-
-  useEffect(() => {
-    setCurrentSrc(getOptimizedStorageImageUrl(src, width));
-    setFailed(!src);
-  }, [src, width]);
-
-  if (!src || failed) {
-    return (
-      <div className={fallbackClassName}>
-        <Car className={iconClassName} />
-      </div>
-    );
-  }
-
   return (
-    <img
-      src={currentSrc ?? src}
+    <SignedCarImage
+      src={src}
       alt={alt}
       className={imgClassName}
       loading="lazy"
-      onError={() => {
-        if (currentSrc && currentSrc !== src) {
-          setCurrentSrc(src);
-          return;
-        }
-        setFailed(true);
-      }}
+      fallback={
+        <div className={fallbackClassName}>
+          <Car className={iconClassName} />
+        </div>
+      }
     />
   );
 }

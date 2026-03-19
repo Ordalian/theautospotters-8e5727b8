@@ -146,10 +146,10 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       const missingIds = partnerIds.filter((id) => !friendMap.has(id));
       const extraProfiles = new Map<string, ProfileInfo>();
       if (missingIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles_public")
-          .select("user_id, username, avatar_url, role, is_premium")
-          .in("user_id", missingIds);
+        const { data: profiles, error: profilesError } = await supabase.rpc("get_public_profiles_by_ids", {
+          p_user_ids: missingIds,
+        });
+        if (profilesError) throw profilesError;
         (profiles || []).forEach((p: any) => extraProfiles.set(p.user_id, p));
       }
 
@@ -361,13 +361,14 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       } else if (mediaFile && mediaType === "video") {
         video_url = await uploadMedia(mediaFile, "video");
       }
-      await supabase.from("direct_messages").insert({
+      const { error } = await supabase.from("direct_messages").insert({
         sender_id: user!.id,
         receiver_id: selectedFriend!.user_id,
         body: messageBody.trim() || (image_url ? "📷" : video_url ? "🎥" : ""),
         image_url,
         video_url,
       } as any);
+      if (error) throw error;
     },
     onSuccess: () => {
       trackFeature("dm_sent");
@@ -377,8 +378,9 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
       clearMedia();
       setUploading(false);
     },
-    onError: () => {
+    onError: (error) => {
       setUploading(false);
+      alert((error as Error)?.message || "Unable to send message.");
     },
   });
 
@@ -405,12 +407,11 @@ const DirectMessages = ({ onBack }: DirectMessagesProps) => {
   const { data: searchResults = [], isLoading: searchLoading } = useQuery({
     queryKey: ["dm_search_users", debouncedSearch],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles_public")
-        .select("user_id, username, avatar_url, role, is_premium")
-        .neq("user_id", user!.id)
-        .ilike("username", `%${debouncedSearch}%`)
-        .limit(15);
+      const { data, error } = await supabase.rpc("search_public_profiles", {
+        p_query: debouncedSearch,
+        p_limit: 15,
+      });
+      if (error) throw error;
       return (data || []) as ProfileInfo[];
     },
     enabled: !!user && debouncedSearch.length >= 2,

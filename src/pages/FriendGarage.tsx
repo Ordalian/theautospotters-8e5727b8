@@ -7,6 +7,7 @@ import { ArrowLeft, Car, Truck, Bike, Ship, Plane, TrainFront, Sparkles, Loader2
 import { Button } from "@/components/ui/button";
 import BlackGoldBg from "@/components/BlackGoldBg";
 import { CarLikeButton } from "@/components/CarLikeButton";
+import SignedCarImage from "@/components/SignedCarImage";
 import { useQuery } from "@tanstack/react-query";
 
 const VEHICLE_TYPES = [
@@ -171,20 +172,17 @@ const FriendGarage = () => {
                 onClick={() => navigate(`/car/${car.id}`, { state: { carIds: friendCars.map((c) => c.id), returnTo: `/friends/${friendId}/stats` } })}
                 className="w-full rounded-xl border border-border bg-card overflow-hidden text-left hover:border-primary/30 transition-colors"
               >
-                {car.image_url ? (
-                  <img
-                    src={car.image_url.includes('/storage/v1/object/public/')
-                      ? car.image_url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=600&quality=60'
-                      : car.image_url}
-                    alt={`${car.brand} ${car.model}`}
-                    className="h-40 w-full object-cover bg-muted"
-                    loading="lazy"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.querySelector('.img-fallback')?.classList.remove('hidden'); }}
-                  />
-                ) : null}
-                <div className={`h-40 flex items-center justify-center bg-muted img-fallback ${car.image_url ? 'hidden' : ''}`}>
-                  <Car className="h-10 w-10 text-muted-foreground/40" />
-                </div>
+                <SignedCarImage
+                  src={car.image_url}
+                  alt={`${car.brand} ${car.model}`}
+                  className="h-40 w-full object-cover bg-muted"
+                  loading="lazy"
+                  fallback={
+                    <div className="h-40 flex items-center justify-center bg-muted img-fallback">
+                      <Car className="h-10 w-10 text-muted-foreground/40" />
+                    </div>
+                  }
+                />
                 <div className="p-3 flex items-center justify-between">
                   <div>
                     <p className="font-bold">{car.brand} {car.model}</p>
@@ -228,13 +226,11 @@ const FriendGarage = () => {
           >
             {latestAllImage ? (
               <>
-                <img
-                  src={latestAllImage.includes('/storage/v1/object/public/')
-                    ? latestAllImage.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
-                    : latestAllImage}
-                  alt="" className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
+                <SignedCarImage
+                  src={latestAllImage}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
                   loading="lazy"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent rounded-2xl" />
                 <div className="relative flex h-full w-full flex-col justify-end p-4">
@@ -266,13 +262,11 @@ const FriendGarage = () => {
               >
                 {img ? (
                   <>
-                    <img
-                      src={img.includes('/storage/v1/object/public/')
-                        ? img.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=400&quality=50'
-                        : img}
-                      alt={t[LABEL_KEYS[key]] as string} className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
+                    <SignedCarImage
+                      src={img}
+                      alt={t[LABEL_KEYS[key]] as string}
+                      className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-muted"
                       loading="lazy"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent rounded-2xl" />
                     <div className="relative flex h-full w-full flex-col justify-end p-4">
