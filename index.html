@@ -58,6 +58,10 @@
 </head>
 
   <body>
+    <!-- Splash screen — visible until React hydrates -->
+    <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#0a0a0a;transition:opacity .4s ease">
+      <img src="/splash.gif" alt="" style="max-width:280px;max-height:280px;object-fit:contain" />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
