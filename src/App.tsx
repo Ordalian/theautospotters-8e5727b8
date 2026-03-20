@@ -515,6 +515,7 @@ const App = () => (
             <ThemeParticles />
             <LanguageProvider>
               <SWUpdatePrompt />
+              <OfflineBanner />
               <InstallPrompt />
               <AnimatedRoutes />
             </LanguageProvider>
