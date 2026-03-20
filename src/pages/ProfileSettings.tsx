@@ -20,6 +20,8 @@ import {
   Share,
   Smartphone,
   MoreVertical,
+  Trash2,
+  EyeOff,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 import { isStandalone, type BeforeInstallPromptEvent } from "@/lib/pwaUtils";
