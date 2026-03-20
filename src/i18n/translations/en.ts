@@ -932,6 +932,25 @@ const en: Translations = {
   // PWA / SW updates
   sw_update_available: "Update available",
   sw_update_btn: "Update",
+
+  // Daily streak
+  streak_title: "Daily streak",
+  streak_claim: "Claim",
+  streak_done: "Done!",
+  streak_already_claimed: "Already claimed today!",
+
+  // Widget
+  widget_today: "today",
+  widget_friends: "friends",
+
+  // Account
+  account_delete: "Delete my account",
+  account_delete_desc: "This action is irreversible. All your data will be deleted.",
+  account_delete_confirm: "Are you sure you want to delete your account?",
+  account_delete_confirm2: "Last chance — this action is permanent.",
+  account_deleted: "Account deleted",
+  hide_email: "Hide my email",
+  hide_email_desc: "Your email will no longer be visible to other users",
 };
 
-export default en
+export default en;
