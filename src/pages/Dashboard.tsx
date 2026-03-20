@@ -340,6 +340,12 @@ const Dashboard = () => {
       <main className="p-4 sm:p-5 max-w-2xl mx-auto relative z-10 w-full min-w-0">
         <MessagingArrow displayName={displayName} />
 
+        {/* Widget + Streak */}
+        <div className="space-y-3 mb-4">
+          <DashboardWidget />
+          <DailyStreak />
+        </div>
+
         {/* Row 1: Mon Garage + Zone de Jeu */}
         <div className="grid grid-cols-2 gap-3 mb-3">
           <DashTile
