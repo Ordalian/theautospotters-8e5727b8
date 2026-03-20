@@ -7,7 +7,6 @@ import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loade
 import { CardImage } from "@/components/game/CardImage";
 import storeBg from "@/assets/store-bg.png";
 import { DailyStreak } from "@/components/DailyStreak";
-import { DailyStreak } from "@/components/DailyStreak";
 import type { CardCondition, CardArchetype } from "@/data/gameCards";
 import { Button } from "@/components/ui/button";
 import { useUnreadDMs } from "@/hooks/useUnreadDMs";
