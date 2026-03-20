@@ -49,7 +49,14 @@ export const PAID_STYLES: ThemeOption[] = [
   { id: "style-cosmic", label: "Cosmos", preview: { bg: "#080510", accent: "#8b5cf6", text: "#ede9fe" }, price: 80 },
 ];
 
-const FREE_THEME_IDS: ThemeId[] = ["noir-or", "bleu-alpine", "rose-barbie", "vert-rallye", "glace-arctique", "ferrari-red"];
+const FREE_THEME_IDS: ThemeId[] = [
+  "noir-or",
+  "bleu-alpine",
+  "rose-barbie",
+  "vert-rallye",
+  "glace-arctique",
+  "ferrari-red",
+];
 const PAID_STYLE_IDS: ThemeId[] = PAID_STYLES.map((s) => s.id);
 const ALL_THEME_IDS: ThemeId[] = [...FREE_THEME_IDS, ...PAID_STYLE_IDS];
 
@@ -84,12 +91,14 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [ownedStyleIds, setOwnedStyleIds] = useState<Set<string>>(new Set());
   const [coins, setCoins] = useState(0);
 
-  const refetchOwned = async () => {
+  // Single fetch function used by both the effect and refetchOwned
+  const fetchAndApply = async (signal?: { cancelled: boolean }) => {
     if (!user?.id) return;
     const [profileRes, stylesRes] = await Promise.all([
       supabase.from("profiles").select("theme, coins").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_owned_styles").select("style_id").eq("user_id", user.id),
     ]);
+    if (signal?.cancelled) return;
     const owned = new Set((stylesRes.data ?? []).map((r) => r.style_id));
     setOwnedStyleIds(owned);
     setCoins(profileRes.data?.coins ?? 0);
@@ -100,26 +109,18 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refetchOwned = async () => {
+    await fetchAndApply();
+  };
+
   // Load theme + owned styles + coins when user is logged in
   useEffect(() => {
     if (!user?.id) return;
-    let cancelled = false;
-    (async () => {
-      const [profileRes, stylesRes] = await Promise.all([
-        supabase.from("profiles").select("theme, coins").eq("user_id", user.id).maybeSingle(),
-        supabase.from("user_owned_styles").select("style_id").eq("user_id", user.id),
-      ]);
-      if (cancelled) return;
-      const owned = new Set((stylesRes.data ?? []).map((r) => r.style_id));
-      setOwnedStyleIds(owned);
-      setCoins(profileRes.data?.coins ?? 0);
-      const profileTheme = profileRes.data?.theme;
-      if (profileTheme && isValidTheme(profileTheme, owned)) {
-        setThemeState(profileTheme);
-        localStorage.setItem("app-theme", profileTheme);
-      }
-    })();
-    return () => { cancelled = true; };
+    const signal = { cancelled: false };
+    fetchAndApply(signal);
+    return () => {
+      signal.cancelled = true;
+    };
   }, [user?.id]);
 
   const setTheme = (t: ThemeId) => {
@@ -128,7 +129,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setThemeState(t);
     localStorage.setItem("app-theme", t);
     if (user?.id) {
-      supabase.from("profiles").update({ theme: t }).eq("user_id", user.id).then(() => {});
+      supabase
+        .from("profiles")
+        .update({ theme: t })
+        .eq("user_id", user.id)
+        .then(() => {});
     }
   };
 
