@@ -2,18 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Download, Share, Smartphone, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { isStandalone } from "@/lib/pushNotifications";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-const isFirefox = () => /firefox/i.test(navigator.userAgent);
-const isIOSSafari = () =>
-  /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-  !(window as any).MSStream &&
-  /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+import { isStandalone, isIOSSafari, isFirefox, type BeforeInstallPromptEvent } from "@/lib/pwaUtils";
 
 export default function InstallPrompt() {
   const { t } = useLanguage();
@@ -22,14 +11,12 @@ export default function InstallPrompt() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (isStandalone()) return;
-    if (localStorage.getItem("pwa-install-dismissed")) return;
+    if (isStandalone() || localStorage.getItem("pwa-install-dismissed")) return;
 
     if (isIOSSafari()) {
       setShowManualPrompt("ios");
       return;
     }
-
     if (isFirefox()) {
       setShowManualPrompt("firefox");
       return;
@@ -39,7 +26,6 @@ export default function InstallPrompt() {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
-
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
@@ -49,11 +35,10 @@ export default function InstallPrompt() {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") setDeferredPrompt(null);
-    setDismissed(true);
-    localStorage.setItem("pwa-install-dismissed", "1");
+    dismiss();
   };
 
-  const handleDismiss = () => {
+  const dismiss = () => {
     setDismissed(true);
     setDeferredPrompt(null);
     setShowManualPrompt(null);
@@ -61,6 +46,13 @@ export default function InstallPrompt() {
   };
 
   if (dismissed || (!deferredPrompt && !showManualPrompt)) return null;
+
+  const instructions =
+    showManualPrompt === "ios"
+      ? (t.pwa_install_ios as string)
+      : showManualPrompt === "firefox"
+        ? (t.pwa_install_firefox as string)
+        : (t.pwa_install_desc as string);
 
   return (
     <div className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-sm">
@@ -70,45 +62,39 @@ export default function InstallPrompt() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-bold text-sm truncate">{t.pwa_install_title as string}</p>
-          <p className="text-xs text-muted-foreground line-clamp-1">
-            {showManualPrompt === "ios"
-              ? (t.pwa_install_ios as string)
-              : showManualPrompt === "firefox"
-                ? (t.pwa_install_firefox as string)
-                : (t.pwa_install_desc as string)}
-          </p>
+          <p className="text-xs text-muted-foreground line-clamp-1">{instructions}</p>
         </div>
+
         {showManualPrompt === "ios" ? (
-          <p className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
-            <Share className="h-3.5 w-3.5" />
-          </p>
+          <Share className="h-4 w-4 text-muted-foreground shrink-0" />
         ) : showManualPrompt === "firefox" ? (
-          <p className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
-            <MoreVertical className="h-3.5 w-3.5" />
-          </p>
+          <MoreVertical className="h-4 w-4 text-muted-foreground shrink-0" />
         ) : (
           <Button size="sm" className="gap-1.5 shrink-0" onClick={handleInstall}>
             <Download className="h-3.5 w-3.5" />
             {t.pwa_install_btn as string}
           </Button>
         )}
-        <button onClick={handleDismiss} className="text-muted-foreground hover:text-foreground p-1 shrink-0">
+
+        <button onClick={dismiss} className="text-muted-foreground hover:text-foreground p-1 shrink-0">
           <X className="h-4 w-4" />
         </button>
       </div>
-      {showManualPrompt === "ios" && (
+
+      {showManualPrompt && (
         <div className="px-4 pb-3 -mt-1">
           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Share className="h-3.5 w-3.5 shrink-0" />
-            {t.pwa_install_ios_steps as string}
-          </p>
-        </div>
-      )}
-      {showManualPrompt === "firefox" && (
-        <div className="px-4 pb-3 -mt-1">
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <MoreVertical className="h-3.5 w-3.5 shrink-0" />
-            {t.pwa_install_firefox_steps as string}
+            {showManualPrompt === "ios" ? (
+              <>
+                <Share className="h-3.5 w-3.5 shrink-0" />
+                {t.pwa_install_ios_steps as string}
+              </>
+            ) : (
+              <>
+                <MoreVertical className="h-3.5 w-3.5 shrink-0" />
+                {t.pwa_install_firefox_steps as string}
+              </>
+            )}
           </p>
         </div>
       )}
