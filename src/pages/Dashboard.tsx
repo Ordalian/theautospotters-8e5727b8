@@ -340,9 +340,8 @@ const Dashboard = () => {
       <main className="p-4 sm:p-5 max-w-2xl mx-auto relative z-10 w-full min-w-0">
         <MessagingArrow displayName={displayName} />
 
-        {/* Widget + Streak */}
-        <div className="space-y-3 mb-4">
-          <DashboardWidget />
+        {/* Streak — widget is now persistent on Home */}
+        <div className="mb-4">
           <DailyStreak />
         </div>
 
