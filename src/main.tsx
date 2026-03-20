@@ -3,7 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Minimum splash display time (ms) so the GIF is visible even on fast connections
-const MIN_SPLASH_MS = 2200;
+const MIN_SPLASH_MS = 5000;
 const splashStart = Date.now();
 
 const root = createRoot(document.getElementById("root")!);
