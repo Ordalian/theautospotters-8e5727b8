@@ -839,7 +839,6 @@ const ProfileSettings = () => {
                   </div>
                 );
               })}
-              ))}
             </div>
           )}
         </div>
