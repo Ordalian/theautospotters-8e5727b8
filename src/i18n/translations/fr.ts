@@ -930,11 +930,10 @@ const fr: Translations = {
   push_disable: "Désactiver les notifications push",
   push_not_supported: "Les notifications push ne sont pas supportées sur ce navigateur",
   push_ios_standalone: "Installe l'app depuis Safari pour activer les notifications",
-};
-
-export default fr
 
   // PWA / SW updates
   sw_update_available: "Mise à jour disponible",
   sw_update_btn: "Mettre à jour",
 };
+
+export default fr;
