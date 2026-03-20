@@ -4,11 +4,7 @@ let cachedVapidKey: string | null = null;
 
 async function getVapidPublicKey(): Promise<string | null> {
   if (cachedVapidKey) return cachedVapidKey;
-  const { data } = await supabase
-    .from("app_config")
-    .select("value")
-    .eq("key", "vapid_public_key")
-    .maybeSingle();
+  const { data } = await supabase.from("app_config").select("value").eq("key", "vapid_public_key").maybeSingle();
   if (data?.value) {
     cachedVapidKey = typeof data.value === "string" ? data.value : JSON.stringify(data.value).replace(/"/g, "");
     return cachedVapidKey;
@@ -99,6 +95,5 @@ export function isPushSupported(): boolean {
   return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 
-export function isStandalone(): boolean {
-  return window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true;
-}
+// Re-exported from pwaUtils for backwards compatibility
+export { isStandalone } from "@/lib/pwaUtils";
