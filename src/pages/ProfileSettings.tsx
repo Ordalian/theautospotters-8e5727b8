@@ -3,20 +3,33 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe, Scale, Download, Share, Smartphone, MoreVertical } from "lucide-react";
-import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported, isStandalone } from "@/lib/pushNotifications";
+import {
+  ArrowLeft,
+  User,
+  Check,
+  UserPlus,
+  X,
+  Car,
+  Bell,
+  Plus,
+  Camera,
+  Loader2,
+  Globe,
+  Scale,
+  Download,
+  Share,
+  Smartphone,
+  MoreVertical,
+} from "lucide-react";
+import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
+import { isStandalone, type BeforeInstallPromptEvent } from "@/lib/pwaUtils";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { callCarApi } from "@/lib/carApi";
 import { resizeImage } from "@/lib/imageUtils";
 import { PhotoUploadDialog } from "@/components/PhotoUpload";
@@ -53,13 +66,18 @@ const NotificationPreferences = ({ user }: { user: any }) => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("notify_channels, notify_dms").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-      if (data) {
-        setNotifyChannels((data as any).notify_channels ?? true);
-        setNotifyDms((data as any).notify_dms ?? true);
-      }
-      setLoaded(true);
-    });
+    supabase
+      .from("profiles")
+      .select("notify_channels, notify_dms")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setNotifyChannels((data as any).notify_channels ?? true);
+          setNotifyDms((data as any).notify_dms ?? true);
+        }
+        setLoaded(true);
+      });
     // Check push subscription status
     isPushSubscribed().then(setPushEnabled);
   }, [user]);
@@ -67,7 +85,10 @@ const NotificationPreferences = ({ user }: { user: any }) => {
   const toggle = async (field: "notify_channels" | "notify_dms", value: boolean) => {
     if (field === "notify_channels") setNotifyChannels(value);
     else setNotifyDms(value);
-    await supabase.from("profiles").update({ [field]: value } as any).eq("user_id", user.id);
+    await supabase
+      .from("profiles")
+      .update({ [field]: value } as any)
+      .eq("user_id", user.id);
   };
 
   const handlePushToggle = async (enable: boolean) => {
@@ -143,11 +164,6 @@ const NotificationPreferences = ({ user }: { user: any }) => {
     </div>
   );
 };
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
 
 const PwaInstallSection = () => {
   const { t } = useLanguage();
@@ -260,7 +276,7 @@ const ProfileSettings = () => {
         .maybeSingle();
       setUsernameAvailability(data ? "taken" : "available");
     },
-    [user]
+    [user],
   );
 
   useEffect(() => {
@@ -278,9 +294,9 @@ const ProfileSettings = () => {
       try {
         const { data } = await supabase
           .from("profiles")
-        .select("username, username_locked, is_temp")
-        .eq("user_id", user.id)
-        .maybeSingle();
+          .select("username, username_locked, is_temp")
+          .eq("user_id", user.id)
+          .maybeSingle();
         if (data?.username) {
           setUsername(data.username);
           setInitialUsername(data.username);
@@ -310,8 +326,17 @@ const ProfileSettings = () => {
         .from("profiles")
         .select("user_id, username, role, is_premium")
         .in("user_id", userIds);
-      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
-      setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id)?.username || null, role: profileMap.get(r.requester_id)?.role ?? null, is_premium: profileMap.get(r.requester_id)?.is_premium ?? false })));
+      const profileMap = new Map(
+        profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || [],
+      );
+      setRequests(
+        data.map((r) => ({
+          ...r,
+          username: profileMap.get(r.requester_id)?.username || null,
+          role: profileMap.get(r.requester_id)?.role ?? null,
+          is_premium: profileMap.get(r.requester_id)?.is_premium ?? false,
+        })),
+      );
     } else {
       setRequests([]);
     }
@@ -362,7 +387,11 @@ const ProfileSettings = () => {
 
   const markNotificationRead = async (id: string) => {
     if (!user) return;
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("user_id", user.id);
     queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
   };
 
@@ -376,7 +405,10 @@ const ProfileSettings = () => {
         action: "identify_and_extract_plate",
         images: [base64],
       });
-      const plate = result?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+      const plate = result?.license_plate
+        ?.replace(/\s|-|\./g, "")
+        .toUpperCase()
+        .slice(0, 20);
       if (!plate || plate.length < 2) {
         toast.error(t.profile_no_plate as string);
         return;
@@ -492,17 +524,23 @@ const ProfileSettings = () => {
                   )}
                 </div>
               )}
-              {usernameLocked && (
-                <p className="text-xs text-muted-foreground">{t.profile_locked as string}</p>
-              )}
+              {usernameLocked && <p className="text-xs text-muted-foreground">{t.profile_locked as string}</p>}
             </div>
             {!usernameLocked && (
               <Button
                 onClick={handleSaveClick}
-                disabled={saving || !username.trim() || usernameAvailability === "taken" || usernameAvailability === "checking"}
+                disabled={
+                  saving || !username.trim() || usernameAvailability === "taken" || usernameAvailability === "checking"
+                }
                 className="w-full h-12 text-base font-bold rounded-xl gap-2"
               >
-                {saving ? (t.profile_saving as string) : <><Check className="h-5 w-5" /> {t.save as string}</>}
+                {saving ? (
+                  (t.profile_saving as string)
+                ) : (
+                  <>
+                    <Check className="h-5 w-5" /> {t.save as string}
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -553,7 +591,12 @@ const ProfileSettings = () => {
               <span className="text-sm font-medium font-mono">
                 {ov.license_plate} · {new Date(ov.created_at).toLocaleDateString("fr-FR")}
               </span>
-              <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRemoveOwnedVehicle(ov.id)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                onClick={() => handleRemoveOwnedVehicle(ov.id)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -609,7 +652,12 @@ const ProfileSettings = () => {
                         </p>
                       )}
                       {!n.read_at && (
-                        <Button size="sm" variant="ghost" className="mt-2 text-xs" onClick={() => markNotificationRead(n.id)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="mt-2 text-xs"
+                          onClick={() => markNotificationRead(n.id)}
+                        >
                           {t.profile_mark_read as string}
                         </Button>
                       )}
@@ -632,7 +680,10 @@ const ProfileSettings = () => {
                 key={req.id}
                 className="flex items-center justify-between rounded-xl border border-border bg-card p-3"
               >
-                <span className="font-medium flex items-center gap-1">{req.username || (t.profile_anonymous as string)} <UserRoleBadge role={(req as any).role} isPremium={(req as any).is_premium} /></span>
+                <span className="font-medium flex items-center gap-1">
+                  {req.username || (t.profile_anonymous as string)}{" "}
+                  <UserRoleBadge role={(req as any).role} isPremium={(req as any).is_premium} />
+                </span>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleAccept(req.id)} className="gap-1">
                     <Check className="h-4 w-4" /> {t.profile_accept as string}
@@ -651,9 +702,7 @@ const ProfileSettings = () => {
             <DialogHeader>
               <DialogTitle>{t.profile_confirm_title as string}</DialogTitle>
             </DialogHeader>
-            <p className="text-sm text-muted-foreground py-2">
-              {t.profile_confirm_desc as string}
-            </p>
+            <p className="text-sm text-muted-foreground py-2">{t.profile_confirm_desc as string}</p>
             <div className="flex gap-3 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setShowUsernameConfirmDialog(false)}>
                 {t.cancel as string}
@@ -671,12 +720,13 @@ const ProfileSettings = () => {
               <DialogTitle>{t.profile_add_vehicle_title as string}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
-              <p className="text-sm text-muted-foreground">
-                {t.profile_add_vehicle_desc as string}
-              </p>
+              <p className="text-sm text-muted-foreground">{t.profile_add_vehicle_desc as string}</p>
               <Button
                 className="w-full gap-2"
-                onClick={() => { setShowAddVehicle(false); setShowPhotoDialog(true); }}
+                onClick={() => {
+                  setShowAddVehicle(false);
+                  setShowPhotoDialog(true);
+                }}
                 disabled={addingVehicle}
               >
                 <Camera className="h-5 w-5" />
@@ -685,7 +735,10 @@ const ProfileSettings = () => {
               <Button
                 variant="outline"
                 className="w-full gap-2"
-                onClick={() => { setShowAddVehicle(false); navigate("/autospotter?owned=1"); }}
+                onClick={() => {
+                  setShowAddVehicle(false);
+                  navigate("/autospotter?owned=1");
+                }}
                 disabled={addingVehicle}
               >
                 {t.profile_open_autospotter as string}
