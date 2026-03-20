@@ -20,6 +20,8 @@ import {
   Share,
   Smartphone,
   MoreVertical,
+  Trash2,
+  EyeOff,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
 import { isStandalone, type BeforeInstallPromptEvent } from "@/lib/pwaUtils";
@@ -236,6 +238,135 @@ const PwaInstallSection = () => {
       ) : (
         <div className="rounded-xl border border-border bg-card p-3">
           <p className="text-sm text-muted-foreground">{t.pwa_settings_open_browser as string}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const HideEmailToggle = ({ user }: { user: any }) => {
+  const { t } = useLanguage();
+  const [hideEmail, setHideEmail] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("hide_email")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setHideEmail((data as any).hide_email ?? false);
+        setLoaded(true);
+      });
+  }, [user]);
+
+  const toggle = async (value: boolean) => {
+    setHideEmail(value);
+    await supabase.from("profiles").update({ hide_email: value } as any).eq("user_id", user.id);
+  };
+
+  if (!loaded) return null;
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-lg font-bold flex items-center gap-2">
+        <EyeOff className="h-5 w-5 text-primary" />
+        {t.hide_email as string}
+      </h2>
+      <label className="flex items-center justify-between rounded-xl border border-border bg-card p-3 cursor-pointer">
+        <div>
+          <p className="text-sm font-medium">{t.hide_email as string}</p>
+          <p className="text-xs text-muted-foreground">{t.hide_email_desc as string}</p>
+        </div>
+        <input
+          type="checkbox"
+          checked={hideEmail}
+          onChange={(e) => toggle(e.target.checked)}
+          className="h-5 w-5 accent-[hsl(var(--primary))] rounded"
+        />
+      </label>
+    </div>
+  );
+};
+
+const DeleteAccountSection = () => {
+  const { t } = useLanguage();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [step, setStep] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      // Flag for deletion — actual deletion handled by admin/backend
+      await supabase
+        .from("profiles")
+        .update({ flagged_for_deletion: true } as any)
+        .eq("user_id", user.id);
+      await signOut();
+      toast.success(t.account_deleted as string);
+      navigate("/auth");
+    } catch {
+      toast.error(t.error as string);
+    } finally {
+      setDeleting(false);
+      setStep(0);
+    }
+  };
+
+  return (
+    <div className="space-y-3 pt-4 border-t border-destructive/20">
+      <h2 className="text-lg font-bold flex items-center gap-2 text-destructive">
+        <Trash2 className="h-5 w-5" />
+        {t.account_delete as string}
+      </h2>
+      <p className="text-sm text-muted-foreground">{t.account_delete_desc as string}</p>
+      {step === 0 && (
+        <Button
+          variant="outline"
+          className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
+          onClick={() => setStep(1)}
+        >
+          {t.account_delete as string}
+        </Button>
+      )}
+      {step === 1 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-destructive">{t.account_delete_confirm as string}</p>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>
+              {t.cancel as string}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => setStep(2)}
+            >
+              {t.confirm as string}
+            </Button>
+          </div>
+        </div>
+      )}
+      {step === 2 && (
+        <div className="space-y-2">
+          <p className="text-sm font-bold text-destructive">{t.account_delete_confirm2 as string}</p>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>
+              {t.cancel as string}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t.account_delete as string}
+            </Button>
+          </div>
         </div>
       )}
     </div>
@@ -612,6 +743,9 @@ const ProfileSettings = () => {
         {/* PWA Install */}
         <PwaInstallSection />
 
+        {/* Hide email */}
+        <HideEmailToggle user={user} />
+
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Scale className="h-5 w-5 text-primary" />
@@ -623,6 +757,9 @@ const ProfileSettings = () => {
             {t.legal_title as string}
           </Button>
         </div>
+
+        {/* Delete account */}
+        <DeleteAccountSection />
 
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">

@@ -375,6 +375,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_streaks: {
+        Row: {
+          current_streak: number
+          last_claim_date: string | null
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          last_claim_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          last_claim_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       deliveries: {
         Row: {
           car_id: string
@@ -884,6 +908,7 @@ export type Database = {
           emblem_slot_3: string | null
           flagged_by: string | null
           flagged_for_deletion: boolean
+          hide_email: boolean
           id: string
           is_map_marker: boolean
           is_premium: boolean
@@ -915,6 +940,7 @@ export type Database = {
           emblem_slot_3?: string | null
           flagged_by?: string | null
           flagged_for_deletion?: boolean
+          hide_email?: boolean
           id?: string
           is_map_marker?: boolean
           is_premium?: boolean
@@ -946,6 +972,7 @@ export type Database = {
           emblem_slot_3?: string | null
           flagged_by?: string | null
           flagged_for_deletion?: boolean
+          hide_email?: boolean
           id?: string
           is_map_marker?: boolean
           is_premium?: boolean
@@ -1444,6 +1471,7 @@ export type Database = {
       }
       buy_premium_coins: { Args: { p_plan: string }; Returns: Json }
       claim_daily_boosters: { Args: never; Returns: Json }
+      claim_daily_streak: { Args: never; Returns: Json }
       consume_daily_booster: { Args: never; Returns: Json }
       consume_purchased_booster: { Args: never; Returns: boolean }
       get_activity_overview: { Args: never; Returns: Json }
@@ -1470,6 +1498,7 @@ export type Database = {
         }[]
       }
       get_autospotter_status: { Args: never; Returns: Json }
+      get_daily_streak: { Args: never; Returns: Json }
       get_flagged_users: {
         Args: never
         Returns: {

@@ -934,6 +934,25 @@ const fr: Translations = {
   // PWA / SW updates
   sw_update_available: "Mise à jour disponible",
   sw_update_btn: "Mettre à jour",
+
+  // Daily streak
+  streak_title: "Streak quotidien",
+  streak_claim: "Réclamer",
+  streak_done: "Fait !",
+  streak_already_claimed: "Déjà réclamé aujourd'hui !",
+
+  // Widget
+  widget_today: "aujourd'hui",
+  widget_friends: "amis",
+
+  // Account
+  account_delete: "Supprimer mon compte",
+  account_delete_desc: "Cette action est irréversible. Toutes vos données seront supprimées.",
+  account_delete_confirm: "Êtes-vous sûr de vouloir supprimer votre compte ?",
+  account_delete_confirm2: "Dernière chance — cette action est définitive.",
+  account_deleted: "Compte supprimé",
+  hide_email: "Masquer mon email",
+  hide_email_desc: "Votre email ne sera plus visible par les autres utilisateurs",
 };
 
 export default fr;

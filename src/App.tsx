@@ -12,6 +12,7 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
 import ThemeParticles from "@/components/ThemeParticles";
 import InstallPrompt from "@/components/InstallPrompt";
+import { OfflineBanner } from "@/components/OfflineFallback";
 import { PageLoader } from "@/components/PageLoader";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
@@ -514,6 +515,7 @@ const App = () => (
             <ThemeParticles />
             <LanguageProvider>
               <SWUpdatePrompt />
+              <OfflineBanner />
               <InstallPrompt />
               <AnimatedRoutes />
             </LanguageProvider>
