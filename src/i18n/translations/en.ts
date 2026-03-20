@@ -928,11 +928,10 @@ const en: Translations = {
   push_disable: "Disable push notifications",
   push_not_supported: "Push notifications are not supported on this browser",
   push_ios_standalone: "Install the app from Safari to enable notifications",
-};
-
-export default en
 
   // PWA / SW updates
   sw_update_available: "Update available",
   sw_update_btn: "Update",
 };
+
+export default en
