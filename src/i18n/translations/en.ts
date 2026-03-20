@@ -937,6 +937,7 @@ const en: Translations = {
   push_disable: "Disable push notifications",
   push_not_supported: "Push notifications are not supported on this browser",
   push_ios_standalone: "Install the app from Safari to enable notifications",
+  push_permission_denied: "Permission denied — check your browser notification settings",
 
   // PWA / SW updates
   sw_update_available: "Update available",
