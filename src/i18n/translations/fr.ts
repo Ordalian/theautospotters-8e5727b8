@@ -932,4 +932,9 @@ const fr: Translations = {
   push_ios_standalone: "Installe l'app depuis Safari pour activer les notifications",
 };
 
-export default fr;
+export default fr
+
+  // PWA / SW updates
+  sw_update_available: "Mise à jour disponible",
+  sw_update_btn: "Mettre à jour",
+};
