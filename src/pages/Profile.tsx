@@ -113,7 +113,9 @@ const Profile = () => {
                 {profile?.username || user?.email?.split("@")[0] || "—"}
                 <UserRoleBadge role={role} isPremium={is_premium} isMapMarker={isMapMarker} />
               </p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {profile?.hide_email ? "••••••@••••" : user?.email}
+              </p>
             </div>
           </div>
 
