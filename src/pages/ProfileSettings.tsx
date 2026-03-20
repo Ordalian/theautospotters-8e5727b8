@@ -614,6 +614,9 @@ const ProfileSettings = () => {
         {/* PWA Install */}
         <PwaInstallSection />
 
+        {/* Hide email */}
+        <HideEmailToggle user={user} />
+
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Scale className="h-5 w-5 text-primary" />
@@ -625,6 +628,9 @@ const ProfileSettings = () => {
             {t.legal_title as string}
           </Button>
         </div>
+
+        {/* Delete account */}
+        <DeleteAccountSection />
 
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
