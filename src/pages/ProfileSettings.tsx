@@ -775,33 +775,70 @@ const ProfileSettings = () => {
             <p className="text-sm text-muted-foreground">{t.profile_no_notifications as string}</p>
           ) : (
             <div className="space-y-2">
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`rounded-xl border border-border bg-card p-3 ${!n.read_at ? "border-primary/30 bg-primary/5" : ""}`}
-                >
-                  {n.type === "vehicle_spotted" && (
-                    <>
-                      <p className="font-medium">{t.profile_vehicle_spotted as string}</p>
-                      {n.data?.brand && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {n.data.brand} {n.data.model} {n.data.year}
-                        </p>
-                      )}
-                      {!n.read_at && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="mt-2 text-xs"
-                          onClick={() => markNotificationRead(n.id)}
-                        >
-                          {t.profile_mark_read as string}
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
+              {notifications.map((n) => {
+                const d = (n.data ?? {}) as Record<string, any>;
+                let label = "";
+                let detail = "";
+                switch (n.type) {
+                  case "vehicle_spotted":
+                    label = t.notif_vehicle_spotted as string;
+                    detail = d.brand ? `${d.brand} ${d.model} ${d.year ?? ""}` : "";
+                    break;
+                  case "car_like":
+                    label = t.notif_car_like as string;
+                    detail = d.liker_username ?? "";
+                    break;
+                  case "friend_request":
+                    label = t.notif_friend_request as string;
+                    detail = d.requester_username ?? "";
+                    break;
+                  case "friend_accepted":
+                    label = t.notif_friend_accepted as string;
+                    detail = d.accepter_username ?? "";
+                    break;
+                  case "dm_received":
+                    label = t.notif_dm_received as string;
+                    detail = d.sender_username ?? "";
+                    break;
+                  case "group_message":
+                    label = t.notif_group_message as string;
+                    detail = d.sender_username ?? "";
+                    break;
+                  case "friend_spot":
+                    label = t.notif_friend_spot as string;
+                    detail = d.brand ? `${d.spotter_username ?? ""} — ${d.brand} ${d.model}` : d.spotter_username ?? "";
+                    break;
+                  case "vehicle_delivered":
+                    label = t.notif_vehicle_delivered as string;
+                    detail = d.deliverer_username ?? "";
+                    break;
+                  case "topic_reply":
+                    label = t.notif_topic_reply as string;
+                    detail = d.replier_username ?? "";
+                    break;
+                  default:
+                    label = n.type;
+                }
+                return (
+                  <div
+                    key={n.id}
+                    className={`rounded-xl border border-border bg-card p-3 ${!n.read_at ? "border-primary/30 bg-primary/5" : ""}`}
+                  >
+                    <p className="font-medium text-sm">{label}</p>
+                    {detail && <p className="text-xs text-muted-foreground mt-0.5">{detail}</p>}
+                    {!n.read_at && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="mt-2 text-xs"
+                        onClick={() => markNotificationRead(n.id)}
+                      >
+                        {t.profile_mark_read as string}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
