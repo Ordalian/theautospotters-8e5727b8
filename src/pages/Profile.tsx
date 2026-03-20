@@ -22,10 +22,10 @@ const Profile = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("username, avatar_url, total_xp, coins")
+        .select("username, avatar_url, total_xp, coins, hide_email")
         .eq("user_id", user!.id)
         .maybeSingle();
-      return data as { username: string | null; avatar_url: string | null; total_xp: number; coins: number } | null;
+      return data as { username: string | null; avatar_url: string | null; total_xp: number; coins: number; hide_email: boolean } | null;
     },
     enabled: !!user,
     staleTime: 60_000,
