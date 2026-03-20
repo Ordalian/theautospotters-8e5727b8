@@ -10,6 +10,8 @@ import type { CardCondition, CardArchetype } from "@/data/gameCards";
 import { Button } from "@/components/ui/button";
 import { useUnreadDMs } from "@/hooks/useUnreadDMs";
 import { useQuery } from "@tanstack/react-query";
+import { useAutoRotate } from "@/hooks/useAutoRotate";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 const DashboardMap = lazy(() => import("@/components/DashboardMap"));
 
@@ -53,15 +55,24 @@ interface TileProps {
   children?: React.ReactNode;
 }
 
-function DashTile({ title, subtitle, icon: Icon, image, onClick, notificationCount = 0, className = "", children }: TileProps) {
+function DashTile({
+  title,
+  subtitle,
+  icon: Icon,
+  image,
+  onClick,
+  notificationCount = 0,
+  className = "",
+  children,
+}: TileProps) {
   return (
     <button
       onClick={onClick}
       className={`group relative overflow-hidden rounded-2xl bg-card border border-border text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${className}`}
     >
       <div className="flex h-full w-full flex-col justify-between p-3">
-        {children ?? (
-          image ? (
+        {children ??
+          (image ? (
             <div className="flex-1 overflow-hidden rounded-xl mb-2 relative min-h-0">
               <img src={image} alt={title} className="h-full w-full object-cover rounded-xl" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
@@ -90,8 +101,7 @@ function DashTile({ title, subtitle, icon: Icon, image, onClick, notificationCou
                 <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>
               </div>
             </>
-          )
-        )}
+          ))}
       </div>
     </button>
   );
@@ -145,21 +155,20 @@ const Dashboard = () => {
       const cars = carsRes.data || [];
       const pinnedCarId = profileRes.data?.pinned_car_id ?? null;
       const pinnedCar = pinnedCarId ? cars.find((c) => c.id === pinnedCarId) : null;
-      const latestCarImage = (pinnedCar?.image_url ?? cars[0]?.image_url) ?? null;
+      const latestCarImage = pinnedCar?.image_url ?? cars[0]?.image_url ?? null;
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const mapSpots = cars
         .filter((c) => c.latitude && c.longitude && c.created_at >= sevenDaysAgo)
         .map((c) => ({ id: c.id, latitude: c.latitude!, longitude: c.longitude! }));
 
-      const lastPosition =
-        cars.filter((c) => c.latitude != null && c.longitude != null)[0] ?? null;
-      const mapCenter = lastPosition
-        ? { lat: lastPosition.latitude!, lng: lastPosition.longitude! }
-        : null;
+      const lastPosition = cars.filter((c) => c.latitude != null && c.longitude != null)[0] ?? null;
+      const mapCenter = lastPosition ? { lat: lastPosition.latitude!, lng: lastPosition.longitude! } : null;
 
       const { data: ownedInstances } = await supabase
         .from("user_game_cards")
-        .select("id, condition, obtained_at, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)")
+        .select(
+          "id, condition, obtained_at, game_cards(id, name, brand, model, rarity, archetype, speed, resilience, adaptability, power, hp)",
+        )
         .eq("user_id", user!.id);
       const RARITY_RANK: Record<string, number> = { mythic: 4, rare: 3, uncommon: 2, common: 1 };
       const instances = (ownedInstances || []).filter((i: any) => i.game_cards);
@@ -171,12 +180,17 @@ const Dashboard = () => {
       });
       const topCards = instances.slice(0, 5);
 
-      let friendSpots: { id: string; brand: string; model: string; year: number; image_url: string | null; username: string | null }[] = [];
+      let friendSpots: {
+        id: string;
+        brand: string;
+        model: string;
+        year: number;
+        image_url: string | null;
+        username: string | null;
+      }[] = [];
       const friendships = friendshipsRes.data || [];
       if (friendships.length > 0) {
-        const friendIds = friendships.map((f) =>
-          f.requester_id === user!.id ? f.addressee_id : f.requester_id
-        );
+        const friendIds = friendships.map((f) => (f.requester_id === user!.id ? f.addressee_id : f.requester_id));
         const { data: profiles } = await supabase
           .from("profiles_public")
           .select("user_id, username")
@@ -223,36 +237,14 @@ const Dashboard = () => {
   const friendSpots = data?.friendSpots ?? [];
   const topCards = data?.topCards ?? [];
 
-  const [friendsTileIndex, setFriendsTileIndex] = useState(0);
-  const [zoneJeuCardIndex, setZoneJeuCardIndex] = useState(0);
-  useEffect(() => {
-    if (friendSpots.length <= 1) return;
-    const timer = setInterval(() => {
-      setFriendsTileIndex((i) => (i + 1) % friendSpots.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [friendSpots.length]);
-
-  useEffect(() => {
-    setZoneJeuCardIndex(0);
-  }, [topCards.length]);
-  useEffect(() => {
-    if (topCards.length <= 1) return;
-    const timer = setInterval(() => setZoneJeuCardIndex((i) => (i + 1) % topCards.length), 5000);
-    return () => clearInterval(timer);
-  }, [topCards.length]);
+  const [friendsTileIndex] = useAutoRotate(friendSpots.length, 3500);
+  const [zoneJeuCardIndex] = useAutoRotate(topCards.length, 5000);
 
   const currentFriendSpot = friendSpots[friendsTileIndex] ?? null;
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) setProfileMenuOpen(false);
-    };
-    if (profileMenuOpen) document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [profileMenuOpen]);
+  useClickOutside(profileMenuRef, () => setProfileMenuOpen(false), profileMenuOpen);
 
   if (isLoading) {
     return (
@@ -275,18 +267,24 @@ const Dashboard = () => {
     navigate("/auth");
   };
 
-  const carsSpottedText = typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
+  const carsSpottedText =
+    typeof t.dash_cars_spotted === "function" ? t.dash_cars_spotted(carCount) : `${carCount} spots`;
 
   return (
     <div className="min-h-full relative pb-6 overflow-x-hidden">
       {/* Glass Header */}
-      <header className="glass-header sticky top-0 z-20 px-4 py-3 sm:px-6" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+      <header
+        className="glass-header sticky top-0 z-20 px-4 py-3 sm:px-6"
+        style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+      >
         <div className="flex items-center justify-between max-w-2xl mx-auto w-full min-w-0">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 ring-1 ring-primary/20">
               <Car className="h-4.5 w-4.5 text-primary" />
             </div>
-            <h1 className="text-xl font-heading tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{t.app_name as string}</h1>
+            <h1 className="text-xl font-heading tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              {t.app_name as string}
+            </h1>
           </div>
           <div className="flex items-center gap-0.5 relative" ref={profileMenuRef}>
             <Button
@@ -304,7 +302,10 @@ const Dashboard = () => {
                 <button
                   type="button"
                   className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 rounded-t-xl"
-                  onClick={() => { setProfileMenuOpen(false); navigate("/profile"); }}
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    navigate("/profile");
+                  }}
                 >
                   <User className="h-4 w-4" />
                   {t.dash_my_profile as string}
@@ -312,14 +313,24 @@ const Dashboard = () => {
                 <button
                   type="button"
                   className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-secondary/50 flex items-center gap-2 rounded-b-xl"
-                  onClick={() => { setProfileMenuOpen(false); navigate("/garage-settings"); }}
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    navigate("/garage-settings");
+                  }}
                 >
                   <Car className="h-4 w-4" />
                   {t.dash_my_garage_settings as string}
                 </button>
               </div>
             )}
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={handleSignOut}><LogOut className="h-5 w-5" /></Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-primary"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
@@ -391,7 +402,7 @@ const Dashboard = () => {
             <div className="flex flex-col h-full">
               {/* Carousel of friend spots */}
               <div className="flex-1 overflow-hidden rounded-xl relative min-h-0">
-              {friendSpots.length > 0 ? (
+                {friendSpots.length > 0 ? (
                   <div className="relative h-full w-full">
                     {friendSpots.map((spot, idx) => (
                       <div
@@ -399,7 +410,12 @@ const Dashboard = () => {
                         className={`absolute inset-0 transition-opacity duration-700 ${idx === friendsTileIndex ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                       >
                         {spot.image_url ? (
-                          <img src={spot.image_url} alt={`${spot.brand} ${spot.model}`} className="h-full w-full object-cover rounded-xl" loading="lazy" />
+                          <img
+                            src={spot.image_url}
+                            alt={`${spot.brand} ${spot.model}`}
+                            className="h-full w-full object-cover rounded-xl"
+                            loading="lazy"
+                          />
                         ) : (
                           <div className="h-full w-full rounded-xl bg-secondary/30 flex items-center justify-center">
                             <Car className="h-10 w-10 text-muted-foreground/30" />
@@ -407,7 +423,9 @@ const Dashboard = () => {
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-xl" />
                         <div className="absolute bottom-2 left-2.5 right-2.5">
-                          <p className="text-[11px] font-semibold text-foreground truncate">{spot.brand} {spot.model}</p>
+                          <p className="text-[11px] font-semibold text-foreground truncate">
+                            {spot.brand} {spot.model}
+                          </p>
                           {spot.username && (
                             <p className="text-[9px] text-muted-foreground truncate">by {spot.username}</p>
                           )}
@@ -471,7 +489,9 @@ const Dashboard = () => {
             <div className="absolute bottom-3 left-4 z-10 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" />
               <span className="font-heading text-sm text-foreground">{t.dash_spot_map as string}</span>
-              <span className="text-xs text-foreground/60 font-sans normal-case">• {mapSpots.length} {t.dash_located as string}</span>
+              <span className="text-xs text-foreground/60 font-sans normal-case">
+                • {mapSpots.length} {t.dash_located as string}
+              </span>
             </div>
           </div>
         </button>
