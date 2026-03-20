@@ -94,12 +94,16 @@ const NotificationPreferences = ({ user }: { user: any }) => {
   };
 
   const handlePushToggle = async (enable: boolean) => {
+    if (!isPushSupported()) {
+      toast.error(t.push_not_supported as string);
+      return;
+    }
     setPushLoading(true);
     try {
       if (enable) {
         const ok = await subscribeToPush();
         setPushEnabled(ok);
-        if (!ok) toast.error(t.push_not_supported as string);
+        if (!ok) toast.error(t.push_permission_denied as string);
       } else {
         await unsubscribeFromPush();
         setPushEnabled(false);
