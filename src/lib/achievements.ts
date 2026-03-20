@@ -4,9 +4,23 @@
  * Each level grants XP when reached (cumulative in total).
  */
 
-export const RARITY_HUNTER_IDS = ["rarity_hunter_5", "rarity_hunter_6", "rarity_hunter_7", "rarity_hunter_8", "rarity_hunter_9", "rarity_hunter_10"] as const;
+export const RARITY_HUNTER_IDS = [
+  "rarity_hunter_5",
+  "rarity_hunter_6",
+  "rarity_hunter_7",
+  "rarity_hunter_8",
+  "rarity_hunter_9",
+  "rarity_hunter_10",
+] as const;
 export const MUSE_ACHIEVEMENT_IDS = ["muse_of_history"] as const;
-export const ACHIEVEMENT_IDS = ["spotter", "globe_trotter", ...RARITY_HUNTER_IDS, "big_game", ...MUSE_ACHIEVEMENT_IDS, "brand_collector"] as const;
+export const ACHIEVEMENT_IDS = [
+  "spotter",
+  "globe_trotter",
+  ...RARITY_HUNTER_IDS,
+  "big_game",
+  ...MUSE_ACHIEVEMENT_IDS,
+  "brand_collector",
+] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 
 /** Shape of the emblem for each achievement type */
@@ -31,9 +45,8 @@ export const ACHIEVEMENT_SHAPES: Record<AchievementId, EmblemShape> = {
 };
 
 /** XP granted when reaching each level (1→100, 2→200, …, 10→5000). */
-export const ACHIEVEMENT_XP_REWARDS: [number, number, number, number, number, number, number, number, number, number] = [
-  100, 200, 400, 800, 1500, 2000, 2500, 3000, 3500, 5000,
-];
+export const ACHIEVEMENT_XP_REWARDS: [number, number, number, number, number, number, number, number, number, number] =
+  [100, 200, 400, 800, 1500, 2000, 2500, 3000, 3500, 5000];
 
 export interface AchievementDef {
   id: AchievementId;
