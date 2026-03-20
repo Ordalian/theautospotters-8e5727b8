@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Car, Users, Brain, Trophy, LogOut, User, MapPin, Gamepad2, Store, Loader2, ChevronRight } from "lucide-react";
 import { CardImage } from "@/components/game/CardImage";
 import storeBg from "@/assets/store-bg.png";
-import { DashboardWidget } from "@/components/DashboardWidget";
 import { DailyStreak } from "@/components/DailyStreak";
 import type { CardCondition, CardArchetype } from "@/data/gameCards";
 import { Button } from "@/components/ui/button";
@@ -340,9 +339,8 @@ const Dashboard = () => {
       <main className="p-4 sm:p-5 max-w-2xl mx-auto relative z-10 w-full min-w-0">
         <MessagingArrow displayName={displayName} />
 
-        {/* Widget + Streak */}
-        <div className="space-y-3 mb-4">
-          <DashboardWidget />
+        {/* Streak — widget is now persistent on Home */}
+        <div className="mb-4">
           <DailyStreak />
         </div>
 
