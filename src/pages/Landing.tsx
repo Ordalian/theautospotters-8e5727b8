@@ -109,17 +109,25 @@ const Landing = () => {
 
         {/* Scroll hint */}
         <motion.div
-          className="absolute bottom-8 flex flex-col items-center gap-1 text-muted-foreground/50"
+          className="absolute bottom-8 flex flex-col items-center gap-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 0.6 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
         >
-          <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-          >
-            <ChevronDown className="h-5 w-5" />
-          </motion.div>
+          {[0, 1].map((i) => (
+            <motion.div
+              key={i}
+              animate={{ opacity: [0.2, 0.8, 0.2], y: [0, 5, 0] }}
+              transition={{
+                repeat: Infinity,
+                duration: 1.6,
+                ease: "easeInOut",
+                delay: i * 0.2,
+              }}
+            >
+              <ChevronDown className="h-5 w-5 text-primary/60 -mt-1" />
+            </motion.div>
+          ))}
         </motion.div>
       </section>
 
