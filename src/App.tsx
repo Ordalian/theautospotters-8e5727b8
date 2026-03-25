@@ -8,7 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ThemeProvider } from "@/hooks/useTheme";
-import { LanguageProvider } from "@/i18n/LanguageContext";
+import { LanguageProvider, useLanguage } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
 import ThemeParticles from "@/components/ThemeParticles";
 import InstallPrompt from "@/components/InstallPrompt";
