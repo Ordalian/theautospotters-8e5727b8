@@ -39,7 +39,7 @@ function parseEngines(text: string): { name: string; displacement: string; fuel:
 
 const AI_MODELS = [
   { name: "gemini-2.5-flash", useMaxTokens: true },
-  { name: "gemini-2.0-flash", useMaxTokens: true },
+  { name: "gemini-2.5-flash-lite", useMaxTokens: true },
 ];
 
 async function callAI(apiKey: string, messages: { role: string; content: string | object[] }[]): Promise<string> {
