@@ -942,9 +942,7 @@ const en: Translations = {
   push_ios_standalone: "Install the app from Safari to enable notifications",
   push_permission_denied: "Permission denied — check your browser notification settings",
 
-  // PWA / SW updates
-  sw_update_available: "Update available",
-  sw_update_btn: "Update",
+  // (duplicates removed)
 
   // Daily streak
   streak_title: "Daily streak",

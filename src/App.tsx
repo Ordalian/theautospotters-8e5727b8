@@ -17,7 +17,7 @@ import { PageLoader } from "@/components/PageLoader";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { useLanguage } from "@/i18n/LanguageContext";
+
 import { toast } from "sonner";
 
 // Lazy-load all pages
