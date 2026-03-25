@@ -19,6 +19,8 @@ import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
+import { toast } from "sonner";
+
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
