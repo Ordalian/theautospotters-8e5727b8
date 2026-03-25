@@ -18,8 +18,6 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { useLanguage } from "@/i18n/LanguageContext";
-import { toast } from "sonner";
 
 // Lazy-load all pages
 const Auth = lazy(() => import("./pages/Auth"));
@@ -76,14 +74,14 @@ const persister = createIDBPersister();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <SplashScreen />;
+  if (loading) return <PageLoader />;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <SplashScreen />;
+  if (loading) return <PageLoader />;
   if (user) return <Navigate to="/home" replace />;
   return <>{children}</>;
 }
@@ -515,6 +513,23 @@ function AnimatedRoutes() {
   );
 }
 
+function AppShell() {
+  const { loading } = useAuth();
+  const [splashVisible, setSplashVisible] = useState(true);
+
+  return (
+    <>
+      <SWUpdatePrompt />
+      <OfflineBanner />
+      <InstallPrompt />
+      <AnimatedRoutes />
+      {splashVisible && (
+        <SplashScreen fading={!loading} onDone={() => setSplashVisible(false)} />
+      )}
+    </>
+  );
+}
+
 const App = () => (
   <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: 24 * 60 * 60 * 1000 }}>
     <TooltipProvider>
@@ -524,10 +539,7 @@ const App = () => (
           <ThemeProvider>
             <ThemeParticles />
             <LanguageProvider>
-              <SWUpdatePrompt />
-              <OfflineBanner />
-              <InstallPrompt />
-              <AnimatedRoutes />
+              <AppShell />
             </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>
