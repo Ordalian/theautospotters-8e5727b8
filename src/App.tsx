@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ThemeProvider } from "@/hooks/useTheme";
-import { LanguageProvider } from "@/i18n/LanguageContext";
+import { LanguageProvider, useLanguage } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
 import ThemeParticles from "@/components/ThemeParticles";
 import InstallPrompt from "@/components/InstallPrompt";
@@ -96,19 +96,28 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 // SW update prompt
 function SWUpdatePrompt() {
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW();
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW();
   const { t } = useLanguage();
-  if (!needRefresh) return null;
+  const [dismissed, setDismissed] = useState(false);
+  if (!needRefresh || dismissed) return null;
   return (
     <div className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-sm">
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <p className="text-sm font-medium">{t.sw_update_available as string}</p>
-        <button onClick={() => updateServiceWorker(true)} className="text-sm font-bold text-primary underline shrink-0">
-          {t.sw_update_btn as string}
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => setDismissed(true)}
+            className="text-sm text-muted-foreground"
+          >
+            {t.sw_update_later as string}
+          </button>
+          <button
+            onClick={() => updateServiceWorker(true)}
+            className="text-sm font-bold text-primary underline"
+          >
+            {t.sw_update_btn as string}
+          </button>
+        </div>
       </div>
     </div>
   );

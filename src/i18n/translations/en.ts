@@ -929,6 +929,9 @@ const en: Translations = {
   pwa_settings_open_browser: "Open this page in Chrome or Safari to install the app.",
   pwa_install_firefox: "Install Autospotter from the Firefox menu.",
   pwa_install_firefox_steps: "Menu ⋮ → Install",
+  sw_update_available: "Update available",
+  sw_update_btn: "Update now",
+  sw_update_later: "Later",
 
   // Push notifications
   push_notifications: "Push notifications",

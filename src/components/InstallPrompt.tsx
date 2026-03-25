@@ -9,6 +9,7 @@ export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showManualPrompt, setShowManualPrompt] = useState<"ios" | "firefox" | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     if (isStandalone() || localStorage.getItem("pwa-install-dismissed")) return;
@@ -31,11 +32,21 @@ export default function InstallPrompt() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") setDeferredPrompt(null);
-    dismiss();
+    if (!deferredPrompt || installing) return;
+    setInstalling(true);
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setDeferredPrompt(null);
+        setDismissed(true);
+        localStorage.setItem("pwa-install-dismissed", "1");
+      }
+    } catch {
+      // prompt() can throw if called more than once or in wrong context
+    } finally {
+      setInstalling(false);
+    }
   };
 
   const dismiss = () => {
@@ -64,13 +75,8 @@ export default function InstallPrompt() {
           <p className="font-bold text-sm truncate">{t.pwa_install_title as string}</p>
           <p className="text-xs text-muted-foreground line-clamp-1">{instructions}</p>
         </div>
-
-        {showManualPrompt === "ios" ? (
-          <Share className="h-4 w-4 text-muted-foreground shrink-0" />
-        ) : showManualPrompt === "firefox" ? (
-          <MoreVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-        ) : (
-          <Button size="sm" className="gap-1.5 shrink-0" onClick={handleInstall}>
+        {!showManualPrompt && (
+          <Button size="sm" className="gap-1.5 shrink-0" onClick={handleInstall} disabled={installing}>
             <Download className="h-3.5 w-3.5" />
             {t.pwa_install_btn as string}
           </Button>
