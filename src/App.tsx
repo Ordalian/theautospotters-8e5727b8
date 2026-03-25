@@ -14,6 +14,7 @@ import ThemeParticles from "@/components/ThemeParticles";
 import InstallPrompt from "@/components/InstallPrompt";
 import { OfflineBanner } from "@/components/OfflineFallback";
 import { PageLoader } from "@/components/PageLoader";
+import { SplashScreen } from "@/components/SplashScreen";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
 import { useRegisterSW } from "virtual:pwa-register/react";
@@ -75,14 +76,14 @@ const persister = createIDBPersister();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <PageLoader />;
+  if (loading) return <SplashScreen />;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <PageLoader />;
+  if (loading) return <SplashScreen />;
   if (user) return <Navigate to="/home" replace />;
   return <>{children}</>;
 }

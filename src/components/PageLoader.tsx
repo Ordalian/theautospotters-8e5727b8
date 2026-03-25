@@ -1,7 +1,9 @@
+import { Loader2 } from "lucide-react";
+
 export function PageLoader() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <img src="/splash.gif" alt="Loading..." className="w-48 h-48 object-contain" />
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
   );
 }
