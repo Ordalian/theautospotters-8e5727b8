@@ -108,31 +108,33 @@ const Landing = () => {
         </motion.div>
 
         {/* Scroll hint */}
-        <motion.div
-          className="absolute bottom-8 flex flex-col items-center gap-0"
+        <motion.button
+          className="absolute bottom-8 flex flex-col items-center gap-0 cursor-pointer p-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 0.6 }}
+          onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+          aria-label="Scroll to features"
         >
-          {[0, 1].map((i) => (
+          {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              animate={{ opacity: [0.2, 0.8, 0.2], y: [0, 5, 0] }}
+              animate={{ opacity: [0.15, 1, 0.15], y: [0, 6, 0] }}
               transition={{
                 repeat: Infinity,
                 duration: 1.6,
                 ease: "easeInOut",
-                delay: i * 0.2,
+                delay: i * 0.18,
               }}
             >
-              <ChevronDown className="h-5 w-5 text-primary/60 -mt-1" />
+              <ChevronDown className="h-6 w-6 text-primary -mt-1.5" />
             </motion.div>
           ))}
-        </motion.div>
+        </motion.button>
       </section>
 
       {/* ── Features ── */}
-      <section className="px-4 pb-16 pt-4 max-w-2xl mx-auto">
+      <section id="features" className="px-4 pb-16 pt-4 max-w-2xl mx-auto">
         <div className="grid grid-cols-1 gap-3">
           {FEATURES.map(({ key, icon: Icon }, i) => (
             <motion.div
