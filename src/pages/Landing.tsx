@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Car, Layers, MapPin, MessageSquare, Users, User, ChevronDown } from "lucide-react";
 
 const FEATURES = [
-  { key: "garage",    icon: Car,           color: "text-orange-400",  bg: "bg-orange-400/10 border-orange-400/20" },
-  { key: "cards",     icon: Layers,        color: "text-teal-400",    bg: "bg-teal-400/10 border-teal-400/20" },
-  { key: "map",       icon: MapPin,        color: "text-red-400",     bg: "bg-red-400/10 border-red-400/20" },
-  { key: "messaging", icon: MessageSquare, color: "text-orange-300",  bg: "bg-orange-300/10 border-orange-300/20" },
-  { key: "friends",   icon: Users,         color: "text-teal-300",    bg: "bg-teal-300/10 border-teal-300/20" },
-  { key: "profile",   icon: User,          color: "text-red-300",     bg: "bg-red-300/10 border-red-300/20" },
+  { key: "garage",    icon: Car,           color: "#F4780A", border: "rgba(244,120,10,0.25)" },
+  { key: "cards",     icon: Layers,        color: "#40B5AD", border: "rgba(64,181,173,0.25)" },
+  { key: "map",       icon: MapPin,        color: "#F4780A", border: "rgba(244,120,10,0.25)" },
+  { key: "messaging", icon: MessageSquare, color: "#40B5AD", border: "rgba(64,181,173,0.25)" },
+  { key: "friends",   icon: Users,         color: "#F4780A", border: "rgba(244,120,10,0.25)" },
+  { key: "profile",   icon: User,          color: "#40B5AD", border: "rgba(64,181,173,0.25)" },
 ] as const;
 
 const fadeUp = {
@@ -21,7 +21,6 @@ const fadeUp = {
   }),
 };
 
-/* Pixel-art garage door SVG — rendered inline so no asset needed */
 function GarageDoor() {
   return (
     <svg
@@ -31,34 +30,42 @@ function GarageDoor() {
       xmlns="http://www.w3.org/2000/svg"
     >
       {/* Wall */}
-      <rect width="120" height="100" fill="#1a0a0a" />
-      {/* Door frame */}
-      <rect x="10" y="10" width="100" height="78" fill="#2a0d0d" />
+      <rect width="120" height="100" fill="#071212" />
+      {/* Door frame outer */}
+      <rect x="8" y="8" width="104" height="80" fill="#0d2424" stroke="#40B5AD" strokeWidth="1.5" />
       {/* Door panels — horizontal slats */}
-      {[10, 22, 34, 46, 58, 70].map((y) => (
-        <rect key={y} x="10" y={y} width="100" height="11" fill="#3d1010" stroke="#1a0a0a" strokeWidth="1" />
+      {[9, 21, 33, 45, 57, 69].map((y) => (
+        <rect key={y} x="9" y={y} width="102" height="11" fill="#0a1e1e" stroke="#152e2e" strokeWidth="0.5" />
       ))}
-      {/* Door vertical divider */}
-      <rect x="59" y="10" width="2" height="68" fill="#1a0a0a" />
-      {/* Number 3 — pixel art on door */}
-      {/* Top bar */}
-      <rect x="46" y="22" width="28" height="4" fill="#e85d04" />
-      {/* Mid-right */}
-      <rect x="66" y="22" width="8" height="14" fill="#e85d04" />
-      {/* Mid bar */}
-      <rect x="46" y="32" width="28" height="4" fill="#e85d04" />
-      {/* Bot-right */}
-      <rect x="66" y="36" width="8" height="14" fill="#e85d04" />
-      {/* Bottom bar */}
-      <rect x="46" y="46" width="28" height="4" fill="#e85d04" />
-      {/* Glow underneath door */}
-      <rect x="10" y="82" width="100" height="6" fill="#e85d04" opacity="0.9" />
-      <rect x="0" y="86" width="120" height="14" fill="#e85d04" opacity="0.25" />
-      {/* Ground glow spread */}
-      <ellipse cx="60" cy="92" rx="55" ry="8" fill="#f48c06" opacity="0.3" />
-      {/* Door handle */}
-      <rect x="44" y="72" width="6" height="4" fill="#f48c06" />
-      <rect x="70" y="72" width="6" height="4" fill="#f48c06" />
+      {/* Vertical centre divider */}
+      <rect x="59" y="9" width="2" height="70" fill="#071212" />
+      {/* AS monogram — pixel art */}
+      {/* A left stroke */}
+      <rect x="32" y="24" width="4" height="28" fill="#40B5AD" />
+      {/* A right stroke */}
+      <rect x="44" y="24" width="4" height="28" fill="#40B5AD" />
+      {/* A top bar */}
+      <rect x="32" y="24" width="16" height="4" fill="#40B5AD" />
+      {/* A mid bar */}
+      <rect x="32" y="36" width="16" height="4" fill="#40B5AD" />
+      {/* S top bar */}
+      <rect x="66" y="24" width="18" height="4" fill="#F4780A" />
+      {/* S top-left */}
+      <rect x="66" y="24" width="4" height="10" fill="#F4780A" />
+      {/* S mid bar */}
+      <rect x="66" y="34" width="18" height="4" fill="#F4780A" />
+      {/* S bot-right */}
+      <rect x="80" y="38" width="4" height="10" fill="#F4780A" />
+      {/* S bot bar */}
+      <rect x="66" y="48" width="18" height="4" fill="#F4780A" />
+      {/* Glow strip under door */}
+      <rect x="9" y="83" width="102" height="4" fill="#40B5AD" opacity="0.9" />
+      <rect x="0"  y="87" width="120" height="13" fill="#40B5AD" opacity="0.15" />
+      {/* Ground glow */}
+      <ellipse cx="60" cy="95" rx="52" ry="7" fill="#40B5AD" opacity="0.2" />
+      {/* Handles */}
+      <rect x="42" y="73" width="6" height="4" fill="#F4780A" />
+      <rect x="72" y="73" width="6" height="4" fill="#F4780A" />
     </svg>
   );
 }
@@ -69,14 +76,13 @@ const Landing = () => {
   return (
     <div
       className="min-h-screen w-full overflow-x-hidden relative"
-      style={{ background: "linear-gradient(180deg, #0d0303 0%, #1a0505 50%, #0d0303 100%)" }}
+      style={{ background: "linear-gradient(180deg, #040e0e 0%, #071a1a 60%, #040e0e 100%)" }}
     >
-      {/* Pixel dot grid overlay */}
+      {/* Scanline overlay */}
       <div
-        className="pointer-events-none fixed inset-0 z-0 opacity-[0.04]"
+        className="pointer-events-none fixed inset-0 z-0 opacity-[0.03]"
         style={{
-          backgroundImage: "radial-gradient(circle, #e85d04 1px, transparent 1px)",
-          backgroundSize: "16px 16px",
+          backgroundImage: "repeating-linear-gradient(0deg, #40B5AD 0px, #40B5AD 1px, transparent 1px, transparent 4px)",
         }}
       />
 
@@ -87,16 +93,17 @@ const Landing = () => {
       >
         {(["fr", "en"] as const).map((lang, i) => (
           <>
-            {i > 0 && <span key="sep" className="text-orange-900/60 text-sm">|</span>}
+            {i > 0 && <span key="sep" className="text-sm" style={{ color: "rgba(64,181,173,0.3)" }}>|</span>}
             <button
               key={lang}
               type="button"
               onClick={() => setLanguage(lang)}
-              className={`px-3 py-1.5 rounded text-sm font-mono font-medium transition-colors ${
+              className="px-3 py-1.5 rounded text-sm font-mono font-medium transition-colors"
+              style={
                 language === lang
-                  ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
-                  : "text-orange-900 hover:text-orange-600"
-              }`}
+                  ? { background: "rgba(64,181,173,0.15)", color: "#40B5AD", border: "1px solid rgba(64,181,173,0.3)" }
+                  : { color: "rgba(64,181,173,0.4)", border: "1px solid transparent" }
+              }
             >
               {t[`auth_language_${lang}`] as string}
             </button>
@@ -107,32 +114,33 @@ const Landing = () => {
       {/* ── Hero ── */}
       <section className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center z-10">
 
-        {/* Garage door logo */}
+        {/* Garage door */}
         <motion.div
-          className="w-36 h-36 mb-8"
+          className="w-40 h-36 mb-8 drop-shadow-2xl"
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
         >
           <GarageDoor />
         </motion.div>
 
         <motion.h1
-          className="text-5xl sm:text-6xl font-bold tracking-tight"
-          style={{ color: "#f5e6d3", fontFamily: "monospace" }}
+          className="text-5xl sm:text-6xl font-bold tracking-tight font-mono"
+          style={{ color: "#e8f4f4" }}
           custom={0} initial="hidden" animate="visible" variants={fadeUp}
         >
-          AUTO<span style={{ color: "#e85d04" }}>SPOTTER</span>
+          AUTO<span style={{ color: "#40B5AD" }}>SPOTTER</span>
         </motion.h1>
 
         <motion.div
-          className="mt-4 flex items-center gap-2 text-base sm:text-lg font-mono font-medium"
+          className="mt-4 flex items-center gap-2 text-base sm:text-lg font-mono"
+          style={{ color: "#6ab8b3" }}
           custom={1} initial="hidden" animate="visible" variants={fadeUp}
         >
           {["Spot", "Collect", "Compete"].map((word, i) => (
             <span key={word} className="flex items-center gap-2">
-              <span style={{ color: "#c4a882" }}>{word}</span>
-              {i < 2 && <span style={{ color: "#e85d04" }}>·</span>}
+              <span>{word}</span>
+              {i < 2 && <span style={{ color: "#F4780A" }}>·</span>}
             </span>
           ))}
         </motion.div>
@@ -143,15 +151,15 @@ const Landing = () => {
         >
           <Button
             asChild size="lg"
-            className="w-full sm:w-auto px-8 font-mono"
-            style={{ background: "#e85d04", color: "#fff", border: "none" }}
+            className="w-full sm:w-auto px-8 font-mono font-semibold border-0"
+            style={{ background: "#40B5AD", color: "#040e0e" }}
           >
             <Link to="/auth">{t.landing_connect as string}</Link>
           </Button>
           <Button
-            asChild size="lg" variant="outline"
+            asChild size="lg"
             className="w-full sm:w-auto px-8 font-mono"
-            style={{ borderColor: "#e85d04", color: "#e85d04", background: "transparent" }}
+            style={{ background: "transparent", color: "#F4780A", border: "1px solid rgba(244,120,10,0.5)" }}
           >
             <Link to="/tryout">{t.tryout_button as string}</Link>
           </Button>
@@ -172,7 +180,7 @@ const Landing = () => {
               animate={{ opacity: [0.15, 1, 0.15], y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut", delay: i * 0.18 }}
             >
-              <ChevronDown className="h-6 w-6 -mt-1.5" style={{ color: "#e85d04" }} />
+              <ChevronDown className="h-6 w-6 -mt-1.5" style={{ color: "#40B5AD" }} />
             </motion.div>
           ))}
         </motion.button>
@@ -180,15 +188,15 @@ const Landing = () => {
 
       {/* ── Features ── */}
       <section id="features" className="relative z-10 px-4 pb-16 pt-4 max-w-2xl mx-auto">
-        {/* Section divider */}
+        {/* Divider */}
         <div className="flex items-center gap-3 mb-8 px-2">
-          <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, #e85d04, transparent)" }} />
-          <span className="text-xs font-mono uppercase tracking-widest" style={{ color: "#e85d04" }}>Features</span>
-          <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, #e85d04, transparent)" }} />
+          <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, #40B5AD55, transparent)" }} />
+          <span className="text-xs font-mono uppercase tracking-widest" style={{ color: "#40B5AD" }}>Features</span>
+          <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, #40B5AD55, transparent)" }} />
         </div>
 
         <div className="grid grid-cols-1 gap-2">
-          {FEATURES.map(({ key, icon: Icon, color, bg }, i) => (
+          {FEATURES.map(({ key, icon: Icon, color, border }, i) => (
             <motion.div
               key={key}
               custom={i}
@@ -196,17 +204,23 @@ const Landing = () => {
               whileInView="visible"
               viewport={{ once: true, margin: "-60px" }}
               variants={fadeUp}
-              className={`flex items-start gap-4 rounded border p-4 transition-colors hover:bg-white/[0.03] ${bg}`}
-              style={{ background: "rgba(255,255,255,0.02)" }}
+              className="flex items-start gap-4 rounded p-4 transition-all"
+              style={{
+                background: "rgba(64,181,173,0.04)",
+                border: `1px solid ${border}`,
+              }}
             >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded border ${bg}`}>
-                <Icon className={`h-5 w-5 ${color}`} />
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded"
+                style={{ background: `${color}18`, border: `1px solid ${color}40` }}
+              >
+                <Icon className="h-5 w-5" style={{ color }} />
               </div>
               <div className="min-w-0 pt-0.5">
-                <p className={`font-mono font-semibold text-sm ${color}`}>
+                <p className="font-mono font-semibold text-sm" style={{ color }}>
                   {t[`landing_feature_${key}_title`] as string}
                 </p>
-                <p className="text-sm mt-0.5 leading-relaxed" style={{ color: "#9a7a5a" }}>
+                <p className="text-sm mt-0.5 leading-relaxed" style={{ color: "#4a8a85" }}>
                   {t[`landing_feature_${key}_desc`] as string}
                 </p>
               </div>
@@ -219,25 +233,25 @@ const Landing = () => {
       <section
         className="relative z-10 px-6 py-12 flex flex-col items-center gap-5"
         style={{
-          borderTop: "1px solid rgba(232, 93, 4, 0.2)",
+          borderTop: "1px solid rgba(64,181,173,0.15)",
           paddingBottom: "max(3rem, calc(1.5rem + env(safe-area-inset-bottom)))",
         }}
       >
-        <p className="font-mono text-sm text-center" style={{ color: "#9a7a5a" }}>
+        <p className="font-mono text-sm text-center" style={{ color: "#4a8a85" }}>
           {t.landing_tagline as string}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs sm:max-w-none sm:justify-center">
           <Button
             asChild size="lg"
-            className="w-full sm:w-auto px-8 font-mono"
-            style={{ background: "#e85d04", color: "#fff", border: "none" }}
+            className="w-full sm:w-auto px-8 font-mono font-semibold border-0"
+            style={{ background: "#40B5AD", color: "#040e0e" }}
           >
             <Link to="/auth">{t.landing_try_me as string}</Link>
           </Button>
           <Button
-            asChild size="lg" variant="ghost"
+            asChild size="lg"
             className="w-full sm:w-auto font-mono"
-            style={{ color: "#9a7a5a" }}
+            style={{ background: "transparent", color: "#4a8a85", border: "none" }}
           >
             <Link to="/tryout">{t.tryout_button as string}</Link>
           </Button>
@@ -245,7 +259,7 @@ const Landing = () => {
         <Link
           to="/legal"
           className="text-xs font-mono underline underline-offset-2"
-          style={{ color: "#5a3a1a" }}
+          style={{ color: "#2a5a55" }}
         >
           {t.landing_legal as string}
         </Link>
