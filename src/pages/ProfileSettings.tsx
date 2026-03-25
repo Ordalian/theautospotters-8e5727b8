@@ -3,20 +3,35 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, User, Check, UserPlus, X, Car, Bell, Plus, Camera, Loader2, Globe, Scale, Download, Share, Smartphone, MoreVertical } from "lucide-react";
-import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported, isStandalone } from "@/lib/pushNotifications";
+import {
+  ArrowLeft,
+  User,
+  Check,
+  UserPlus,
+  X,
+  Car,
+  Bell,
+  Plus,
+  Camera,
+  Loader2,
+  Globe,
+  Scale,
+  Download,
+  Share,
+  Smartphone,
+  MoreVertical,
+  Trash2,
+  EyeOff,
+} from "lucide-react";
+import { subscribeToPush, unsubscribeFromPush, isPushSubscribed, isPushSupported } from "@/lib/pushNotifications";
+import { isStandalone, type BeforeInstallPromptEvent } from "@/lib/pwaUtils";
 import UserRoleBadge from "@/components/UserRoleBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { callCarApi } from "@/lib/carApi";
 import { resizeImage } from "@/lib/imageUtils";
 import { PhotoUploadDialog } from "@/components/PhotoUpload";
@@ -53,13 +68,18 @@ const NotificationPreferences = ({ user }: { user: any }) => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("notify_channels, notify_dms").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-      if (data) {
-        setNotifyChannels((data as any).notify_channels ?? true);
-        setNotifyDms((data as any).notify_dms ?? true);
-      }
-      setLoaded(true);
-    });
+    supabase
+      .from("profiles")
+      .select("notify_channels, notify_dms")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setNotifyChannels((data as any).notify_channels ?? true);
+          setNotifyDms((data as any).notify_dms ?? true);
+        }
+        setLoaded(true);
+      });
     // Check push subscription status
     isPushSubscribed().then(setPushEnabled);
   }, [user]);
@@ -67,16 +87,23 @@ const NotificationPreferences = ({ user }: { user: any }) => {
   const toggle = async (field: "notify_channels" | "notify_dms", value: boolean) => {
     if (field === "notify_channels") setNotifyChannels(value);
     else setNotifyDms(value);
-    await supabase.from("profiles").update({ [field]: value } as any).eq("user_id", user.id);
+    await supabase
+      .from("profiles")
+      .update({ [field]: value } as any)
+      .eq("user_id", user.id);
   };
 
   const handlePushToggle = async (enable: boolean) => {
+    if (!isPushSupported()) {
+      toast.error(t.push_not_supported as string);
+      return;
+    }
     setPushLoading(true);
     try {
       if (enable) {
         const ok = await subscribeToPush();
         setPushEnabled(ok);
-        if (!ok) toast.error(t.push_not_supported as string);
+        if (!ok) toast.error(t.push_permission_denied as string);
       } else {
         await unsubscribeFromPush();
         setPushEnabled(false);
@@ -143,11 +170,6 @@ const NotificationPreferences = ({ user }: { user: any }) => {
     </div>
   );
 };
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
 
 const PwaInstallSection = () => {
   const { t } = useLanguage();
@@ -226,6 +248,135 @@ const PwaInstallSection = () => {
   );
 };
 
+const HideEmailToggle = ({ user }: { user: any }) => {
+  const { t } = useLanguage();
+  const [hideEmail, setHideEmail] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("hide_email")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setHideEmail((data as any).hide_email ?? false);
+        setLoaded(true);
+      });
+  }, [user]);
+
+  const toggle = async (value: boolean) => {
+    setHideEmail(value);
+    await supabase.from("profiles").update({ hide_email: value } as any).eq("user_id", user.id);
+  };
+
+  if (!loaded) return null;
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-lg font-bold flex items-center gap-2">
+        <EyeOff className="h-5 w-5 text-primary" />
+        {t.hide_email as string}
+      </h2>
+      <label className="flex items-center justify-between rounded-xl border border-border bg-card p-3 cursor-pointer">
+        <div>
+          <p className="text-sm font-medium">{t.hide_email as string}</p>
+          <p className="text-xs text-muted-foreground">{t.hide_email_desc as string}</p>
+        </div>
+        <input
+          type="checkbox"
+          checked={hideEmail}
+          onChange={(e) => toggle(e.target.checked)}
+          className="h-5 w-5 accent-[hsl(var(--primary))] rounded"
+        />
+      </label>
+    </div>
+  );
+};
+
+const DeleteAccountSection = () => {
+  const { t } = useLanguage();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [step, setStep] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      // Flag for deletion — actual deletion handled by admin/backend
+      await supabase
+        .from("profiles")
+        .update({ flagged_for_deletion: true } as any)
+        .eq("user_id", user.id);
+      await signOut();
+      toast.success(t.account_deleted as string);
+      navigate("/auth");
+    } catch {
+      toast.error(t.error as string);
+    } finally {
+      setDeleting(false);
+      setStep(0);
+    }
+  };
+
+  return (
+    <div className="space-y-3 pt-4 border-t border-destructive/20">
+      <h2 className="text-lg font-bold flex items-center gap-2 text-destructive">
+        <Trash2 className="h-5 w-5" />
+        {t.account_delete as string}
+      </h2>
+      <p className="text-sm text-muted-foreground">{t.account_delete_desc as string}</p>
+      {step === 0 && (
+        <Button
+          variant="outline"
+          className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
+          onClick={() => setStep(1)}
+        >
+          {t.account_delete as string}
+        </Button>
+      )}
+      {step === 1 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-destructive">{t.account_delete_confirm as string}</p>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>
+              {t.cancel as string}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => setStep(2)}
+            >
+              {t.confirm as string}
+            </Button>
+          </div>
+        </div>
+      )}
+      {step === 2 && (
+        <div className="space-y-2">
+          <p className="text-sm font-bold text-destructive">{t.account_delete_confirm2 as string}</p>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>
+              {t.cancel as string}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t.account_delete as string}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProfileSettings = () => {
   const { user } = useAuth();
   const { t, language, setLanguage } = useLanguage();
@@ -260,7 +411,7 @@ const ProfileSettings = () => {
         .maybeSingle();
       setUsernameAvailability(data ? "taken" : "available");
     },
-    [user]
+    [user],
   );
 
   useEffect(() => {
@@ -278,9 +429,9 @@ const ProfileSettings = () => {
       try {
         const { data } = await supabase
           .from("profiles")
-        .select("username, username_locked, is_temp")
-        .eq("user_id", user.id)
-        .maybeSingle();
+          .select("username, username_locked, is_temp")
+          .eq("user_id", user.id)
+          .maybeSingle();
         if (data?.username) {
           setUsername(data.username);
           setInitialUsername(data.username);
@@ -310,8 +461,17 @@ const ProfileSettings = () => {
         .from("profiles")
         .select("user_id, username, role, is_premium")
         .in("user_id", userIds);
-      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || []);
-      setRequests(data.map((r) => ({ ...r, username: profileMap.get(r.requester_id)?.username || null, role: profileMap.get(r.requester_id)?.role ?? null, is_premium: profileMap.get(r.requester_id)?.is_premium ?? false })));
+      const profileMap = new Map(
+        profiles?.map((p: any) => [p.user_id, { username: p.username, role: p.role, is_premium: p.is_premium }]) || [],
+      );
+      setRequests(
+        data.map((r) => ({
+          ...r,
+          username: profileMap.get(r.requester_id)?.username || null,
+          role: profileMap.get(r.requester_id)?.role ?? null,
+          is_premium: profileMap.get(r.requester_id)?.is_premium ?? false,
+        })),
+      );
     } else {
       setRequests([]);
     }
@@ -362,7 +522,11 @@ const ProfileSettings = () => {
 
   const markNotificationRead = async (id: string) => {
     if (!user) return;
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id).eq("user_id", user.id);
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("user_id", user.id);
     queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
   };
 
@@ -376,7 +540,10 @@ const ProfileSettings = () => {
         action: "identify_and_extract_plate",
         images: [base64],
       });
-      const plate = result?.license_plate?.replace(/\s|-|\./g, "").toUpperCase().slice(0, 20);
+      const plate = result?.license_plate
+        ?.replace(/\s|-|\./g, "")
+        .toUpperCase()
+        .slice(0, 20);
       if (!plate || plate.length < 2) {
         toast.error(t.profile_no_plate as string);
         return;
@@ -492,17 +659,23 @@ const ProfileSettings = () => {
                   )}
                 </div>
               )}
-              {usernameLocked && (
-                <p className="text-xs text-muted-foreground">{t.profile_locked as string}</p>
-              )}
+              {usernameLocked && <p className="text-xs text-muted-foreground">{t.profile_locked as string}</p>}
             </div>
             {!usernameLocked && (
               <Button
                 onClick={handleSaveClick}
-                disabled={saving || !username.trim() || usernameAvailability === "taken" || usernameAvailability === "checking"}
+                disabled={
+                  saving || !username.trim() || usernameAvailability === "taken" || usernameAvailability === "checking"
+                }
                 className="w-full h-12 text-base font-bold rounded-xl gap-2"
               >
-                {saving ? (t.profile_saving as string) : <><Check className="h-5 w-5" /> {t.save as string}</>}
+                {saving ? (
+                  (t.profile_saving as string)
+                ) : (
+                  <>
+                    <Check className="h-5 w-5" /> {t.save as string}
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -553,7 +726,12 @@ const ProfileSettings = () => {
               <span className="text-sm font-medium font-mono">
                 {ov.license_plate} · {new Date(ov.created_at).toLocaleDateString("fr-FR")}
               </span>
-              <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRemoveOwnedVehicle(ov.id)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                onClick={() => handleRemoveOwnedVehicle(ov.id)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -569,6 +747,9 @@ const ProfileSettings = () => {
         {/* PWA Install */}
         <PwaInstallSection />
 
+        {/* Hide email */}
+        <HideEmailToggle user={user} />
+
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Scale className="h-5 w-5 text-primary" />
@@ -580,6 +761,9 @@ const ProfileSettings = () => {
             {t.legal_title as string}
           </Button>
         </div>
+
+        {/* Delete account */}
+        <DeleteAccountSection />
 
         <div className="space-y-3">
           <h2 className="text-lg font-bold flex items-center gap-2">
@@ -595,28 +779,70 @@ const ProfileSettings = () => {
             <p className="text-sm text-muted-foreground">{t.profile_no_notifications as string}</p>
           ) : (
             <div className="space-y-2">
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`rounded-xl border border-border bg-card p-3 ${!n.read_at ? "border-primary/30 bg-primary/5" : ""}`}
-                >
-                  {n.type === "vehicle_spotted" && (
-                    <>
-                      <p className="font-medium">{t.profile_vehicle_spotted as string}</p>
-                      {n.data?.brand && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {n.data.brand} {n.data.model} {n.data.year}
-                        </p>
-                      )}
-                      {!n.read_at && (
-                        <Button size="sm" variant="ghost" className="mt-2 text-xs" onClick={() => markNotificationRead(n.id)}>
-                          {t.profile_mark_read as string}
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
+              {notifications.map((n) => {
+                const d = (n.data ?? {}) as Record<string, any>;
+                let label = "";
+                let detail = "";
+                switch (n.type) {
+                  case "vehicle_spotted":
+                    label = t.notif_vehicle_spotted as string;
+                    detail = d.brand ? `${d.brand} ${d.model} ${d.year ?? ""}` : "";
+                    break;
+                  case "car_like":
+                    label = t.notif_car_like as string;
+                    detail = d.liker_username ?? "";
+                    break;
+                  case "friend_request":
+                    label = t.notif_friend_request as string;
+                    detail = d.requester_username ?? "";
+                    break;
+                  case "friend_accepted":
+                    label = t.notif_friend_accepted as string;
+                    detail = d.accepter_username ?? "";
+                    break;
+                  case "dm_received":
+                    label = t.notif_dm_received as string;
+                    detail = d.sender_username ?? "";
+                    break;
+                  case "group_message":
+                    label = t.notif_group_message as string;
+                    detail = d.sender_username ?? "";
+                    break;
+                  case "friend_spot":
+                    label = t.notif_friend_spot as string;
+                    detail = d.brand ? `${d.spotter_username ?? ""} — ${d.brand} ${d.model}` : d.spotter_username ?? "";
+                    break;
+                  case "vehicle_delivered":
+                    label = t.notif_vehicle_delivered as string;
+                    detail = d.deliverer_username ?? "";
+                    break;
+                  case "topic_reply":
+                    label = t.notif_topic_reply as string;
+                    detail = d.replier_username ?? "";
+                    break;
+                  default:
+                    label = n.type;
+                }
+                return (
+                  <div
+                    key={n.id}
+                    className={`rounded-xl border border-border bg-card p-3 ${!n.read_at ? "border-primary/30 bg-primary/5" : ""}`}
+                  >
+                    <p className="font-medium text-sm">{label}</p>
+                    {detail && <p className="text-xs text-muted-foreground mt-0.5">{detail}</p>}
+                    {!n.read_at && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="mt-2 text-xs"
+                        onClick={() => markNotificationRead(n.id)}
+                      >
+                        {t.profile_mark_read as string}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -632,7 +858,10 @@ const ProfileSettings = () => {
                 key={req.id}
                 className="flex items-center justify-between rounded-xl border border-border bg-card p-3"
               >
-                <span className="font-medium flex items-center gap-1">{req.username || (t.profile_anonymous as string)} <UserRoleBadge role={(req as any).role} isPremium={(req as any).is_premium} /></span>
+                <span className="font-medium flex items-center gap-1">
+                  {req.username || (t.profile_anonymous as string)}{" "}
+                  <UserRoleBadge role={(req as any).role} isPremium={(req as any).is_premium} />
+                </span>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => handleAccept(req.id)} className="gap-1">
                     <Check className="h-4 w-4" /> {t.profile_accept as string}
@@ -651,9 +880,7 @@ const ProfileSettings = () => {
             <DialogHeader>
               <DialogTitle>{t.profile_confirm_title as string}</DialogTitle>
             </DialogHeader>
-            <p className="text-sm text-muted-foreground py-2">
-              {t.profile_confirm_desc as string}
-            </p>
+            <p className="text-sm text-muted-foreground py-2">{t.profile_confirm_desc as string}</p>
             <div className="flex gap-3 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setShowUsernameConfirmDialog(false)}>
                 {t.cancel as string}
@@ -671,12 +898,13 @@ const ProfileSettings = () => {
               <DialogTitle>{t.profile_add_vehicle_title as string}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
-              <p className="text-sm text-muted-foreground">
-                {t.profile_add_vehicle_desc as string}
-              </p>
+              <p className="text-sm text-muted-foreground">{t.profile_add_vehicle_desc as string}</p>
               <Button
                 className="w-full gap-2"
-                onClick={() => { setShowAddVehicle(false); setShowPhotoDialog(true); }}
+                onClick={() => {
+                  setShowAddVehicle(false);
+                  setShowPhotoDialog(true);
+                }}
                 disabled={addingVehicle}
               >
                 <Camera className="h-5 w-5" />
@@ -685,7 +913,10 @@ const ProfileSettings = () => {
               <Button
                 variant="outline"
                 className="w-full gap-2"
-                onClick={() => { setShowAddVehicle(false); navigate("/autospotter?owned=1"); }}
+                onClick={() => {
+                  setShowAddVehicle(false);
+                  navigate("/autospotter?owned=1");
+                }}
                 disabled={addingVehicle}
               >
                 {t.profile_open_autospotter as string}

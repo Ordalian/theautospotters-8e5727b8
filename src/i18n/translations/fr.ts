@@ -460,6 +460,15 @@ const fr: Translations = {
   profile_notifications: "Notifications",
   profile_no_notifications: "Aucune notification.",
   profile_vehicle_spotted: "Votre véhicule a été spotté. Félicitations !",
+  notif_vehicle_spotted: "Votre véhicule a été spotté !",
+  notif_car_like: "Quelqu'un a aimé votre voiture",
+  notif_friend_request: "Nouvelle demande d'ami",
+  notif_friend_accepted: "Demande d'ami acceptée",
+  notif_dm_received: "Nouveau message privé",
+  notif_group_message: "Nouveau message de groupe",
+  notif_friend_spot: "Un ami a spotté un véhicule",
+  notif_vehicle_delivered: "Véhicule livré !",
+  notif_topic_reply: "Nouvelle réponse à un sujet",
   profile_mark_read: "Marquer comme lu",
   profile_friend_requests: "Demandes d'amis",
   profile_accept: "Accepter",
@@ -933,6 +942,30 @@ const fr: Translations = {
   push_disable: "Désactiver les notifications push",
   push_not_supported: "Les notifications push ne sont pas supportées sur ce navigateur",
   push_ios_standalone: "Installe l'app depuis Safari pour activer les notifications",
+  push_permission_denied: "Permission refusée — vérifie les paramètres de notifications de ton navigateur",
+
+  // PWA / SW updates
+  sw_update_available: "Mise à jour disponible",
+  sw_update_btn: "Mettre à jour",
+
+  // Daily streak
+  streak_title: "Streak quotidien",
+  streak_claim: "Réclamer",
+  streak_done: "Fait !",
+  streak_already_claimed: "Déjà réclamé aujourd'hui !",
+
+  // Widget
+  widget_today: "aujourd'hui",
+  widget_friends: "amis",
+
+  // Account
+  account_delete: "Supprimer mon compte",
+  account_delete_desc: "Cette action est irréversible. Toutes vos données seront supprimées.",
+  account_delete_confirm: "Êtes-vous sûr de vouloir supprimer votre compte ?",
+  account_delete_confirm2: "Dernière chance — cette action est définitive.",
+  account_deleted: "Compte supprimé",
+  hide_email: "Masquer mon email",
+  hide_email_desc: "Votre email ne sera plus visible par les autres utilisateurs",
 };
 
 export default fr;

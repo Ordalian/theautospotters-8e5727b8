@@ -38,22 +38,18 @@ function parseEngines(text: string): { name: string; displacement: string; fuel:
 }
 
 const AI_MODELS = [
-  { name: "google/gemini-2.5-flash", useMaxTokens: true },
-  { name: "openai/gpt-5-mini", useMaxTokens: false },
+  { name: "gemini-2.5-flash", useMaxTokens: true },
+  { name: "gemini-2.5-flash-lite", useMaxTokens: true },
 ];
 
 async function callAI(apiKey: string, messages: { role: string; content: string | object[] }[]): Promise<string> {
   for (const model of AI_MODELS) {
     const body: Record<string, unknown> = { model: model.name, messages };
-    if (model.useMaxTokens) {
-      body.temperature = 0.4;
-      body.max_tokens = 1024;
-    } else {
-      body.max_completion_tokens = 8192;
-    }
+    body.temperature = 0.4;
+    body.max_tokens = 1024;
 
     console.log("Trying AI model:", model.name);
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -66,9 +62,8 @@ async function callAI(apiKey: string, messages: { role: string; content: string 
       const t = await response.text();
       console.error(`Model ${model.name} failed:`, response.status, t);
       if (response.status === 429) throw new Error("Rate limit exceeded, please try again later.");
-      if (response.status === 402) throw new Error("AI credits exhausted.");
       if (response.status >= 500) continue;
-      throw new Error(`AI gateway error (${response.status}): ${t}`);
+      throw new Error(`Gemini API error (${response.status}): ${t}`);
     }
 
     const data = await response.json();
@@ -151,9 +146,9 @@ Deno.serve(async (req) => {
       return errResponse("Unauthorized.", 401);
     }
 
-    const API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!API_KEY) {
-      return errResponse("LOVABLE_API_KEY missing.", 500);
+      return errResponse("GEMINI_API_KEY missing.", 500);
     }
 
     const body = await req.json();

@@ -13,7 +13,7 @@ async function importVapidKeys(publicKeyBase64url: string, privateKeyBase64url: 
 
   const publicKey = await crypto.subtle.importKey(
     "raw",
-    publicKeyRaw,
+    publicKeyRaw.buffer as ArrayBuffer,
     { name: "ECDSA", namedCurve: "P-256" },
     true,
     []
@@ -77,8 +77,8 @@ async function createJWT(
     sub: subject,
   };
 
-  const headerB64 = bufferToBase64url(new TextEncoder().encode(JSON.stringify(header)));
-  const payloadB64 = bufferToBase64url(new TextEncoder().encode(JSON.stringify(payload)));
+  const headerB64 = bufferToBase64url(new TextEncoder().encode(JSON.stringify(header)).buffer as ArrayBuffer);
+  const payloadB64 = bufferToBase64url(new TextEncoder().encode(JSON.stringify(payload)).buffer as ArrayBuffer);
   const unsignedToken = `${headerB64}.${payloadB64}`;
 
   const signature = await crypto.subtle.sign(
@@ -132,7 +132,7 @@ async function encryptPayload(
 
   const subscriberPublicKey = await crypto.subtle.importKey(
     "raw",
-    base64urlToBuffer(p256dhKey),
+    base64urlToBuffer(p256dhKey).buffer as ArrayBuffer,
     { name: "ECDH", namedCurve: "P-256" },
     true,
     []
@@ -157,7 +157,7 @@ async function encryptPayload(
   authInfoFull.set(localPublicKeyRaw, authInfo.length + subscriberKeyRaw.length);
 
   // PRK = HKDF-Extract(auth_secret, shared_secret)
-  const prkKey = await crypto.subtle.importKey("raw", authSecretBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const prkKey = await crypto.subtle.importKey("raw", authSecretBytes.buffer as ArrayBuffer, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const prk = new Uint8Array(await crypto.subtle.sign("HMAC", prkKey, ikm));
 
   // IKM for content = HKDF-Expand(PRK, auth_info, 32)
@@ -396,7 +396,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("send-push-notification error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
