@@ -8,7 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ThemeProvider } from "@/hooks/useTheme";
-import { LanguageProvider, useLanguage } from "@/i18n/LanguageContext";
+import { LanguageProvider } from "@/i18n/LanguageContext";
 import { PageTransition } from "@/components/PageTransition";
 import ThemeParticles from "@/components/ThemeParticles";
 import InstallPrompt from "@/components/InstallPrompt";
@@ -17,7 +17,7 @@ import { PageLoader } from "@/components/PageLoader";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { createIDBPersister } from "@/lib/queryPersistence";
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { useLanguage } from "@/i18n/LanguageContext";
+
 import { toast } from "sonner";
 
 // Lazy-load all pages
