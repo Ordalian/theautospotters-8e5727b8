@@ -944,9 +944,7 @@ const fr: Translations = {
   push_ios_standalone: "Installe l'app depuis Safari pour activer les notifications",
   push_permission_denied: "Permission refusée — vérifie les paramètres de notifications de ton navigateur",
 
-  // PWA / SW updates
-  sw_update_available: "Mise à jour disponible",
-  sw_update_btn: "Mettre à jour",
+  // (duplicates removed)
 
   // Daily streak
   streak_title: "Streak quotidien",
